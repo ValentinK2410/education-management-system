@@ -139,6 +139,25 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
     Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
 
+    // Тестовые маршруты профиля (временно без контроллера)
+    Route::get('/admin/test-profile', function () {
+        try {
+            $user = auth()->user();
+            return view('admin.profile.show', compact('user'));
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-profile');
+
+    Route::get('/admin/test-profile-edit', function () {
+        try {
+            $user = auth()->user();
+            return view('admin.profile.edit', compact('user'));
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-profile-edit');
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         // Главная панель администратора

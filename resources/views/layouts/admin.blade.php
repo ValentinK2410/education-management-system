@@ -410,10 +410,10 @@
                             <small class="text-muted d-block">{{ auth()->user()->email }}</small>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{{ route('admin.profile.show') }}">
+                        <a class="dropdown-item" href="{{ route('admin.test-profile') }}">
                             <i class="fas fa-user me-2"></i>Профиль
                         </a>
-                        <a class="dropdown-item" href="{{ route('admin.profile.edit') }}">
+                        <a class="dropdown-item" href="{{ route('admin.test-profile-edit') }}">
                             <i class="fas fa-user-edit me-2"></i>Редактировать профиль
                         </a>
                         <a class="dropdown-item" href="#">
