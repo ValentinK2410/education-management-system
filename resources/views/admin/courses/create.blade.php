@@ -125,6 +125,54 @@
                             </div>
                         </div>
 
+                        <!-- Поля оплаты -->
+                        <h5 class="mb-3">Настройки оплаты</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_paid" name="is_paid" 
+                                               value="1" {{ old('is_paid') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_paid">
+                                            Платный курс
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currency" class="form-label">Валюта</label>
+                                    <select class="form-select @error('currency') is-invalid @enderror" 
+                                            id="currency" name="currency">
+                                        <option value="RUB" {{ old('currency', 'RUB') == 'RUB' ? 'selected' : '' }}>Рубль (RUB)</option>
+                                        <option value="USD" {{ old('currency') == 'USD' ? 'selected' : '' }}>Доллар (USD)</option>
+                                        <option value="EUR" {{ old('currency') == 'EUR' ? 'selected' : '' }}>Евро (EUR)</option>
+                                    </select>
+                                    @error('currency')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Цена курса</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control @error('price') is-invalid @enderror" 
+                                               id="price" name="price" value="{{ old('price') }}" 
+                                               min="0" step="0.01" placeholder="0.00" disabled>
+                                        <span class="input-group-text" id="currency-display">RUB</span>
+                                    </div>
+                                    @error('price')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">Оставьте пустым для бесплатного курса</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
@@ -149,4 +197,34 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currencySelect = document.getElementById('currency');
+    const currencyDisplay = document.getElementById('currency-display');
+    const isPaidCheckbox = document.getElementById('is_paid');
+    const priceInput = document.getElementById('price');
+
+    // Обновление отображения валюты
+    currencySelect.addEventListener('change', function() {
+        currencyDisplay.textContent = this.value;
+    });
+
+    // Управление полем цены в зависимости от чекбокса "Платный курс"
+    isPaidCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            priceInput.disabled = false;
+            priceInput.placeholder = '0.00';
+        } else {
+            priceInput.disabled = true;
+            priceInput.value = '';
+            priceInput.placeholder = 'Бесплатный курс';
+        }
+    });
+
+    // Инициализация состояния при загрузке страницы
+    priceInput.disabled = true;
+    priceInput.placeholder = 'Бесплатный курс';
+});
+</script>
 @endsection
