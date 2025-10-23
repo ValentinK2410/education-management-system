@@ -218,6 +218,59 @@
             transform: scale(1.05);
         }
 
+        /* User Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            min-width: 200px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 0.5rem 0;
+        }
+
+        [data-theme="dark"] .dropdown-divider {
+            background-color: var(--border-color);
+        }
+
         /* Cards */
         .card {
             border: none;
@@ -296,6 +349,27 @@
             .sidebar {
                 transform: translateX(-100%);
             }
+
+            /* Адаптивное позиционирование dropdown меню */
+            .dropdown-menu {
+                right: auto;
+                left: 0;
+                min-width: 180px;
+                transform: translateX(-50%);
+                margin-left: 20px;
+            }
+
+            /* Если меню все еще выходит за экран, позиционируем его слева */
+            @media (max-width: 400px) {
+                .dropdown-menu {
+                    right: 0;
+                    left: auto;
+                    transform: none;
+                    margin-left: 0;
+                    margin-right: 10px;
+                }
+            }
+        }
 
             .sidebar.show {
                 transform: translateX(0);
@@ -550,12 +624,42 @@
 
         userMenuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            
+            if (userDropdown.style.display === 'none' || userDropdown.style.display === '') {
+                // Показываем меню с анимацией
+                userDropdown.style.display = 'block';
+                userDropdown.style.opacity = '0';
+                userDropdown.style.transform = 'translateY(-10px)';
+                
+                // Плавная анимация появления
+                setTimeout(() => {
+                    userDropdown.style.transition = 'all 0.2s ease';
+                    userDropdown.style.opacity = '1';
+                    userDropdown.style.transform = 'translateY(0)';
+                }, 10);
+            } else {
+                // Скрываем меню с анимацией
+                userDropdown.style.transition = 'all 0.2s ease';
+                userDropdown.style.opacity = '0';
+                userDropdown.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    userDropdown.style.display = 'none';
+                }, 200);
+            }
         });
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', () => {
-            userDropdown.style.display = 'none';
+        document.addEventListener('click', (e) => {
+            if (!userMenuToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.style.transition = 'all 0.2s ease';
+                userDropdown.style.opacity = '0';
+                userDropdown.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    userDropdown.style.display = 'none';
+                }, 200);
+            }
         });
 
         // Mobile sidebar toggle
