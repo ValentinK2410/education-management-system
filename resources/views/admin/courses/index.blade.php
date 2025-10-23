@@ -33,7 +33,8 @@
                                     <th>Название</th>
                                     <th>Программа</th>
                                     <th>Преподаватель</th>
-                                    <th>Кредиты</th>
+                                    <th>Тип оплаты</th>
+                                    <th>Цена</th>
                                     <th>Статус</th>
                                     <th>Действия</th>
                                 </tr>
@@ -73,7 +74,22 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-warning">{{ $course->credits ?? 'Не указано' }}</span>
+                                            @if($course->is_paid)
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-dollar-sign me-1"></i>Платный
+                                                </span>
+                                            @else
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-gift me-1"></i>Бесплатный
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($course->is_paid && $course->price)
+                                                <strong>{{ number_format($course->price, 0) }} {{ $course->currency ?? 'USD' }}</strong>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($course->is_active)
@@ -111,7 +127,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-4">
+                                        <td colspan="8" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
                                                 <p>Курсы не найдены</p>

@@ -128,10 +128,22 @@
             margin-left: var(--sidebar-width);
             min-height: 100vh;
             transition: all 0.3s ease;
+            padding: 0;
         }
 
         .main-content.expanded {
             margin-left: 80px;
+        }
+
+        /* Когда боковая панель скрыта на мобильных устройствах */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .main-content.expanded {
+                margin-left: 0;
+            }
         }
 
         /* Header */
@@ -160,8 +172,8 @@
         .sidebar-toggle {
             background: none;
             border: none;
+            color: var(--text-color);
             font-size: 1.2rem;
-            color: var(--secondary-color);
             cursor: pointer;
             padding: 0.5rem;
             border-radius: 0.5rem;
@@ -171,6 +183,10 @@
         .sidebar-toggle:hover {
             background-color: var(--light-bg);
             color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .sidebar-toggle:hover {
+            background-color: var(--hover-bg);
         }
 
         .header-right {

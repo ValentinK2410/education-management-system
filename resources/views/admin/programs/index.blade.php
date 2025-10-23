@@ -32,7 +32,8 @@
                                     <th>ID</th>
                                     <th>Название</th>
                                     <th>Учебное заведение</th>
-                                    <th>Описание</th>
+                                    <th>Тип оплаты</th>
+                                    <th>Цена</th>
                                     <th>Статус</th>
                                     <th>Действия</th>
                                 </tr>
@@ -55,9 +56,22 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="text-truncate" style="max-width: 200px;" title="{{ $program->description }}">
-                                                {{ $program->description ?? 'Без описания' }}
-                                            </div>
+                                            @if($program->is_paid)
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-dollar-sign me-1"></i>Платная
+                                                </span>
+                                            @else
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-gift me-1"></i>Бесплатная
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($program->is_paid && $program->price)
+                                                <strong>{{ number_format($program->price, 0) }} {{ $program->currency ?? 'USD' }}</strong>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($program->is_active)
@@ -95,7 +109,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-4">
+                                        <td colspan="7" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-book fa-3x mb-3"></i>
                                                 <p>Программы не найдены</p>
