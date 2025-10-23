@@ -1,6 +1,6 @@
 # Education Management System
 
-Современная система управления образовательными процессами, построенная на Laravel 10.
+Современная система управления образовательными процессами, построенная на Laravel 12.
 
 ## Возможности
 
@@ -54,7 +54,7 @@
 1. Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/yourusername/education-management-system.git
+git clone https://github.com/ValentinK2410/education-management-system.git
 cd education-management-system
 ```
 
@@ -129,10 +129,11 @@ resources/views/
 
 ## Технологии
 
--   **Backend**: Laravel 10, PHP 8.1+
+-   **Backend**: Laravel 12, PHP 8.2+
 -   **Frontend**: Bootstrap 5, Font Awesome
 -   **База данных**: SQLite (по умолчанию), MySQL, PostgreSQL
 -   **Аутентификация**: Laravel Sanctum
+-   **Система ролей**: Spatie Laravel Permission
 
 ## Лицензия
 
@@ -141,4 +142,3 @@ MIT License
 ## Автор
 
 Создано с ❤️ для управления образовательными процессами
-# education-management-system
