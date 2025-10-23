@@ -19,6 +19,48 @@ Route::get('/courses', [PublicController::class, 'courses'])->name('courses.inde
 Route::get('/courses/{course}', [PublicController::class, 'course'])->name('courses.show');
 Route::get('/instructors/{instructor}', [PublicController::class, 'instructor'])->name('instructors.show');
 
+// Тестовые маршруты админки (временно без авторизации)
+Route::get('/admin/test-dashboard', function () {
+    try {
+        $stats = [
+            'users' => \App\Models\User::count(),
+            'institutions' => \App\Models\Institution::count(),
+            'programs' => \App\Models\Program::count(),
+            'courses' => \App\Models\Course::count(),
+        ];
+        return view('admin.dashboard-simple', compact('stats'));
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+})->name('admin.test-dashboard');
+
+Route::get('/admin/test-users', function () {
+    try {
+        $users = \App\Models\User::with('roles')->paginate(15);
+        return view('admin.users.index', compact('users'));
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+})->name('admin.test-users');
+
+Route::get('/admin/test-institutions', function () {
+    try {
+        $institutions = \App\Models\Institution::paginate(15);
+        return view('admin.institutions.index', compact('institutions'));
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+})->name('admin.test-institutions');
+
+Route::get('/admin/test-programs', function () {
+    try {
+        $programs = \App\Models\Program::with('institution')->paginate(15);
+        return view('admin.programs.index', compact('programs'));
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+})->name('admin.test-programs');
+
 // Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
