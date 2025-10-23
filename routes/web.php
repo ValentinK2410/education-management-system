@@ -61,6 +61,15 @@ Route::get('/admin/test-programs', function () {
     }
 })->name('admin.test-programs');
 
+Route::get('/admin/test-courses', function () {
+    try {
+        $courses = \App\Models\Course::with(['program', 'instructor'])->paginate(15);
+        return view('admin.courses.index', compact('courses'));
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+})->name('admin.test-courses');
+
 // Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
