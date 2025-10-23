@@ -36,6 +36,13 @@ class User extends Authenticatable
         'theme_preference',        // Предпочтение темы (light/dark)
         'sidebar_collapsed',       // Свернута ли боковая панель
         'notifications_enabled',   // Включены ли уведомления
+        'photo',                   // Фото пользователя
+        'religion',                // Вероисповедание
+        'city',                    // Город
+        'church',                  // Название церкви
+        'marital_status',          // Семейное положение
+        'education',               // Образование
+        'about_me',                // Кратко о себе
     ];
 
     /**
@@ -127,5 +134,81 @@ class User extends Authenticatable
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Получить программы, на которые записан пользователь
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function programs()
+    {
+        return $this->belongsToMany(Program::class, 'user_programs')
+                    ->withPivot(['status', 'enrolled_at', 'completed_at', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Получить курсы, на которые записан пользователь
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'user_courses')
+                    ->withPivot(['status', 'enrolled_at', 'completed_at', 'progress', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Получить учебные заведения, с которыми связан пользователь
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function institutions()
+    {
+        return $this->belongsToMany(Institution::class, 'user_institutions')
+                    ->withPivot(['status', 'enrolled_at', 'graduated_at', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Получить активные программы пользователя
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function activePrograms()
+    {
+        return $this->programs()->wherePivot('status', 'active');
+    }
+
+    /**
+     * Получить активные курсы пользователя
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function activeCourses()
+    {
+        return $this->courses()->wherePivot('status', 'active');
+    }
+
+    /**
+     * Получить завершенные программы пользователя
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function completedPrograms()
+    {
+        return $this->programs()->wherePivot('status', 'completed');
+    }
+
+    /**
+     * Получить завершенные курсы пользователя
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function completedCourses()
+    {
+        return $this->courses()->wherePivot('status', 'completed');
     }
 }

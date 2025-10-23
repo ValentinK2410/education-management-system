@@ -30,6 +30,9 @@ class Program extends Model
         'language',      // Язык обучения
         'requirements',  // Требования для поступления
         'is_active',     // Статус активности
+        'is_paid',       // Платная программа или бесплатная
+        'price',         // Цена программы
+        'currency',      // Валюта
     ];
 
     /**
@@ -38,7 +41,9 @@ class Program extends Model
     protected $casts = [
         'requirements' => 'array',    // Требования как массив
         'is_active' => 'boolean',     // Статус активности как булево значение
+        'is_paid' => 'boolean',       // Платная программа как булево значение
         'tuition_fee' => 'decimal:2', // Стоимость обучения как десятичное число с 2 знаками
+        'price' => 'decimal:2',       // Цена как десятичное число
     ];
 
     /**
@@ -70,5 +75,49 @@ class Program extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Область видимости для получения только платных программ
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('is_paid', true);
+    }
+
+    /**
+     * Область видимости для получения только бесплатных программ
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopeFree($query)
+    {
+        return $query->where('is_paid', false);
+    }
+
+    /**
+     * Получить пользователей, записанных на программу
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_programs')
+                    ->withPivot(['status', 'enrolled_at', 'completed_at', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Получить количество записанных пользователей
+     *
+     * @return int
+     */
+    public function getEnrolledUsersCountAttribute()
+    {
+        return $this->users()->count();
     }
 }

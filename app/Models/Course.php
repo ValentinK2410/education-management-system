@@ -32,6 +32,9 @@ class Course extends Model
         'prerequisites',     // Предварительные требования
         'learning_outcomes', // Результаты обучения
         'is_active',         // Статус активности
+        'is_paid',           // Платный курс или бесплатный
+        'price',             // Цена курса
+        'currency',          // Валюта
     ];
 
     /**
@@ -41,6 +44,8 @@ class Course extends Model
         'prerequisites' => 'array',     // Предварительные требования как массив
         'learning_outcomes' => 'array', // Результаты обучения как массив
         'is_active' => 'boolean',       // Статус активности как булево значение
+        'is_paid' => 'boolean',         // Платный курс как булево значение
+        'price' => 'decimal:2',         // Цена как десятичное число
     ];
 
     /**
@@ -72,5 +77,49 @@ class Course extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Область видимости для получения только платных курсов
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('is_paid', true);
+    }
+
+    /**
+     * Область видимости для получения только бесплатных курсов
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopeFree($query)
+    {
+        return $query->where('is_paid', false);
+    }
+
+    /**
+     * Получить пользователей, записанных на курс
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_courses')
+                    ->withPivot(['status', 'enrolled_at', 'completed_at', 'progress', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Получить количество записанных пользователей
+     *
+     * @return int
+     */
+    public function getEnrolledUsersCountAttribute()
+    {
+        return $this->users()->count();
     }
 }
