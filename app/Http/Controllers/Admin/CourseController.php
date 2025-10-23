@@ -68,9 +68,21 @@ class CourseController extends Controller
             'prerequisites.*' => 'string',
             'learning_outcomes' => 'nullable|array',
             'learning_outcomes.*' => 'string',
+            'is_active' => 'boolean',
+            'is_paid' => 'boolean',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        Course::create($request->all());
+        // Подготовка данных для сохранения
+        $data = $request->all();
+        
+        // Если курс не платный, обнуляем цену
+        if (!$request->boolean('is_paid')) {
+            $data['price'] = null;
+        }
+
+        Course::create($data);
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Курс успешно создан.');
@@ -132,9 +144,20 @@ class CourseController extends Controller
             'learning_outcomes' => 'nullable|array',
             'learning_outcomes.*' => 'string',
             'is_active' => 'boolean',
+            'is_paid' => 'boolean',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        $course->update($request->all());
+        // Подготовка данных для обновления
+        $data = $request->all();
+        
+        // Если курс не платный, обнуляем цену
+        if (!$request->boolean('is_paid')) {
+            $data['price'] = null;
+        }
+
+        $course->update($data);
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Курс успешно обновлен.');

@@ -56,9 +56,21 @@ class ProgramController extends Controller
             'language' => 'required|string|max:10',
             'requirements' => 'nullable|array',
             'requirements.*' => 'string',
+            'is_active' => 'boolean',
+            'is_paid' => 'boolean',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        Program::create($request->all());
+        // Подготовка данных для сохранения
+        $data = $request->all();
+        
+        // Если программа не платная, обнуляем цену
+        if (!$request->boolean('is_paid')) {
+            $data['price'] = null;
+        }
+
+        Program::create($data);
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно создана.');
@@ -109,9 +121,20 @@ class ProgramController extends Controller
             'requirements' => 'nullable|array',
             'requirements.*' => 'string',
             'is_active' => 'boolean',
+            'is_paid' => 'boolean',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        $program->update($request->all());
+        // Подготовка данных для обновления
+        $data = $request->all();
+        
+        // Если программа не платная, обнуляем цену
+        if (!$request->boolean('is_paid')) {
+            $data['price'] = null;
+        }
+
+        $program->update($data);
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно обновлена.');
