@@ -8,22 +8,36 @@ use App\Models\Program;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Контроллер для публичных страниц
+ *
+ * Обрабатывает отображение информации для неавторизованных пользователей.
+ * Предоставляет доступ к каталогам учебных заведений, программ и курсов.
+ */
 class PublicController extends Controller
 {
     /**
-     * Display the homepage.
+     * Отобразить главную страницу сайта
+     *
+     * Показывает краткую информацию о доступных учебных заведениях,
+     * программах и курсах для привлечения посетителей.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
+        // Получение ограниченного количества записей для главной страницы
         $institutions = Institution::active()->with('programs')->take(6)->get();
         $programs = Program::active()->with('institution')->take(8)->get();
         $courses = Course::active()->with(['program.institution', 'instructor'])->take(8)->get();
-        
+
         return view('public.index', compact('institutions', 'programs', 'courses'));
     }
 
     /**
-     * Display a listing of institutions.
+     * Отобразить список всех учебных заведений
+     *
+     * @return \Illuminate\View\View
      */
     public function institutions()
     {
@@ -32,7 +46,10 @@ class PublicController extends Controller
     }
 
     /**
-     * Display the specified institution.
+     * Отобразить конкретное учебное заведение
+     *
+     * @param Institution $institution
+     * @return \Illuminate\View\View
      */
     public function institution(Institution $institution)
     {
@@ -41,7 +58,9 @@ class PublicController extends Controller
     }
 
     /**
-     * Display a listing of programs.
+     * Отобразить список всех образовательных программ
+     *
+     * @return \Illuminate\View\View
      */
     public function programs()
     {
@@ -50,7 +69,10 @@ class PublicController extends Controller
     }
 
     /**
-     * Display the specified program.
+     * Отобразить конкретную образовательную программу
+     *
+     * @param Program $program
+     * @return \Illuminate\View\View
      */
     public function program(Program $program)
     {
@@ -59,7 +81,9 @@ class PublicController extends Controller
     }
 
     /**
-     * Display a listing of courses.
+     * Отобразить список всех курсов
+     *
+     * @return \Illuminate\View\View
      */
     public function courses()
     {
@@ -68,7 +92,10 @@ class PublicController extends Controller
     }
 
     /**
-     * Display the specified course.
+     * Отобразить конкретный курс
+     *
+     * @param Course $course
+     * @return \Illuminate\View\View
      */
     public function course(Course $course)
     {
@@ -77,7 +104,10 @@ class PublicController extends Controller
     }
 
     /**
-     * Display the specified instructor.
+     * Отобразить профиль преподавателя
+     *
+     * @param User $instructor
+     * @return \Illuminate\View\View
      */
     public function instructor(User $instructor)
     {

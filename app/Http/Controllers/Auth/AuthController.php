@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Контроллер аутентификации
+ *
+ * Обрабатывает процессы входа, регистрации и выхода пользователей.
+ * Управляет сессиями и перенаправлениями после аутентификации.
+ */
 class AuthController extends Controller
 {
     /**
-     * Show login form
+     * Показать форму входа в систему
+     *
+     * @return \Illuminate\View\View
      */
     public function showLoginForm()
     {
@@ -21,10 +29,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login request
+     * Обработать запрос на вход в систему
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function login(Request $request)
     {
+        // Валидация входящих данных
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
@@ -39,9 +51,10 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
+        // Попытка аутентификации пользователя
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            
+
             return redirect()->intended('/dashboard');
         }
 
@@ -51,7 +64,9 @@ class AuthController extends Controller
     }
 
     /**
-     * Show registration form
+     * Показать форму регистрации
+     *
+     * @return \Illuminate\View\View
      */
     public function showRegisterForm()
     {
@@ -59,10 +74,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle registration request
+     * Обработать запрос на регистрацию нового пользователя
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function register(Request $request)
     {
+        // Валидация входящих данных
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -76,6 +95,7 @@ class AuthController extends Controller
                 ->withInput($request->except('password', 'password_confirmation'));
         }
 
+        // Создание нового пользователя
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -84,16 +104,20 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
-        // Assign default role (student)
+        // Назначение роли студента по умолчанию
         $user->roles()->attach(Role::where('slug', 'student')->first());
 
+        // Автоматический вход после регистрации
         Auth::login($user);
 
         return redirect('/dashboard');
     }
 
     /**
-     * Handle logout request
+     * Обработать запрос на выход из системы
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function logout(Request $request)
     {

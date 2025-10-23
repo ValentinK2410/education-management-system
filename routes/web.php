@@ -8,7 +8,7 @@ use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
+// Публичные маршруты - доступны всем пользователям
 Route::get('/', [PublicController::class, 'index'])->name('home');
 Route::get('/institutions', [PublicController::class, 'institutions'])->name('institutions.index');
 Route::get('/institutions/{institution}', [PublicController::class, 'institution'])->name('institutions.show');
@@ -18,31 +18,32 @@ Route::get('/courses', [PublicController::class, 'courses'])->name('courses.inde
 Route::get('/courses/{course}', [PublicController::class, 'course'])->name('courses.show');
 Route::get('/instructors/{instructor}', [PublicController::class, 'instructor'])->name('instructors.show');
 
-// Authentication routes
+// Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Protected routes
+// Защищенные маршруты - требуют авторизации
 Route::middleware(['auth'])->group(function () {
+    // Главная панель управления
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-    
-    // Admin routes
+
+    // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        // Users management
+        // Управление пользователями
         Route::resource('users', UserController::class);
-        
-        // Institutions management
+
+        // Управление учебными заведениями
         Route::resource('institutions', InstitutionController::class);
-        
-        // Programs management
+
+        // Управление образовательными программами
         Route::resource('programs', ProgramController::class);
-        
-        // Courses management
+
+        // Управление курсами
         Route::resource('courses', CourseController::class);
     });
 });

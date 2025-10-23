@@ -20,15 +20,15 @@
                             <h5 class="card-title">{{ $program->name }}</h5>
                             <span class="badge bg-primary">{{ $program->degree_level }}</span>
                         </div>
-                        
+
                         <p class="card-text text-muted flex-grow-1">{{ Str::limit($program->description, 120) }}</p>
-                        
+
                         <div class="mb-3">
                             <small class="text-muted">
                                 <i class="fas fa-university me-1"></i>{{ $program->institution->name }}
                             </small>
                         </div>
-                        
+
                         <div class="row mb-3">
                             @if($program->duration)
                                 <div class="col-6">
@@ -45,7 +45,7 @@
                                 </div>
                             @endif
                         </div>
-                        
+
                         @if($program->requirements && count($program->requirements) > 0)
                             <div class="mb-3">
                                 <small class="text-muted">
@@ -56,7 +56,7 @@
                                 </small>
                             </div>
                         @endif
-                        
+
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">

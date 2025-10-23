@@ -8,10 +8,18 @@ use App\Models\Program;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Контроллер для управления курсами
+ *
+ * Обеспечивает CRUD операции для курсов в административной панели.
+ * Управляет связями между курсами, программами и преподавателями.
+ */
 class CourseController extends Controller
 {
     /**
-     * Display a listing of courses.
+     * Отобразить список всех курсов
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -20,23 +28,32 @@ class CourseController extends Controller
     }
 
     /**
-     * Show the form for creating a new course.
+     * Показать форму для создания нового курса
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
+        // Получение активных программ с их учебными заведениями
         $programs = Program::active()->with('institution')->get();
+
+        // Получение пользователей с ролью преподавателя
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('slug', 'instructor');
         })->get();
-        
+
         return view('admin.courses.create', compact('programs', 'instructors'));
     }
 
     /**
-     * Store a newly created course.
+     * Сохранить новый курс в базе данных
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -60,7 +77,10 @@ class CourseController extends Controller
     }
 
     /**
-     * Display the specified course.
+     * Отобразить конкретный курс
+     *
+     * @param Course $course
+     * @return \Illuminate\View\View
      */
     public function show(Course $course)
     {
@@ -69,23 +89,34 @@ class CourseController extends Controller
     }
 
     /**
-     * Show the form for editing the course.
+     * Показать форму для редактирования курса
+     *
+     * @param Course $course
+     * @return \Illuminate\View\View
      */
     public function edit(Course $course)
     {
+        // Получение активных программ с их учебными заведениями
         $programs = Program::active()->with('institution')->get();
+
+        // Получение пользователей с ролью преподавателя
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('slug', 'instructor');
         })->get();
-        
+
         return view('admin.courses.edit', compact('course', 'programs', 'instructors'));
     }
 
     /**
-     * Update the specified course.
+     * Обновить курс в базе данных
+     *
+     * @param Request $request
+     * @param Course $course
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, Course $course)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -110,7 +141,10 @@ class CourseController extends Controller
     }
 
     /**
-     * Remove the specified course.
+     * Удалить курс из базы данных
+     *
+     * @param Course $course
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Course $course)
     {

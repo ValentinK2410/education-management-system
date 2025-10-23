@@ -18,7 +18,7 @@
         <div class="col-lg-8">
             <h1 class="fw-bold mb-3">{{ $institution->name }}</h1>
             <p class="lead text-muted mb-4">{{ $institution->description }}</p>
-            
+
             <div class="row">
                 @if($institution->address)
                     <div class="col-md-6 mb-3">
@@ -28,7 +28,7 @@
                         <p class="mb-0">{{ $institution->address }}</p>
                     </div>
                 @endif
-                
+
                 @if($institution->phone)
                     <div class="col-md-6 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -37,7 +37,7 @@
                         <p class="mb-0">{{ $institution->phone }}</p>
                     </div>
                 @endif
-                
+
                 @if($institution->email)
                     <div class="col-md-6 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -50,7 +50,7 @@
                         </p>
                     </div>
                 @endif
-                
+
                 @if($institution->website)
                     <div class="col-md-6 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -71,7 +71,7 @@
     <div class="row">
         <div class="col-12">
             <h2 class="fw-bold mb-4">Образовательные программы</h2>
-            
+
             @if($institution->programs->count() > 0)
                 <div class="row">
                     @foreach($institution->programs as $program)
@@ -82,9 +82,9 @@
                                         <h5 class="card-title">{{ $program->name }}</h5>
                                         <span class="badge bg-primary">{{ $program->degree_level }}</span>
                                     </div>
-                                    
+
                                     <p class="card-text text-muted">{{ Str::limit($program->description, 150) }}</p>
-                                    
+
                                     <div class="row mb-3">
                                         @if($program->duration)
                                             <div class="col-6">
@@ -101,7 +101,7 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="d-flex justify-content-between align-items-center">
                                         <small class="text-muted">
                                             {{ $program->courses->count() }} курсов

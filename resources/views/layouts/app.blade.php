@@ -52,11 +52,11 @@
                 <i class="fas fa-graduation-cap me-2"></i>
                 EduManage
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
@@ -72,7 +72,7 @@
                         <a class="nav-link" href="{{ route('courses.index') }}">Курсы</a>
                     </li>
                 </ul>
-                
+
                 <ul class="navbar-nav">
                     @auth
                         @if(auth()->user()->isAdmin())

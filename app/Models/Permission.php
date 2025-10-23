@@ -6,18 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * Модель разрешения
+ *
+ * Представляет разрешения в системе управления образованием.
+ * Разрешения определяют конкретные действия, которые может выполнять пользователь.
+ */
 class Permission extends Model
 {
     use HasFactory;
 
+    /**
+     * Поля, доступные для массового заполнения
+     */
     protected $fillable = [
-        'name',
-        'slug',
-        'description',
+        'name',        // Название разрешения
+        'slug',        // Уникальный слаг разрешения
+        'description', // Описание разрешения
     ];
 
     /**
-     * Get the roles for the permission.
+     * Получить роли, которые имеют данное разрешение
+     *
+     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {

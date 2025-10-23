@@ -9,52 +9,60 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * Модель пользователя системы управления образованием
+ *
+ * Отвечает за аутентификацию пользователей и управление их ролями.
+ * Поддерживает различные роли: администратор, преподаватель, студент.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Поля, доступные для массового заполнения
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'avatar',
-        'bio',
-        'is_active',
+        'name',        // Имя пользователя
+        'email',       // Email адрес
+        'password',    // Пароль (будет захеширован)
+        'phone',       // Номер телефона
+        'avatar',      // Путь к аватару
+        'bio',         // Биография пользователя
+        'is_active',   // Статус активности
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Поля, которые должны быть скрыты при сериализации
      *
      * @var list<string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password',        // Пароль
+        'remember_token',  // Токен "запомнить меня"
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Получить атрибуты, которые должны быть приведены к определенным типам
      *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
+            'email_verified_at' => 'datetime',  // Дата подтверждения email
+            'password' => 'hashed',            // Пароль будет автоматически хеширован
+            'is_active' => 'boolean',          // Статус активности как булево значение
         ];
     }
 
     /**
-     * Get the roles for the user.
+     * Получить роли пользователя
+     *
+     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {
@@ -62,7 +70,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the courses taught by the user.
+     * Получить курсы, которые преподает пользователь
+     *
+     * @return HasMany
      */
     public function taughtCourses(): HasMany
     {
@@ -70,7 +80,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has role.
+     * Проверить, имеет ли пользователь определенную роль
+     *
+     * @param string $role Слаг роли для проверки
+     * @return bool
      */
     public function hasRole(string $role): bool
     {
@@ -78,7 +91,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is admin.
+     * Проверить, является ли пользователь администратором
+     *
+     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -86,7 +101,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has permission.
+     * Проверить, имеет ли пользователь определенное разрешение
+     *
+     * @param string $permission Слаг разрешения для проверки
+     * @return bool
      */
     public function hasPermission(string $permission): bool
     {
@@ -96,7 +114,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Scope a query to only include active users.
+     * Область видимости для получения только активных пользователей
+     *
+     * @param $query
+     * @return mixed
      */
     public function scopeActive($query)
     {

@@ -79,7 +79,7 @@
                 <p class="text-muted">Откройте для себя лучшие образовательные учреждения</p>
             </div>
         </div>
-        
+
         <div class="row">
             @forelse($institutions as $institution)
                 <div class="col-lg-4 col-md-6 mb-4">
@@ -108,7 +108,7 @@
                 </div>
             @endforelse
         </div>
-        
+
         <div class="text-center mt-4">
             <a href="{{ route('institutions.index') }}" class="btn btn-outline-primary btn-lg">
                 Все учебные заведения <i class="fas fa-arrow-right ms-2"></i>
@@ -126,7 +126,7 @@
                 <p class="text-muted">Выберите подходящую образовательную программу</p>
             </div>
         </div>
-        
+
         <div class="row">
             @forelse($programs as $program)
                 <div class="col-lg-4 col-md-6 mb-4">
@@ -159,7 +159,7 @@
                 </div>
             @endforelse
         </div>
-        
+
         <div class="text-center mt-4">
             <a href="{{ route('programs.index') }}" class="btn btn-outline-primary btn-lg">
                 Все программы <i class="fas fa-arrow-right ms-2"></i>
@@ -177,7 +177,7 @@
                 <p class="text-muted">Изучайте новые навыки с лучшими преподавателями</p>
             </div>
         </div>
-        
+
         <div class="row">
             @forelse($courses as $course)
                 <div class="col-lg-4 col-md-6 mb-4">
@@ -219,7 +219,7 @@
                 </div>
             @endforelse
         </div>
-        
+
         <div class="text-center mt-4">
             <a href="{{ route('courses.index') }}" class="btn btn-outline-primary btn-lg">
                 Все курсы <i class="fas fa-arrow-right ms-2"></i>

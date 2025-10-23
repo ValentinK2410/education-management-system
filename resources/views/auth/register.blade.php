@@ -16,14 +16,14 @@
 
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
-                        
+
                         <div class="mb-3">
                             <label for="name" class="form-label">Имя</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-user"></i>
                                 </span>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
                                        id="name" name="name" value="{{ old('name') }}" required>
                             </div>
                             @error('name')
@@ -37,7 +37,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-envelope"></i>
                                 </span>
-                                <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                                <input type="email" class="form-control @error('email') is-invalid @enderror"
                                        id="email" name="email" value="{{ old('email') }}" required>
                             </div>
                             @error('email')
@@ -51,7 +51,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-phone"></i>
                                 </span>
-                                <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
+                                <input type="tel" class="form-control @error('phone') is-invalid @enderror"
                                        id="phone" name="phone" value="{{ old('phone') }}">
                             </div>
                             @error('phone')
@@ -65,7 +65,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-lock"></i>
                                 </span>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                                <input type="password" class="form-control @error('password') is-invalid @enderror"
                                        id="password" name="password" required>
                             </div>
                             @error('password')
@@ -79,7 +79,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-lock"></i>
                                 </span>
-                                <input type="password" class="form-control" 
+                                <input type="password" class="form-control"
                                        id="password_confirmation" name="password_confirmation" required>
                             </div>
                         </div>
@@ -90,7 +90,7 @@
                     </form>
 
                     <div class="text-center">
-                        <p class="mb-0">Уже есть аккаунт? 
+                        <p class="mb-0">Уже есть аккаунт?
                             <a href="{{ route('login') }}" class="text-decoration-none">Войти</a>
                         </p>
                     </div>

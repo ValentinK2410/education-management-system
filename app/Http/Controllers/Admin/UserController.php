@@ -9,10 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Контроллер для управления пользователями
+ *
+ * Обеспечивает CRUD операции для пользователей в административной панели.
+ * Управляет ролями пользователей и их правами доступа.
+ */
 class UserController extends Controller
 {
     /**
-     * Display a listing of users.
+     * Отобразить список всех пользователей
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -21,7 +29,9 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new user.
+     * Показать форму для создания нового пользователя
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -30,10 +40,14 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created user.
+     * Сохранить нового пользователя в базе данных
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -44,6 +58,7 @@ class UserController extends Controller
             'roles.*' => 'exists:roles,id',
         ]);
 
+        // Создание нового пользователя
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -53,6 +68,7 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
+        // Назначение ролей пользователю
         $user->roles()->sync($request->roles);
 
         return redirect()->route('admin.users.index')
@@ -60,7 +76,10 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified user.
+     * Отобразить конкретного пользователя
+     *
+     * @param User $user
+     * @return \Illuminate\View\View
      */
     public function show(User $user)
     {
@@ -69,7 +88,10 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the user.
+     * Показать форму для редактирования пользователя
+     *
+     * @param User $user
+     * @return \Illuminate\View\View
      */
     public function edit(User $user)
     {
@@ -79,10 +101,15 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified user.
+     * Обновить пользователя в базе данных
+     *
+     * @param Request $request
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, User $user)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -102,6 +129,7 @@ class UserController extends Controller
             'is_active' => $request->boolean('is_active'),
         ];
 
+        // Обновление пароля только если он указан
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -114,7 +142,10 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified user.
+     * Удалить пользователя из базы данных
+     *
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(User $user)
     {

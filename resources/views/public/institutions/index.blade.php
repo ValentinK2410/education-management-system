@@ -25,7 +25,7 @@
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ $institution->name }}</h5>
                         <p class="card-text text-muted flex-grow-1">{{ Str::limit($institution->description, 120) }}</p>
-                        
+
                         @if($institution->address)
                             <div class="mb-2">
                                 <small class="text-muted">
@@ -33,7 +33,7 @@
                                 </small>
                             </div>
                         @endif
-                        
+
                         @if($institution->phone)
                             <div class="mb-2">
                                 <small class="text-muted">
@@ -41,7 +41,7 @@
                                 </small>
                             </div>
                         @endif
-                        
+
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">

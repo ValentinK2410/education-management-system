@@ -4,29 +4,35 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Миграция для создания таблицы учебных заведений
+ *
+ * Создает таблицу для хранения информации об образовательных учреждениях.
+ * Включает основные данные: название, описание, контакты, логотип.
+ */
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Выполнить миграцию - создать таблицу учебных заведений
      */
     public function up(): void
     {
         Schema::create('institutions', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('address')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('email')->nullable();
-            $table->string('website')->nullable();
-            $table->string('logo')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('name');                    // Название учебного заведения
+            $table->text('description')->nullable();  // Описание учебного заведения
+            $table->string('address')->nullable();    // Адрес учебного заведения
+            $table->string('phone')->nullable();       // Телефон учебного заведения
+            $table->string('email')->nullable();       // Email учебного заведения
+            $table->string('website')->nullable();    // Веб-сайт учебного заведения
+            $table->string('logo')->nullable();        // Путь к логотипу учебного заведения
+            $table->boolean('is_active')->default(true); // Статус активности
             $table->timestamps();
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Откатить миграцию - удалить таблицу учебных заведений
      */
     public function down(): void
     {

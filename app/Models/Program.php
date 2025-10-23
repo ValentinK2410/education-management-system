@@ -7,30 +7,44 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Модель образовательной программы
+ *
+ * Представляет образовательную программу в рамках учебного заведения.
+ * Каждая программа принадлежит учебному заведению и может содержать множество курсов.
+ */
 class Program extends Model
 {
     use HasFactory;
 
+    /**
+     * Поля, доступные для массового заполнения
+     */
     protected $fillable = [
-        'name',
-        'description',
-        'institution_id',
-        'duration',
-        'degree_level',
-        'tuition_fee',
-        'language',
-        'requirements',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'requirements' => 'array',
-        'is_active' => 'boolean',
-        'tuition_fee' => 'decimal:2',
+        'name',          // Название программы
+        'description',   // Описание программы
+        'institution_id', // ID учебного заведения
+        'duration',      // Продолжительность программы
+        'degree_level',  // Уровень степени
+        'tuition_fee',   // Стоимость обучения
+        'language',      // Язык обучения
+        'requirements',  // Требования для поступления
+        'is_active',     // Статус активности
     ];
 
     /**
-     * Get the institution that owns the program.
+     * Атрибуты, которые должны быть приведены к определенным типам
+     */
+    protected $casts = [
+        'requirements' => 'array',    // Требования как массив
+        'is_active' => 'boolean',     // Статус активности как булево значение
+        'tuition_fee' => 'decimal:2', // Стоимость обучения как десятичное число с 2 знаками
+    ];
+
+    /**
+     * Получить учебное заведение, которому принадлежит программа
+     *
+     * @return BelongsTo
      */
     public function institution(): BelongsTo
     {
@@ -38,7 +52,9 @@ class Program extends Model
     }
 
     /**
-     * Get the courses for the program.
+     * Получить курсы, входящие в программу
+     *
+     * @return HasMany
      */
     public function courses(): HasMany
     {
@@ -46,7 +62,10 @@ class Program extends Model
     }
 
     /**
-     * Scope a query to only include active programs.
+     * Область видимости для получения только активных программ
+     *
+     * @param $query
+     * @return mixed
      */
     public function scopeActive($query)
     {

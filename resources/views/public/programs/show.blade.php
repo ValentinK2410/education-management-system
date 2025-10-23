@@ -13,10 +13,10 @@
                 </a>
                 <span class="badge bg-success">{{ $program->degree_level }}</span>
             </div>
-            
+
             <h1 class="fw-bold mb-3">{{ $program->name }}</h1>
             <p class="lead text-muted mb-4">{{ $program->description }}</p>
-            
+
             <div class="row">
                 @if($program->duration)
                     <div class="col-md-4 mb-3">
@@ -26,7 +26,7 @@
                         <p class="mb-0">{{ $program->duration }}</p>
                     </div>
                 @endif
-                
+
                 @if($program->tuition_fee)
                     <div class="col-md-4 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -35,7 +35,7 @@
                         <p class="mb-0">{{ number_format($program->tuition_fee, 0, ',', ' ') }} ₽</p>
                     </div>
                 @endif
-                
+
                 @if($program->language)
                     <div class="col-md-4 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -96,7 +96,7 @@
     <div class="row">
         <div class="col-12">
             <h3 class="fw-bold mb-4">Курсы программы</h3>
-            
+
             @if($program->courses->count() > 0)
                 <div class="row">
                     @foreach($program->courses as $course)
@@ -109,9 +109,9 @@
                                             <span class="badge bg-success">{{ $course->credits }} кредитов</span>
                                         @endif
                                     </div>
-                                    
+
                                     <p class="card-text text-muted">{{ Str::limit($course->description, 120) }}</p>
-                                    
+
                                     @if($course->instructor)
                                         <div class="mb-3">
                                             <small class="text-muted">
@@ -122,7 +122,7 @@
                                             </small>
                                         </div>
                                     @endif
-                                    
+
                                     <div class="row mb-3">
                                         @if($course->duration)
                                             <div class="col-6">
@@ -139,7 +139,7 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="d-flex justify-content-between align-items-center">
                                         @if($course->location)
                                             <small class="text-muted">

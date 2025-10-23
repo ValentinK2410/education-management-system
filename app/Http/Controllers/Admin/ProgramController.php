@@ -7,10 +7,18 @@ use App\Models\Institution;
 use App\Models\Program;
 use Illuminate\Http\Request;
 
+/**
+ * Контроллер для управления образовательными программами
+ *
+ * Обеспечивает CRUD операции для образовательных программ в административной панели.
+ * Управляет связями между программами и учебными заведениями.
+ */
 class ProgramController extends Controller
 {
     /**
-     * Display a listing of programs.
+     * Отобразить список всех образовательных программ
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -19,7 +27,9 @@ class ProgramController extends Controller
     }
 
     /**
-     * Show the form for creating a new program.
+     * Показать форму для создания новой образовательной программы
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -28,10 +38,14 @@ class ProgramController extends Controller
     }
 
     /**
-     * Store a newly created program.
+     * Сохранить новую образовательную программу в базе данных
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -51,7 +65,10 @@ class ProgramController extends Controller
     }
 
     /**
-     * Display the specified program.
+     * Отобразить конкретную образовательную программу
+     *
+     * @param Program $program
+     * @return \Illuminate\View\View
      */
     public function show(Program $program)
     {
@@ -60,7 +77,10 @@ class ProgramController extends Controller
     }
 
     /**
-     * Show the form for editing the program.
+     * Показать форму для редактирования образовательной программы
+     *
+     * @param Program $program
+     * @return \Illuminate\View\View
      */
     public function edit(Program $program)
     {
@@ -69,10 +89,15 @@ class ProgramController extends Controller
     }
 
     /**
-     * Update the specified program.
+     * Обновить образовательную программу в базе данных
+     *
+     * @param Request $request
+     * @param Program $program
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, Program $program)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -93,7 +118,10 @@ class ProgramController extends Controller
     }
 
     /**
-     * Remove the specified program.
+     * Удалить образовательную программу из базы данных
+     *
+     * @param Program $program
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Program $program)
     {

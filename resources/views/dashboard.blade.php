@@ -21,7 +21,7 @@
             <div class="col-12">
                 <h3 class="mb-4">Административная панель</h3>
             </div>
-            
+
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
@@ -104,10 +104,10 @@
                         <div class="col-md-4 text-center">
                             <div class="mb-3">
                                 @if(auth()->user()->avatar)
-                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" 
+                                    <img src="{{ Storage::url(auth()->user()->avatar) }}"
                                          class="rounded-circle" width="100" height="100" alt="Avatar">
                                 @else
-                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto" 
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto"
                                          style="width: 100px; height: 100px;">
                                         <i class="fas fa-user fa-2x text-white"></i>
                                     </div>

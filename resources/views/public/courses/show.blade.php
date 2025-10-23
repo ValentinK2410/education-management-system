@@ -18,10 +18,10 @@
                     <span class="badge bg-warning">{{ $course->credits }} кредитов</span>
                 @endif
             </div>
-            
+
             <h1 class="fw-bold mb-3">{{ $course->name }}</h1>
             <p class="lead text-muted mb-4">{{ $course->description }}</p>
-            
+
             <div class="row">
                 @if($course->code)
                     <div class="col-md-3 mb-3">
@@ -31,7 +31,7 @@
                         <p class="mb-0">{{ $course->code }}</p>
                     </div>
                 @endif
-                
+
                 @if($course->duration)
                     <div class="col-md-3 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -40,7 +40,7 @@
                         <p class="mb-0">{{ $course->duration }}</p>
                     </div>
                 @endif
-                
+
                 @if($course->schedule)
                     <div class="col-md-3 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -49,7 +49,7 @@
                         <p class="mb-0">{{ $course->schedule }}</p>
                     </div>
                 @endif
-                
+
                 @if($course->location)
                     <div class="col-md-3 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -153,10 +153,10 @@
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
                                 @if($course->instructor->avatar)
-                                    <img src="{{ Storage::url($course->instructor->avatar) }}" 
+                                    <img src="{{ Storage::url($course->instructor->avatar) }}"
                                          class="rounded-circle" width="100" height="100" alt="Avatar">
                                 @else
-                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto" 
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto"
                                          style="width: 100px; height: 100px;">
                                         <i class="fas fa-user fa-2x text-white"></i>
                                     </div>

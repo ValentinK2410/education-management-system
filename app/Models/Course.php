@@ -6,33 +6,47 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Модель курса
+ *
+ * Представляет отдельный курс в рамках образовательной программы.
+ * Каждый курс принадлежит программе и может иметь преподавателя.
+ */
 class Course extends Model
 {
     use HasFactory;
 
+    /**
+     * Поля, доступные для массового заполнения
+     */
     protected $fillable = [
-        'name',
-        'description',
-        'program_id',
-        'instructor_id',
-        'code',
-        'credits',
-        'duration',
-        'schedule',
-        'location',
-        'prerequisites',
-        'learning_outcomes',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'prerequisites' => 'array',
-        'learning_outcomes' => 'array',
-        'is_active' => 'boolean',
+        'name',              // Название курса
+        'description',       // Описание курса
+        'program_id',        // ID образовательной программы
+        'instructor_id',     // ID преподавателя
+        'code',              // Код курса
+        'credits',           // Количество кредитов
+        'duration',          // Продолжительность курса
+        'schedule',          // Расписание
+        'location',          // Место проведения
+        'prerequisites',     // Предварительные требования
+        'learning_outcomes', // Результаты обучения
+        'is_active',         // Статус активности
     ];
 
     /**
-     * Get the program that owns the course.
+     * Атрибуты, которые должны быть приведены к определенным типам
+     */
+    protected $casts = [
+        'prerequisites' => 'array',     // Предварительные требования как массив
+        'learning_outcomes' => 'array', // Результаты обучения как массив
+        'is_active' => 'boolean',       // Статус активности как булево значение
+    ];
+
+    /**
+     * Получить образовательную программу, к которой принадлежит курс
+     *
+     * @return BelongsTo
      */
     public function program(): BelongsTo
     {
@@ -40,7 +54,9 @@ class Course extends Model
     }
 
     /**
-     * Get the instructor that teaches the course.
+     * Получить преподавателя, который ведет курс
+     *
+     * @return BelongsTo
      */
     public function instructor(): BelongsTo
     {
@@ -48,7 +64,10 @@ class Course extends Model
     }
 
     /**
-     * Scope a query to only include active courses.
+     * Область видимости для получения только активных курсов
+     *
+     * @param $query
+     * @return mixed
      */
     public function scopeActive($query)
     {

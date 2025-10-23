@@ -8,10 +8,10 @@
     <div class="row mb-5">
         <div class="col-lg-4 text-center">
             @if($instructor->avatar)
-                <img src="{{ Storage::url($instructor->avatar) }}" 
+                <img src="{{ Storage::url($instructor->avatar) }}"
                      class="rounded-circle shadow" width="200" height="200" alt="Avatar">
             @else
-                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto shadow" 
+                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto shadow"
                      style="width: 200px; height: 200px;">
                     <i class="fas fa-user fa-4x text-white"></i>
                 </div>
@@ -22,7 +22,7 @@
             @if($instructor->bio)
                 <p class="lead text-muted mb-4">{{ $instructor->bio }}</p>
             @endif
-            
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h6 class="fw-bold text-primary">
@@ -34,7 +34,7 @@
                         </a>
                     </p>
                 </div>
-                
+
                 @if($instructor->phone)
                     <div class="col-md-6 mb-3">
                         <h6 class="fw-bold text-primary">
@@ -44,7 +44,7 @@
                     </div>
                 @endif
             </div>
-            
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h6 class="fw-bold text-primary">
@@ -52,7 +52,7 @@
                     </h6>
                     <p class="mb-0">{{ $instructor->taughtCourses->count() }} курсов</p>
                 </div>
-                
+
                 <div class="col-md-6 mb-3">
                     <h6 class="fw-bold text-primary">
                         <i class="fas fa-user-tag me-2"></i>Роли
@@ -71,7 +71,7 @@
     <div class="row">
         <div class="col-12">
             <h3 class="fw-bold mb-4">Преподаваемые курсы</h3>
-            
+
             @if($instructor->taughtCourses->count() > 0)
                 <div class="row">
                     @foreach($instructor->taughtCourses as $course)
@@ -84,21 +84,21 @@
                                             <span class="badge bg-success">{{ $course->credits }} кредитов</span>
                                         @endif
                                     </div>
-                                    
+
                                     <p class="card-text text-muted">{{ Str::limit($course->description, 120) }}</p>
-                                    
+
                                     <div class="mb-3">
                                         <small class="text-muted">
                                             <i class="fas fa-university me-1"></i>{{ $course->program->institution->name }}
                                         </small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <small class="text-muted">
                                             <i class="fas fa-book me-1"></i>{{ $course->program->name }}
                                         </small>
                                     </div>
-                                    
+
                                     <div class="row mb-3">
                                         @if($course->duration)
                                             <div class="col-6">
@@ -115,7 +115,7 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
+
                                     @if($course->location)
                                         <div class="mb-3">
                                             <small class="text-muted">
@@ -123,7 +123,7 @@
                                             </small>
                                         </div>
                                     @endif
-                                    
+
                                     <div class="d-flex justify-content-between align-items-center">
                                         @if($course->code)
                                             <small class="text-muted">

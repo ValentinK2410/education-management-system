@@ -7,10 +7,18 @@ use App\Models\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Контроллер для управления учебными заведениями
+ *
+ * Обеспечивает CRUD операции для учебных заведений в административной панели.
+ * Включает загрузку и управление логотипами учебных заведений.
+ */
 class InstitutionController extends Controller
 {
     /**
-     * Display a listing of institutions.
+     * Отобразить список всех учебных заведений
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -19,7 +27,9 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Show the form for creating a new institution.
+     * Показать форму для создания нового учебного заведения
+     *
+     * @return \Illuminate\View\View
      */
     public function create()
     {
@@ -27,10 +37,14 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Store a newly created institution.
+     * Сохранить новое учебное заведение в базе данных
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -43,6 +57,7 @@ class InstitutionController extends Controller
 
         $data = $request->all();
 
+        // Обработка загрузки логотипа
         if ($request->hasFile('logo')) {
             $data['logo'] = $request->file('logo')->store('institutions', 'public');
         }
@@ -54,7 +69,10 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Display the specified institution.
+     * Отобразить конкретное учебное заведение
+     *
+     * @param Institution $institution
+     * @return \Illuminate\View\View
      */
     public function show(Institution $institution)
     {
@@ -63,7 +81,10 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Show the form for editing the institution.
+     * Показать форму для редактирования учебного заведения
+     *
+     * @param Institution $institution
+     * @return \Illuminate\View\View
      */
     public function edit(Institution $institution)
     {
@@ -71,10 +92,15 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Update the specified institution.
+     * Обновить учебное заведение в базе данных
+     *
+     * @param Request $request
+     * @param Institution $institution
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, Institution $institution)
     {
+        // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -88,8 +114,9 @@ class InstitutionController extends Controller
 
         $data = $request->all();
 
+        // Обработка загрузки нового логотипа
         if ($request->hasFile('logo')) {
-            // Delete old logo
+            // Удаление старого логотипа
             if ($institution->logo) {
                 Storage::disk('public')->delete($institution->logo);
             }
@@ -103,11 +130,14 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Remove the specified institution.
+     * Удалить учебное заведение из базы данных
+     *
+     * @param Institution $institution
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Institution $institution)
     {
-        // Delete logo file
+        // Удаление файла логотипа
         if ($institution->logo) {
             Storage::disk('public')->delete($institution->logo);
         }

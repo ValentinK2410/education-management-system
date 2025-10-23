@@ -16,14 +16,14 @@
 
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
-                        
+
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-envelope"></i>
                                 </span>
-                                <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                                <input type="email" class="form-control @error('email') is-invalid @enderror"
                                        id="email" name="email" value="{{ old('email') }}" required>
                             </div>
                             @error('email')
@@ -37,7 +37,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-lock"></i>
                                 </span>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                                <input type="password" class="form-control @error('password') is-invalid @enderror"
                                        id="password" name="password" required>
                             </div>
                             @error('password')
@@ -58,7 +58,7 @@
                     </form>
 
                     <div class="text-center">
-                        <p class="mb-0">Нет аккаунта? 
+                        <p class="mb-0">Нет аккаунта?
                             <a href="{{ route('register') }}" class="text-decoration-none">Зарегистрироваться</a>
                         </p>
                     </div>

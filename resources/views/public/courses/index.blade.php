@@ -22,21 +22,21 @@
                                 <span class="badge bg-success">{{ $course->credits }} кредитов</span>
                             @endif
                         </div>
-                        
+
                         <p class="card-text text-muted flex-grow-1">{{ Str::limit($course->description, 120) }}</p>
-                        
+
                         <div class="mb-3">
                             <small class="text-muted">
                                 <i class="fas fa-university me-1"></i>{{ $course->program->institution->name }}
                             </small>
                         </div>
-                        
+
                         <div class="mb-3">
                             <small class="text-muted">
                                 <i class="fas fa-book me-1"></i>{{ $course->program->name }}
                             </small>
                         </div>
-                        
+
                         @if($course->instructor)
                             <div class="mb-3">
                                 <small class="text-muted">
@@ -47,7 +47,7 @@
                                 </small>
                             </div>
                         @endif
-                        
+
                         <div class="row mb-3">
                             @if($course->duration)
                                 <div class="col-6">
@@ -64,7 +64,7 @@
                                 </div>
                             @endif
                         </div>
-                        
+
                         @if($course->location)
                             <div class="mb-3">
                                 <small class="text-muted">
@@ -72,7 +72,7 @@
                                 </small>
                             </div>
                         @endif
-                        
+
                         <div class="mt-auto">
                             <a href="{{ route('courses.show', $course) }}" class="btn btn-primary btn-sm w-100">
                                 Подробнее <i class="fas fa-arrow-right ms-1"></i>
