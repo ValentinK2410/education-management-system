@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Публичные маршруты - доступны всем пользователям
@@ -132,6 +133,11 @@ Route::middleware(['auth'])->group(function () {
             ]);
         }
     })->name('admin.users.simple');
+
+    // Маршруты профиля пользователя
+    Route::get('/admin/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
+    Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
 
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
