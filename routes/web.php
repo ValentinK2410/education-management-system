@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 // Публичные маршруты - доступны всем пользователям
@@ -32,8 +33,63 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+    // Тестовый маршрут для админки (временно без middleware)
+    Route::get('/admin/test', function () {
+        $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
+        return view('admin.dashboard', $dashboardData);
+    })->name('admin.test');
+
+    // Простой тест для проверки авторизации
+    Route::get('/admin/simple', function () {
+        return response()->json([
+            'user' => auth()->user() ? auth()->user()->name : 'Not authenticated',
+            'roles' => auth()->user() ? auth()->user()->roles->pluck('name') : [],
+            'has_admin_role' => auth()->user() ? auth()->user()->hasRole('admin') : false
+        ]);
+    })->name('admin.simple');
+
+    // Простой маршрут для админки (без middleware для тестирования)
+    Route::get('/admin/dashboard', function () {
+        try {
+            // Простая статистика без сложных запросов
+            $stats = [
+                'users' => \App\Models\User::count(),
+                'institutions' => \App\Models\Institution::count(),
+                'programs' => \App\Models\Program::count(),
+                'courses' => \App\Models\Course::count(),
+            ];
+
+            return view('admin.dashboard-simple', compact('stats'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Ошибка загрузки данных',
+                'message' => $e->getMessage(),
+                'user' => auth()->user() ? auth()->user()->name : 'Not authenticated'
+            ]);
+        }
+    })->name('admin.dashboard.simple');
+
+    // Простой маршрут для списка пользователей
+    Route::get('/admin/users', function () {
+        try {
+            $users = \App\Models\User::with('roles')->paginate(15);
+            return view('admin.users.index', compact('users'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Ошибка загрузки пользователей',
+                'message' => $e->getMessage()
+            ]);
+        }
+    })->name('admin.users.simple');
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        // Главная панель администратора
+        Route::get('/dashboard', function () {
+            $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
+            return view('admin.dashboard', $dashboardData);
+        })->name('dashboard');
+
         // Управление пользователями
         Route::resource('users', UserController::class);
 
@@ -45,5 +101,10 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление курсами
         Route::resource('courses', CourseController::class);
+
+        // Настройки пользователя
+        Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
+        Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
+        Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
     });
 });

@@ -26,13 +26,16 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',        // Имя пользователя
-        'email',       // Email адрес
-        'password',    // Пароль (будет захеширован)
-        'phone',       // Номер телефона
-        'avatar',      // Путь к аватару
-        'bio',         // Биография пользователя
-        'is_active',   // Статус активности
+        'name',                    // Имя пользователя
+        'email',                   // Email адрес
+        'password',                // Пароль (будет захеширован)
+        'phone',                   // Номер телефона
+        'avatar',                  // Путь к аватару
+        'bio',                     // Биография пользователя
+        'is_active',               // Статус активности
+        'theme_preference',        // Предпочтение темы (light/dark)
+        'sidebar_collapsed',       // Свернута ли боковая панель
+        'notifications_enabled',   // Включены ли уведомления
     ];
 
     /**
@@ -56,6 +59,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',  // Дата подтверждения email
             'password' => 'hashed',            // Пароль будет автоматически хеширован
             'is_active' => 'boolean',          // Статус активности как булево значение
+            'sidebar_collapsed' => 'boolean',  // Состояние боковой панели
+            'notifications_enabled' => 'boolean', // Включены ли уведомления
         ];
     }
 

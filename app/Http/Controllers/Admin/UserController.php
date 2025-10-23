@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Institution;
+use App\Models\Program;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -153,5 +156,36 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Пользователь успешно удален.');
+    }
+
+    /**
+     * Получить статистику для панели управления
+     *
+     * @return array
+     */
+    public static function getDashboardStats()
+    {
+        $stats = [
+            'users' => User::count(),
+            'institutions' => Institution::count(),
+            'programs' => Program::count(),
+            'courses' => Course::count(),
+        ];
+
+        // Статистика по ролям
+        $roleStats = [];
+        $roles = Role::withCount('users')->get();
+        foreach ($roles as $role) {
+            $roleStats[$role->name] = $role->users_count;
+        }
+
+        // Последние пользователи
+        $recentUsers = User::with('roles')->latest()->take(5)->get();
+
+        return [
+            'stats' => $stats,
+            'roleStats' => $roleStats,
+            'recentUsers' => $recentUsers,
+        ];
     }
 }
