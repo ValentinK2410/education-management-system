@@ -54,6 +54,21 @@
     </div>
 
     <script>
+        // Получаем CSRF токен
+        async function getCSRFToken() {
+            try {
+                const response = await fetch('https://m.dekan.pro/admin/test-program-structure');
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const token = doc.querySelector('meta[name="csrf-token"]');
+                return token ? token.getAttribute('content') : null;
+            } catch (error) {
+                console.error('Ошибка получения CSRF токена:', error);
+                return null;
+            }
+        }
+
         document.getElementById('testForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -66,10 +81,17 @@
             }
             
             try {
-                const response = await fetch('https://m.dekan.pro/admin/test-save-price', {
+                // Получаем CSRF токен
+                const csrfToken = await getCSRFToken();
+                if (csrfToken) {
+                    data._token = csrfToken;
+                }
+                
+                const response = await fetch('https://m.dekan.pro/admin/test-save-price-simple', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': csrfToken || '',
                     },
                     body: new URLSearchParams(data)
                 });

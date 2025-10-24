@@ -299,6 +299,55 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.test-save-price');
 
+    // Тестовый маршрут без CSRF защиты для простого тестирования
+    Route::post('/admin/test-save-price-simple', function (Request $request) {
+        try {
+            $program = \App\Models\Program::find(3);
+            if (!$program) {
+                return response()->json(['error' => 'Программа не найдена']);
+            }
+
+            // Логируем входящие данные
+            \Log::info('Test save price data (simple):', $request->all());
+
+            // Подготавливаем данные для сохранения
+            $data = [
+                'is_paid' => $request->boolean('is_paid'),
+                'price' => $request->input('price'),
+                'currency' => $request->input('currency', 'RUB'),
+            ];
+
+            // Если программа не платная, обнуляем цену
+            if (!$data['is_paid']) {
+                $data['price'] = null;
+            }
+
+            // Сохраняем данные
+            $program->update($data);
+
+            // Получаем обновленные данные
+            $updatedProgram = $program->fresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Цена программы сохранена (простой тест)',
+                'before' => [
+                    'is_paid' => $program->is_paid,
+                    'price' => $program->price,
+                    'currency' => $program->currency,
+                ],
+                'after' => [
+                    'is_paid' => $updatedProgram->is_paid,
+                    'price' => $updatedProgram->price,
+                    'currency' => $updatedProgram->currency,
+                ],
+                'input_data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-save-price-simple');
+
     // Тестовая страница для отправки POST запроса
     Route::get('/test-price-form', function () {
         return response()->file(public_path('test-price.html'));
