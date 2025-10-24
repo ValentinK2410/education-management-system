@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Регистрация middleware для проверки ролей
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'check.role' => \App\Http\Middleware\CheckRole::class,
         ]);
         
         // Добавляем middleware для установки языка в глобальные middleware

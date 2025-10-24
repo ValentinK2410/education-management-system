@@ -427,7 +427,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('test-price-form');
 
     // Административные маршруты - требуют роль администратора
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
         // Главная панель администратора
         Route::get('/dashboard', function () {
             $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
