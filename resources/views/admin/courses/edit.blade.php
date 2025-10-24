@@ -132,7 +132,9 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_paid" name="is_paid"
+                                        <!-- Скрытое поле для отправки false когда чекбокс не отмечен -->
+                                        <input type="hidden" name="is_paid" value="0">
+                                        <input class="form-check-input" type="checkbox" id="is_paid" name="is_paid" 
                                                value="1" {{ old('is_paid', $course->is_paid) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="is_paid">
                                             Платный курс

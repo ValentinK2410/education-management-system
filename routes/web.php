@@ -196,19 +196,19 @@ Route::middleware(['auth'])->group(function () {
                 return response()->json(['error' => 'Программа не найдена']);
             }
 
-            // Проверяем наличие полей оплаты
+            // Проверяем наличие полей оплаты (исправленная логика)
             $hasPaymentFields = [
-                'is_paid' => isset($program->is_paid),
-                'price' => isset($program->price),
-                'currency' => isset($program->currency),
+                'is_paid' => array_key_exists('is_paid', $program->getAttributes()),
+                'price' => array_key_exists('price', $program->getAttributes()),
+                'currency' => array_key_exists('currency', $program->getAttributes()),
             ];
 
             // Дополнительная проверка через raw SQL
             $rawData = \DB::table('programs')->where('id', 3)->first();
             $rawFields = [
-                'is_paid' => isset($rawData->is_paid),
-                'price' => isset($rawData->price),
-                'currency' => isset($rawData->currency),
+                'is_paid' => property_exists($rawData, 'is_paid'),
+                'price' => property_exists($rawData, 'price'),
+                'currency' => property_exists($rawData, 'currency'),
             ];
 
             return response()->json([
@@ -237,9 +237,9 @@ Route::middleware(['auth'])->group(function () {
         try {
             // Выполняем миграцию исправления поля price
             \Artisan::call('migrate', ['--path' => 'database/migrations/2024_01_01_000010_fix_price_field_in_programs_table.php']);
-            
+
             $output = \Artisan::output();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Миграция исправления поля price выполнена',
@@ -249,6 +249,55 @@ Route::middleware(['auth'])->group(function () {
             return response()->json(['error' => $e->getMessage()]);
         }
     })->name('admin.fix-price-field');
+
+    // Тестовый маршрут для проверки сохранения цены программы
+    Route::post('/admin/test-save-price', function (Request $request) {
+        try {
+            $program = \App\Models\Program::find(3);
+            if (!$program) {
+                return response()->json(['error' => 'Программа не найдена']);
+            }
+
+            // Логируем входящие данные
+            \Log::info('Test save price data:', $request->all());
+
+            // Подготавливаем данные для сохранения
+            $data = [
+                'is_paid' => $request->boolean('is_paid'),
+                'price' => $request->input('price'),
+                'currency' => $request->input('currency', 'RUB'),
+            ];
+
+            // Если программа не платная, обнуляем цену
+            if (!$data['is_paid']) {
+                $data['price'] = null;
+            }
+
+            // Сохраняем данные
+            $program->update($data);
+
+            // Получаем обновленные данные
+            $updatedProgram = $program->fresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Цена программы сохранена',
+                'before' => [
+                    'is_paid' => $program->is_paid,
+                    'price' => $program->price,
+                    'currency' => $program->currency,
+                ],
+                'after' => [
+                    'is_paid' => $updatedProgram->is_paid,
+                    'price' => $updatedProgram->price,
+                    'currency' => $updatedProgram->currency,
+                ],
+                'input_data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-save-price');
 
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
