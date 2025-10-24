@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка статуса сервера</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .status-card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .warning { border-left: 4px solid #ffc107; }
+        .info { border-left: 4px solid #17a2b8; }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 0; }
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .check-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .status-ok { color: #28a745; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="status-card info">
+        <h1>🔍 Проверка статуса сервера m.dekan.pro</h1>
+        <div class="timestamp">Время проверки: <span id="timestamp"></span></div>
+    </div>
+
+    <div class="status-card success">
+        <h2>✅ Статус сервера</h2>
+        <div class="check-item">
+            <span class="status-ok">✓</span> Сервер отвечает на запросы
+        </div>
+        <div class="check-item">
+            <span class="status-ok">✓</span> Статический контент загружается
+        </div>
+    </div>
+
+    <div class="status-card warning">
+        <h2>⚠️ Проверка Laravel</h2>
+        <div class="check-item">
+            <span class="status-warning">?</span> Laravel приложение - требует проверки
+        </div>
+        <div class="check-item">
+            <span class="status-warning">?</span> База данных - требует проверки
+        </div>
+        <div class="check-item">
+            <span class="status-warning">?</span> Права доступа к storage/ - требуют проверки
+        </div>
+    </div>
+
+    <div class="status-card info">
+        <h2>📋 Рекомендуемые действия</h2>
+        <div class="check-item">
+            1. Обновить код с GitHub: <code>git pull origin main</code>
+        </div>
+        <div class="check-item">
+            2. Исправить права доступа: <code>sudo chmod -R 775 storage/</code>
+        </div>
+        <div class="check-item">
+            3. Очистить кэш Laravel: <code>php artisan cache:clear</code>
+        </div>
+        <div class="check-item">
+            4. Перезапустить PHP-FPM: <code>sudo systemctl restart php8.4-fpm</code>
+        </div>
+    </div>
+
+    <div class="status-card">
+        <h2>🔗 Полезные ссылки</h2>
+        <div class="check-item">
+            <a href="/" target="_blank">Главная страница</a>
+        </div>
+        <div class="check-item">
+            <a href="/admin/dashboard" target="_blank">Админ панель</a>
+        </div>
+        <div class="check-item">
+            <a href="/seminary-style" target="_blank">Страница семинарии</a>
+        </div>
+        <div class="check-item">
+            <a href="/modern" target="_blank">Современная страница</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('ru-RU');
+        
+        // Автоматическое обновление каждые 30 секунд
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
