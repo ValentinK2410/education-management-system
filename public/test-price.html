@@ -97,7 +97,7 @@
                     price: data.price || '',
                     currency: data.currency || 'RUB'
                 });
-                
+
                 const response = await fetch(`https://m.dekan.pro/admin/test-save-price-get?${params}`);
 
                 const result = await response.json();
