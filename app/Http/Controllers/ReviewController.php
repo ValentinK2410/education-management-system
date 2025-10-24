@@ -19,7 +19,7 @@ class ReviewController extends Controller
     {
         // Проверяем, может ли пользователь оставить отзыв
         $user = Auth::user();
-        
+
         if (!$user) {
             return redirect()->route('login')->with('error', 'Необходимо войти в систему для оставления отзыва');
         }
@@ -43,7 +43,7 @@ class ReviewController extends Controller
     public function store(Request $request, Course $course)
     {
         $user = Auth::user();
-        
+
         if (!$user) {
             return redirect()->route('login')->with('error', 'Необходимо войти в систему');
         }
@@ -81,7 +81,7 @@ class ReviewController extends Controller
     public function edit(Review $review)
     {
         $user = Auth::user();
-        
+
         if (!$user || $user->id !== $review->user_id) {
             abort(403, 'У вас нет прав для редактирования этого отзыва');
         }
@@ -95,7 +95,7 @@ class ReviewController extends Controller
     public function update(Request $request, Review $review)
     {
         $user = Auth::user();
-        
+
         if (!$user || $user->id !== $review->user_id) {
             abort(403, 'У вас нет прав для редактирования этого отзыва');
         }
@@ -121,7 +121,7 @@ class ReviewController extends Controller
     public function destroy(Review $review)
     {
         $user = Auth::user();
-        
+
         if (!$user || $user->id !== $review->user_id) {
             abort(403, 'У вас нет прав для удаления этого отзыва');
         }

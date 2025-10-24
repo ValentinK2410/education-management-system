@@ -445,12 +445,12 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление курсами
         Route::resource('courses', CourseController::class);
-        
+
         // События
         Route::resource('events', AdminEventController::class);
         Route::post('/admin/events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('admin.events.toggle-published');
         Route::post('/admin/events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('admin.events.toggle-featured');
-        
+
         // Отзывы
         Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
         Route::get('/admin/reviews/pending', [AdminReviewController::class, 'pending'])->name('admin.reviews.pending');
