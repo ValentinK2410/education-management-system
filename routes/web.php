@@ -348,6 +348,60 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.test-save-price-simple');
 
+    // Простой тестовый маршрут через GET для проверки сохранения цены
+    Route::get('/admin/test-save-price-get', function (Request $request) {
+        try {
+            $program = \App\Models\Program::find(3);
+            if (!$program) {
+                return response()->json(['error' => 'Программа не найдена']);
+            }
+
+            // Получаем параметры из URL
+            $isPaid = $request->get('is_paid', '0') === '1';
+            $price = $request->get('price');
+            $currency = $request->get('currency', 'RUB');
+
+            // Логируем входящие данные
+            \Log::info('Test save price data (GET):', [
+                'is_paid' => $isPaid,
+                'price' => $price,
+                'currency' => $currency
+            ]);
+
+            // Подготавливаем данные для сохранения
+            $data = [
+                'is_paid' => $isPaid,
+                'price' => $isPaid ? $price : null,
+                'currency' => $currency,
+            ];
+
+            // Сохраняем данные
+            $program->update($data);
+
+            // Получаем обновленные данные
+            $updatedProgram = $program->fresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Цена программы сохранена (GET тест)',
+                'before' => [
+                    'is_paid' => $program->is_paid,
+                    'price' => $program->price,
+                    'currency' => $program->currency,
+                ],
+                'after' => [
+                    'is_paid' => $updatedProgram->is_paid,
+                    'price' => $updatedProgram->price,
+                    'currency' => $updatedProgram->currency,
+                ],
+                'input_data' => $data,
+                'url_params' => $request->all()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-save-price-get');
+
     // Тестовая страница для отправки POST запроса
     Route::get('/test-price-form', function () {
         return response()->file(public_path('test-price.html'));
