@@ -246,6 +246,52 @@
             color: var(--primary-color);
         }
 
+        /* Language Switcher */
+        .language-switcher .dropdown-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .language-switcher .dropdown-toggle:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--primary-color);
+        }
+
+        .language-switcher .dropdown-menu {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .language-switcher .dropdown-item {
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .language-switcher .dropdown-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .language-switcher .dropdown-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        [data-theme="dark"] .language-switcher .dropdown-toggle {
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .language-switcher .dropdown-menu {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
         .user-menu {
             position: relative;
         }
@@ -465,42 +511,42 @@
             <div class="nav-item">
                 <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span>Панель управления</span>
+                    <span>{{ __('messages.dashboard') }}</span>
                 </a>
             </div>
 
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i>
-                    <span>Пользователи</span>
+                    <span>{{ __('messages.users') }}</span>
                 </a>
             </div>
 
             <div class="nav-item">
                 <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
                     <i class="fas fa-university"></i>
-                    <span>Учебные заведения</span>
+                    <span>{{ __('messages.institutions') }}</span>
                 </a>
             </div>
 
             <div class="nav-item">
                 <a href="{{ route('admin.programs.index') }}" class="nav-link {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
                     <i class="fas fa-book"></i>
-                    <span>Программы</span>
+                    <span>{{ __('messages.programs') }}</span>
                 </a>
             </div>
 
             <div class="nav-item">
                 <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
                     <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Курсы</span>
+                    <span>{{ __('messages.courses') }}</span>
                 </a>
             </div>
 
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>
-                    <span>На сайт</span>
+                    <span>{{ __('messages.home') }}</span>
                 </a>
             </div>
         </nav>
@@ -514,11 +560,36 @@
                 <button class="sidebar-toggle" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h4 class="mb-0">@yield('page-title', 'Административная панель')</h4>
+                <h4 class="mb-0">@yield('page-title', __('messages.dashboard'))</h4>
             </div>
 
             <div class="header-right">
-                <button class="theme-toggle" id="themeToggle" title="Переключить тему">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe me-1"></i>
+                            <span id="currentLanguage">{{ app()->getLocale() === 'en' ? 'EN' : 'RU' }}</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                            <li>
+                                <a class="dropdown-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}" 
+                                   href="{{ request()->fullUrlWithQuery(['lang' => 'ru']) }}">
+                                    <i class="fas fa-flag me-2"></i>Русский
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}" 
+                                   href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}">
+                                    <i class="fas fa-flag me-2"></i>English
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="theme-toggle" id="themeToggle" title="{{ __('messages.light_theme') }}">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
 
@@ -535,19 +606,19 @@
                         </div>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('admin.test-profile') }}">
-                            <i class="fas fa-user me-2"></i>Профиль
+                            <i class="fas fa-user me-2"></i>{{ __('messages.profile') }}
                         </a>
                         <a class="dropdown-item" href="{{ route('admin.test-profile-edit') }}">
-                            <i class="fas fa-user-edit me-2"></i>Редактировать профиль
+                            <i class="fas fa-user-edit me-2"></i>{{ __('messages.edit_profile') }}
                         </a>
                         <a class="dropdown-item" href="#">
-                            <i class="fas fa-cog me-2"></i>Настройки
+                            <i class="fas fa-cog me-2"></i>{{ __('messages.settings') }}
                         </a>
                         <div class="dropdown-divider"></div>
                         <form action="{{ route('logout') }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ __('messages.logout') }}
                             </button>
                         </form>
                     </div>
