@@ -158,6 +158,68 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.test-profile-edit');
 
+    // Тестовый маршрут для проверки сохранения программы
+    Route::post('/admin/test-program-update', function (Request $request) {
+        try {
+            $program = \App\Models\Program::find(3);
+            if (!$program) {
+                return response()->json(['error' => 'Программа не найдена']);
+            }
+
+            $data = $request->all();
+            
+            // Логируем входящие данные
+            \Log::info('Test program update data:', $data);
+            
+            // Если программа не платная, обнуляем цену
+            if (!$request->boolean('is_paid')) {
+                $data['price'] = null;
+            }
+
+            $program->update($data);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Программа обновлена',
+                'data' => $program->fresh()->toArray()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-program-update');
+
+    // Тестовый маршрут для проверки структуры таблицы programs
+    Route::get('/admin/test-program-structure', function () {
+        try {
+            $program = \App\Models\Program::find(3);
+            if (!$program) {
+                return response()->json(['error' => 'Программа не найдена']);
+            }
+
+            // Проверяем наличие полей оплаты
+            $hasPaymentFields = [
+                'is_paid' => isset($program->is_paid),
+                'price' => isset($program->price),
+                'currency' => isset($program->currency),
+            ];
+
+            return response()->json([
+                'program_id' => $program->id,
+                'program_name' => $program->name,
+                'current_values' => [
+                    'is_paid' => $program->is_paid,
+                    'price' => $program->price,
+                    'currency' => $program->currency,
+                ],
+                'has_payment_fields' => $hasPaymentFields,
+                'fillable_fields' => $program->getFillable(),
+                'table_columns' => \Schema::getColumnListing('programs')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.test-program-structure');
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         // Главная панель администратора

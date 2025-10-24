@@ -150,7 +150,7 @@
             .main-content {
                 width: 100%;
             }
-            
+
             .main-content.expanded {
                 width: 100%;
             }
