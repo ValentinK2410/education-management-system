@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Institution;
 use App\Models\Program;
 use App\Models\User;
+use App\Models\Event;
 use Illuminate\Http\Request;
 
 /**
@@ -31,7 +32,22 @@ class PublicController extends Controller
         $programs = Program::active()->with('institution')->take(8)->get();
         $courses = Course::active()->with(['program.institution', 'instructor'])->take(8)->get();
 
-        return view('public.index', compact('institutions', 'programs', 'courses'));
+        // Получаем последние события (опубликованные и будущие)
+        $upcomingEvents = Event::published()
+            ->upcoming()
+            ->orderBy('start_date', 'asc')
+            ->limit(3)
+            ->get();
+
+        // Получаем рекомендуемые события
+        $featuredEvents = Event::published()
+            ->featured()
+            ->upcoming()
+            ->orderBy('start_date', 'asc')
+            ->limit(2)
+            ->get();
+
+        return view('public.index', compact('institutions', 'programs', 'courses', 'upcomingEvents', 'featuredEvents'));
     }
 
     /**

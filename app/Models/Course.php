@@ -122,4 +122,36 @@ class Course extends Model
     {
         return $this->users()->count();
     }
+
+    /**
+     * Отзывы курса
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Одобренные отзывы курса
+     */
+    public function approvedReviews()
+    {
+        return $this->hasMany(Review::class)->where('is_approved', true);
+    }
+
+    /**
+     * Получить средний рейтинг курса
+     */
+    public function getAverageRatingAttribute()
+    {
+        return $this->approvedReviews()->avg('rating');
+    }
+
+    /**
+     * Получить количество отзывов
+     */
+    public function getReviewsCountAttribute()
+    {
+        return $this->approvedReviews()->count();
+    }
 }

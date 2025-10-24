@@ -5,9 +5,9 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
-use App\Http\Controllers\Admin\CourseController;
-use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Главная страница (современный дизайн)
@@ -29,6 +29,15 @@ Route::get('/programs/{program}', [PublicController::class, 'program'])->name('p
 Route::get('/courses', [PublicController::class, 'courses'])->name('courses.index');
 Route::get('/courses/{course}', [PublicController::class, 'course'])->name('courses.show');
 Route::get('/instructors/{instructor}', [PublicController::class, 'instructor'])->name('instructors.show');
+
+// Маршруты для отзывов (требуют авторизации)
+Route::middleware('auth')->group(function () {
+    Route::get('/courses/{course}/reviews/create', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::post('/courses/{course}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+});
 
 // Тестовые маршруты админки (временно без авторизации)
 Route::get('/admin/test-dashboard', function () {
@@ -436,6 +445,20 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление курсами
         Route::resource('courses', CourseController::class);
+        
+        // События
+        Route::resource('events', AdminEventController::class);
+        Route::post('/admin/events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('admin.events.toggle-published');
+        Route::post('/admin/events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('admin.events.toggle-featured');
+        
+        // Отзывы
+        Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('/admin/reviews/pending', [AdminReviewController::class, 'pending'])->name('admin.reviews.pending');
+        Route::get('/admin/reviews/approved', [AdminReviewController::class, 'approved'])->name('admin.reviews.approved');
+        Route::get('/admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
+        Route::post('/admin/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('admin.reviews.approve');
+        Route::post('/admin/reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('admin.reviews.reject');
+        Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

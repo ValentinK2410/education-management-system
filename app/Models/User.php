@@ -211,4 +211,12 @@ class User extends Authenticatable
     {
         return $this->courses()->wherePivot('status', 'completed');
     }
+
+    /**
+     * Отзывы пользователя
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
