@@ -299,6 +299,11 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.test-save-price');
 
+    // Тестовая страница для отправки POST запроса
+    Route::get('/test-price-form', function () {
+        return response()->file(public_path('test-price.html'));
+    })->name('test-price-form');
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         // Главная панель администратора
