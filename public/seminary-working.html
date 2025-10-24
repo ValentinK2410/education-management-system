@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduManage - Система управления образовательными процессами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --light-blue: #dbeafe;
+            --dark-blue: #1e3a8a;
+            --accent-blue: #3b82f6;
+            --text-dark: #1f2937;
+            --text-gray: #6b7280;
+            --white: #ffffff;
+            --light-gray: #f9fafb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        /* Top Banner */
+        .top-banner {
+            background: var(--light-blue);
+            padding: 0.75rem 0;
+            font-size: 0.9rem;
+            color: var(--primary-blue);
+        }
+
+        .top-banner .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .banner-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .banner-btn:hover {
+            background: var(--dark-blue);
+            color: white;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--white);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .logo-circle {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            margin-right: 0.75rem;
+        }
+
+        .nav-link {
+            color: var(--text-dark);
+            font-weight: 500;
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--light-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-icon:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #e0f2fe 100%);
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(59,130,246,0.1)" points="0,0 1000,1000 1000,0"/></svg>');
+            background-size: cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.125rem;
+            color: var(--text-gray);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .tag {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tag:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .tag-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .hero-image {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-person {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Stats Section */
+        .stats {
+            background: var(--white);
+            padding: 3rem 0;
+            margin-top: -2rem;
+            position: relative;
+            z-index: 3;
+        }
+
+        .stats-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        /* Education Section */
+        .education {
+            padding: 4rem 0;
+            background: var(--light-gray);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .education-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .tab-btn {
+            background: var(--white);
+            color: var(--text-gray);
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .course-card {
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .course-image {
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .course-content {
+            padding: 1.5rem;
+        }
+
+        .course-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .course-tag {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .course-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .course-meta {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-blue);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        /* Program Selection */
+        .program-selection {
+            padding: 4rem 0;
+            background: var(--white);
+        }
+
+        .program-content {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+        }
+
+        .program-text h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .program-text p {
+            font-size: 1.125rem;
+            color: var(--text-gray);
+            margin-bottom: 2rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .benefits-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            background: var(--primary-blue);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: 700;
+        }
+
+        .program-image {
+            flex-shrink: 0;
+        }
+
+        .program-person {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Benefits Cards */
+        .benefits {
+            padding: 4rem 0;
+            background: var(--light-gray);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .benefit-card {
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-card p {
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .benefit-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .benefit-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        /* Events Section */
+        .events {
+            padding: 4rem 0;
+            background: var(--white);
+        }
+
+        .event-card {
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .event-image {
+            width: 200px;
+            height: 150px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .event-content {
+            padding: 1.5rem;
+            flex: 1;
+        }
+
+        .event-date {
+            font-size: 0.875rem;
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .event-description {
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        /* Campus Life */
+        .campus-life {
+            padding: 4rem 0;
+            background: var(--light-gray);
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video-thumbnail:hover {
+            transform: scale(1.02);
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 4rem 0;
+            background: var(--white);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .testimonial-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .testimonial-avatar {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .testimonial-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .testimonial-location {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-text {
+            color: var(--text-gray);
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* Faculty */
+        .faculty {
+            padding: 4rem 0;
+            background: var(--light-gray);
+        }
+
+        .faculty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .faculty-member {
+            text-align: center;
+        }
+
+        .faculty-avatar {
+            width: 120px;
+            height: 120px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .faculty-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .faculty-title {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Contact Form */
+        .contact-form {
+            padding: 4rem 0;
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .contact-content {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+        }
+
+        .contact-text h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: white;
+            outline: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary-blue);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-white:hover {
+            background: var(--light-gray);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo-circle {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+
+        .footer-section h5 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul li a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-top:hover {
+            background: var(--primary-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-tags {
+                justify-content: center;
+            }
+            
+            .program-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .contact-content {
+                flex-direction: column;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Banner -->
+    <div class="top-banner">
+        <div class="container">
+            <span>Набор на программу бакалавриата</span>
+            <a href="#" class="banner-btn">Подробнее</a>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <a href="/" class="navbar-brand">
+                    <div class="logo-circle">ЕМ</div>
+                    EduManage
+                </a>
+                
+                <div class="d-none d-lg-flex align-items-center">
+                    <a href="#programs" class="nav-link">Программы</a>
+                    <a href="#courses" class="nav-link">Курсы</a>
+                    <a href="#testimonials" class="nav-link">Отзывы</a>
+                    <a href="#contacts" class="nav-link">Контакты</a>
+                </div>
+                
+                <div class="nav-icons">
+                    <div class="nav-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="nav-icon d-lg-none">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1>EduManage — обучение, основанное на современных технологиях</h1>
+                        <p>Современная система управления образовательными процессами для учебных заведений, преподавателей и студентов. Получите качественное образование с использованием передовых технологий.</p>
+                        
+                        <div class="hero-tags">
+                            <button class="tag">Программирование</button>
+                            <button class="tag">Веб-разработка</button>
+                            <button class="tag">Дизайн</button>
+                            <button class="tag">Маркетинг</button>
+                            <button class="tag tag-primary">Все курсы</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image text-center">
+                        <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 500'><rect width='400' height='500' fill='%23e0f2fe'/><circle cx='200' cy='150' r='60' fill='%233b82f6'/><rect x='150' y='220' width='100' height='200' fill='%231e40af'/><rect x='120' y='420' width='160' height='60' fill='%233b82f6'/></svg>" alt="Преподаватель" class="hero-person">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-4">
+                    <div class="stats-card">
+                        <div class="stat-number">5+</div>
+                        <div class="stat-label">лет опыта преподавания</div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <div class="stats-card">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">направлений обучения</div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <div class="stats-card">
+                        <div class="stat-number">1000+</div>
+                        <div class="stat-label">выпускников</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Education Section -->
+    <section id="programs" class="education">
+        <div class="container">
+            <h2 class="section-title">Обучение в системе</h2>
+            
+            <div class="education-tabs">
+                <button class="tab-btn active">Обучение в системе</button>
+                <button class="tab-btn">Программы обучения</button>
+                <button class="tab-btn">Полезные ресурсы</button>
+            </div>
+            
+            <div id="courses" class="course-grid">
+                <div class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-tags">
+                            <span class="course-tag">Основы</span>
+                            <span class="course-tag">Программирование</span>
+                        </div>
+                        <h3 class="course-title">Изучение веб-разработки</h3>
+                        <p class="course-meta">Старт 15 января / 6 месяцев</p>
+                    </div>
+                </div>
+                
+                <div class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-tags">
+                            <span class="course-tag">Дизайн</span>
+                            <span class="course-tag">UI/UX</span>
+                        </div>
+                        <h3 class="course-title">Дизайн пользовательских интерфейсов</h3>
+                        <p class="course-meta">Старт 20 января / 4 месяца</p>
+                    </div>
+                </div>
+                
+                <div class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-tags">
+                            <span class="course-tag">Аналитика</span>
+                            <span class="course-tag">Данные</span>
+                        </div>
+                        <h3 class="course-title">Анализ данных и машинное обучение</h3>
+                        <p class="course-meta">Старт 25 января / 8 месяцев</p>
+                    </div>
+                </div>
+                
+                <div class="course-card">
+                    <div class="course-image">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="course-content">
+                        <div class="course-tags">
+                            <span class="course-tag">Мобильные</span>
+                            <span class="course-tag">Приложения</span>
+                        </div>
+                        <h3 class="course-title">Разработка мобильных приложений</h3>
+                        <p class="course-meta">Старт 30 января / 5 месяцев</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="#" class="btn btn-primary">Все курсы</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Program Selection -->
+    <section class="program-selection">
+        <div class="container">
+            <div class="program-content">
+                <div class="program-text">
+                    <h2>Подберите свою программу обучения</h2>
+                    <p>Наша система поможет вам найти подходящую образовательную программу, которая соответствует вашим целям и интересам.</p>
+                    
+                    <ul class="benefits-list">
+                        <li>Персональный подход к каждому студенту</li>
+                        <li>Современные методы обучения</li>
+                        <li>Практические проекты и стажировки</li>
+                        <li>Поддержка наставников и преподавателей</li>
+                        <li>Гибкий график обучения</li>
+                    </ul>
+                    
+                    <a href="#" class="btn btn-primary">Пройти тестирование</a>
+                </div>
+                <div class="program-image">
+                    <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect width='400' height='300' fill='%23e0f2fe'/><rect x='100' y='50' width='200' height='150' fill='%233b82f6'/><circle cx='200' cy='125' r='30' fill='%231e40af'/></svg>" alt="Студент за работой" class="program-person">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="benefits">
+        <div class="container">
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <h3>Официальный диплом с государственной аккредитацией</h3>
+                    <p>Получите признанный диплом, который ценится работодателями по всему миру. Наши программы аккредитованы ведущими образовательными организациями.</p>
+                    <button class="benefit-btn">Подробнее</button>
+                </div>
+                
+                <div class="benefit-card">
+                    <h3>Наставничество</h3>
+                    <p>Каждый студент получает персонального наставника из числа опытных преподавателей и практикующих специалистов.</p>
+                    <button class="benefit-btn">Становитесь наставником</button>
+                </div>
+                
+                <div class="benefit-card">
+                    <h3>Признание на высоком уровне</h3>
+                    <p>Наши выпускники работают в ведущих IT-компаниях и создают собственные успешные проекты.</p>
+                    <button class="benefit-btn">Подробнее</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events -->
+    <section class="events">
+        <div class="container">
+            <h2 class="section-title">Предстоящие события</h2>
+            <p class="text-center text-muted mb-4">Все самое важное — в одном месте. Не пропустите будущие встречи, лекции и конференции.</p>
+            
+            <div class="event-card">
+                <div class="event-image">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="event-content">
+                    <div class="event-date">20.01.2024</div>
+                    <h3 class="event-title">День открытых дверей в EduManage</h3>
+                    <p class="event-description">Приходите на день открытых дверей и узнайте больше о наших программах обучения. Встреча с преподавателями, экскурсия по кампусу и возможность задать все интересующие вопросы.</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-primary">Все мероприятия</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Campus Life -->
+    <section class="campus-life">
+        <div class="container">
+            <h2 class="section-title">Жизнь в системе — больше, чем просто учёба</h2>
+            <p class="text-center text-muted mb-4">Узнайте, как проходит обучение в нашей системе и какие возможности мы предоставляем студентам.</p>
+            
+            <div class="video-container">
+                <div class="video-thumbnail">
+                    <i class="fas fa-play"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="testimonials">
+        <div class="container">
+            <h2 class="section-title">Отзывы студентов</h2>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">АК</div>
+                    <h4 class="testimonial-name">Александр Кодрашевич</h4>
+                    <p class="testimonial-location">Город Москва</p>
+                    <p class="testimonial-text">"Отличная система обучения! Преподаватели очень квалифицированные, материал подается доступно. Рекомендую всем, кто хочет получить качественное IT-образование."</p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">МП</div>
+                    <h4 class="testimonial-name">Мария Петрова</h4>
+                    <p class="testimonial-location">Город Санкт-Петербург</p>
+                    <p class="testimonial-text">"Благодаря EduManage я смогла кардинально изменить свою карьеру. Теперь работаю веб-разработчиком в крупной компании."</p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">ДС</div>
+                    <h4 class="testimonial-name">Дмитрий Сидоров</h4>
+                    <p class="testimonial-location">Город Екатеринбург</p>
+                    <p class="testimonial-text">"Практические проекты и стажировки помогли мне быстро найти работу. Система обучения построена очень логично и эффективно."</p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">ЕВ</div>
+                    <h4 class="testimonial-name">Елена Волкова</h4>
+                    <p class="testimonial-location">Город Новосибирск</p>
+                    <p class="testimonial-text">"Отличная поддержка наставников и гибкий график обучения. Смогла совмещать учебу с работой и семьей."</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-primary">Смотреть все отзывы</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Faculty -->
+    <section class="faculty">
+        <div class="container">
+            <h2 class="section-title">Наши преподаватели</h2>
+            <p class="text-center text-muted mb-4">Опытные специалисты с многолетним стажем работы в IT-индустрии.</p>
+            
+            <div class="faculty-grid">
+                <div class="faculty-member">
+                    <div class="faculty-avatar">АЕ</div>
+                    <h4 class="faculty-name">Андрей Ефимов</h4>
+                    <p class="faculty-title">Профессор программирования</p>
+                </div>
+                
+                <div class="faculty-member">
+                    <div class="faculty-avatar">СК</div>
+                    <h4 class="faculty-name">Сергей Козлов</h4>
+                    <p class="faculty-title">Преподаватель веб-разработки</p>
+                </div>
+                
+                <div class="faculty-member">
+                    <div class="faculty-avatar">ОМ</div>
+                    <h4 class="faculty-name">Ольга Морозова</h4>
+                    <p class="faculty-title">Специалист по UI/UX дизайну</p>
+                </div>
+                
+                <div class="faculty-member">
+                    <div class="faculty-avatar">ВН</div>
+                    <h4 class="faculty-name">Владимир Новиков</h4>
+                    <p class="faculty-title">Эксперт по анализу данных</p>
+                </div>
+                
+                <div class="faculty-member">
+                    <div class="faculty-avatar">ИЗ</div>
+                    <h4 class="faculty-name">Ирина Захарова</h4>
+                    <p class="faculty-title">Преподаватель мобильной разработки</p>
+                </div>
+                
+                <div class="faculty-member">
+                    <div class="faculty-avatar">ПК</div>
+                    <h4 class="faculty-name">Павел Кузнецов</h4>
+                    <p class="faculty-title">Специалист по DevOps</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-primary">Все преподаватели</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section id="contacts" class="contact-form">
+        <div class="container">
+            <div class="contact-content">
+                <div class="contact-text">
+                    <h2>Ответим на все вопросы</h2>
+                    <p>Оставьте заявку, и мы свяжемся с вами в течение 24 часов для консультации по программам обучения.</p>
+                </div>
+                
+                <div class="contact-form-container">
+                    <form>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="email" class="form-control" placeholder="Email">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Имя/Фамилия">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Вопрос">
+                        </div>
+                        <button type="submit" class="btn btn-white">Отправить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <div class="footer-logo-circle">ЕМ</div>
+                        <div>
+                            <h5>EduManage</h5>
+                            <p>Современная система управления образовательными процессами для учебных заведений.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Информация</h5>
+                    <ul>
+                        <li><a href="#">О системе</a></li>
+                        <li><a href="#">Новости</a></li>
+                        <li><a href="#">Мероприятия</a></li>
+                        <li><a href="#">Контакты</a></li>
+                        <li><a href="#">Преподаватели</a></li>
+                        <li><a href="#">Сотрудничество</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Обучение</h5>
+                    <ul>
+                        <li><a href="#">Курсы</a></li>
+                        <li><a href="#">Программы</a></li>
+                        <li><a href="#">Модули</a></li>
+                        <li><a href="#">Бакалавриат</a></li>
+                        <li><a href="#">IT-курсы</a></li>
+                        <li><a href="#">Веб-разработка</a></li>
+                        <li><a href="#">Дизайн</a></li>
+                        <li><a href="#">Библиотека</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <button class="btn btn-white mb-3">Позвоните мне</button>
+                    <p>Версия для слабовидящих</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; EduManage 2024 | <a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top -->
+    <div class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    // Получаем высоту навигации для корректного позиционирования
+                    const navbar = document.querySelector('.navbar');
+                    const navbarHeight = navbar ? navbar.offsetHeight : 0;
+                    
+                    // Вычисляем позицию с учетом высоты навигации
+                    const targetPosition = target.offsetTop - navbarHeight - 20;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Scroll to top button visibility
+        window.addEventListener('scroll', function() {
+            const scrollTop = document.querySelector('.scroll-top');
+            if (window.scrollY > 300) {
+                scrollTop.style.display = 'flex';
+            } else {
+                scrollTop.style.display = 'none';
+            }
+        });
+
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Спасибо за ваше сообщение! Мы свяжемся с вами в ближайшее время.');
+        });
+    </script>
+</body>
+</html>
