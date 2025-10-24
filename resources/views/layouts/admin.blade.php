@@ -125,23 +125,41 @@
 
         /* Main Content */
         .main-content {
-            margin-left: var(--sidebar-width);
+            width: 100%;
             min-height: 100vh;
             transition: all 0.3s ease;
             padding: 0;
         }
 
         .main-content.expanded {
+            width: 100%;
+        }
+
+        /* Содержимое страницы - отступ от sidebar */
+        .main-content main {
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded main {
             margin-left: 80px;
         }
 
         /* Когда боковая панель скрыта на мобильных устройствах */
         @media (max-width: 768px) {
             .main-content {
-                margin-left: 0;
+                width: 100%;
             }
             
             .main-content.expanded {
+                width: 100%;
+            }
+
+            .main-content main {
+                margin-left: 0;
+            }
+
+            .main-content.expanded main {
                 margin-left: 0;
             }
         }
@@ -156,6 +174,22 @@
             justify-content: between;
             padding: 0 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded .admin-header {
+            margin-left: 80px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                margin-left: 0;
+            }
+
+            .main-content.expanded .admin-header {
+                margin-left: 0;
+            }
         }
 
         [data-theme="dark"] .admin-header {
@@ -640,13 +674,13 @@
 
         userMenuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            
+
             if (userDropdown.style.display === 'none' || userDropdown.style.display === '') {
                 // Показываем меню с анимацией
                 userDropdown.style.display = 'block';
                 userDropdown.style.opacity = '0';
                 userDropdown.style.transform = 'translateY(-10px)';
-                
+
                 // Плавная анимация появления
                 setTimeout(() => {
                     userDropdown.style.transition = 'all 0.2s ease';
@@ -658,7 +692,7 @@
                 userDropdown.style.transition = 'all 0.2s ease';
                 userDropdown.style.opacity = '0';
                 userDropdown.style.transform = 'translateY(-10px)';
-                
+
                 setTimeout(() => {
                     userDropdown.style.display = 'none';
                 }, 200);
@@ -671,7 +705,7 @@
                 userDropdown.style.transition = 'all 0.2s ease';
                 userDropdown.style.opacity = '0';
                 userDropdown.style.transform = 'translateY(-10px)';
-                
+
                 setTimeout(() => {
                     userDropdown.style.display = 'none';
                 }, 200);
