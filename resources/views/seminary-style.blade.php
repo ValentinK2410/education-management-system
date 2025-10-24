@@ -845,7 +845,7 @@
             <div class="d-none d-lg-flex align-items-center">
                 <a href="#programs" class="nav-link">{{ __('messages.programs') }}</a>
                 <a href="#courses" class="nav-link">{{ __('messages.courses') }}</a>
-                <a href="#news" class="nav-link">{{ __('messages.news') }}</a>
+                <a href="#testimonials" class="nav-link">{{ __('messages.student_testimonials') }}</a>
                 <a href="#contacts" class="nav-link">{{ __('messages.contacts') }}</a>
             </div>
             
@@ -925,7 +925,7 @@
             <button class="tab-btn">{{ __('messages.useful_resources') }}</button>
         </div>
         
-        <div class="course-grid">
+        <div id="courses" class="course-grid">
             <div class="course-card">
                 <div class="course-image">
                     <i class="fas fa-code"></i>
@@ -1077,7 +1077,7 @@
 </section>
 
 <!-- Testimonials -->
-<section class="testimonials">
+<section id="testimonials" class="testimonials">
     <div class="container">
         <h2 class="section-title">{{ __('messages.student_testimonials') }}</h2>
         
@@ -1260,9 +1260,16 @@
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                // Получаем высоту навигации для корректного позиционирования
+                const navbar = document.querySelector('.navbar');
+                const navbarHeight = navbar ? navbar.offsetHeight : 0;
+                
+                // Вычисляем позицию с учетом высоты навигации
+                const targetPosition = target.offsetTop - navbarHeight - 20;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
                 });
             }
         });
