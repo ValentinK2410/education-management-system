@@ -49,13 +49,13 @@
         .sidebar {
             position: fixed;
             top: 0;
-            right: 0;
+            left: 0;
             height: 100vh;
             width: var(--sidebar-width);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             z-index: 1000;
             transition: all 0.3s ease;
-            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
 
         .sidebar.collapsed {
@@ -125,24 +125,24 @@
 
         /* Main Content */
         .main-content {
-            margin-right: var(--sidebar-width);
+            margin-left: var(--sidebar-width);
             min-height: 100vh;
             transition: all 0.3s ease;
             padding: 0;
         }
 
         .main-content.expanded {
-            margin-right: 80px;
+            margin-left: 80px;
         }
 
         /* Когда боковая панель скрыта на мобильных устройствах */
         @media (max-width: 768px) {
             .main-content {
-                margin-right: 0;
+                margin-left: 0;
             }
             
             .main-content.expanded {
-                margin-right: 0;
+                margin-left: 0;
             }
         }
 
@@ -238,8 +238,8 @@
         .dropdown-menu {
             position: absolute;
             top: 100%;
-            left: 0;
-            right: auto;
+            right: 0;
+            left: auto;
             min-width: 200px;
             background: white;
             border: 1px solid #e2e8f0;
@@ -363,7 +363,7 @@
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(100%);
+                transform: translateX(-100%);
             }
 
             /* Адаптивное позиционирование dropdown меню */
