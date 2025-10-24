@@ -167,17 +167,17 @@ Route::middleware(['auth'])->group(function () {
             }
 
             $data = $request->all();
-            
+
             // Логируем входящие данные
             \Log::info('Test program update data:', $data);
-            
+
             // Если программа не платная, обнуляем цену
             if (!$request->boolean('is_paid')) {
                 $data['price'] = null;
             }
 
             $program->update($data);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Программа обновлена',
@@ -203,6 +203,14 @@ Route::middleware(['auth'])->group(function () {
                 'currency' => isset($program->currency),
             ];
 
+            // Дополнительная проверка через raw SQL
+            $rawData = \DB::table('programs')->where('id', 3)->first();
+            $rawFields = [
+                'is_paid' => isset($rawData->is_paid),
+                'price' => isset($rawData->price),
+                'currency' => isset($rawData->currency),
+            ];
+
             return response()->json([
                 'program_id' => $program->id,
                 'program_name' => $program->name,
@@ -212,13 +220,35 @@ Route::middleware(['auth'])->group(function () {
                     'currency' => $program->currency,
                 ],
                 'has_payment_fields' => $hasPaymentFields,
+                'raw_fields_check' => $rawFields,
+                'raw_data' => $rawData,
                 'fillable_fields' => $program->getFillable(),
-                'table_columns' => \Schema::getColumnListing('programs')
+                'table_columns' => \Schema::getColumnListing('programs'),
+                'model_attributes' => $program->getAttributes(),
+                'casts' => $program->getCasts()
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()]);
         }
     })->name('admin.test-program-structure');
+
+    // Тестовый маршрут для выполнения миграции исправления поля price
+    Route::get('/admin/fix-price-field', function () {
+        try {
+            // Выполняем миграцию исправления поля price
+            \Artisan::call('migrate', ['--path' => 'database/migrations/2024_01_01_000010_fix_price_field_in_programs_table.php']);
+            
+            $output = \Artisan::output();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Миграция исправления поля price выполнена',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    })->name('admin.fix-price-field');
 
     // Административные маршруты - требуют роль администратора
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
