@@ -15,6 +15,11 @@ Route::get('/modern', function () {
     return view('welcome-modern');
 })->name('welcome.modern');
 
+// Страница в стиле семинарии
+Route::get('/seminary-style', function () {
+    return view('seminary-style');
+})->name('welcome.seminary-style');
+
 // Публичные маршруты - доступны всем пользователям
 Route::get('/', [PublicController::class, 'index'])->name('home');
 Route::get('/institutions', [PublicController::class, 'institutions'])->name('institutions.index');
