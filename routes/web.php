@@ -10,6 +10,11 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+// Главная страница (современный дизайн)
+Route::get('/modern', function () {
+    return view('welcome-modern');
+})->name('welcome.modern');
+
 // Публичные маршруты - доступны всем пользователям
 Route::get('/', [PublicController::class, 'index'])->name('home');
 Route::get('/institutions', [PublicController::class, 'institutions'])->name('institutions.index');

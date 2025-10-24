@@ -567,20 +567,20 @@
                 <!-- Language Switcher -->
                 <div class="language-switcher">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                 id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-globe me-1"></i>
                             <span id="currentLanguage">{{ app()->getLocale() === 'en' ? 'EN' : 'RU' }}</span>
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="languageDropdown">
                             <li>
-                                <a class="dropdown-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}" 
+                                <a class="dropdown-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}"
                                    href="{{ request()->fullUrlWithQuery(['lang' => 'ru']) }}">
                                     <i class="fas fa-flag me-2"></i>Русский
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}" 
+                                <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}"
                                    href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}">
                                     <i class="fas fa-flag me-2"></i>English
                                 </a>
