@@ -182,7 +182,122 @@
                     </div>
                 </div>
             </div>
+    <!-- Reviews Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold">
+                    <i class="fas fa-star me-2 text-warning"></i>
+                    Отзывы о курсе
+                </h3>
+                <div class="d-flex align-items-center">
+                    @if($course->reviews_count > 0)
+                        <div class="me-3">
+                            <div class="d-flex align-items-center">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="fas fa-star {{ $i <= round($course->average_rating) ? 'text-warning' : 'text-muted' }}"></i>
+                                @endfor
+                                <span class="ms-2 fw-bold">{{ number_format($course->average_rating, 1) }}</span>
+                                <span class="text-muted ms-1">({{ $course->reviews_count }} отзывов)</span>
+                            </div>
+                        </div>
+                    @endif
+                    @auth
+                        @php
+                            $userReview = $course->reviews()->where('user_id', auth()->id())->first();
+                        @endphp
+                        @if(!$userReview)
+                            <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Оставить отзыв
+                            </a>
+                        @else
+                            <a href="{{ route('reviews.edit', $userReview) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>
+                                Редактировать отзыв
+                            </a>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Войти для отзыва
+                        </a>
+                    @endauth
+                </div>
+            </div>
+
+            @if($course->approvedReviews->count() > 0)
+                <div class="row">
+                    @foreach($course->approvedReviews->take(6) as $review)
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                {{ substr($review->user->name, 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ $review->user->name }}</h6>
+                                                <small class="text-muted">{{ $review->created_at->format('d.m.Y') }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="rating-display">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
+                                            @endfor
+                                        </div>
+                                    </div>
+                                    <p class="card-text">{{ $review->comment }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                @if($course->approvedReviews->count() > 6)
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary" onclick="showAllReviews()">
+                            <i class="fas fa-eye me-1"></i>
+                            Показать все отзывы ({{ $course->approvedReviews->count() }})
+                        </button>
+                    </div>
+                @endif
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Пока нет отзывов</h5>
+                    <p class="text-muted">Станьте первым, кто оставит отзыв об этом курсе</p>
+                    @auth
+                        <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Оставить отзыв
+                        </a>
+                    @endauth
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
 </div>
+
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+}
+</style>
+
+<script>
+function showAllReviews() {
+    // Здесь можно добавить логику для показа всех отзывов
+    // Например, через AJAX или модальное окно
+    alert('Функция показа всех отзывов будет реализована в следующих версиях');
+}
+</script>
 @endsection
