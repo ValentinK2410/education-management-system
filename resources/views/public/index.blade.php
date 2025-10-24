@@ -67,11 +67,172 @@
                 </div>
             </div>
         </div>
+<!-- Events Section -->
+@if($upcomingEvents->count() > 0 || $featuredEvents->count() > 0)
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <h2 class="fw-bold mb-3">
+                    <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                    Предстоящие события
+                </h2>
+                <p class="text-muted">Присоединяйтесь к нашим образовательным мероприятиям и семинарам</p>
+            </div>
+        </div>
+
+        <!-- Рекомендуемые события -->
+        @if($featuredEvents->count() > 0)
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h4 class="mb-3">
+                        <i class="fas fa-star me-2 text-warning"></i>
+                        Рекомендуемые события
+                    </h4>
+                </div>
+                @foreach($featuredEvents as $event)
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            @if($event->image)
+                                <img src="{{ Storage::url($event->image) }}" 
+                                     class="card-img-top" 
+                                     alt="{{ $event->title }}" 
+                                     style="height: 200px; object-fit: cover;">
+                            @else
+                                <div class="card-img-top bg-primary d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="fas fa-calendar-alt fa-3x text-white opacity-75"></i>
+                                </div>
+                            @endif
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-3">
+                                    <span class="badge bg-warning mb-2">
+                                        <i class="fas fa-star me-1"></i>
+                                        Рекомендуемое
+                                    </span>
+                                    <h5 class="card-title fw-bold">{{ $event->title }}</h5>
+                                    @if($event->description)
+                                        <p class="card-text text-muted">{{ Str::limit($event->description, 120) }}</p>
+                                    @endif
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Дата</small>
+                                            <strong>{{ $event->start_date->format('d.m.Y') }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Время</small>
+                                            <strong>{{ $event->start_date->format('H:i') }}</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    @if($event->location)
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                Место
+                                            </small>
+                                            <span>{{ Str::limit($event->location, 50) }}</span>
+                                        </div>
+                                    @endif
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            @if($event->isFree())
+                                                <span class="badge bg-success">Бесплатно</span>
+                                            @else
+                                                <span class="badge bg-info">{{ $event->formatted_price }}</span>
+                                            @endif
+                                        </div>
+                                        @if($event->registration_url)
+                                            <a href="{{ $event->registration_url }}" 
+                                               target="_blank" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                Регистрация
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- Обычные события -->
+        @if($upcomingEvents->count() > 0)
+            <div class="row">
+                <div class="col-12">
+                    <h4 class="mb-3">
+                        <i class="fas fa-calendar me-2 text-primary"></i>
+                        Все события
+                    </h4>
+                </div>
+                @foreach($upcomingEvents as $event)
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            @if($event->image)
+                                <img src="{{ Storage::url($event->image) }}" 
+                                     class="card-img-top" 
+                                     alt="{{ $event->title }}" 
+                                     style="height: 150px; object-fit: cover;">
+                            @else
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 150px;">
+                                    <i class="fas fa-calendar fa-2x text-muted"></i>
+                                </div>
+                            @endif
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-3">
+                                    <h6 class="card-title fw-bold">{{ Str::limit($event->title, 50) }}</h6>
+                                    @if($event->description)
+                                        <p class="card-text text-muted small">{{ Str::limit($event->description, 80) }}</p>
+                                    @endif
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Дата</small>
+                                            <strong class="small">{{ $event->start_date->format('d.m.Y') }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Время</small>
+                                            <strong class="small">{{ $event->start_date->format('H:i') }}</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            @if($event->isFree())
+                                                <span class="badge bg-success small">Бесплатно</span>
+                                            @else
+                                                <span class="badge bg-info small">{{ $event->formatted_price }}</span>
+                                            @endif
+                                        </div>
+                                        @if($event->registration_url)
+                                            <a href="{{ $event->registration_url }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                Регистрация
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 </section>
-
-<!-- Featured Institutions -->
-<section class="py-5">
+@endif
     <div class="container">
         <div class="row mb-5">
             <div class="col-lg-8 mx-auto text-center">
