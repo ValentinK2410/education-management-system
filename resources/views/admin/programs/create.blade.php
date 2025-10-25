@@ -14,7 +14,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.programs.store') }}" method="POST">
+                    <form action="{{ route('admin.programs.store') }}" method="POST" onsubmit="enablePriceField()">
                         @csrf
                         
                         <div class="row">
@@ -167,6 +167,16 @@
 </div>
 
 <script>
+// Функция для включения поля цены перед отправкой формы
+function enablePriceField() {
+    const priceInput = document.getElementById('price');
+    if (priceInput) {
+        priceInput.disabled = false;
+        console.log('Price field enabled before submit, value:', priceInput.value);
+    }
+    return true; // Продолжаем отправку формы
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const currencySelect = document.getElementById('currency');
     const currencyDisplay = document.getElementById('currency-display');
@@ -195,8 +205,17 @@ document.addEventListener('DOMContentLoaded', function() {
     priceInput.placeholder = 'Бесплатная программа';
 
     // Перед отправкой формы включаем все поля, чтобы они отправились
-    document.querySelector('form').addEventListener('submit', function() {
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Включаем поле цены перед отправкой
         priceInput.disabled = false;
+        
+        // Также убеждаемся, что все скрытые поля отправляются
+        const hiddenField = document.querySelector('input[name="is_paid"][type="hidden"]');
+        if (hiddenField && !isPaidCheckbox.checked) {
+            hiddenField.value = '0';
+        }
+        
+        console.log('Form submitting with price:', priceInput.value, 'is_paid:', isPaidCheckbox.checked);
     });
 });
 </script>
