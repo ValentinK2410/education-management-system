@@ -5,6 +5,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
@@ -153,10 +154,10 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.users.simple');
 
-    // Маршруты профиля пользователя
-    Route::get('/admin/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
-    Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
-    Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    // Маршруты профиля пользователя (временно отключены)
+    // Route::get('/admin/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
+    // Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    // Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
 
     // Тестовые маршруты профиля (временно без контроллера)
     Route::get('/admin/test-profile', function () {
@@ -460,9 +461,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('admin.reviews.reject');
         Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
-        // Настройки пользователя
-        Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
-        Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
-        Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
+        // Настройки пользователя (временно отключены)
+        // Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
+        // Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
+        // Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
     });
 });
