@@ -54,8 +54,20 @@
             width: var(--sidebar-width);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             z-index: 1000;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+            pointer-events: none;
         }
 
         .sidebar.collapsed {
@@ -82,11 +94,46 @@
 
         .sidebar-nav {
             padding: 1rem 0;
+            overflow-y: auto;
+            height: calc(100vh - 120px);
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 1rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-section-title i {
+            font-size: 0.875rem;
         }
 
         .nav-item {
             margin: 0.25rem 1rem;
+            position: relative;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInLeft 0.6s ease-out forwards;
         }
+
+        .nav-item:nth-child(1) { animation-delay: 0.1s; }
+        .nav-item:nth-child(2) { animation-delay: 0.2s; }
+        .nav-item:nth-child(3) { animation-delay: 0.3s; }
+        .nav-item:nth-child(4) { animation-delay: 0.4s; }
+        .nav-item:nth-child(5) { animation-delay: 0.5s; }
+        .nav-item:nth-child(6) { animation-delay: 0.6s; }
+        .nav-item:nth-child(7) { animation-delay: 0.7s; }
+        .nav-item:nth-child(8) { animation-delay: 0.8s; }
 
         .nav-link {
             color: rgba(255,255,255,0.8);
@@ -95,7 +142,9 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             text-decoration: none;
+            position: relative;
         }
 
         .nav-link:hover {
@@ -107,6 +156,7 @@
         .nav-link.active {
             background-color: rgba(255,255,255,0.2);
             color: white;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
         }
 
         .nav-link i {
@@ -115,12 +165,49 @@
             font-size: 1.1rem;
         }
 
-        .sidebar.collapsed .nav-link span {
+        .nav-link span:not(.nav-badge) {
+            flex: 1;
+        }
+
+        .nav-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            min-width: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover .nav-badge {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .nav-link.active .nav-badge {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-link span:not(.nav-badge) {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-badge {
             display: none;
         }
 
         .sidebar.collapsed .nav-link i {
             margin-right: 0;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
         }
 
         /* Main Content */
@@ -436,6 +523,17 @@
             }
         }
 
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .fade-in-up {
             animation: fadeInUp 0.6s ease-out;
         }
@@ -508,46 +606,142 @@
         </div>
 
         <nav class="sidebar-nav">
-            <div class="nav-item">
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <!-- Основные разделы -->
+            <div class="nav-section">
+                <div class="nav-section-title">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span>{{ __('messages.dashboard') }}</span>
-                </a>
+                    <span>Панель управления</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home"></i>
+                        <span>Главная</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-item">
-                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i>
-                    <span>{{ __('messages.users') }}</span>
-                </a>
+            <!-- Управление контентом -->
+            <div class="nav-section">
+                <div class="nav-section-title">
+                    <i class="fas fa-database"></i>
+                    <span>Управление контентом</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                        <span class="nav-badge">{{ \App\Models\User::count() }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
+                        <i class="fas fa-university"></i>
+                        <span>Учебные заведения</span>
+                        <span class="nav-badge">{{ \App\Models\Institution::count() }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.programs.index') }}" class="nav-link {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
+                        <i class="fas fa-book"></i>
+                        <span>Образовательные программы</span>
+                        <span class="nav-badge">{{ \App\Models\Program::count() }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Курсы</span>
+                        <span class="nav-badge">{{ \App\Models\Course::count() }}</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-item">
-                <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
-                    <i class="fas fa-university"></i>
-                    <span>{{ __('messages.institutions') }}</span>
-                </a>
+            <!-- Отзывы и события -->
+            <div class="nav-section">
+                <div class="nav-section-title">
+                    <i class="fas fa-comments"></i>
+                    <span>Отзывы и события</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
+                        <i class="fas fa-star"></i>
+                        <span>Отзывы</span>
+                        <span class="nav-badge">{{ \App\Models\Review::count() }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.events.index') }}" class="nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>События</span>
+                        <span class="nav-badge">{{ \App\Models\Event::count() }}</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-item">
-                <a href="{{ route('admin.programs.index') }}" class="nav-link {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
-                    <i class="fas fa-book"></i>
-                    <span>{{ __('messages.programs') }}</span>
-                </a>
+            <!-- Аналитика -->
+            <div class="nav-section">
+                <div class="nav-section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Аналитика</span>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Статистика</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-item">
-                <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span>{{ __('messages.courses') }}</span>
-                </a>
+            <!-- Настройки -->
+            <div class="nav-section">
+                <div class="nav-section-title">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('admin.test-profile') }}" class="nav-link {{ request()->routeIs('admin.test-profile*') ? 'active' : '' }}">
+                        <i class="fas fa-user"></i>
+                        <span>Профиль</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bell"></i>
+                        <span>Уведомления</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Безопасность</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-item mt-4">
-                <a href="{{ route('home') }}" class="nav-link">
+            <!-- Внешние ссылки -->
+            <div class="nav-section">
+                <div class="nav-section-title">
                     <i class="fas fa-external-link-alt"></i>
-                    <span>{{ __('messages.home') }}</span>
-                </a>
+                    <span>Внешние ссылки</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ route('home') }}" class="nav-link">
+                        <i class="fas fa-globe"></i>
+                        <span>Главный сайт</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Помощь</span>
+                    </a>
+                </div>
             </div>
         </nav>
     </div>
