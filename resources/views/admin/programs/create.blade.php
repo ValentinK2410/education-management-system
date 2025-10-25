@@ -193,6 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Инициализация состояния при загрузке страницы
     priceInput.disabled = true;
     priceInput.placeholder = 'Бесплатная программа';
+
+    // Перед отправкой формы включаем все поля, чтобы они отправились
+    document.querySelector('form').addEventListener('submit', function() {
+        priceInput.disabled = false;
+    });
 });
 </script>
 @endsection
