@@ -66,7 +66,7 @@ class ProgramController extends Controller
 
         // Подготовка данных для сохранения
         $data = $request->all();
-        
+
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
             $data['price'] = null;
@@ -74,8 +74,8 @@ class ProgramController extends Controller
 
         Program::create($data);
 
-        return redirect()->route('admin.programs.index')
-            ->with('success', 'Учебная программа успешно создана.');
+        return $data;//redirect()->route('admin.programs.index')
+            //->with('success', 'Учебная программа успешно создана.');
     }
 
     /**
@@ -132,7 +132,7 @@ class ProgramController extends Controller
 
         // Подготовка данных для обновления
         $data = $request->all();
-        
+
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
             $data['price'] = null;
@@ -140,8 +140,10 @@ class ProgramController extends Controller
 
         $program->update($data);
 
-        return redirect()->route('admin.programs.index')
+       /* return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно обновлена.');
+    */
+    return $data;
     }
 
     /**
