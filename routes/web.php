@@ -5,6 +5,8 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
