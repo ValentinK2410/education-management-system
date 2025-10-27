@@ -544,7 +544,7 @@
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.*.reviews.*') ? 'active' : '' }}">
                     <i class="fas fa-star"></i>
                     <span>Отзывы</span>
                 </a>

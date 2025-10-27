@@ -450,17 +450,17 @@ Route::middleware(['auth'])->group(function () {
 
         // События
         Route::resource('events', AdminEventController::class);
-        Route::post('/admin/events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('admin.events.toggle-published');
-        Route::post('/admin/events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('admin.events.toggle-featured');
+        Route::post('events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('events.toggle-published');
+        Route::post('events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('events.toggle-featured');
 
         // Отзывы
-        Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
-        Route::get('/admin/reviews/pending', [AdminReviewController::class, 'pending'])->name('admin.reviews.pending');
-        Route::get('/admin/reviews/approved', [AdminReviewController::class, 'approved'])->name('admin.reviews.approved');
-        Route::get('/admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
-        Route::post('/admin/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('admin.reviews.approve');
-        Route::post('/admin/reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('admin.reviews.reject');
-        Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+        Route::get('reviews/pending', [AdminReviewController::class, 'pending'])->name('reviews.pending');
+        Route::get('reviews/approved', [AdminReviewController::class, 'approved'])->name('reviews.approved');
+        Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
+        Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+        Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
