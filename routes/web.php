@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProgramEnrollmentController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use Illuminate\Support\Facades\Route;
@@ -41,19 +42,27 @@ Route::middleware('auth')->group(function () {
     Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
-    
+
     // Запись на программы
     Route::post('/programs/{program}/enroll', [ProgramEnrollmentController::class, 'enroll'])->name('programs.enroll');
     Route::post('/programs/{program}/unenroll', [ProgramEnrollmentController::class, 'unenroll'])->name('programs.unenroll');
     Route::post('/programs/{program}/activate', [ProgramEnrollmentController::class, 'activate'])->name('programs.activate');
     Route::post('/programs/{program}/complete', [ProgramEnrollmentController::class, 'complete'])->name('programs.complete');
-    
+
     // Профиль студента
     Route::get('/profile/programs', function () {
         $user = auth()->user();
         $enrolledPrograms = $user->programs()->orderBy('pivot_updated_at', 'desc')->get();
         return view('profile.programs', compact('enrolledPrograms'));
     })->name('profile.programs');
+    
+    // Профиль пользователя
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Просмотр профиля другого пользователя
+    Route::get('/users/{id}', [ProfileController::class, 'show'])->name('users.show');
 });
 
 // Тестовые маршруты админки (временно без авторизации)
