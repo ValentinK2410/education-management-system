@@ -208,8 +208,12 @@ php artisan config:clear
         </div>
         
         <div class="command">
-# Перезапустить PHP-FPM
-sudo systemctl restart php8.4-fpm
+# Перезапустить PHP-FPM (опционально)
+# Попробуйте одну из этих команд:
+sudo service php8.4-fpm restart
+sudo service php8.3-fpm restart
+sudo service php8.2-fpm restart
+# Или выполните перезапуск через веб-панель хостинга
         </div>
     </div>
 
@@ -230,8 +234,8 @@ tail -f storage/logs/laravel.log
         </div>
         
         <div class="command">
-# Проверить статус PHP-FPM
-sudo systemctl status php8.4-fpm
+# Проверить логи Nginx
+sudo tail -f /var/log/nginx/error.log
         </div>
     </div>
 
