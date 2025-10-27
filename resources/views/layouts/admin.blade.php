@@ -543,6 +543,13 @@
                 </a>
             </div>
 
+            <div class="nav-item">
+                <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
+                    <i class="fas fa-star"></i>
+                    <span>Отзывы</span>
+                </a>
+            </div>
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>
