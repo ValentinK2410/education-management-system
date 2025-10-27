@@ -48,9 +48,11 @@ class ProgramController extends Controller
         // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'institution_id' => 'required|exists:institutions,id',
-            'duration' => 'nullable|string|max:100',
+            'duration' => 'nullable|numeric|min:0',
+            'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
             'language' => 'required|string|max:10',
@@ -112,9 +114,11 @@ class ProgramController extends Controller
         // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'institution_id' => 'required|exists:institutions,id',
-            'duration' => 'nullable|string|max:100',
+            'duration' => 'nullable|numeric|min:0',
+            'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
             'language' => 'required|string|max:10',
