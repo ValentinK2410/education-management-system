@@ -74,8 +74,8 @@ class ProgramController extends Controller
 
         Program::create($data);
 
-        return $data;//redirect()->route('admin.programs.index')
-            //->with('success', 'Учебная программа успешно создана.');
+        return redirect()->route('admin.programs.index')
+            ->with('success', 'Учебная программа успешно создана.');
     }
 
     /**
@@ -140,10 +140,8 @@ class ProgramController extends Controller
 
         $program->update($data);
 
-       /* return redirect()->route('admin.programs.index')
+        return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно обновлена.');
-    */
-    return $data;
     }
 
     /**
