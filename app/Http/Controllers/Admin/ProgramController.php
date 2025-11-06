@@ -48,14 +48,14 @@ class ProgramController extends Controller
         // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'institution_id' => 'required|exists:institutions,id',
-            'duration' => 'nullable|string|max:100',
+            'duration' => 'nullable|numeric|min:0',
+            'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|max:10',
-            'requirements' => 'nullable|array',
-            'requirements.*' => 'string',
+            'language' => 'required|string|in:ru,en',
             'is_active' => 'boolean',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
@@ -64,7 +64,7 @@ class ProgramController extends Controller
 
         // Подготовка данных для сохранения
         $data = $request->all();
-        
+
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
             $data['price'] = null;
@@ -112,14 +112,14 @@ class ProgramController extends Controller
         // Валидация входящих данных
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'institution_id' => 'required|exists:institutions,id',
-            'duration' => 'nullable|string|max:100',
+            'duration' => 'nullable|numeric|min:0',
+            'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|max:10',
-            'requirements' => 'nullable|array',
-            'requirements.*' => 'string',
+            'language' => 'required|string|in:ru,en',
             'is_active' => 'boolean',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
@@ -128,7 +128,7 @@ class ProgramController extends Controller
 
         // Подготовка данных для обновления
         $data = $request->all();
-        
+
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
             $data['price'] = null;

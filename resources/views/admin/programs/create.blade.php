@@ -68,12 +68,51 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="duration" class="form-label">Продолжительность (месяцы)</label>
                                     <input type="number" class="form-control @error('duration') is-invalid @enderror" 
-                                           id="duration" name="duration" value="{{ old('duration') }}" min="1">
+                                           id="duration" name="duration" value="{{ old('duration') }}" min="0">
                                     @error('duration')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="credits" class="form-label">Количество кредитов</label>
+                                    <input type="number" class="form-control @error('credits') is-invalid @enderror" 
+                                           id="credits" name="credits" value="{{ old('credits') }}" min="0">
+                                    @error('credits')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="degree_level" class="form-label">Уровень степени</label>
+                                    <input type="text" class="form-control @error('degree_level') is-invalid @enderror" 
+                                           id="degree_level" name="degree_level" value="{{ old('degree_level') }}">
+                                    @error('degree_level')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="language" class="form-label">Язык обучения *</label>
+                                    <select class="form-select @error('language') is-invalid @enderror" 
+                                            id="language" name="language" required>
+                                        <option value="">Выберите язык</option>
+                                        <option value="ru" {{ old('language', 'ru') == 'ru' ? 'selected' : '' }}>Русский</option>
+                                        <option value="en" {{ old('language') == 'en' ? 'selected' : '' }}>English</option>
+                                    </select>
+                                    @error('language')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -81,10 +120,11 @@
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="credits" class="form-label">Количество кредитов</label>
-                                    <input type="number" class="form-control @error('credits') is-invalid @enderror" 
-                                           id="credits" name="credits" value="{{ old('credits') }}" min="0">
-                                    @error('credits')
+                                    <label for="tuition_fee" class="form-label">Стоимость обучения</label>
+                                    <input type="number" class="form-control @error('tuition_fee') is-invalid @enderror" 
+                                           id="tuition_fee" name="tuition_fee" value="{{ old('tuition_fee') }}" 
+                                           min="0" step="0.01">
+                                    @error('tuition_fee')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

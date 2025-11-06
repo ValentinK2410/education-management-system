@@ -1,7 +1,7 @@
 #!/bin/bash
-# Скрипт для исправления прав доступа к storage директории
+# Скрипт для установки прав 777 (для быстрого исправления)
 
-echo "🔧 Исправление прав доступа к storage/framework/views/"
+echo "🔧 Установка прав 777 для storage и bootstrap/cache"
 echo "===================================================="
 echo ""
 
@@ -16,16 +16,6 @@ git pull origin main
 echo "🗑️ Удаление скомпилированных представлений..."
 rm -rf storage/framework/views/*
 
-# Установить правильные права доступа
-echo "🔐 Установка прав доступа..."
-chmod -R 775 storage/
-chmod -R 775 bootstrap/cache/
-
-# Назначить правильного владельца
-echo "👤 Назначение владельца..."
-chown -R www-data:www-data storage/
-chown -R www-data:www-data bootstrap/cache/
-
 # Создать необходимые директории
 echo "📁 Создание директорий..."
 mkdir -p storage/framework/views
@@ -33,9 +23,20 @@ mkdir -p storage/framework/sessions
 mkdir -p storage/framework/cache/data
 mkdir -p storage/logs
 
-# Установить права для framework директорий
-chmod -R 775 storage/framework/
-chmod 664 storage/logs/laravel.log 2>/dev/null || touch storage/logs/laravel.log && chmod 664 storage/logs/laravel.log
+# Установить права 777 для storage и bootstrap/cache
+echo "🔐 Установка прав 777..."
+chmod -R 777 storage/
+chmod -R 777 bootstrap/cache/
+
+# Назначить правильного владельца
+echo "👤 Назначение владельца..."
+chown -R www-data:www-data storage/
+chown -R www-data:www-data bootstrap/cache/
+
+# Создать файл логов если не существует
+touch storage/logs/laravel.log
+chmod 777 storage/logs/laravel.log
+chown www-data:www-data storage/logs/laravel.log
 
 # Очистить кэш Laravel
 echo "🧹 Очистка кэша Laravel..."
@@ -47,7 +48,9 @@ php artisan route:clear
 # Проверить результат
 echo ""
 echo "✅ Проверка результата:"
+ls -la storage/
 ls -la storage/framework/views/
 
 echo ""
-echo "✅ Готово! Проверьте работу сайта."
+echo "✅ Готово! Теперь сайт должен работать."
+echo "⚠️ Примечание: Права 777 небезопасны для продакшена. После проверки рекомендуется вернуть 775."

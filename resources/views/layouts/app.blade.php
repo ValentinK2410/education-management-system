@@ -87,12 +87,13 @@
                                 <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('dashboard') }}">Панель управления</a></li>
+                                <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-home me-2"></i>Панель управления</a></li>
+                                <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="dropdown-item">Выйти</button>
+                                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выйти</button>
                                     </form>
                                 </li>
                             </ul>

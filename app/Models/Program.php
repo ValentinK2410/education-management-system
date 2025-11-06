@@ -22,9 +22,11 @@ class Program extends Model
      */
     protected $fillable = [
         'name',          // Название программы
+        'code',          // Код программы
         'description',   // Описание программы
         'institution_id', // ID учебного заведения
         'duration',      // Продолжительность программы
+        'credits',       // Количество кредитов
         'degree_level',  // Уровень степени
         'tuition_fee',   // Стоимость обучения
         'language',      // Язык обучения

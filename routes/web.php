@@ -6,7 +6,10 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ProgramEnrollmentController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use Illuminate\Support\Facades\Route;
@@ -33,11 +36,33 @@ Route::get('/instructors/{instructor}', [PublicController::class, 'instructor'])
 
 // Маршруты для отзывов (требуют авторизации)
 Route::middleware('auth')->group(function () {
+    // Отзывы
     Route::get('/courses/{course}/reviews/create', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/courses/{course}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // Запись на программы
+    Route::post('/programs/{program}/enroll', [ProgramEnrollmentController::class, 'enroll'])->name('programs.enroll');
+    Route::post('/programs/{program}/unenroll', [ProgramEnrollmentController::class, 'unenroll'])->name('programs.unenroll');
+    Route::post('/programs/{program}/activate', [ProgramEnrollmentController::class, 'activate'])->name('programs.activate');
+    Route::post('/programs/{program}/complete', [ProgramEnrollmentController::class, 'complete'])->name('programs.complete');
+
+    // Профиль студента
+    Route::get('/profile/programs', function () {
+        $user = auth()->user();
+        $enrolledPrograms = $user->programs()->orderBy('pivot_updated_at', 'desc')->get();
+        return view('profile.programs', compact('enrolledPrograms'));
+    })->name('profile.programs');
+    
+    // Профиль пользователя
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Просмотр профиля другого пользователя
+    Route::get('/users/{id}', [ProfileController::class, 'show'])->name('users.show');
 });
 
 // Тестовые маршруты админки (временно без авторизации)
@@ -154,10 +179,10 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('admin.users.simple');
 
-    // Маршруты профиля пользователя (временно отключены)
-    // Route::get('/admin/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
-    // Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
-    // Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    // Маршруты профиля пользователя
+    Route::get('/admin/profile', [ProfileController::class, 'show'])->name('admin.profile.show');
+    Route::get('/admin/profile/edit', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
 
     // Тестовые маршруты профиля (временно без контроллера)
     Route::get('/admin/test-profile', function () {
@@ -449,21 +474,21 @@ Route::middleware(['auth'])->group(function () {
 
         // События
         Route::resource('events', AdminEventController::class);
-        Route::post('/admin/events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('admin.events.toggle-published');
-        Route::post('/admin/events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('admin.events.toggle-featured');
+        Route::post('events/{event}/toggle-published', [AdminEventController::class, 'togglePublished'])->name('events.toggle-published');
+        Route::post('events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('events.toggle-featured');
 
         // Отзывы
-        Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
-        Route::get('/admin/reviews/pending', [AdminReviewController::class, 'pending'])->name('admin.reviews.pending');
-        Route::get('/admin/reviews/approved', [AdminReviewController::class, 'approved'])->name('admin.reviews.approved');
-        Route::get('/admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
-        Route::post('/admin/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('admin.reviews.approve');
-        Route::post('/admin/reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('admin.reviews.reject');
-        Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+        Route::get('reviews/pending', [AdminReviewController::class, 'pending'])->name('reviews.pending');
+        Route::get('reviews/approved', [AdminReviewController::class, 'approved'])->name('reviews.approved');
+        Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
+        Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+        Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
-        // Настройки пользователя (временно отключены)
-        // Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
-        // Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
-        // Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
+        // Настройки пользователя
+        Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
+        Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
+        Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
     });
 });
