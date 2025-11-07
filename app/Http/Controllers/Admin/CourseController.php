@@ -77,9 +77,11 @@ class CourseController extends Controller
 
         // Подготовка данных для сохранения
         $data = $request->all();
-        
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
+
         // Если курс не платный, обнуляем цену
-        if (!$request->boolean('is_paid')) {
+        if (!$data['is_paid']) {
             $data['price'] = null;
         }
 
@@ -152,9 +154,11 @@ class CourseController extends Controller
 
         // Подготовка данных для обновления
         $data = $request->all();
-        
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
+
         // Если курс не платный, обнуляем цену
-        if (!$request->boolean('is_paid')) {
+        if (!$data['is_paid']) {
             $data['price'] = null;
         }
 
