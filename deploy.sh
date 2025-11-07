@@ -5,11 +5,16 @@
 
 set -e  # Остановить выполнение при ошибке
 
-# Конфигурация
-SERVER_HOST="82.146.39.18"
-SERVER_USER="root"
-SERVER_PASSWORD="lShzBqBqnsHcR2sUos8v4XT4"
-SERVER_PATH="/var/www/www-root/data/www/m.dekan.pro"
+# Конфигурация (настройте переменные окружения перед запуском)
+SERVER_HOST=${SERVER_HOST:-"82.146.39.18"}
+SERVER_USER=${SERVER_USER:-"root"}
+SERVER_PATH=${SERVER_PATH:-"/var/www/www-root/data/www/m.dekan.pro"}
+
+if [ -z "$SERVER_PASSWORD" ]; then
+    echo "❌ Переменная окружения SERVER_PASSWORD не установлена."
+    echo "Установите её командой: export SERVER_PASSWORD=\"ваш_пароль\""
+    exit 1
+fi
 
 echo "🚀 Начинаем деплой проекта на сервер..."
 
