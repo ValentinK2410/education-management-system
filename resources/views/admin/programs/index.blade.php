@@ -86,6 +86,15 @@
                                                    class="btn btn-sm btn-warning" title="Редактировать">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <form action="{{ route('admin.programs.duplicate', $program) }}" 
+                                                      method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-secondary" 
+                                                            title="Дублировать"
+                                                            onclick="return confirm('Создать копию этой программы?')">
+                                                        <i class="fas fa-clone"></i>
+                                                    </button>
+                                                </form>
                                                 <form action="{{ route('admin.programs.destroy', $program) }}" 
                                                       method="POST" class="d-inline">
                                                     @csrf

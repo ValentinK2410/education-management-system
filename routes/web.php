@@ -467,9 +467,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('institutions', InstitutionController::class);
 
         // Управление образовательными программами
+        Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
         Route::resource('programs', ProgramController::class);
 
         // Управление курсами
+        Route::post('courses/{course}/duplicate', [CourseController::class, 'duplicate'])->name('courses.duplicate');
         Route::resource('courses', CourseController::class);
 
         // События
