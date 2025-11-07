@@ -66,6 +66,8 @@ class ProgramController extends Controller
 
         // Подготовка данных для сохранения
         $data = $request->all();
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
 
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
@@ -131,6 +133,8 @@ class ProgramController extends Controller
 
         // Подготовка данных для обновления
         $data = $request->all();
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
 
         // Если программа не платная, обнуляем цену
         if (!$request->boolean('is_paid')) {
