@@ -1,6 +1,7 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Редактирование пользователя')
+@section('page-title', 'Редактировать пользователя')
 
 @section('content')
 <div class="container-fluid">
@@ -11,7 +12,7 @@
                     <h3 class="card-title mb-0">Редактирование пользователя: {{ $user->name }}</h3>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.users.update', $user) }}" method="POST">
+                    <form action="{{ route('admin.users.update', $user) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -59,6 +60,24 @@
                                     @enderror
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Фото профиля -->
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Фото профиля</label>
+                            <input type="file" class="form-control @error('photo') is-invalid @enderror" 
+                                   id="photo" name="photo" accept="image/*">
+                            @error('photo')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            @if($user->photo)
+                                <div class="mt-2">
+                                    <img src="{{ asset('storage/' . $user->photo) }}" alt="Текущее фото" 
+                                         class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                    <div class="form-text">Текущее фото профиля</div>
+                                </div>
+                            @endif
+                            <div class="form-text">Поддерживаемые форматы: JPG, PNG, GIF. Максимальный размер: 2MB</div>
                         </div>
 
                         <div class="mb-3">

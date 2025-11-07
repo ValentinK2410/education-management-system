@@ -12,7 +12,7 @@
                     <div class="col-auto">
                         <div class="avatar-lg">
                             @if($user->photo)
-                                <img src="{{ Storage::url($user->photo) }}" alt="{{ $user->name }}" class="rounded-circle w-100">
+                                <img src="{{ asset('storage/' . $user->photo) }}" alt="{{ $user->name }}" class="rounded-circle w-100">
                             @else
                                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="font-size: 3rem;">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}

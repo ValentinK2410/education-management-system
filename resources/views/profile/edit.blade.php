@@ -20,7 +20,7 @@
                             <div class="col-12 text-center">
                                 <div class="avatar-preview mb-3">
                                     @if($user->photo)
-                                        <img id="avatarPreview" src="{{ Storage::url($user->photo) }}" alt="Avatar" class="rounded-circle mb-2" style="width: 150px; height: 150px; object-fit: cover;">
+                                        <img id="avatarPreview" src="{{ asset('storage/' . $user->photo) }}" alt="Avatar" class="rounded-circle mb-2" style="width: 150px; height: 150px; object-fit: cover;">
                                     @else
                                         <div id="avatarPreview" class="bg-primary text-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 150px; height: 150px; font-size: 4rem;">
                                             {{ strtoupper(substr($user->name, 0, 1)) }}

@@ -70,12 +70,13 @@ class ProfileController extends Controller
         // Обработка загрузки фото
         if ($request->hasFile('photo')) {
             // Удаляем старое фото, если есть
-            if ($user->photo && Storage::exists($user->photo)) {
-                Storage::delete($user->photo);
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
             }
             
             $path = $request->file('photo')->store('avatars', 'public');
             $validated['photo'] = $path;
+            \Log::info('Photo uploaded for user', ['user_id' => $user->id, 'path' => $path]);
         }
         
         $user->update($validated);

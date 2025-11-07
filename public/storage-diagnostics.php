@@ -101,3 +101,13 @@ if (file_exists($diskFile) && $diskFile !== $publicFile) {
 echo "\nДиагностика завершена.\n";
 
 
+
+
+
+
+
+
+
+
+
+

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\Program;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * Контроллер для управления образовательными программами
@@ -152,5 +153,69 @@ class ProgramController extends Controller
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно удалена.');
+    }
+
+    /**
+     * Создать дубликат образовательной программы
+     */
+    public function duplicate(Program $program)
+    {
+        $duplicate = $program->replicate();
+        $duplicate->name = $this->generateCopyLabel($program->name, Program::class, 'name');
+        $duplicate->code = $this->generateCopyCode($program->code);
+        $duplicate->save();
+
+        return redirect()->route('admin.programs.edit', $duplicate)
+            ->with('success', 'Дубликат программы создан. Проверьте и обновите данные перед публикацией.');
+    }
+
+    /**
+     * Сформировать уникальное имя с пометкой копии
+     */
+    private function generateCopyLabel(?string $original, string $modelClass, string $field, string $suffix = 'копия'): string
+    {
+        $base = $original ?: 'Новая запись';
+        $candidate = $this->formatCopyLabel($base, $suffix);
+        $counter = 2;
+
+        while ($modelClass::where($field, $candidate)->exists()) {
+            $candidate = $this->formatCopyLabel($base, $suffix, $counter);
+            $counter++;
+        }
+
+        return Str::limit($candidate, 255, '');
+    }
+
+    /**
+     * Сформировать код копии, если исходный код присутствует
+     */
+    private function generateCopyCode(?string $code): ?string
+    {
+        if (!$code) {
+            return null;
+        }
+
+        $base = Str::limit($code, 45, '');
+        $candidate = $base . '-copy';
+        $counter = 2;
+
+        while (Program::where('code', $candidate)->exists()) {
+            $candidate = $base . '-copy' . $counter;
+            $counter++;
+        }
+
+        return Str::limit($candidate, 50, '');
+    }
+
+    /**
+     * Собрать подпись дубликата с учетом счетчика
+     */
+    private function formatCopyLabel(string $base, string $suffix, ?int $counter = null): string
+    {
+        if ($counter === null) {
+            return sprintf('%s (%s)', $base, $suffix);
+        }
+
+        return sprintf('%s (%s %d)', $base, $suffix, $counter);
     }
 }
