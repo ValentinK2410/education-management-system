@@ -24,6 +24,7 @@
                                     <th>ID</th>
                                     <th>Название</th>
                                     <th>Учебное заведение</th>
+                                    <th>Локация</th>
                                     <th>Тип оплаты</th>
                                     <th>Цена</th>
                                     <th>Статус</th>
@@ -45,6 +46,13 @@
                                                 <span class="badge bg-info">{{ $program->institution->name }}</span>
                                             @else
                                                 <span class="text-muted">Не указано</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($program->location)
+                                                <span class="badge bg-secondary">{{ $program->location }}</span>
+                                            @else
+                                                <span class="text-muted">Не указана</span>
                                             @endif
                                         </td>
                                         <td>
@@ -110,7 +118,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-4">
+                                        <td colspan="8" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-book fa-3x mb-3"></i>
                                                 <p>Программы не найдены</p>

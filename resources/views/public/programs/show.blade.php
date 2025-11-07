@@ -57,6 +57,12 @@
                                 {{ $program->institution->name }}
                             </a>
                         </li>
+                        @if($program->location)
+                            <li class="mb-2">
+                                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                {{ $program->location }}
+                            </li>
+                        @endif
                         <li class="mb-2">
                             <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
                             {{ $program->courses->count() }} курсов

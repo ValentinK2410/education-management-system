@@ -103,7 +103,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="language" class="form-label">Язык обучения *</label>
                                     <select class="form-select @error('language') is-invalid @enderror" 
@@ -117,8 +117,18 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="location" class="form-label">Локация</label>
+                                    <input type="text" class="form-control @error('location') is-invalid @enderror"
+                                           id="location" name="location" value="{{ old('location') }}">
+                                    @error('location')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                             
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="tuition_fee" class="form-label">Стоимость обучения</label>
                                     <input type="number" class="form-control @error('tuition_fee') is-invalid @enderror" 

@@ -30,6 +30,7 @@ class Program extends Model
         'degree_level',  // Уровень степени
         'tuition_fee',   // Стоимость обучения
         'language',      // Язык обучения
+        'location',      // Местоположение программы
         'requirements',  // Требования для поступления
         'is_active',     // Статус активности
         'is_paid',       // Платная программа или бесплатная
