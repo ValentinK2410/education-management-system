@@ -17,6 +17,12 @@ class Program extends Model
 {
     use HasFactory;
 
+    public const DEGREE_LEVELS = [
+        'начальный' => 'Начальный',
+        'бакалаврский' => 'Бакалаврский',
+        'магистерский' => 'Магистерский',
+    ];
+
     /**
      * Поля, доступные для массового заполнения
      */
@@ -122,5 +128,23 @@ class Program extends Model
     public function getEnrolledUsersCountAttribute()
     {
         return $this->users()->count();
+    }
+
+    /**
+     * Получить отформатированный уровень степени
+     */
+    public function getDegreeLevelLabelAttribute(): ?string
+    {
+        return $this->degree_level
+            ? (self::DEGREE_LEVELS[$this->degree_level] ?? mb_convert_case($this->degree_level, MB_CASE_TITLE, 'UTF-8'))
+            : null;
+    }
+
+    /**
+     * Получить доступные варианты уровня степени
+     */
+    public static function degreeLevelOptions(): array
+    {
+        return self::DEGREE_LEVELS;
     }
 }

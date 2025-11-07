@@ -93,8 +93,15 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="degree_level" class="form-label">Уровень степени</label>
-                                    <input type="text" class="form-control @error('degree_level') is-invalid @enderror" 
-                                           id="degree_level" name="degree_level" value="{{ old('degree_level') }}">
+                                    <select class="form-select @error('degree_level') is-invalid @enderror"
+                                            id="degree_level" name="degree_level">
+                                        <option value="">Выберите уровень</option>
+                                        @foreach(\App\Models\Program::degreeLevelOptions() as $value => $label)
+                                            <option value="{{ $value }}" {{ old('degree_level') === $value ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     @error('degree_level')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

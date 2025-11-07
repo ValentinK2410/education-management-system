@@ -11,7 +11,7 @@
                 <a href="{{ route('institutions.show', $program->institution) }}" class="text-decoration-none">
                     <span class="badge bg-primary me-2">{{ $program->institution->name }}</span>
                 </a>
-                <span class="badge bg-success">{{ $program->degree_level }}</span>
+                <span class="badge bg-success">{{ $program->degree_level_label ?? 'Не указан' }}</span>
             </div>
 
             <h1 class="fw-bold mb-3">{{ $program->name }}</h1>
@@ -69,7 +69,7 @@
                         </li>
                         <li class="mb-2">
                             <i class="fas fa-graduation-cap text-primary me-2"></i>
-                            {{ $program->degree_level }}
+                            {{ $program->degree_level_label ?? 'Не указан' }}
                         </li>
                     </ul>
                     

@@ -18,7 +18,7 @@
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h5 class="card-title">{{ $program->name }}</h5>
-                            <span class="badge bg-primary">{{ $program->degree_level }}</span>
+                            <span class="badge bg-primary">{{ $program->degree_level_label ?? 'Не указан' }}</span>
                         </div>
 
                         <p class="card-text text-muted flex-grow-1">{{ Str::limit($program->description, 120) }}</p>
