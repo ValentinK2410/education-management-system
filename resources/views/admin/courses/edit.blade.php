@@ -180,6 +180,7 @@
 
                         <div class="mb-3">
                             <div class="form-check">
+                                <input type="hidden" name="is_active" value="0">
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
                                        value="1" {{ old('is_active', $course->is_active) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_active">

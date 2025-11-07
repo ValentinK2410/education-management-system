@@ -55,7 +55,7 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         // Валидация входящих данных
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'program_id' => 'required|exists:programs,id',
@@ -75,11 +75,12 @@ class CourseController extends Controller
             'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        // Подготовка данных для сохранения
-        $data = $request->all();
+        // Приведение булевых значений
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
         
         // Если курс не платный, обнуляем цену
-        if (!$request->boolean('is_paid')) {
+        if (!$data['is_paid']) {
             $data['price'] = null;
         }
 
@@ -130,7 +131,7 @@ class CourseController extends Controller
     public function update(Request $request, Course $course)
     {
         // Валидация входящих данных
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'program_id' => 'required|exists:programs,id',
@@ -150,11 +151,12 @@ class CourseController extends Controller
             'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
 
-        // Подготовка данных для обновления
-        $data = $request->all();
+        // Приведение булевых значений
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_paid'] = $request->boolean('is_paid');
         
         // Если курс не платный, обнуляем цену
-        if (!$request->boolean('is_paid')) {
+        if (!$data['is_paid']) {
             $data['price'] = null;
         }
 
