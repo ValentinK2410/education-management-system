@@ -50,7 +50,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Информация о программе</h5>
-                    <ul class="list-unstyled mb-3">
+                    <ul class="list-unstyled mb-0">
                         <li class="mb-2">
                             <i class="fas fa-university text-primary me-2"></i>
                             <a href="{{ route('institutions.show', $program->institution) }}" class="text-decoration-none">
@@ -66,47 +66,6 @@
                             {{ $program->degree_level }}
                         </li>
                     </ul>
-                    
-                    @auth
-                        @php
-                            $enrollment = auth()->user()->programs()->where('program_id', $program->id)->first();
-                        @endphp
-                        
-                        @if($enrollment)
-                            <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Вы записаны на эту программу</strong><br>
-                                <small>
-                                    Статус: 
-                                    @if($enrollment->pivot->status === 'enrolled')
-                                        <span class="badge bg-secondary">Записан</span>
-                                    @elseif($enrollment->pivot->status === 'active')
-                                        <span class="badge bg-primary">В процессе</span>
-                                    @elseif($enrollment->pivot->status === 'completed')
-                                        <span class="badge bg-success">Завершена</span>
-                                    @elseif($enrollment->pivot->status === 'cancelled')
-                                        <span class="badge bg-danger">Отменена</span>
-                                    @endif
-                                </small>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <a href="{{ route('profile.programs') }}" class="btn btn-primary">
-                                    <i class="fas fa-book me-2"></i>Мои программы
-                                </a>
-                            </div>
-                        @else
-                            <form action="{{ route('programs.enroll', $program) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-primary w-100 mb-2">
-                                    <i class="fas fa-plus me-2"></i>Записаться на программу
-                                </button>
-                            </form>
-                        @endif
-                    @else
-                        <a href="{{ route('login') }}" class="btn btn-primary w-100">
-                            <i class="fas fa-sign-in-alt me-2"></i>Войти для записи
-                        </a>
-                    @endauth
                 </div>
             </div>
         </div>

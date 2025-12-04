@@ -17,6 +17,14 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
@@ -37,7 +45,7 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 @if($institution->logo)
-                                                    <img src="{{ asset('storage/' . $institution->logo) }}" 
+                                                    <img src="{{ asset('storage/' . $institution->logo) }}"
                                                          alt="Логотип" class="me-3" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                                                 @else
                                                     <div class="avatar-sm me-3">
@@ -83,19 +91,19 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.institutions.show', $institution) }}" 
+                                                <a href="{{ route('admin.institutions.show', $institution) }}"
                                                    class="btn btn-sm btn-info" title="Просмотр">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('admin.institutions.edit', $institution) }}" 
+                                                <a href="{{ route('admin.institutions.edit', $institution) }}"
                                                    class="btn btn-sm btn-warning" title="Редактировать">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <form action="{{ route('admin.institutions.destroy', $institution) }}" 
+                                                <form action="{{ route('admin.institutions.destroy', $institution) }}"
                                                       method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                                    <button type="submit" class="btn btn-sm btn-danger"
                                                             title="Удалить"
                                                             onclick="return confirm('Вы уверены, что хотите удалить это учебное заведение?')">
                                                         <i class="fas fa-trash"></i>

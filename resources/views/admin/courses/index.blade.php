@@ -17,6 +17,14 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
@@ -96,19 +104,19 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.courses.show', $course) }}" 
+                                                <a href="{{ route('admin.courses.show', $course) }}"
                                                    class="btn btn-sm btn-info" title="Просмотр">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('admin.courses.edit', $course) }}" 
+                                                <a href="{{ route('admin.courses.edit', $course) }}"
                                                    class="btn btn-sm btn-warning" title="Редактировать">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <form action="{{ route('admin.courses.destroy', $course) }}" 
+                                                <form action="{{ route('admin.courses.destroy', $course) }}"
                                                       method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                                    <button type="submit" class="btn btn-sm btn-danger"
                                                             title="Удалить"
                                                             onclick="return confirm('Вы уверены, что хотите удалить этот курс?')">
                                                         <i class="fas fa-trash"></i>

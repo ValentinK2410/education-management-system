@@ -55,7 +55,9 @@ class ProgramController extends Controller
             'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|in:ru,en',
+            'language' => 'required|string|max:10',
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'string',
             'is_active' => 'boolean',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
@@ -72,8 +74,8 @@ class ProgramController extends Controller
 
         Program::create($data);
 
-        return redirect()->route('admin.programs.index')
-            ->with('success', 'Учебная программа успешно создана.');
+        return $data;//redirect()->route('admin.programs.index')
+            //->with('success', 'Учебная программа успешно создана.');
     }
 
     /**
@@ -119,7 +121,9 @@ class ProgramController extends Controller
             'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|in:ru,en',
+            'language' => 'required|string|max:10',
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'string',
             'is_active' => 'boolean',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
@@ -136,8 +140,10 @@ class ProgramController extends Controller
 
         $program->update($data);
 
-        return redirect()->route('admin.programs.index')
+       /* return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно обновлена.');
+    */
+    return $data;
     }
 
     /**
