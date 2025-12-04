@@ -66,8 +66,24 @@ php artisan route:clear 2>/dev/null || echo "⚠️ Не удалось очис
 echo "✅ Кэш очищен"
 echo ""
 
-echo "✅ Исправление прав доступа завершено!"
+# Попытка перезапустить PHP-FPM (автоматический поиск правильного сервиса)
+echo "🔄 Попытка перезапустить PHP-FPM..."
+PHP_FPM_SERVICE=$(systemctl list-units --type=service --all | grep -i "php.*fpm" | head -1 | awk '{print $1}')
+
+if [ -n "$PHP_FPM_SERVICE" ]; then
+    echo "   Найден сервис: $PHP_FPM_SERVICE"
+    systemctl restart "$PHP_FPM_SERVICE" 2>/dev/null && echo "   ✅ PHP-FPM перезапущен" || echo "   ⚠️ Не удалось перезапустить PHP-FPM (может потребоваться sudo)"
+else
+    echo "   ⚠️ Сервис PHP-FPM не найден автоматически"
+    echo "   Попробуйте вручную:"
+    echo "   - systemctl restart php-fpm"
+    echo "   - systemctl restart php8.1-fpm"
+    echo "   - systemctl restart php8.2-fpm"
+    echo "   - systemctl restart php8.3-fpm"
+    echo "   - systemctl restart php8.4-fpm"
+    echo "   Или перезапустите веб-сервер (nginx/apache)"
+fi
 echo ""
-echo "🔄 Рекомендуется перезапустить PHP-FPM:"
-echo "   sudo systemctl restart php8.4-fpm"
+
+echo "✅ Исправление прав доступа завершено!"
 echo ""
