@@ -46,15 +46,17 @@ chown -R www-data:www-data bootstrap/cache/
 echo "✅ Владелец назначен"
 echo ""
 
-# Создать файл логов если его нет
+# Создать файл логов если его нет и установить правильные права
+echo "📄 Проверка и настройка файла логов..."
+mkdir -p storage/logs
 if [ ! -f storage/logs/laravel.log ]; then
-    echo "📄 Создание файла логов..."
     touch storage/logs/laravel.log
-    chmod 664 storage/logs/laravel.log
-    chown www-data:www-data storage/logs/laravel.log
-    echo "✅ Файл логов создан"
-    echo ""
 fi
+chmod 666 storage/logs/laravel.log
+chown www-data:www-data storage/logs/laravel.log
+chmod 777 storage/logs/
+echo "✅ Файл логов настроен"
+echo ""
 
 # Проверка прав доступа
 echo "🔍 Проверка прав доступа..."
