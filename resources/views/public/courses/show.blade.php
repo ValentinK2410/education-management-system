@@ -80,9 +80,13 @@
                         @if($course->instructor)
                             <li class="mb-2">
                                 <i class="fas fa-user text-primary me-2"></i>
-                                <a href="{{ route('instructors.show', $course->instructor) }}" class="text-decoration-none">
-                                    {{ $course->instructor->name }}
-                                </a>
+                                @if(Route::has('instructors.show'))
+                                    <a href="{{ route('instructors.show', $course->instructor) }}" class="text-decoration-none">
+                                        {{ $course->instructor->name }}
+                                    </a>
+                                @else
+                                    <span>{{ $course->instructor->name }}</span>
+                                @endif
                             </li>
                         @endif
                         @if($course->credits)
@@ -152,9 +156,16 @@
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
-                                @if($course->instructor->avatar)
+                                @php
+                                    $hasAvatar = isset($course->instructor->avatar) && !empty($course->instructor->avatar);
+                                @endphp
+                                @if($hasAvatar)
                                     <img src="{{ Storage::url($course->instructor->avatar) }}"
-                                         class="rounded-circle" width="100" height="100" alt="Avatar">
+                                         class="rounded-circle" width="100" height="100" alt="Avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto"
+                                         style="width: 100px; height: 100px; display: none;">
+                                        <i class="fas fa-user fa-2x text-white"></i>
+                                    </div>
                                 @else
                                     <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto"
                                          style="width: 100px; height: 100px;">
@@ -173,9 +184,11 @@
                                             <i class="fas fa-envelope me-1"></i>Email
                                         </a>
                                     @endif
-                                    <a href="{{ route('instructors.show', $course->instructor) }}" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-user me-1"></i>Профиль
-                                    </a>
+                                    @if(Route::has('instructors.show'))
+                                        <a href="{{ route('instructors.show', $course->instructor) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-user me-1"></i>Профиль
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
