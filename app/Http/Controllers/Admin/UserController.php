@@ -109,7 +109,13 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load('roles', 'taughtCourses');
+        $user->load([
+            'roles', 
+            'taughtCourses.program.institution',
+            'programs.institution',
+            'courses.program.institution',
+            'institutions'
+        ]);
         return view('admin.users.show', compact('user'));
     }
 
