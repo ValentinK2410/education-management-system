@@ -454,13 +454,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('events/{event}/toggle-featured', [AdminEventController::class, 'toggleFeatured'])->name('events.toggle-featured');
 
         // Отзывы
-        Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
-        Route::get('reviews/pending', [AdminReviewController::class, 'pending'])->name('reviews.pending');
-        Route::get('reviews/approved', [AdminReviewController::class, 'approved'])->name('reviews.approved');
-        Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
-        Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
-        Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
-        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/pending', [AdminReviewController::class, 'pending'])->name('admin.reviews.pending');
+        Route::get('reviews/approved', [AdminReviewController::class, 'approved'])->name('admin.reviews.approved');
+        Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
+        Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('admin.reviews.approve');
+        Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('admin.reviews.reject');
+        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
