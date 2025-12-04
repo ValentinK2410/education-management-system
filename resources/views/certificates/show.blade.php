@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
+
 @section('title', 'Сертификат')
 
 @section('content')
@@ -17,14 +21,14 @@
                         <p class="text-muted mb-2">Номер сертификата: <strong>{{ $certificate->certificate_number }}</strong></p>
                         <p class="text-muted mb-2">Дата выдачи: <strong>{{ $certificate->issued_at->format('d.m.Y') }}</strong></p>
                     </div>
-                    
+
                     <div class="certificate-image-container mb-4">
-                        <img src="{{ Storage::url($certificate->image_path) }}" 
-                             alt="Сертификат" 
+                        <img src="{{ Storage::url($certificate->image_path) }}"
+                             alt="Сертификат"
                              class="img-fluid border rounded shadow-sm"
                              style="max-width: 100%; height: auto;">
                     </div>
-                    
+
                     <div class="d-flex justify-content-center gap-2 flex-wrap">
                         <a href="{{ route('certificates.download', $certificate) }}" class="btn btn-primary">
                             <i class="fas fa-download me-2"></i>Скачать сертификат

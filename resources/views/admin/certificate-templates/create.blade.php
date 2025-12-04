@@ -42,13 +42,13 @@
                 <div class="card-body">
                     <form action="{{ route('admin.certificate-templates.store') }}" method="POST" enctype="multipart/form-data" id="templateForm">
                         @csrf
-                        
+
                         <input type="hidden" name="text_elements_json" id="text_elements_json">
 
                         <div class="row">
                             <div class="col-md-8">
                                 <h5 class="mb-3">Основные настройки</h5>
-                                
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -86,7 +86,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Размер и качество</h5>
-                                
+
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="mb-3">
@@ -123,7 +123,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Настройки фона</h5>
-                                
+
                                 <div class="mb-3">
                                     <label for="background_type" class="form-label">Тип фона *</label>
                                     <select class="form-select @error('background_type') is-invalid @enderror"
@@ -171,13 +171,13 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Текстовые элементы</h5>
-                                
+
                                 <div id="textElements">
                                     <div class="text-element-item">
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <label class="form-label">Текст</label>
-                                                <input type="text" class="form-control" name="text_elements[0][text]" 
+                                                <input type="text" class="form-control" name="text_elements[0][text]"
                                                        value="Сертификат" placeholder="Используйте {user_name}, {course_name}, {date}">
                                             </div>
                                             <div class="col-md-3">
@@ -201,7 +201,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="addTextElement">
                                     <i class="fas fa-plus"></i> Добавить текстовый элемент
                                 </button>
@@ -263,7 +263,7 @@ document.getElementById('addTextElement').addEventListener('click', function() {
         <div class="row">
             <div class="col-md-6">
                 <label class="form-label">Текст</label>
-                <input type="text" class="form-control" name="text_elements[${textElementIndex}][text]" 
+                <input type="text" class="form-control" name="text_elements[${textElementIndex}][text]"
                        placeholder="Используйте {user_name}, {course_name}, {date}">
             </div>
             <div class="col-md-3">
@@ -301,15 +301,15 @@ function updatePreview() {
     const ctx = canvas.getContext('2d');
     const width = parseInt(document.getElementById('width').value) || 1200;
     const height = parseInt(document.getElementById('height').value) || 800;
-    
+
     canvas.width = Math.min(width, 400);
     canvas.height = Math.min(height, 300);
-    
+
     const scale = Math.min(400 / width, 300 / height);
-    
+
     // Очистка
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     // Фон
     const bgType = document.getElementById('background_type').value;
     if (bgType === 'color') {
@@ -325,7 +325,7 @@ function updatePreview() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    
+
     // Текстовые элементы
     const textElements = document.querySelectorAll('[name^="text_elements"]');
     textElements.forEach((input, index) => {
@@ -334,7 +334,7 @@ function updatePreview() {
             const y = parseInt(document.querySelector(`[name="text_elements[${Math.floor(index/6)}][y]"]`)?.value || 200) * scale;
             const size = parseInt(document.querySelector(`[name="text_elements[${Math.floor(index/6)}][size]"]`)?.value || 24) * scale;
             const color = document.querySelector(`[name="text_elements[${Math.floor(index/6)}][color]"]`)?.value || '#000000';
-            
+
             ctx.fillStyle = color;
             ctx.font = `${size}px Arial`;
             ctx.fillText(input.value, x, y);
@@ -370,14 +370,14 @@ function updateGradient() {
 function prepareFormData() {
     const textElements = [];
     const items = document.querySelectorAll('.text-element-item');
-    
+
     items.forEach((item, index) => {
         const text = item.querySelector('[name*="[text]"]')?.value;
         const x = item.querySelector('[name*="[x]"]')?.value;
         const y = item.querySelector('[name*="[y]"]')?.value;
         const size = item.querySelector('[name*="[size]"]')?.value;
         const color = item.querySelector('[name*="[color]"]')?.value;
-        
+
         if (text) {
             textElements.push({
                 text: text,
@@ -389,7 +389,7 @@ function prepareFormData() {
             });
         }
     });
-    
+
     document.getElementById('text_elements_json').value = JSON.stringify(textElements);
 }
 

@@ -128,7 +128,7 @@ class CertificateTemplateController extends Controller
         // Обработка загрузки фонового изображения
         if ($request->hasFile('background_image')) {
             Storage::disk('public')->makeDirectory('certificate-templates');
-            
+
             // Удаляем старое изображение
             if ($certificateTemplate->background_image && Storage::disk('public')->exists($certificateTemplate->background_image)) {
                 Storage::disk('public')->delete($certificateTemplate->background_image);

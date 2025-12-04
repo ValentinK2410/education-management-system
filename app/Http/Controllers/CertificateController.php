@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 // Используем GD напрямую
 
 class CertificateController extends Controller
@@ -18,7 +19,7 @@ class CertificateController extends Controller
     public function generateForCourse(Request $request, Course $course)
     {
         $user = auth()->user();
-        
+
         // Проверяем, завершен ли курс
         $userCourse = $user->courses()->where('course_id', $course->id)->first();
         if (!$userCourse || $userCourse->pivot->status !== 'completed') {
@@ -57,7 +58,7 @@ class CertificateController extends Controller
     public function generateForProgram(Request $request, Program $program)
     {
         $user = auth()->user();
-        
+
         // Проверяем, завершена ли программа
         $userProgram = $user->programs()->where('program_id', $program->id)->first();
         if (!$userProgram || $userProgram->pivot->status !== 'completed') {
@@ -111,7 +112,7 @@ class CertificateController extends Controller
                 'user_email' => $user->email,
                 'course_name' => $course ? $course->name : null,
                 'program_name' => $program ? $program->name : null,
-                'completed_at' => $course 
+                'completed_at' => $course
                     ? ($user->courses()->where('course_id', $course->id)->first()->pivot->completed_at ?? now())
                     : ($user->programs()->where('program_id', $program->id)->first()->pivot->completed_at ?? now()),
             ],
@@ -153,7 +154,7 @@ class CertificateController extends Controller
             $filename = 'cert_' . time() . '_' . uniqid() . '.jpg';
             $path = 'certificates/' . $filename;
             $fullPath = storage_path('app/public/' . $path);
-            
+
             imagejpeg($image, $fullPath, $template->quality);
             imagedestroy($image);
 
@@ -195,7 +196,7 @@ class CertificateController extends Controller
                         $sourceImage = imagecreatefromgif($backgroundPath);
                         break;
                 }
-                
+
                 if ($sourceImage) {
                     imagecopyresampled($image, $sourceImage, 0, 0, 0, 0, $width, $height, $backgroundInfo[0], $backgroundInfo[1]);
                     imagedestroy($sourceImage);
@@ -212,13 +213,13 @@ class CertificateController extends Controller
         if (isset($gradient['colors']) && count($gradient['colors']) >= 2) {
             $color1 = $this->hexToRgb($gradient['colors'][0]);
             $color2 = $this->hexToRgb($gradient['colors'][1]);
-            
+
             for ($y = 0; $y < $height; $y++) {
                 $ratio = $y / $height;
                 $r = (int)($color1['r'] + ($color2['r'] - $color1['r']) * $ratio);
                 $g = (int)($color1['g'] + ($color2['g'] - $color1['g']) * $ratio);
                 $b = (int)($color1['b'] + ($color2['b'] - $color1['b']) * $ratio);
-                
+
                 $lineColor = imagecolorallocate($image, $r, $g, $b);
                 imageline($image, 0, $y, $width, $y, $lineColor);
             }
@@ -239,7 +240,7 @@ class CertificateController extends Controller
 
             $rgb = $this->hexToRgb($color);
             $textColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
-            
+
             // Используем встроенный шрифт (можно заменить на imagettftext для кастомных шрифтов)
             $fontSize = max(1, min(5, (int)($size / 10))); // Размер шрифта 1-5
             imagestring($image, $fontSize, $x, $y, $text, $textColor);
@@ -300,7 +301,7 @@ class CertificateController extends Controller
         }
 
         $path = storage_path('app/public/' . $certificate->image_path);
-        
+
         if (!file_exists($path)) {
             abort(404, 'Файл сертификата не найден.');
         }

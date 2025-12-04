@@ -43,13 +43,13 @@
                     <form action="{{ route('admin.certificate-templates.update', $certificateTemplate) }}" method="POST" enctype="multipart/form-data" id="templateForm">
                         @csrf
                         @method('PUT')
-                        
+
                         <input type="hidden" name="text_elements_json" id="text_elements_json">
 
                         <div class="row">
                             <div class="col-md-8">
                                 <h5 class="mb-3">Основные настройки</h5>
-                                
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -87,7 +87,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Размер и качество</h5>
-                                
+
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="mb-3">
@@ -124,7 +124,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Настройки фона</h5>
-                                
+
                                 <div class="mb-3">
                                     <label for="background_type" class="form-label">Тип фона *</label>
                                     <select class="form-select @error('background_type') is-invalid @enderror"
@@ -172,12 +172,12 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label for="gradient_color1" class="form-label">Цвет 1</label>
-                                            <input type="color" class="form-control form-control-color" id="gradient_color1" 
+                                            <input type="color" class="form-control form-control-color" id="gradient_color1"
                                                    value="{{ old('gradient_color1', $certificateTemplate->background_gradient['colors'][0] ?? '#ffffff') }}">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="gradient_color2" class="form-label">Цвет 2</label>
-                                            <input type="color" class="form-control form-control-color" id="gradient_color2" 
+                                            <input type="color" class="form-control form-control-color" id="gradient_color2"
                                                    value="{{ old('gradient_color2', $certificateTemplate->background_gradient['colors'][1] ?? '#f0f0f0') }}">
                                         </div>
                                     </div>
@@ -185,7 +185,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Текстовые элементы</h5>
-                                
+
                                 <div id="textElements">
                                     @if($certificateTemplate->text_elements)
                                         @foreach($certificateTemplate->text_elements as $index => $element)
@@ -193,8 +193,8 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <label class="form-label">Текст</label>
-                                                        <input type="text" class="form-control" 
-                                                               value="{{ $element['text'] ?? '' }}" 
+                                                        <input type="text" class="form-control"
+                                                               value="{{ $element['text'] ?? '' }}"
                                                                placeholder="Используйте {user_name}, {course_name}, {date}">
                                                     </div>
                                                     <div class="col-md-3">
@@ -225,14 +225,14 @@
                                         @endforeach
                                     @endif
                                 </div>
-                                
+
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="addTextElement">
                                     <i class="fas fa-plus"></i> Добавить текстовый элемент
                                 </button>
 
                                 <div class="mb-3 mt-4">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" 
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1"
                                                {{ old('is_active', $certificateTemplate->is_active) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="is_active">
                                             Активен
@@ -325,14 +325,14 @@ function updatePreview() {
     const ctx = canvas.getContext('2d');
     const width = parseInt(document.getElementById('width').value) || 1200;
     const height = parseInt(document.getElementById('height').value) || 800;
-    
+
     canvas.width = Math.min(width, 400);
     canvas.height = Math.min(height, 300);
-    
+
     const scale = Math.min(400 / width, 300 / height);
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     const bgType = document.getElementById('background_type').value;
     if (bgType === 'color') {
         ctx.fillStyle = document.getElementById('background_color').value;
@@ -362,7 +362,7 @@ function updateGradient() {
 function prepareFormData() {
     const textElements = [];
     const items = document.querySelectorAll('.text-element-item');
-    
+
     items.forEach((item) => {
         const inputs = item.querySelectorAll('input');
         const text = inputs[0]?.value;
@@ -370,7 +370,7 @@ function prepareFormData() {
         const y = inputs[2]?.value;
         const size = inputs[3]?.value;
         const color = inputs[4]?.value;
-        
+
         if (text) {
             textElements.push({
                 text: text,
@@ -382,7 +382,7 @@ function prepareFormData() {
             });
         }
     });
-    
+
     document.getElementById('text_elements_json').value = JSON.stringify(textElements);
 }
 
