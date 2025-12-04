@@ -257,10 +257,14 @@
         @forelse($courses as $course)
             <div class="col-lg-4 col-md-6">
                 <div class="course-card">
-                    <div class="course-header {{ $course->image ? 'has-image' : '' }}"
-                         @if($course->image) style="background-image: url('{{ asset('storage/' . $course->image) }}');" @endif>
-                        @if($course->image)
-                            <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $course->name }}" loading="lazy">
+                    @php
+                        $hasImage = isset($course->image) && !empty($course->image);
+                    @endphp
+                    <div class="course-header {{ $hasImage ? 'has-image' : '' }}"
+                         @if($hasImage) style="background-image: url('{{ asset('storage/' . $course->image) }}');" @endif>
+                        @if($hasImage)
+                            <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $course->name }}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.course-icon').style.display='block';">
+                            <i class="fas fa-book course-icon" style="display: none;"></i>
                         @else
                             <i class="fas fa-book course-icon"></i>
                         @endif
@@ -289,9 +293,13 @@
                             @if($course->instructor)
                                 <div class="course-info-item">
                                     <i class="fas fa-user-tie"></i>
-                                    <a href="{{ route('instructors.show', $course->instructor) }}">
-                                        {{ $course->instructor->name }}
-                                    </a>
+                                    @if(Route::has('instructors.show'))
+                                        <a href="{{ route('instructors.show', $course->instructor) }}">
+                                            {{ $course->instructor->name }}
+                                        </a>
+                                    @else
+                                        <span>{{ $course->instructor->name }}</span>
+                                    @endif
                                 </div>
                             @endif
 
