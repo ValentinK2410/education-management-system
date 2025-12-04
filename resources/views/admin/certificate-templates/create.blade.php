@@ -388,31 +388,50 @@ function prepareFormData() {
     const textElements = [];
     const items = document.querySelectorAll('.text-element-item');
 
-    items.forEach((item, index) => {
-        const text = item.querySelector('[name*="[text]"]')?.value;
-        const x = item.querySelector('[name*="[x]"]')?.value;
-        const y = item.querySelector('[name*="[y]"]')?.value;
-        const size = item.querySelector('[name*="[size]"]')?.value;
-        const color = item.querySelector('[name*="[color]"]')?.value;
+    items.forEach((item) => {
+        const inputs = item.querySelectorAll('input');
+        if (inputs.length >= 5) {
+            const text = inputs[0]?.value; // текст
+            const x = inputs[1]?.value; // x
+            const y = inputs[2]?.value; // y
+            const size = inputs[3]?.value; // size
+            const color = inputs[4]?.value; // color
 
-        if (text) {
-            textElements.push({
-                text: text,
-                x: parseInt(x) || 0,
-                y: parseInt(y) || 0,
-                size: parseInt(size) || 24,
-                color: color || '#000000',
-                align: 'left'
-            });
+            if (text && text.trim() !== '') {
+                textElements.push({
+                    text: text.trim(),
+                    x: parseInt(x) || 0,
+                    y: parseInt(y) || 0,
+                    size: parseInt(size) || 24,
+                    color: color || '#000000',
+                    align: 'left'
+                });
+            }
         }
     });
 
-    document.getElementById('text_elements_json').value = JSON.stringify(textElements);
+    const jsonValue = JSON.stringify(textElements);
+    document.getElementById('text_elements_json').value = jsonValue;
+    
+    // Проверка валидности JSON
+    try {
+        JSON.parse(jsonValue);
+        console.log('JSON валиден:', jsonValue);
+    } catch (e) {
+        console.error('Ошибка JSON:', e);
+        alert('Ошибка при подготовке данных. Пожалуйста, проверьте заполнение полей.');
+        return false;
+    }
+    
+    return true;
 }
 
 // Обработка отправки формы
 document.getElementById('templateForm').addEventListener('submit', function(e) {
-    prepareFormData();
+    if (!prepareFormData()) {
+        e.preventDefault();
+        return false;
+    }
 });
 
 // Инициализация
