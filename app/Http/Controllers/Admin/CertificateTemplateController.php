@@ -69,15 +69,31 @@ class CertificateTemplateController extends Controller
         }
 
         // Парсинг градиента
-        if ($request->has('background_gradient') && $request->background_type === 'gradient') {
-            $data['background_gradient'] = json_decode($request->background_gradient, true);
+        if ($request->has('background_gradient') && $request->background_type === 'gradient' && !empty($request->background_gradient)) {
+            $gradientData = json_decode($request->background_gradient, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['background_gradient'] = $gradientData;
+            }
+        } elseif ($request->background_type === 'gradient') {
+            // Если градиент не передан, но тип градиент, создаем пустой
+            $data['background_gradient'] = null;
         }
 
         // Парсинг элементов текста
         if ($request->has('text_elements_json') && !empty($request->text_elements_json)) {
-            $data['text_elements'] = json_decode($request->text_elements_json, true);
+            $textElementsData = json_decode($request->text_elements_json, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['text_elements'] = $textElementsData;
+            } else {
+                $data['text_elements'] = [];
+            }
         } elseif ($request->has('text_elements')) {
-            $data['text_elements'] = json_decode($request->text_elements, true);
+            $textElementsData = json_decode($request->text_elements, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['text_elements'] = $textElementsData;
+            } else {
+                $data['text_elements'] = [];
+            }
         } else {
             $data['text_elements'] = [];
         }
@@ -163,15 +179,40 @@ class CertificateTemplateController extends Controller
         }
 
         // Парсинг градиента
-        if ($request->has('background_gradient') && $request->background_type === 'gradient') {
-            $data['background_gradient'] = json_decode($request->background_gradient, true);
+        if ($request->has('background_gradient') && $request->background_type === 'gradient' && !empty($request->background_gradient)) {
+            $gradientData = json_decode($request->background_gradient, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['background_gradient'] = $gradientData;
+            }
+        } elseif ($request->background_type === 'gradient') {
+            // Если градиент не передан, но тип градиент, сохраняем текущий или null
+            if (!isset($data['background_gradient'])) {
+                $data['background_gradient'] = $certificateTemplate->background_gradient;
+            }
         }
 
         // Парсинг элементов текста
-        if ($request->has('text_elements_json')) {
-            $data['text_elements'] = json_decode($request->text_elements_json, true);
+        if ($request->has('text_elements_json') && !empty($request->text_elements_json)) {
+            $textElementsData = json_decode($request->text_elements_json, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['text_elements'] = $textElementsData;
+            }
         } elseif ($request->has('text_elements')) {
-            $data['text_elements'] = json_decode($request->text_elements, true);
+            $textElementsData = json_decode($request->text_elements, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $data['text_elements'] = $textElementsData;
+            }
+        }
+
+        // Очистка неиспользуемых полей фона
+        if ($data['background_type'] !== 'color') {
+            unset($data['background_color']);
+        }
+        if ($data['background_type'] !== 'image' && !$request->hasFile('background_image') && !$request->has('remove_background_image')) {
+            unset($data['background_image']);
+        }
+        if ($data['background_type'] !== 'gradient') {
+            unset($data['background_gradient']);
         }
 
         $certificateTemplate->update($data);
