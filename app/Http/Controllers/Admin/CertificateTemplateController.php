@@ -107,11 +107,11 @@ class CertificateTemplateController extends Controller
                 $data['background_color'] = '#ffffff';
             }
         }
-        
+
         if ($data['background_type'] !== 'image') {
             unset($data['background_image']);
         }
-        
+
         if ($data['background_type'] !== 'gradient') {
             unset($data['background_gradient']);
         } else {
@@ -138,7 +138,7 @@ class CertificateTemplateController extends Controller
             \Log::error('Ошибка создания шаблона сертификата: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->back()
                 ->with('error', 'Произошла ошибка при создании шаблона: ' . $e->getMessage())
                 ->withInput();
