@@ -44,8 +44,8 @@ class CertificateTemplateController extends Controller
             'background_color' => 'required_if:background_type,color|string',
             'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'background_gradient' => 'nullable|string',
-            'text_elements' => 'nullable|json',
-            'is_active' => 'boolean',
+            'text_elements_json' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
             'is_default' => 'boolean',
         ]);
 
@@ -170,8 +170,8 @@ class CertificateTemplateController extends Controller
             'background_color' => 'required_if:background_type,color|string',
             'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'background_gradient' => 'nullable|string',
-            'text_elements' => 'nullable|json',
-            'is_active' => 'boolean',
+            'text_elements_json' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
             'is_default' => 'boolean',
         ]);
 
