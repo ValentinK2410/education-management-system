@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
+
 @section('title', 'Курсы')
 
 @push('styles')
@@ -259,11 +263,12 @@
                 <div class="course-card">
                     @php
                         $hasImage = isset($course->image) && !empty($course->image);
+                        $imageUrl = $hasImage ? Storage::url($course->image) : null;
                     @endphp
                     <div class="course-header {{ $hasImage ? 'has-image' : '' }}"
-                         @if($hasImage) style="background-image: url('{{ asset('storage/' . $course->image) }}');" @endif>
-                        @if($hasImage)
-                            <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $course->name }}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.course-icon').style.display='block';">
+                         @if($hasImage && $imageUrl) style="background-image: url('{{ $imageUrl }}');" @endif>
+                        @if($hasImage && $imageUrl)
+                            <img src="{{ $imageUrl }}" alt="{{ $course->name }}" loading="lazy" onerror="this.style.display='none'; this.parentElement.classList.remove('has-image'); this.parentElement.querySelector('.course-icon').style.display='block';">
                             <i class="fas fa-book course-icon" style="display: none;"></i>
                         @else
                             <i class="fas fa-book course-icon"></i>
