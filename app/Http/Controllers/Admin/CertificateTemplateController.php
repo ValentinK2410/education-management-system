@@ -62,7 +62,19 @@ class CertificateTemplateController extends Controller
 
         // Обработка загрузки фонового изображения
         if ($request->hasFile('background_image')) {
-            Storage::disk('public')->makeDirectory('certificate-templates');
+            $directory = 'certificate-templates';
+            $fullPath = storage_path('app/public/' . $directory);
+            
+            // Создаем директорию, если её нет
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
+            
+            // Проверяем права доступа
+            if (!is_writable($fullPath)) {
+                chmod($fullPath, 0755);
+            }
+            
             $image = $request->file('background_image');
             $imageName = time() . '_' . Str::slug($request->name) . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs('certificate-templates', $imageName, 'public');
@@ -189,7 +201,18 @@ class CertificateTemplateController extends Controller
 
         // Обработка загрузки фонового изображения
         if ($request->hasFile('background_image')) {
-            Storage::disk('public')->makeDirectory('certificate-templates');
+            $directory = 'certificate-templates';
+            $fullPath = storage_path('app/public/' . $directory);
+            
+            // Создаем директорию, если её нет
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
+            
+            // Проверяем права доступа
+            if (!is_writable($fullPath)) {
+                chmod($fullPath, 0755);
+            }
 
             // Удаляем старое изображение
             if ($certificateTemplate->background_image && Storage::disk('public')->exists($certificateTemplate->background_image)) {

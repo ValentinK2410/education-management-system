@@ -194,26 +194,26 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <label class="form-label">Текст</label>
-                                                <input type="text" class="form-control" name="text_elements[0][text]"
+                                                <input type="text" class="form-control text-element-input"
                                                        value="Сертификат" placeholder="Используйте {user_name}, {course_name}, {date}">
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label">X</label>
-                                                <input type="number" class="form-control" name="text_elements[0][x]" value="100">
+                                                <input type="number" class="form-control text-element-input" value="100">
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label">Y</label>
-                                                <input type="number" class="form-control" name="text_elements[0][y]" value="200">
+                                                <input type="number" class="form-control text-element-input" value="200">
                                             </div>
                                         </div>
                                         <div class="row mt-2">
                                             <div class="col-md-3">
                                                 <label class="form-label">Размер</label>
-                                                <input type="number" class="form-control" name="text_elements[0][size]" value="48">
+                                                <input type="number" class="form-control text-element-input" value="48">
                                             </div>
                                             <div class="col-md-3">
                                                 <label class="form-label">Цвет</label>
-                                                <input type="color" class="form-control form-control-color" name="text_elements[0][color]" value="#000000">
+                                                <input type="color" class="form-control form-control-color text-element-input" value="#000000">
                                             </div>
                                         </div>
                                     </div>
@@ -280,26 +280,26 @@ document.getElementById('addTextElement').addEventListener('click', function() {
         <div class="row">
             <div class="col-md-6">
                 <label class="form-label">Текст</label>
-                <input type="text" class="form-control" name="text_elements[${textElementIndex}][text]"
+                <input type="text" class="form-control text-element-input"
                        placeholder="Используйте {user_name}, {course_name}, {date}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">X</label>
-                <input type="number" class="form-control" name="text_elements[${textElementIndex}][x]" value="100">
+                <input type="number" class="form-control text-element-input" value="100">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Y</label>
-                <input type="number" class="form-control" name="text_elements[${textElementIndex}][y]" value="200">
+                <input type="number" class="form-control text-element-input" value="200">
             </div>
         </div>
         <div class="row mt-2">
             <div class="col-md-3">
                 <label class="form-label">Размер</label>
-                <input type="number" class="form-control" name="text_elements[${textElementIndex}][size]" value="24">
+                <input type="number" class="form-control text-element-input" value="24">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Цвет</label>
-                <input type="color" class="form-control form-control-color" name="text_elements[${textElementIndex}][color]" value="#000000">
+                <input type="color" class="form-control form-control-color text-element-input" value="#000000">
             </div>
             <div class="col-md-6">
                 <button type="button" class="btn btn-sm btn-danger mt-4" onclick="this.closest('.text-element-item').remove(); updatePreview();">
@@ -310,6 +310,14 @@ document.getElementById('addTextElement').addEventListener('click', function() {
     `;
     container.appendChild(newElement);
     textElementIndex++;
+    
+    // Добавляем слушатели для новых элементов
+    newElement.querySelectorAll('.text-element-input').forEach(input => {
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
+    });
+    
+    updatePreview();
 });
 
 // Обновление предпросмотра
@@ -344,17 +352,23 @@ function updatePreview() {
     }
 
     // Текстовые элементы
-    const textElements = document.querySelectorAll('[name^="text_elements"]');
-    textElements.forEach((input, index) => {
-        if (input.name.includes('[text]') && input.value) {
-            const x = parseInt(document.querySelector(`[name="text_elements[${Math.floor(index/6)}][x]"]`)?.value || 100) * scale;
-            const y = parseInt(document.querySelector(`[name="text_elements[${Math.floor(index/6)}][y]"]`)?.value || 200) * scale;
-            const size = parseInt(document.querySelector(`[name="text_elements[${Math.floor(index/6)}][size]"]`)?.value || 24) * scale;
-            const color = document.querySelector(`[name="text_elements[${Math.floor(index/6)}][color]"]`)?.value || '#000000';
-
-            ctx.fillStyle = color;
-            ctx.font = `${size}px Arial`;
-            ctx.fillText(input.value, x, y);
+    const textElementItems = document.querySelectorAll('.text-element-item');
+    textElementItems.forEach((item) => {
+        const inputs = item.querySelectorAll('input');
+        if (inputs.length >= 5) {
+            const text = inputs[0]?.value || '';
+            const x = parseInt(inputs[1]?.value || 100) * scale;
+            const y = parseInt(inputs[2]?.value || 200) * scale;
+            const size = parseInt(inputs[3]?.value || 24) * scale;
+            const color = inputs[4]?.value || '#000000';
+            
+            if (text && text.trim() !== '') {
+                ctx.fillStyle = color;
+                ctx.font = `bold ${size}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(text, x, y);
+            }
         }
     });
 }
@@ -378,9 +392,25 @@ function updateGradient() {
 }
 
 // Слушатели для обновления предпросмотра
-['width', 'height', 'background_color', 'background_type'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', updatePreview);
-    document.getElementById(id)?.addEventListener('change', updatePreview);
+['width', 'height', 'background_color', 'background_type', 'gradient_color1', 'gradient_color2'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+        element.addEventListener('input', updatePreview);
+        element.addEventListener('change', updatePreview);
+    }
+});
+
+// Слушатели для текстовых элементов
+document.addEventListener('input', function(e) {
+    if (e.target.closest('.text-element-item')) {
+        updatePreview();
+    }
+});
+
+// Слушатель для изменения типа фона
+document.getElementById('background_type')?.addEventListener('change', function() {
+    updatePreview();
+    updateGradient();
 });
 
 // Подготовка данных формы перед отправкой

@@ -193,27 +193,27 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <label class="form-label">Текст</label>
-                                                        <input type="text" class="form-control"
+                                                        <input type="text" class="form-control text-element-input"
                                                                value="{{ $element['text'] ?? '' }}"
                                                                placeholder="Используйте {user_name}, {course_name}, {date}">
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">X</label>
-                                                        <input type="number" class="form-control" value="{{ $element['x'] ?? 100 }}">
+                                                        <input type="number" class="form-control text-element-input" value="{{ $element['x'] ?? 100 }}">
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Y</label>
-                                                        <input type="number" class="form-control" value="{{ $element['y'] ?? 200 }}">
+                                                        <input type="number" class="form-control text-element-input" value="{{ $element['y'] ?? 200 }}">
                                                     </div>
                                                 </div>
                                                 <div class="row mt-2">
                                                     <div class="col-md-3">
                                                         <label class="form-label">Размер</label>
-                                                        <input type="number" class="form-control" value="{{ $element['size'] ?? 24 }}">
+                                                        <input type="number" class="form-control text-element-input" value="{{ $element['size'] ?? 24 }}">
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Цвет</label>
-                                                        <input type="color" class="form-control form-control-color" value="{{ $element['color'] ?? '#000000' }}">
+                                                        <input type="color" class="form-control form-control-color text-element-input" value="{{ $element['color'] ?? '#000000' }}">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <button type="button" class="btn btn-sm btn-danger mt-4" onclick="this.closest('.text-element-item').remove(); updatePreview();">
@@ -289,25 +289,25 @@ document.getElementById('addTextElement').addEventListener('click', function() {
         <div class="row">
             <div class="col-md-6">
                 <label class="form-label">Текст</label>
-                <input type="text" class="form-control" placeholder="Используйте {user_name}, {course_name}, {date}">
+                <input type="text" class="form-control text-element-input" placeholder="Используйте {user_name}, {course_name}, {date}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">X</label>
-                <input type="number" class="form-control" value="100">
+                <input type="number" class="form-control text-element-input" value="100">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Y</label>
-                <input type="number" class="form-control" value="200">
+                <input type="number" class="form-control text-element-input" value="200">
             </div>
         </div>
         <div class="row mt-2">
             <div class="col-md-3">
                 <label class="form-label">Размер</label>
-                <input type="number" class="form-control" value="24">
+                <input type="number" class="form-control text-element-input" value="24">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Цвет</label>
-                <input type="color" class="form-control form-control-color" value="#000000">
+                <input type="color" class="form-control form-control-color text-element-input" value="#000000">
             </div>
             <div class="col-md-6">
                 <button type="button" class="btn btn-sm btn-danger mt-4" onclick="this.closest('.text-element-item').remove(); updatePreview();">
@@ -318,6 +318,14 @@ document.getElementById('addTextElement').addEventListener('click', function() {
     `;
     container.appendChild(newElement);
     textElementIndex++;
+    
+    // Добавляем слушатели для новых элементов
+    newElement.querySelectorAll('.text-element-input').forEach(input => {
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
+    });
+    
+    updatePreview();
 });
 
 function updatePreview() {
@@ -347,6 +355,27 @@ function updatePreview() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+    
+    // Текстовые элементы
+    const textElementItems = document.querySelectorAll('.text-element-item');
+    textElementItems.forEach((item) => {
+        const inputs = item.querySelectorAll('input');
+        if (inputs.length >= 5) {
+            const text = inputs[0]?.value || '';
+            const x = parseInt(inputs[1]?.value || 100) * scale;
+            const y = parseInt(inputs[2]?.value || 200) * scale;
+            const size = parseInt(inputs[3]?.value || 24) * scale;
+            const color = inputs[4]?.value || '#000000';
+            
+            if (text && text.trim() !== '') {
+                ctx.fillStyle = color;
+                ctx.font = `bold ${size}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(text, x, y);
+            }
+        }
+    });
 }
 
 function updateGradient() {
@@ -406,8 +435,27 @@ function prepareFormData() {
     document.getElementById(id)?.addEventListener('change', updatePreview);
 });
 
-document.getElementById('gradient_color1')?.addEventListener('change', updateGradient);
-document.getElementById('gradient_color2')?.addEventListener('change', updateGradient);
+document.getElementById('gradient_color1')?.addEventListener('change', function() {
+    updateGradient();
+    updatePreview();
+});
+document.getElementById('gradient_color2')?.addEventListener('change', function() {
+    updateGradient();
+    updatePreview();
+});
+
+// Слушатели для текстовых элементов
+document.addEventListener('input', function(e) {
+    if (e.target.closest('.text-element-item')) {
+        updatePreview();
+    }
+});
+
+// Слушатель для изменения типа фона
+document.getElementById('background_type')?.addEventListener('change', function() {
+    updatePreview();
+    updateGradient();
+});
 
 // Обработка отправки формы
 document.getElementById('templateForm').addEventListener('submit', function(e) {
@@ -415,6 +463,12 @@ document.getElementById('templateForm').addEventListener('submit', function(e) {
         e.preventDefault();
         return false;
     }
+});
+
+// Добавляем слушатели для существующих текстовых элементов
+document.querySelectorAll('.text-element-input').forEach(input => {
+    input.addEventListener('input', updatePreview);
+    input.addEventListener('change', updatePreview);
 });
 
 updatePreview();
