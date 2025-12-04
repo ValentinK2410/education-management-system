@@ -38,13 +38,20 @@
     }
 
     .course-header {
-        height: 120px;
+        height: 200px;
         background: var(--primary-gradient);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
         overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .course-header.has-image {
+        background-image: var(--course-image);
     }
 
     .course-header::before {
@@ -59,23 +66,42 @@
         opacity: 0.3;
     }
 
+    .course-header.has-image::before {
+        background: linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%);
+        opacity: 1;
+    }
+
+    .course-header img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
     .course-icon {
         font-size: 3rem;
         color: white;
         position: relative;
-        z-index: 1;
+        z-index: 2;
         opacity: 0.9;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    .course-card:nth-child(3n+1) .course-header {
+    .course-header.has-image .course-icon {
+        display: none;
+    }
+
+    .course-card:nth-child(3n+1) .course-header:not(.has-image) {
         background: var(--primary-gradient);
     }
 
-    .course-card:nth-child(3n+2) .course-header {
+    .course-card:nth-child(3n+2) .course-header:not(.has-image) {
         background: var(--success-gradient);
     }
 
-    .course-card:nth-child(3n+3) .course-header {
+    .course-card:nth-child(3n+3) .course-header:not(.has-image) {
         background: var(--info-gradient);
     }
 
@@ -204,7 +230,7 @@
         }
 
         .course-header {
-            height: 100px;
+            height: 150px;
         }
 
         .course-icon {
@@ -231,8 +257,13 @@
         @forelse($courses as $course)
             <div class="col-lg-4 col-md-6">
                 <div class="course-card">
-                    <div class="course-header">
-                        <i class="fas fa-book course-icon"></i>
+                    <div class="course-header {{ $course->image ? 'has-image' : '' }}"
+                         @if($course->image) style="background-image: url('{{ asset('storage/' . $course->image) }}');" @endif>
+                        @if($course->image)
+                            <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $course->name }}" loading="lazy">
+                        @else
+                            <i class="fas fa-book course-icon"></i>
+                        @endif
                     </div>
                     <div class="course-body">
                         <div class="course-title-row">

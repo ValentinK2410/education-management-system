@@ -22,6 +22,7 @@ class Course extends Model
     protected $fillable = [
         'name',              // Название курса
         'description',       // Описание курса
+        'image',             // Изображение обложки курса
         'program_id',        // ID образовательной программы
         'instructor_id',     // ID преподавателя
         'code',              // Код курса
@@ -153,5 +154,46 @@ class Course extends Model
     public function getReviewsCountAttribute()
     {
         return $this->approvedReviews()->count();
+    }
+
+    /**
+     * Получить URL изображения обложки курса
+     *
+     * @return string
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+
+        // Возвращаем дефолтное изображение на основе названия курса
+        return $this->getDefaultImageUrl();
+    }
+
+    /**
+     * Получить URL дефолтного изображения на основе названия курса
+     *
+     * @return string
+     */
+    private function getDefaultImageUrl()
+    {
+        // Генерируем градиент на основе названия курса
+        $colors = [
+            ['#667eea', '#764ba2'], // Фиолетовый
+            ['#f093fb', '#f5576c'], // Розовый
+            ['#4facfe', '#00f2fe'], // Синий
+            ['#43e97b', '#38f9d7'], // Зеленый
+            ['#fa709a', '#fee140'], // Оранжевый
+            ['#30cfd0', '#330867'], // Бирюзовый
+            ['#a8edea', '#fed6e3'], // Светлый
+            ['#ff9a9e', '#fecfef'], // Розово-красный
+        ];
+
+        $index = crc32($this->name) % count($colors);
+        $gradient = $colors[$index];
+
+        // Возвращаем CSS градиент как data URI
+        return "linear-gradient(135deg, {$gradient[0]} 0%, {$gradient[1]} 100%)";
     }
 }

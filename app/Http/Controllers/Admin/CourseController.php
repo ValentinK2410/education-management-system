@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -58,6 +59,7 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'program_id' => 'required|exists:programs,id',
             'instructor_id' => 'nullable|exists:users,id',
             'code' => 'nullable|string|max:20',
@@ -83,6 +85,14 @@ class CourseController extends Controller
         // Если курс не платный, обнуляем цену
         if (!$data['is_paid']) {
             $data['price'] = null;
+        }
+
+        // Обработка загрузки изображения
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . Str::slug($request->name) . '.' . $image->getClientOriginalExtension();
+            $imagePath = $image->storeAs('courses', $imageName, 'public');
+            $data['image'] = $imagePath;
         }
 
         Course::create($data);
@@ -135,6 +145,7 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'program_id' => 'required|exists:programs,id',
             'instructor_id' => 'nullable|exists:users,id',
             'code' => 'nullable|string|max:20',
@@ -160,6 +171,28 @@ class CourseController extends Controller
         // Если курс не платный, обнуляем цену
         if (!$data['is_paid']) {
             $data['price'] = null;
+        }
+
+        // Обработка загрузки изображения
+        if ($request->hasFile('image')) {
+            // Удаляем старое изображение, если оно существует
+            if ($course->image && Storage::disk('public')->exists($course->image)) {
+                Storage::disk('public')->delete($course->image);
+            }
+
+            $image = $request->file('image');
+            $imageName = time() . '_' . Str::slug($request->name) . '.' . $image->getClientOriginalExtension();
+            $imagePath = $image->storeAs('courses', $imageName, 'public');
+            $data['image'] = $imagePath;
+        } elseif ($request->has('remove_image')) {
+            // Удаляем изображение, если пользователь хочет его удалить
+            if ($course->image && Storage::disk('public')->exists($course->image)) {
+                Storage::disk('public')->delete($course->image);
+            }
+            $data['image'] = null;
+        } else {
+            // Сохраняем существующее изображение
+            unset($data['image']);
         }
 
         $course->update($data);

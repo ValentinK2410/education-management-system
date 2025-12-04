@@ -14,7 +14,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.courses.update', $course) }}" method="POST">
+                    <form action="{{ route('admin.courses.update', $course) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -89,6 +89,32 @@
                             @error('description')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Обложка курса</label>
+
+                            @if($course->image)
+                                <div class="mb-3">
+                                    <img src="{{ asset('storage/' . $course->image) }}" alt="Текущая обложка" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image" value="1">
+                                        <label class="form-check-label" for="remove_image">
+                                            Удалить текущее изображение
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <input type="file" class="form-control @error('image') is-invalid @enderror"
+                                   id="image" name="image" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                            @error('image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Рекомендуемый размер: 1200x600px. Форматы: JPG, PNG, GIF, WebP. Максимальный размер: 2MB</div>
+                            <div id="image-preview" class="mt-3" style="display: none;">
+                                <img id="preview-img" src="" alt="Предпросмотр" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">
+                            </div>
                         </div>
 
                         <div class="row">
@@ -232,6 +258,38 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!isPaidCheckbox.checked) {
         priceInput.disabled = true;
         priceInput.placeholder = 'Бесплатный курс';
+    }
+
+    // Предпросмотр изображения
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const removeImageCheckbox = document.getElementById('remove_image');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            if (removeImageCheckbox) {
+                removeImageCheckbox.checked = false;
+            }
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    });
+
+    if (removeImageCheckbox) {
+        removeImageCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                imageInput.value = '';
+                imagePreview.style.display = 'none';
+            }
+        });
     }
 });
 </script>
