@@ -2,101 +2,312 @@
 
 @section('title', 'Курсы')
 
+@push('styles')
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .courses-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        border-radius: 0 0 2rem 2rem;
+    }
+
+    .course-card {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .course-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .course-header {
+        height: 120px;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .course-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.1)"/></svg>');
+        background-size: cover;
+        opacity: 0.3;
+    }
+
+    .course-icon {
+        font-size: 3rem;
+        color: white;
+        position: relative;
+        z-index: 1;
+        opacity: 0.9;
+    }
+
+    .course-card:nth-child(3n+1) .course-header {
+        background: var(--primary-gradient);
+    }
+
+    .course-card:nth-child(3n+2) .course-header {
+        background: var(--success-gradient);
+    }
+
+    .course-card:nth-child(3n+3) .course-header {
+        background: var(--info-gradient);
+    }
+
+    .course-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .course-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+
+    .course-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.3;
+        flex: 1;
+    }
+
+    .course-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+
+    .course-description {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+
+    .course-info {
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .course-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: #475569;
+    }
+
+    .course-info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .course-info-item i {
+        width: 20px;
+        color: #667eea;
+        margin-right: 0.5rem;
+    }
+
+    .course-info-item a {
+        color: #475569;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .course-info-item a:hover {
+        color: #667eea;
+    }
+
+    .course-footer {
+        margin-top: auto;
+        padding-top: 1rem;
+    }
+
+    .course-btn {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .course-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .courses-header {
+            padding: 2rem 0 1.5rem;
+            border-radius: 0 0 1rem 1rem;
+        }
+
+        .course-header {
+            height: 100px;
+        }
+
+        .course-icon {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container py-5">
-    <div class="row mb-5">
-        <div class="col-12">
-            <h1 class="fw-bold mb-3">Учебные курсы</h1>
-            <p class="text-muted">Изучайте новые навыки с лучшими преподавателями</p>
+<div class="courses-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold mb-3">Учебные курсы</h1>
+                <p class="lead mb-0">Изучайте новые навыки с лучшими преподавателями</p>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="row">
+<div class="container pb-5">
+    <div class="row g-4">
         @forelse($courses as $course)
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title">{{ $course->name }}</h5>
+            <div class="col-lg-4 col-md-6">
+                <div class="course-card">
+                    <div class="course-header">
+                        <i class="fas fa-book course-icon"></i>
+                    </div>
+                    <div class="course-body">
+                        <div class="course-title-row">
+                            <h5 class="course-title">{{ $course->name }}</h5>
                             @if($course->credits)
-                                <span class="badge bg-success">{{ $course->credits }} кредитов</span>
+                                <span class="course-badge">{{ $course->credits }} кредитов</span>
                             @endif
                         </div>
 
-                        <p class="card-text text-muted flex-grow-1">{{ Str::limit($course->description, 120) }}</p>
+                        <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
 
-                        <div class="mb-3">
-                            <small class="text-muted">
-                                <i class="fas fa-university me-1"></i>{{ $course->program->institution->name }}
-                            </small>
-                        </div>
+                        <div class="course-info">
+                            <div class="course-info-item">
+                                <i class="fas fa-university"></i>
+                                <span>{{ $course->program->institution->name }}</span>
+                            </div>
 
-                        <div class="mb-3">
-                            <small class="text-muted">
-                                <i class="fas fa-book me-1"></i>{{ $course->program->name }}
-                            </small>
-                        </div>
+                            <div class="course-info-item">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span>{{ $course->program->name }}</span>
+                            </div>
 
-                        @if($course->instructor)
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>
-                                    <a href="{{ route('instructors.show', $course->instructor) }}" class="text-decoration-none">
+                            @if($course->instructor)
+                                <div class="course-info-item">
+                                    <i class="fas fa-user-tie"></i>
+                                    <a href="{{ route('instructors.show', $course->instructor) }}">
                                         {{ $course->instructor->name }}
                                     </a>
-                                </small>
-                            </div>
-                        @endif
-
-                        <div class="row mb-3">
-                            @if($course->duration)
-                                <div class="col-6">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>{{ $course->duration }}
-                                    </small>
                                 </div>
                             @endif
+
+                            @if($course->duration)
+                                <div class="course-info-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ $course->duration }}</span>
+                                </div>
+                            @endif
+
                             @if($course->schedule)
-                                <div class="col-6">
-                                    <small class="text-muted">
-                                        <i class="fas fa-calendar me-1"></i>{{ $course->schedule }}
-                                    </small>
+                                <div class="course-info-item">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>{{ $course->schedule }}</span>
+                                </div>
+                            @endif
+
+                            @if($course->location)
+                                <div class="course-info-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>{{ $course->location }}</span>
                                 </div>
                             @endif
                         </div>
 
-                        @if($course->location)
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-map-marker-alt me-1"></i>{{ $course->location }}
-                                </small>
-                            </div>
-                        @endif
-
-                        <div class="mt-auto">
-                            <a href="{{ route('courses.show', $course) }}" class="btn btn-primary btn-sm w-100">
-                                Подробнее <i class="fas fa-arrow-right ms-1"></i>
+                        <div class="course-footer">
+                            <a href="{{ route('courses.show', $course) }}" class="course-btn">
+                                Подробнее <i class="fas fa-arrow-right"></i>
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
         @empty
-            <div class="col-12 text-center">
-                <div class="card">
-                    <div class="card-body">
-                        <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Курсы не найдены</h5>
-                        <p class="text-muted">Учебные курсы будут добавлены в ближайшее время</p>
-                    </div>
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-chalkboard-teacher empty-state-icon"></i>
+                    <h3 class="text-muted mb-3">Курсы не найдены</h3>
+                    <p class="text-muted">Учебные курсы будут добавлены в ближайшее время</p>
                 </div>
             </div>
         @endforelse
     </div>
 
     @if($courses->hasPages())
-        <div class="row">
-            <div class="col-12">
+        <div class="row mt-5">
+            <div class="col-12 d-flex justify-content-center">
                 {{ $courses->links() }}
             </div>
         </div>
