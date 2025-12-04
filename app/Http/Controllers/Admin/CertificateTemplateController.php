@@ -101,18 +101,48 @@ class CertificateTemplateController extends Controller
         // Очистка неиспользуемых полей фона
         if ($data['background_type'] !== 'color') {
             unset($data['background_color']);
+        } else {
+            // Убеждаемся, что цвет установлен
+            if (empty($data['background_color'])) {
+                $data['background_color'] = '#ffffff';
+            }
         }
+        
         if ($data['background_type'] !== 'image') {
             unset($data['background_image']);
         }
+        
         if ($data['background_type'] !== 'gradient') {
             unset($data['background_gradient']);
+        } else {
+            // Если градиент не установлен, создаем дефолтный
+            if (empty($data['background_gradient'])) {
+                $data['background_gradient'] = ['colors' => ['#ffffff', '#f0f0f0']];
+            }
         }
 
-        CertificateTemplate::create($data);
+        // Убеждаемся, что text_elements установлен
+        if (empty($data['text_elements'])) {
+            $data['text_elements'] = [];
+        }
 
-        return redirect()->route('admin.certificate-templates.index')
-            ->with('success', 'Шаблон сертификата успешно создан.');
+            $template = CertificateTemplate::create($data);
+
+            return redirect()->route('admin.certificate-templates.index')
+                ->with('success', 'Шаблон сертификата успешно создан.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Ошибка создания шаблона сертификата: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при создании шаблона: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
