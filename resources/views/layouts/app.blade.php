@@ -20,6 +20,20 @@
             --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
+        /* Sticky Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            background: white !important;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
         .navbar-brand {
             font-weight: 600;
             font-size: 1.25rem;
@@ -83,6 +97,15 @@
             border-bottom: 1px solid #e2e8f0;
             padding: 1rem 0;
             margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb-container.scrolled {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .breadcrumb {
@@ -215,7 +238,7 @@
     @php
         $routeName = request()->route()->getName();
         $breadcrumbs = [];
-        
+
         // Главная страница
         if ($routeName == 'home') {
             $breadcrumbs = [
@@ -355,6 +378,57 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.js"></script>
+    <script>
+        // Sticky navbar with scroll effect
+        (function() {
+            const navbar = document.querySelector('.navbar');
+            const breadcrumbContainer = document.querySelector('.breadcrumb-container');
+            
+            if (!navbar) return;
+            
+            function updateNavbar() {
+                if (window.scrollY > 10) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+            
+            // Update navbar on scroll
+            window.addEventListener('scroll', updateNavbar);
+            
+            // Update navbar on load (in case page is loaded with scroll position)
+            updateNavbar();
+            
+            // Update breadcrumb position and scroll effect dynamically
+            if (breadcrumbContainer) {
+                function updateBreadcrumbPosition() {
+                    const navbarHeight = navbar.offsetHeight;
+                    breadcrumbContainer.style.top = navbarHeight + 'px';
+                    
+                    // Add scroll effect to breadcrumbs
+                    if (window.scrollY > navbarHeight + 10) {
+                        breadcrumbContainer.classList.add('scrolled');
+                    } else {
+                        breadcrumbContainer.classList.remove('scrolled');
+                    }
+                }
+                
+                // Update on load and resize
+                updateBreadcrumbPosition();
+                window.addEventListener('resize', updateBreadcrumbPosition);
+                window.addEventListener('scroll', updateBreadcrumbPosition);
+                
+                // Update when navbar collapses/expands (mobile menu)
+                const navbarToggler = document.querySelector('.navbar-toggler');
+                if (navbarToggler) {
+                    navbarToggler.addEventListener('click', function() {
+                        setTimeout(updateBreadcrumbPosition, 350); // Wait for collapse animation
+                    });
+                }
+            }
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>
