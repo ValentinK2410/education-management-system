@@ -195,6 +195,9 @@
                     </div>
                 </div>
             </div>
+        @endif
+    </div>
+
     <!-- Reviews Section -->
     <div class="row mt-5">
         <div class="col-12">
