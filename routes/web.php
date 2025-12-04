@@ -5,6 +5,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
@@ -431,6 +432,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление пользователями
         Route::resource('users', UserController::class);
+
+        // Управление ролями
+        Route::resource('roles', RoleController::class);
 
         // Управление учебными заведениями
         Route::resource('institutions', InstitutionController::class);

@@ -543,6 +543,13 @@
                 </a>
             </div>
 
+            <div class="nav-item">
+                <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Роли</span>
+                </a>
+            </div>
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>
