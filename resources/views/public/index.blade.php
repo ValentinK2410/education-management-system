@@ -876,8 +876,8 @@
                             <div class="event-header {{ $hasImage ? 'has-image' : '' }}"
                                  @if($hasImage) style="background-image: url('{{ Storage::url($event->image) }}');" @endif>
                                 @if($hasImage)
-                                    <img src="{{ Storage::url($event->image) }}" 
-                                         alt="{{ $event->title }}" 
+                                    <img src="{{ Storage::url($event->image) }}"
+                                         alt="{{ $event->title }}"
                                          loading="lazy"
                                          onerror="this.style.display='none'; this.parentElement.classList.remove('has-image');">
                                     <i class="fas fa-calendar-alt event-icon" style="display: none;"></i>
@@ -894,7 +894,7 @@
                                 @if($event->description)
                                     <p class="event-description">{{ Str::limit($event->description, 120) }}</p>
                                 @endif
-                                
+
                                 <div class="event-info">
                                     <div class="event-info-item">
                                         <i class="fas fa-calendar"></i>
@@ -915,10 +915,10 @@
                                         @endif
                                     </div>
                                 </div>
-                                
+
                                 @if($event->registration_url)
-                                    <a href="{{ $event->registration_url }}" 
-                                       target="_blank" 
+                                    <a href="{{ $event->registration_url }}"
+                                       target="_blank"
                                        class="event-btn">
                                         <i class="fas fa-external-link-alt"></i>
                                         Регистрация
@@ -948,8 +948,8 @@
                             <div class="event-header {{ $hasImage ? 'has-image' : '' }}"
                                  @if($hasImage) style="background-image: url('{{ Storage::url($event->image) }}');" @endif>
                                 @if($hasImage)
-                                    <img src="{{ Storage::url($event->image) }}" 
-                                         alt="{{ $event->title }}" 
+                                    <img src="{{ Storage::url($event->image) }}"
+                                         alt="{{ $event->title }}"
                                          loading="lazy"
                                          onerror="this.style.display='none'; this.parentElement.classList.remove('has-image');">
                                     <i class="fas fa-calendar-alt event-icon" style="display: none;"></i>
@@ -962,7 +962,7 @@
                                 @if($event->description)
                                     <p class="event-description">{{ Str::limit($event->description, 80) }}</p>
                                 @endif
-                                
+
                                 <div class="event-info">
                                     <div class="event-info-item">
                                         <i class="fas fa-calendar"></i>
@@ -975,10 +975,10 @@
                                         </div>
                                     @endif
                                 </div>
-                                
+
                                 @if($event->registration_url)
-                                    <a href="{{ $event->registration_url }}" 
-                                       target="_blank" 
+                                    <a href="{{ $event->registration_url }}"
+                                       target="_blank"
                                        class="event-btn">
                                         <i class="fas fa-external-link-alt"></i>
                                         Регистрация
@@ -1012,8 +1012,8 @@
                         <div class="institution-header {{ $hasLogo ? 'has-logo' : '' }}"
                              @if($hasLogo) style="background-image: url('{{ Storage::url($institution->logo) }}');" @endif>
                             @if($hasLogo)
-                                <img src="{{ Storage::url($institution->logo) }}" 
-                                     alt="{{ $institution->name }}" 
+                                <img src="{{ Storage::url($institution->logo) }}"
+                                     alt="{{ $institution->name }}"
                                      loading="lazy"
                                      onerror="this.style.display='none'; this.parentElement.classList.remove('has-logo'); this.parentElement.querySelector('.institution-icon').style.display='flex';">
                                 <i class="fas fa-university institution-icon" style="display: none;"></i>
@@ -1115,8 +1115,8 @@
                         <div class="course-header {{ $hasImage ? 'has-image' : '' }}"
                              @if($hasImage) style="background-image: url('{{ asset('storage/' . $course->image) }}');" @endif>
                             @if($hasImage)
-                                <img src="{{ asset('storage/' . $course->image) }}" 
-                                     alt="{{ $course->name }}" 
+                                <img src="{{ asset('storage/' . $course->image) }}"
+                                     alt="{{ $course->name }}"
                                      loading="lazy"
                                      onerror="this.style.display='none'; this.parentElement.classList.remove('has-image'); this.parentElement.querySelector('.course-icon').style.display='flex';">
                                 <i class="fas fa-book course-icon" style="display: none;"></i>

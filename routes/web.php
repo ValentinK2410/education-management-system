@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 
 // Главная страница (современный дизайн)
@@ -39,6 +40,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    
+    // Сертификаты
+    Route::get('/certificates/{certificate}', [CertificateController::class, 'show'])->name('certificates.show');
+    Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
+    Route::post('/courses/{course}/generate-certificate', [CertificateController::class, 'generateForCourse'])->name('certificates.generate.course');
+    Route::post('/programs/{program}/generate-certificate', [CertificateController::class, 'generateForProgram'])->name('certificates.generate.program');
 });
 
 // Тестовые маршруты админки (временно без авторизации)
@@ -461,6 +468,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
         Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
         Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        // Шаблоны сертификатов
+        Route::resource('certificate-templates', \App\Http\Controllers\Admin\CertificateTemplateController::class);
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

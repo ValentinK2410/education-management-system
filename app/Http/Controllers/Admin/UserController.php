@@ -110,7 +110,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user->load([
-            'roles', 
+            'roles',
             'taughtCourses.program.institution',
             'programs.institution',
             'courses.program.institution',
@@ -185,7 +185,7 @@ class UserController extends Controller
             if ($user->photo && Storage::disk('public')->exists($user->photo)) {
                 Storage::disk('public')->delete($user->photo);
             }
-            
+
             $path = $request->file('photo')->store('avatars', 'public');
             $data['photo'] = $path;
             \Log::info('Photo uploaded for user', ['user_id' => $user->id, 'path' => $path]);

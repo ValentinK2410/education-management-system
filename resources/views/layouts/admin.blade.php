@@ -557,6 +557,13 @@
                 </a>
             </div>
 
+            <div class="nav-item">
+                <a href="{{ route('admin.certificate-templates.index') }}" class="nav-link {{ request()->routeIs('admin.certificate-templates.*') ? 'active' : '' }}">
+                    <i class="fas fa-certificate"></i>
+                    <span>Шаблоны сертификатов</span>
+                </a>
+            </div>
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>

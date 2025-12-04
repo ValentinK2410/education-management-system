@@ -272,8 +272,8 @@
                     <div class="institution-header {{ $hasLogo ? 'has-logo' : '' }}"
                          @if($hasLogo) style="background-image: url('{{ Storage::url($institution->logo) }}');" @endif>
                         @if($hasLogo)
-                            <img src="{{ Storage::url($institution->logo) }}" 
-                                 alt="{{ $institution->name }}" 
+                            <img src="{{ Storage::url($institution->logo) }}"
+                                 alt="{{ $institution->name }}"
                                  loading="lazy"
                                  onerror="this.style.display='none'; this.parentElement.classList.remove('has-logo'); this.parentElement.querySelector('.institution-icon').style.display='flex';">
                             <i class="fas fa-university institution-icon" style="display: none;"></i>

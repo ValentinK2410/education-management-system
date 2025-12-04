@@ -91,7 +91,7 @@ class CourseController extends Controller
         if ($request->hasFile('image')) {
             // Убеждаемся, что директория существует
             Storage::disk('public')->makeDirectory('courses');
-            
+
             $image = $request->file('image');
             $imageName = time() . '_' . Str::slug($request->name) . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs('courses', $imageName, 'public');
@@ -180,7 +180,7 @@ class CourseController extends Controller
         if ($request->hasFile('image')) {
             // Убеждаемся, что директория существует
             Storage::disk('public')->makeDirectory('courses');
-            
+
             // Удаляем старое изображение, если оно существует
             if ($course->image && Storage::disk('public')->exists($course->image)) {
                 Storage::disk('public')->delete($course->image);

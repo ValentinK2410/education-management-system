@@ -296,8 +296,8 @@
     <div class="container institution-hero-content">
         <div class="institution-logo-wrapper">
             @if($institution->logo)
-                <img src="{{ Storage::url($institution->logo) }}" 
-                     class="institution-logo" 
+                <img src="{{ Storage::url($institution->logo) }}"
+                     class="institution-logo"
                      alt="{{ $institution->name }}"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="institution-logo-placeholder" style="display: none;">
