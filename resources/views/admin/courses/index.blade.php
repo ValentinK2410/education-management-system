@@ -104,6 +104,15 @@
                                                    class="btn btn-sm btn-warning" title="Редактировать">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <form action="{{ route('admin.courses.duplicate', $course) }}"
+                                                      method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-secondary"
+                                                            title="Дублировать курс"
+                                                            onclick="return confirm('Создать копию этого курса?')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </form>
                                                 <form action="{{ route('admin.courses.destroy', $course) }}"
                                                       method="POST" class="d-inline">
                                                     @csrf
