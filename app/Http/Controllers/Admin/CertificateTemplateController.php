@@ -74,8 +74,23 @@ class CertificateTemplateController extends Controller
         }
 
         // Парсинг элементов текста
-        if ($request->has('text_elements')) {
+        if ($request->has('text_elements_json') && !empty($request->text_elements_json)) {
+            $data['text_elements'] = json_decode($request->text_elements_json, true);
+        } elseif ($request->has('text_elements')) {
             $data['text_elements'] = json_decode($request->text_elements, true);
+        } else {
+            $data['text_elements'] = [];
+        }
+
+        // Очистка неиспользуемых полей фона
+        if ($data['background_type'] !== 'color') {
+            unset($data['background_color']);
+        }
+        if ($data['background_type'] !== 'image') {
+            unset($data['background_image']);
+        }
+        if ($data['background_type'] !== 'gradient') {
+            unset($data['background_gradient']);
         }
 
         CertificateTemplate::create($data);

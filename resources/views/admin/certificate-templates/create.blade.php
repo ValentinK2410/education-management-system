@@ -226,7 +226,7 @@
 
                                 <div class="d-flex justify-content-end gap-2 mt-4">
                                     <a href="{{ route('admin.certificate-templates.index') }}" class="btn btn-secondary">Отмена</a>
-                                    <button type="submit" class="btn btn-primary" onclick="prepareFormData()">Создать шаблон</button>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">Создать шаблон</button>
                                 </div>
                             </div>
 
@@ -392,6 +392,11 @@ function prepareFormData() {
 
     document.getElementById('text_elements_json').value = JSON.stringify(textElements);
 }
+
+// Обработка отправки формы
+document.getElementById('templateForm').addEventListener('submit', function(e) {
+    prepareFormData();
+});
 
 // Инициализация
 updatePreview();

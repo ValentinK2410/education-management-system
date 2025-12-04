@@ -252,7 +252,7 @@
 
                                 <div class="d-flex justify-content-end gap-2 mt-4">
                                     <a href="{{ route('admin.certificate-templates.index') }}" class="btn btn-secondary">Отмена</a>
-                                    <button type="submit" class="btn btn-primary" onclick="prepareFormData()">Сохранить изменения</button>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">Сохранить изменения</button>
                                 </div>
                             </div>
 
@@ -393,6 +393,11 @@ function prepareFormData() {
 
 document.getElementById('gradient_color1')?.addEventListener('change', updateGradient);
 document.getElementById('gradient_color2')?.addEventListener('change', updateGradient);
+
+// Обработка отправки формы
+document.getElementById('templateForm').addEventListener('submit', function(e) {
+    prepareFormData();
+});
 
 updatePreview();
 updateGradient();
