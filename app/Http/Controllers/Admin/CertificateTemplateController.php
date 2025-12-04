@@ -32,7 +32,8 @@ class CertificateTemplateController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        try {
+            $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:course,program',
             'description' => 'nullable|string',
@@ -126,10 +127,10 @@ class CertificateTemplateController extends Controller
             $data['text_elements'] = [];
         }
 
-            $template = CertificateTemplate::create($data);
+        $template = CertificateTemplate::create($data);
 
-            return redirect()->route('admin.certificate-templates.index')
-                ->with('success', 'Шаблон сертификата успешно создан.');
+        return redirect()->route('admin.certificate-templates.index')
+            ->with('success', 'Шаблон сертификата успешно создан.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()
                 ->withErrors($e->errors())
