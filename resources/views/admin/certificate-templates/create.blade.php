@@ -412,7 +412,7 @@ function prepareFormData() {
 
     const jsonValue = JSON.stringify(textElements);
     document.getElementById('text_elements_json').value = jsonValue;
-    
+
     // Проверка валидности JSON
     try {
         JSON.parse(jsonValue);
@@ -422,7 +422,7 @@ function prepareFormData() {
         alert('Ошибка при подготовке данных. Пожалуйста, проверьте заполнение полей.');
         return false;
     }
-    
+
     return true;
 }
 
