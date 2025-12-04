@@ -99,11 +99,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Защищенные маршруты - требуют авторизации
 Route::middleware(['auth'])->group(function () {
-    // Главная панель управления
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-
     // Тестовый маршрут для админки (временно без middleware)
     Route::get('/admin/test', function () {
         $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();

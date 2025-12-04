@@ -210,7 +210,9 @@
                                 <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-home me-2"></i>Панель управления</a></li>
+                                @if(auth()->user()->isAdmin())
+                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-home me-2"></i>Панель управления</a></li>
+                                @endif
                                 <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
@@ -383,9 +385,9 @@
         (function() {
             const navbar = document.querySelector('.navbar');
             const breadcrumbContainer = document.querySelector('.breadcrumb-container');
-            
+
             if (!navbar) return;
-            
+
             function updateNavbar() {
                 if (window.scrollY > 10) {
                     navbar.classList.add('scrolled');
@@ -393,19 +395,19 @@
                     navbar.classList.remove('scrolled');
                 }
             }
-            
+
             // Update navbar on scroll
             window.addEventListener('scroll', updateNavbar);
-            
+
             // Update navbar on load (in case page is loaded with scroll position)
             updateNavbar();
-            
+
             // Update breadcrumb position and scroll effect dynamically
             if (breadcrumbContainer) {
                 function updateBreadcrumbPosition() {
                     const navbarHeight = navbar.offsetHeight;
                     breadcrumbContainer.style.top = navbarHeight + 'px';
-                    
+
                     // Add scroll effect to breadcrumbs
                     if (window.scrollY > navbarHeight + 10) {
                         breadcrumbContainer.classList.add('scrolled');
@@ -413,12 +415,12 @@
                         breadcrumbContainer.classList.remove('scrolled');
                     }
                 }
-                
+
                 // Update on load and resize
                 updateBreadcrumbPosition();
                 window.addEventListener('resize', updateBreadcrumbPosition);
                 window.addEventListener('scroll', updateBreadcrumbPosition);
-                
+
                 // Update when navbar collapses/expands (mobile menu)
                 const navbarToggler = document.querySelector('.navbar-toggler');
                 if (navbarToggler) {
