@@ -8,6 +8,7 @@ use App\Models\Program;
 use App\Models\User;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Контроллер для публичных страниц
@@ -103,7 +104,16 @@ class PublicController extends Controller
      */
     public function courses()
     {
-        $courses = Course::active()->with(['program.institution', 'instructor'])->paginate(12);
+        try {
+            $courses = Course::active()
+                ->with(['program.institution', 'instructor'])
+                ->whereHas('program') // Только курсы с программой
+                ->paginate(12);
+        } catch (\Exception $e) {
+            // Если произошла ошибка, загружаем курсы без фильтров
+            Log::error('Ошибка загрузки курсов: ' . $e->getMessage());
+            $courses = Course::with(['program.institution', 'instructor'])->paginate(12);
+        }
         return view('public.courses.index', compact('courses'));
     }
 

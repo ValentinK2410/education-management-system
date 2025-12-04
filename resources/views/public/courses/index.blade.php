@@ -280,15 +280,19 @@
                         <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
 
                         <div class="course-info">
-                            <div class="course-info-item">
-                                <i class="fas fa-university"></i>
-                                <span>{{ $course->program->institution->name }}</span>
-                            </div>
+                            @if($course->program && $course->program->institution)
+                                <div class="course-info-item">
+                                    <i class="fas fa-university"></i>
+                                    <span>{{ $course->program->institution->name }}</span>
+                                </div>
+                            @endif
 
-                            <div class="course-info-item">
-                                <i class="fas fa-graduation-cap"></i>
-                                <span>{{ $course->program->name }}</span>
-                            </div>
+                            @if($course->program)
+                                <div class="course-info-item">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>{{ $course->program->name }}</span>
+                                </div>
+                            @endif
 
                             @if($course->instructor)
                                 <div class="course-info-item">
