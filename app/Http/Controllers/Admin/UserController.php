@@ -10,6 +10,7 @@ use App\Models\Program;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 /**
@@ -57,19 +58,41 @@ class UserController extends Controller
             'password' => ['required', Password::defaults()],
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'city' => 'nullable|string|max:100',
+            'religion' => 'nullable|string|max:100',
+            'church' => 'nullable|string|max:255',
+            'marital_status' => 'nullable|string|max:50',
+            'education' => 'nullable|string|max:255',
+            'about_me' => 'nullable|string',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
         ]);
 
-        // Создание нового пользователя
-        $user = User::create([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'bio' => $request->bio,
-            'is_active' => true,
-        ]);
+            'city' => $request->city,
+            'religion' => $request->religion,
+            'church' => $request->church,
+            'marital_status' => $request->marital_status,
+            'education' => $request->education,
+            'about_me' => $request->about_me,
+            'is_active' => $request->boolean('is_active', true),
+        ];
+
+        // Обработка загрузки фото
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('avatars', 'public');
+            $data['photo'] = $path;
+            \Log::info('Photo uploaded for new user', ['path' => $path]);
+        }
+
+        // Создание нового пользователя
+        $user = User::create($data);
 
         // Назначение ролей пользователю
         $user->roles()->sync($request->roles);
@@ -119,6 +142,13 @@ class UserController extends Controller
             'password' => ['nullable', Password::defaults()],
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'city' => 'nullable|string|max:100',
+            'religion' => 'nullable|string|max:100',
+            'church' => 'nullable|string|max:255',
+            'marital_status' => 'nullable|string|max:50',
+            'education' => 'nullable|string|max:255',
+            'about_me' => 'nullable|string',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
             'is_active' => 'boolean',
@@ -129,12 +159,30 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'bio' => $request->bio,
+            'city' => $request->city,
+            'religion' => $request->religion,
+            'church' => $request->church,
+            'marital_status' => $request->marital_status,
+            'education' => $request->education,
+            'about_me' => $request->about_me,
             'is_active' => $request->boolean('is_active'),
         ];
 
         // Обновление пароля только если он указан
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        // Обработка загрузки фото
+        if ($request->hasFile('photo')) {
+            // Удаляем старое фото, если есть
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
+            }
+            
+            $path = $request->file('photo')->store('avatars', 'public');
+            $data['photo'] = $path;
+            \Log::info('Photo uploaded for user', ['user_id' => $user->id, 'path' => $path]);
         }
 
         $user->update($data);

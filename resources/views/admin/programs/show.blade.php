@@ -49,6 +49,10 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td><strong>Локация:</strong></td>
+                                    <td>{{ $program->location ?? 'Не указана' }}</td>
+                                </tr>
+                                <tr>
                                     <td><strong>Продолжительность:</strong></td>
                                     <td>{{ $program->duration ? $program->duration . ' месяцев' : 'Не указана' }}</td>
                                 </tr>
