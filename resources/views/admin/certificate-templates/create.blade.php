@@ -235,7 +235,20 @@
                                                 <label class="form-label">Цвет</label>
                                                 <input type="color" class="form-control form-control-color text-element-input" value="#000000">
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Шрифт</label>
+                                                <select class="form-select text-element-input">
+                                                    <option value="Arial">Arial</option>
+                                                    <option value="Times New Roman">Times New Roman</option>
+                                                    <option value="Courier New">Courier New</option>
+                                                    <option value="Georgia">Georgia</option>
+                                                    <option value="Verdana">Verdana</option>
+                                                    <option value="Comic Sans MS">Comic Sans MS</option>
+                                                    <option value="Impact">Impact</option>
+                                                    <option value="Trebuchet MS">Trebuchet MS</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
                                                 <label class="form-label">Растяжение</label>
                                                 <input type="number" class="form-control text-element-input" value="0" min="0" max="50" step="0.5" placeholder="0">
                                                 <small class="text-muted">Интервал между буквами</small>
@@ -333,12 +346,27 @@ document.getElementById('addTextElement').addEventListener('click', function() {
                 <input type="color" class="form-control form-control-color text-element-input" value="#000000">
             </div>
             <div class="col-md-3">
+                <label class="form-label">Шрифт</label>
+                <select class="form-select text-element-input">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Impact">Impact</option>
+                    <option value="Trebuchet MS">Trebuchet MS</option>
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label">Растяжение</label>
                 <input type="number" class="form-control text-element-input" value="0" min="0" max="50" step="0.5" placeholder="0">
                 <small class="text-muted">Интервал между буквами</small>
             </div>
-            <div class="col-md-3">
-                <button type="button" class="btn btn-sm btn-danger mt-4" onclick="this.closest('.text-element-item').remove(); updatePreview();">
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
+                <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.text-element-item').remove(); updatePreview();">
                     <i class="fas fa-trash"></i> Удалить
                 </button>
             </div>
@@ -348,7 +376,7 @@ document.getElementById('addTextElement').addEventListener('click', function() {
     textElementIndex++;
 
     // Добавляем слушатели для новых элементов
-    newElement.querySelectorAll('.text-element-input').forEach(input => {
+    newElement.querySelectorAll('.text-element-input, select.text-element-input').forEach(input => {
         input.addEventListener('input', updatePreview);
         input.addEventListener('change', updatePreview);
     });
@@ -421,7 +449,7 @@ function updatePreview() {
         // Рисуем белый фон по умолчанию
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Если изображение загружено, рисуем его
         if (backgroundImage) {
             // Масштабируем изображение под размер canvas
@@ -439,6 +467,7 @@ function updatePreview() {
 
     textElementItems.forEach((item, index) => {
         const inputs = item.querySelectorAll('input');
+        const selects = item.querySelectorAll('select');
         if (inputs.length >= 6) {
             const text = inputs[0]?.value || '';
             const x = parseInt(inputs[1]?.value || 100) * scale;
@@ -446,9 +475,10 @@ function updatePreview() {
             const size = parseInt(inputs[3]?.value || 24) * scale;
             const color = inputs[4]?.value || '#000000';
             const letterSpacing = parseFloat(inputs[5]?.value || 0) * scale;
+            const font = selects[0]?.value || 'Arial';
 
             if (text && text.trim() !== '') {
-                ctx.font = `bold ${size}px Arial`;
+                ctx.font = `bold ${size}px ${font}`;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillStyle = color;
@@ -777,6 +807,12 @@ document.addEventListener('input', function(e) {
     }
 });
 
+document.addEventListener('change', function(e) {
+    if (e.target.closest('.text-element-item')) {
+        updatePreview();
+    }
+});
+
 // Слушатель для изменения типа фона
 document.getElementById('background_type')?.addEventListener('change', function() {
     updatePreview();
@@ -790,21 +826,24 @@ function prepareFormData() {
 
     items.forEach((item) => {
         const inputs = item.querySelectorAll('input');
+        const selects = item.querySelectorAll('select');
         if (inputs.length >= 5) {
             const text = inputs[0]?.value; // текст
             const x = inputs[1]?.value; // x
             const y = inputs[2]?.value; // y
             const size = inputs[3]?.value; // size
             const color = inputs[4]?.value; // color
+            const letterSpacing = parseFloat(inputs[5]?.value || 0);
+            const font = selects[0]?.value || 'Arial'; // шрифт
 
             if (text && text.trim() !== '') {
-                const letterSpacing = parseFloat(inputs[5]?.value || 0);
                 textElements.push({
                     text: text.trim(),
                     x: parseInt(x) || 0,
                     y: parseInt(y) || 0,
                     size: parseInt(size) || 24,
                     color: color || '#000000',
+                    font: font || 'Arial',
                     letterSpacing: letterSpacing || 0,
                     align: 'left'
                 });

@@ -237,12 +237,14 @@ class CertificateController extends Controller
             $y = $element['y'] ?? 0;
             $size = $element['size'] ?? 24;
             $color = $element['color'] ?? '#000000';
+            $font = $element['font'] ?? 'Arial';
             $letterSpacing = $element['letterSpacing'] ?? 0;
 
             $rgb = $this->hexToRgb($color);
             $textColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
 
-            // Используем встроенный шрифт (можно заменить на imagettftext для кастомных шрифтов)
+            // Используем встроенный шрифт GD (можно заменить на imagettftext для кастомных TTF шрифтов)
+            // Размер шрифта 1-5 соответствует встроенным шрифтам GD
             $fontSize = max(1, min(5, (int)($size / 10))); // Размер шрифта 1-5
 
             // Если есть растяжение (letter-spacing), рисуем каждую букву отдельно
