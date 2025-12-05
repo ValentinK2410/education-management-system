@@ -9,15 +9,18 @@
         border-radius: 8px;
         padding: 20px;
         background: #f8f9fa;
-        min-height: 400px;
+        min-height: 500px;
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        overflow: auto;
     }
     .preview-canvas {
         background: white;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         max-width: 100%;
+        cursor: crosshair;
     }
     .text-element-item {
         border: 1px solid #ddd;
@@ -25,6 +28,23 @@
         padding: 10px;
         margin-bottom: 10px;
         background: #f8f9fa;
+        transition: all 0.2s;
+    }
+    .text-element-item:hover {
+        border-color: #007bff;
+        background: #e7f3ff;
+    }
+    .text-element-item.selected {
+        border-color: #007bff;
+        border-width: 2px;
+        background: #cfe2ff;
+    }
+    .text-element-item .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    #previewCanvas {
+        border: 1px solid #ccc;
     }
 </style>
 @endpush
@@ -47,7 +67,7 @@
                         <input type="hidden" name="text_elements_json" id="text_elements_json">
 
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                                 <h5 class="mb-3">Основные настройки</h5>
 
                                 <div class="row">
@@ -256,10 +276,16 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
-                                <h5 class="mb-3">Предпросмотр</h5>
-                                <div class="preview-container">
-                                    <canvas id="previewCanvas" class="preview-canvas"></canvas>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Предпросмотр <small class="text-muted">(перетащите текстовые элементы для изменения позиции)</small></h5>
+                                <div class="preview-container" style="position: relative;">
+                                    <canvas id="previewCanvas" class="preview-canvas" style="cursor: crosshair;"></canvas>
+                                    <div id="canvasOverlay" style="position: absolute; top: 0; left: 0; pointer-events: none;"></div>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Кликните на текстовый элемент в предпросмотре для его выбора, затем перетащите для изменения позиции
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -328,16 +354,28 @@ document.getElementById('addTextElement').addEventListener('click', function() {
     updatePreview();
 });
 
+let selectedTextElement = null;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+let textElementRects = [];
+
 function updatePreview() {
     const canvas = document.getElementById('previewCanvas');
     const ctx = canvas.getContext('2d');
     const width = parseInt(document.getElementById('width').value) || 1200;
     const height = parseInt(document.getElementById('height').value) || 800;
 
-    canvas.width = Math.min(width, 400);
-    canvas.height = Math.min(height, 300);
-
-    const scale = Math.min(400 / width, 300 / height);
+    // Увеличиваем размер canvas до половины экрана
+    const container = canvas.parentElement;
+    const maxWidth = Math.min(container.clientWidth - 40, width);
+    const maxHeight = Math.min(window.innerHeight * 0.5, height);
+    
+    const scale = Math.min(maxWidth / width, maxHeight / height);
+    
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    canvas.style.width = canvas.width + 'px';
+    canvas.style.height = canvas.height + 'px';
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -356,9 +394,11 @@ function updatePreview() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Текстовые элементы
+    // Сохраняем информацию о текстовых элементах для обработки кликов
+    textElementRects = [];
     const textElementItems = document.querySelectorAll('.text-element-item');
-    textElementItems.forEach((item) => {
+    
+    textElementItems.forEach((item, index) => {
         const inputs = item.querySelectorAll('input');
         if (inputs.length >= 5) {
             const text = inputs[0]?.value || '';
@@ -368,15 +408,162 @@ function updatePreview() {
             const color = inputs[4]?.value || '#000000';
 
             if (text && text.trim() !== '') {
-                ctx.fillStyle = color;
                 ctx.font = `bold ${size}px Arial`;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
+                
+                // Измеряем текст для отрисовки рамки
+                const metrics = ctx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = size * 1.2;
+                
+                // Сохраняем информацию о позиции для обработки кликов
+                textElementRects.push({
+                    item: item,
+                    x: x,
+                    y: y,
+                    width: textWidth,
+                    height: textHeight,
+                    scale: scale
+                });
+                
+                // Рисуем рамку вокруг текста (если элемент выбран)
+                if (item === selectedTextElement) {
+                    ctx.strokeStyle = '#007bff';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(x - 5, y - 5, textWidth + 10, textHeight + 10);
+                    ctx.setLineDash([]);
+                }
+                
+                // Рисуем текст
+                ctx.fillStyle = color;
                 ctx.fillText(text, x, y);
             }
         }
     });
 }
+
+// Обработка кликов на canvas для выбора текстового элемента
+document.getElementById('previewCanvas').addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Проверяем, попал ли клик в какой-либо текстовый элемент
+    for (let i = textElementRects.length - 1; i >= 0; i--) {
+        const textRect = textElementRects[i];
+        if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
+            y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+            
+            // Убираем выделение с предыдущего элемента
+            if (selectedTextElement) {
+                selectedTextElement.classList.remove('selected');
+            }
+            
+            // Выделяем новый элемент
+            selectedTextElement = textRect.item;
+            selectedTextElement.classList.add('selected');
+            
+            // Прокручиваем к элементу в форме
+            selectedTextElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            updatePreview();
+            return;
+        }
+    }
+    
+    // Если клик не попал в элемент, снимаем выделение
+    if (selectedTextElement) {
+        selectedTextElement.classList.remove('selected');
+        selectedTextElement = null;
+        updatePreview();
+    }
+});
+
+// Обработка перетаскивания текстовых элементов
+document.getElementById('previewCanvas').addEventListener('mousedown', function(e) {
+    const rect = this.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Проверяем, попал ли клик в какой-либо текстовый элемент
+    for (let i = textElementRects.length - 1; i >= 0; i--) {
+        const textRect = textElementRects[i];
+        if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
+            y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+            
+            selectedTextElement = textRect.item;
+            selectedTextElement.classList.add('selected');
+            isDragging = true;
+            dragOffset.x = x - textRect.x;
+            dragOffset.y = y - textRect.y;
+            this.style.cursor = 'move';
+            updatePreview();
+            e.preventDefault();
+            return;
+        }
+    }
+});
+
+document.getElementById('previewCanvas').addEventListener('mousemove', function(e) {
+    if (isDragging && selectedTextElement) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left - dragOffset.x;
+        const y = e.clientY - rect.top - dragOffset.y;
+        
+        // Находим scale для преобразования координат
+        const width = parseInt(document.getElementById('width').value) || 1200;
+        const height = parseInt(document.getElementById('height').value) || 800;
+        const container = this.parentElement;
+        const maxWidth = Math.min(container.clientWidth - 40, width);
+        const maxHeight = Math.min(window.innerHeight * 0.5, height);
+        const scale = Math.min(maxWidth / width, maxHeight / height);
+        
+        // Преобразуем координаты обратно в реальные
+        const realX = Math.max(0, Math.min(width, x / scale));
+        const realY = Math.max(0, Math.min(height, y / scale));
+        
+        // Обновляем значения в форме
+        const inputs = selectedTextElement.querySelectorAll('input');
+        if (inputs.length >= 3) {
+            inputs[1].value = Math.round(realX);
+            inputs[2].value = Math.round(realY);
+            updatePreview();
+        }
+    } else {
+        // Проверяем, находится ли курсор над текстовым элементом
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        let overElement = false;
+        for (let i = textElementRects.length - 1; i >= 0; i--) {
+            const textRect = textElementRects[i];
+            if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
+                y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+                overElement = true;
+                break;
+            }
+        }
+        
+        this.style.cursor = overElement ? 'move' : 'crosshair';
+    }
+});
+
+document.getElementById('previewCanvas').addEventListener('mouseup', function() {
+    if (isDragging) {
+        isDragging = false;
+        this.style.cursor = 'crosshair';
+    }
+});
+
+document.getElementById('previewCanvas').addEventListener('mouseleave', function() {
+    if (isDragging) {
+        isDragging = false;
+        this.style.cursor = 'crosshair';
+    }
+});
 
 function updateGradient() {
     const gradient = {
