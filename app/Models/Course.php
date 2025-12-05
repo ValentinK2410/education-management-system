@@ -196,4 +196,28 @@ class Course extends Model
         // Возвращаем CSS градиент как data URI
         return "linear-gradient(135deg, {$gradient[0]} 0%, {$gradient[1]} 100%)";
     }
+
+    /**
+     * История зачислений на курс
+     */
+    public function enrollmentHistory()
+    {
+        return $this->hasMany(EnrollmentHistory::class);
+    }
+
+    /**
+     * Платежи за курс
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Сертификаты по курсу
+     */
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
 }

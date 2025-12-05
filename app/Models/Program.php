@@ -147,4 +147,28 @@ class Program extends Model
     {
         return self::DEGREE_LEVELS;
     }
+
+    /**
+     * История зачислений на программу
+     */
+    public function enrollmentHistory()
+    {
+        return $this->hasMany(EnrollmentHistory::class);
+    }
+
+    /**
+     * Платежи за программу
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Сертификаты по программе
+     */
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
 }

@@ -219,4 +219,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class);
     }
+
+    /**
+     * История зачислений/отчислений
+     */
+    public function enrollmentHistory()
+    {
+        return $this->hasMany(EnrollmentHistory::class);
+    }
+
+    /**
+     * Платежи пользователя
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Сертификаты пользователя
+     */
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
 }

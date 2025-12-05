@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 
@@ -471,6 +472,11 @@ Route::middleware(['auth'])->group(function () {
 
         // Шаблоны сертификатов
         Route::resource('certificate-templates', \App\Http\Controllers\Admin\CertificateTemplateController::class);
+
+        // Архив пользователей
+        Route::get('user-archive', [UserArchiveController::class, 'index'])->name('user-archive.index');
+        Route::get('user-archive/{user}', [UserArchiveController::class, 'show'])->name('user-archive.show');
+        Route::get('user-archive/{user}/certificates/{certificate}/download', [UserArchiveController::class, 'downloadCertificate'])->name('user-archive.download-certificate');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

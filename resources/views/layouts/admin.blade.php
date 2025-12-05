@@ -564,6 +564,13 @@
                 </a>
             </div>
 
+            <div class="nav-item">
+                <a href="{{ route('admin.user-archive.index') }}" class="nav-link {{ request()->routeIs('admin.user-archive.*') ? 'active' : '' }}">
+                    <i class="fas fa-archive"></i>
+                    <span>Архив пользователей</span>
+                </a>
+            </div>
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>
