@@ -68,5 +68,21 @@ echo "Проверка прав доступа:"
 ls -la storage/framework/ | grep views
 ls -la storage/framework/views | head -3
 
+# Проверяем конфигурацию PHP-FPM 8.4
+echo "Проверка конфигурации PHP-FPM 8.4:"
+if [ -f /opt/php84/etc/php-fpm.conf ]; then
+    grep -E "^user|^group" /opt/php84/etc/php-fpm.conf 2>/dev/null || echo "Не найдено в основном конфиге"
+    find /opt/php84/etc/php-fpm.d -name "*.conf" -exec grep -H "^user\|^group" {} \; 2>/dev/null | head -5
+fi
+
+# Проверяем конфигурацию PHP-FPM 8.3
+echo "Проверка конфигурации PHP-FPM 8.3:"
+if [ -f /etc/php/8.3/fpm/php-fpm.conf ]; then
+    grep -E "^user|^group" /etc/php/8.3/fpm/php-fpm.conf 2>/dev/null || echo "Не найдено в основном конфиге"
+    find /etc/php/8.3/fpm/pool.d -name "*.conf" -exec grep -H "^user\|^group" {} \; 2>/dev/null | head -5
+fi
+
 # Перезапускаем PHP-FPM для применения изменений
-systemctl restart php84-php-fpm 2>/dev/null || service php84-php-fpm restart 2>/dev/null || echo "Перезапустите PHP-FPM вручную"
+echo "Перезапуск PHP-FPM..."
+systemctl restart php84-php-fpm 2>/dev/null || service php84-php-fpm restart 2>/dev/null || echo "PHP 8.4 FPM не перезапущен"
+systemctl restart php8.3-fpm 2>/dev/null || service php8.3-fpm restart 2>/dev/null || echo "PHP 8.3 FPM не перезапущен"
