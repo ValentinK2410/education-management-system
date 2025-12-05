@@ -759,19 +759,22 @@
 @push('scripts')
 <script>
 // Массив всех элементов - загружаем из шаблона
-let elements = @json($certificateTemplate->text_elements ?? [
-    {
-        type: 'text',
-        text: 'Сертификат',
-        x: 100,
-        y: 200,
-        size: 48,
-        color: '#000000',
-        font: 'Arial',
-        letterSpacing: 0,
-        rotation: 0
-    }
-]);
+@php
+    $defaultElements = [
+        [
+            'type' => 'text',
+            'text' => 'Сертификат',
+            'x' => 100,
+            'y' => 200,
+            'size' => 48,
+            'color' => '#000000',
+            'font' => 'Arial',
+            'letterSpacing' => 0,
+            'rotation' => 0
+        ]
+    ];
+@endphp
+let elements = @json($certificateTemplate->text_elements ?? $defaultElements);
 
 // Добавляем type и rotation если их нет (для совместимости со старыми шаблонами)
 elements = elements.map(el => ({
