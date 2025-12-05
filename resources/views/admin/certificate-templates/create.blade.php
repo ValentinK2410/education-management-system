@@ -1931,47 +1931,112 @@ document.getElementById('background_type')?.addEventListener('change', function(
 
 // Подготовка данных формы перед отправкой
 function prepareFormData() {
-    // Сохраняем текущие настройки перед отправкой
-    if (selectedElementIndex !== null) {
-        saveElementSettings();
-    }
-
-    // Фильтруем элементы: для текста проверяем наличие текста, для изображений - наличие изображения
-    const filteredElements = elements.filter(el => {
-        if (el.type === 'text') {
-            return el.text && el.text.trim() !== '';
-        } else if (el.type === 'image') {
-            return el.imageData && elementImages[el.imageData];
-        }
-        return true; // Все остальные типы всегда валидны
-    });
-
-    const jsonValue = JSON.stringify(filteredElements);
-    document.getElementById('text_elements_json').value = jsonValue;
-
     try {
-        JSON.parse(jsonValue);
-    } catch (e) {
-        console.error('Ошибка JSON:', e);
-        alert('Ошибка при подготовке данных. Пожалуйста, проверьте заполнение полей.');
+        // Сохраняем текущие настройки перед отправкой
+        if (selectedElementIndex !== null && typeof saveElementSettings === 'function') {
+            saveElementSettings();
+        }
+
+        // Проверяем, что массив elements существует
+        if (!Array.isArray(elements)) {
+            console.error('Массив elements не инициализирован');
+            alert('Ошибка: элементы не инициализированы. Пожалуйста, обновите страницу.');
+            return false;
+        }
+
+        // Фильтруем элементы: для текста проверяем наличие текста, для изображений - наличие изображения
+        const filteredElements = elements.filter(el => {
+            if (el.type === 'text') {
+                return el.text && el.text.trim() !== '';
+            } else if (el.type === 'image') {
+                return el.imageData && elementImages && elementImages[el.imageData];
+            }
+            return true; // Все остальные типы всегда валидны
+        });
+
+        const jsonValue = JSON.stringify(filteredElements);
+
+        // Проверяем существование поля перед установкой значения
+        const textElementsField = document.getElementById('text_elements_json');
+        if (!textElementsField) {
+            console.error('Поле text_elements_json не найдено');
+            alert('Ошибка: поле формы не найдено. Пожалуйста, обновите страницу.');
+            return false;
+        }
+
+        textElementsField.value = jsonValue;
+
+        // Проверяем валидность JSON
+        try {
+            JSON.parse(jsonValue);
+        } catch (e) {
+            console.error('Ошибка JSON:', e);
+            alert('Ошибка при подготовке данных. Пожалуйста, проверьте заполнение полей.');
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Ошибка в prepareFormData:', error);
+        alert('Произошла ошибка при подготовке данных. Пожалуйста, проверьте консоль браузера.');
         return false;
     }
-
-    return true;
 }
 
-// Обработка отправки формы
-document.getElementById('templateForm').addEventListener('submit', function(e) {
-    if (!prepareFormData()) {
-        e.preventDefault();
-        return false;
-    }
-});
+// Обработка отправки формы будет добавлена в DOMContentLoaded
 
-// Инициализация
-updatePreview();
-updateGradient();
-updateGradientPreview();
+
+// Обработка отправки формы
+function initFormSubmitHandler() {
+    const templateForm = document.getElementById('templateForm');
+    if (!templateForm) {
+        console.error('Форма templateForm не найдена!');
+        return;
+    }
+
+    // Проверяем, не был ли уже добавлен обработчик
+    if (templateForm.hasAttribute('data-submit-handler-attached')) {
+        console.log('Обработчик формы уже добавлен');
+        return;
+    }
+
+    templateForm.setAttribute('data-submit-handler-attached', 'true');
+    templateForm.addEventListener('submit', function(e) {
+        console.log('Форма отправляется...');
+        try {
+            if (!prepareFormData()) {
+                console.log('prepareFormData вернула false, отменяем отправку');
+                e.preventDefault();
+                return false;
+            }
+            console.log('Данные подготовлены успешно, форма отправляется');
+        } catch (error) {
+            console.error('Ошибка при отправке формы:', error);
+            alert('Произошла ошибка при подготовке данных: ' + error.message);
+            e.preventDefault();
+            return false;
+        }
+    });
+    console.log('Обработчик формы инициализирован');
+}
+
+// Инициализация после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM загружен, инициализация...');
+        initFormSubmitHandler();
+        if (typeof updatePreview === 'function') updatePreview();
+        if (typeof updateGradient === 'function') updateGradient();
+        if (typeof updateGradientPreview === 'function') updateGradientPreview();
+    });
+} else {
+    // DOM уже загружен
+    console.log('DOM уже загружен, инициализация...');
+    initFormSubmitHandler();
+    if (typeof updatePreview === 'function') updatePreview();
+    if (typeof updateGradient === 'function') updateGradient();
+    if (typeof updateGradientPreview === 'function') updateGradientPreview();
+}
 </script>
 @endpush
 @endsection
