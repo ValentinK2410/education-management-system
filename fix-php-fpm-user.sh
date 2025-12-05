@@ -26,33 +26,107 @@ else
     done
 fi
 
+# Определяем всех возможных пользователей PHP-FPM
+echo "👥 Поиск всех пользователей PHP-FPM..."
+ALL_USERS=$(ps aux | grep "php-fpm: pool" | grep -v grep | awk '{print $1}' | sort -u)
+echo "Найденные пользователи: $ALL_USERS"
+
 # Определяем пользователя из активного процесса
 ACTIVE_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
-echo "👤 Активный пользователь PHP-FPM worker: $ACTIVE_USER"
+
+echo "👤 Основной активный пользователь PHP-FPM worker: $ACTIVE_USER"
 
 if [ -z "$ACTIVE_USER" ]; then
-    echo "❌ Не удалось определить пользователя PHP-FPM"
-    exit 1
+    echo "⚠️  Не удалось определить пользователя PHP-FPM, используем www-data"
+    ACTIVE_USER="www-data"
 fi
 
 echo ""
 echo "🔧 Исправление прав доступа для пользователя: $ACTIVE_USER"
 echo "=================================================="
 
-# Устанавливаем владельца
+# Удаляем старые файлы представлений
+echo "Очистка старых представлений..."
+rm -rf storage/framework/views/*
+
+# Создаем все необходимые директории
+echo "Создание директорий..."
+mkdir -p storage/app/public/certificate-templates
+mkdir -p storage/framework/views
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/logs
+mkdir -p bootstrap/cache
+
+# Устанавливаем права для родительских директорий (важно!)
+echo "Установка прав для родительских директорий..."
+chmod 755 storage
+chmod 755 storage/framework
+
+# Устанавливаем владельца для всех директорий
+echo "Установка владельца: $ACTIVE_USER"
 chown -R $ACTIVE_USER:$ACTIVE_USER storage
 chown -R $ACTIVE_USER:$ACTIVE_USER bootstrap/cache
 
-# Устанавливаем права доступа
-chmod -R 775 storage
-chmod -R 775 bootstrap/cache
+# Устанавливаем права доступа (775 для директорий, 664 для файлов)
+echo "Установка прав доступа..."
+find storage -type d -exec chmod 775 {} \;
+find storage -type f -exec chmod 664 {} \;
+find bootstrap/cache -type d -exec chmod 775 {} \;
+find bootstrap/cache -type f -exec chmod 664 {} \;
 
-# Убеждаемся, что директория views существует
-mkdir -p storage/framework/views
-chmod 775 storage/framework/views
+# Особое внимание к директории views - используем 777 для гарантии
+chmod 777 storage/framework/views
 chown $ACTIVE_USER:$ACTIVE_USER storage/framework/views
+
+# Если есть другие пользователи PHP-FPM, добавляем их в группу
+for user in $ALL_USERS; do
+    if [ "$user" != "$ACTIVE_USER" ]; then
+        echo "Добавляем права для дополнительного пользователя: $user"
+        # Добавляем пользователя в группу www-data или создаем общую группу
+        usermod -a -G www-data $user 2>/dev/null || true
+    fi
+done
+
+# Устанавливаем группу www-data для всех файлов (если несколько пользователей)
+chgrp -R www-data storage 2>/dev/null || chgrp -R $ACTIVE_USER storage
+chgrp -R www-data bootstrap/cache 2>/dev/null || chgrp -R $ACTIVE_USER bootstrap/cache
+
+# Устанавливаем setgid бит для директорий (новые файлы будут наследовать группу)
+find storage -type d -exec chmod g+s {} \;
+find bootstrap/cache -type d -exec chmod g+s {} \;
 
 echo "✅ Права доступа установлены"
 echo ""
 echo "Проверка:"
 ls -la storage/framework/ | grep views
+ls -la storage/framework/views | head -3
+
+# Тестируем запись от имени пользователя
+echo ""
+echo "🧪 Тест записи от имени $ACTIVE_USER:"
+sudo -u $ACTIVE_USER touch storage/framework/views/.test_write 2>&1
+if [ -f storage/framework/views/.test_write ]; then
+    sudo -u $ACTIVE_USER rm storage/framework/views/.test_write
+    echo "✅ Тест записи успешен!"
+else
+    echo "❌ Тест записи не удался"
+    echo "Попробуем с правами 777..."
+    chmod 777 storage/framework/views
+    sudo -u $ACTIVE_USER touch storage/framework/views/.test_write 2>&1
+    if [ -f storage/framework/views/.test_write ]; then
+        sudo -u $ACTIVE_USER rm storage/framework/views/.test_write
+        echo "✅ Тест записи успешен с правами 777!"
+        echo "⚠️  ВНИМАНИЕ: Используются права 777 (небезопасно, но работает)"
+    fi
+fi
+
+# Очищаем кэш Laravel
+echo ""
+echo "Очистка кэша Laravel..."
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+
+echo ""
+echo "✅ Готово! Попробуйте обновить страницу."
