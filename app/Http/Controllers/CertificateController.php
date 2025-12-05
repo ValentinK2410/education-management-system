@@ -237,13 +237,31 @@ class CertificateController extends Controller
             $y = $element['y'] ?? 0;
             $size = $element['size'] ?? 24;
             $color = $element['color'] ?? '#000000';
+            $letterSpacing = $element['letterSpacing'] ?? 0;
 
             $rgb = $this->hexToRgb($color);
             $textColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
 
             // Используем встроенный шрифт (можно заменить на imagettftext для кастомных шрифтов)
             $fontSize = max(1, min(5, (int)($size / 10))); // Размер шрифта 1-5
-            imagestring($image, $fontSize, $x, $y, $text, $textColor);
+            
+            // Если есть растяжение (letter-spacing), рисуем каждую букву отдельно
+            if ($letterSpacing > 0) {
+                $currentX = $x;
+                $textLength = mb_strlen($text, 'UTF-8');
+                
+                for ($i = 0; $i < $textLength; $i++) {
+                    $char = mb_substr($text, $i, 1, 'UTF-8');
+                    imagestring($image, $fontSize, $currentX, $y, $char, $textColor);
+                    
+                    // Вычисляем ширину символа (приблизительно)
+                    $charWidth = imagefontwidth($fontSize);
+                    $currentX += $charWidth + $letterSpacing;
+                }
+            } else {
+                // Обычная отрисовка без растяжения
+                imagestring($image, $fontSize, $x, $y, $text, $textColor);
+            }
         }
     }
 

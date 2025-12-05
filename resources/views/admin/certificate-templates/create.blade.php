@@ -235,6 +235,11 @@
                                                 <label class="form-label">Цвет</label>
                                                 <input type="color" class="form-control form-control-color text-element-input" value="#000000">
                                             </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Растяжение</label>
+                                                <input type="number" class="form-control text-element-input" value="0" min="0" max="50" step="0.5" placeholder="0">
+                                                <small class="text-muted">Интервал между буквами</small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -327,7 +332,12 @@ document.getElementById('addTextElement').addEventListener('click', function() {
                 <label class="form-label">Цвет</label>
                 <input type="color" class="form-control form-control-color text-element-input" value="#000000">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
+                <label class="form-label">Растяжение</label>
+                <input type="number" class="form-control text-element-input" value="0" min="0" max="50" step="0.5" placeholder="0">
+                <small class="text-muted">Интервал между буквами</small>
+            </div>
+            <div class="col-md-3">
                 <button type="button" class="btn btn-sm btn-danger mt-4" onclick="this.closest('.text-element-item').remove(); updatePreview();">
                     <i class="fas fa-trash"></i> Удалить
                 </button>
@@ -361,9 +371,9 @@ function updatePreview() {
     const container = canvas.parentElement;
     const maxWidth = Math.min(container.clientWidth - 40, width);
     const maxHeight = Math.min(window.innerHeight * 0.5, height);
-    
+
     const scale = Math.min(maxWidth / width, maxHeight / height);
-    
+
     canvas.width = width * scale;
     canvas.height = height * scale;
     canvas.style.width = canvas.width + 'px';
@@ -389,24 +399,43 @@ function updatePreview() {
     // Сохраняем информацию о текстовых элементах для обработки кликов
     textElementRects = [];
     const textElementItems = document.querySelectorAll('.text-element-item');
-    
+
     textElementItems.forEach((item, index) => {
         const inputs = item.querySelectorAll('input');
-        if (inputs.length >= 5) {
+        if (inputs.length >= 6) {
             const text = inputs[0]?.value || '';
             const x = parseInt(inputs[1]?.value || 100) * scale;
             const y = parseInt(inputs[2]?.value || 200) * scale;
             const size = parseInt(inputs[3]?.value || 24) * scale;
             const color = inputs[4]?.value || '#000000';
+            const letterSpacing = parseFloat(inputs[5]?.value || 0) * scale;
 
             if (text && text.trim() !== '') {
                 ctx.font = `bold ${size}px Arial`;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
+                ctx.fillStyle = color;
                 
-                // Измеряем текст для отрисовки рамки
-                const metrics = ctx.measureText(text);
-                const textWidth = metrics.width;
+                let currentX = x;
+                let totalWidth = 0;
+                
+                // Рисуем текст с учетом растяжения (letter-spacing)
+                if (letterSpacing > 0) {
+                    // Рисуем каждую букву отдельно с интервалом
+                    for (let i = 0; i < text.length; i++) {
+                        const char = text[i];
+                        ctx.fillText(char, currentX, y);
+                        const charWidth = ctx.measureText(char).width;
+                        currentX += charWidth + letterSpacing;
+                        totalWidth += charWidth + (i < text.length - 1 ? letterSpacing : 0);
+                    }
+                } else {
+                    // Обычная отрисовка без растяжения
+                    ctx.fillText(text, x, y);
+                    const metrics = ctx.measureText(text);
+                    totalWidth = metrics.width;
+                }
+                
                 const textHeight = size * 1.2;
                 
                 // Сохраняем информацию о позиции для обработки кликов
@@ -414,7 +443,7 @@ function updatePreview() {
                     item: item,
                     x: x,
                     y: y,
-                    width: textWidth,
+                    width: totalWidth,
                     height: textHeight,
                     scale: scale
                 });
@@ -424,13 +453,9 @@ function updatePreview() {
                     ctx.strokeStyle = '#007bff';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([5, 5]);
-                    ctx.strokeRect(x - 5, y - 5, textWidth + 10, textHeight + 10);
+                    ctx.strokeRect(x - 5, y - 5, totalWidth + 10, textHeight + 10);
                     ctx.setLineDash([]);
                 }
-                
-                // Рисуем текст
-                ctx.fillStyle = color;
-                ctx.fillText(text, x, y);
             }
         }
     });
@@ -441,30 +466,30 @@ document.getElementById('previewCanvas').addEventListener('click', function(e) {
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     // Проверяем, попал ли клик в какой-либо текстовый элемент
     for (let i = textElementRects.length - 1; i >= 0; i--) {
         const textRect = textElementRects[i];
         if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
             y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
-            
+
             // Убираем выделение с предыдущего элемента
             if (selectedTextElement) {
                 selectedTextElement.classList.remove('selected');
             }
-            
+
             // Выделяем новый элемент
             selectedTextElement = textRect.item;
             selectedTextElement.classList.add('selected');
-            
+
             // Прокручиваем к элементу в форме
             selectedTextElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             updatePreview();
             return;
         }
     }
-    
+
     // Если клик не попал в элемент, снимаем выделение
     if (selectedTextElement) {
         selectedTextElement.classList.remove('selected');
@@ -478,13 +503,13 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     // Проверяем, попал ли клик в какой-либо текстовый элемент
     for (let i = textElementRects.length - 1; i >= 0; i--) {
         const textRect = textElementRects[i];
         if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
             y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
-            
+
             selectedTextElement = textRect.item;
             selectedTextElement.classList.add('selected');
             isDragging = true;
@@ -503,7 +528,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left - dragOffset.x;
         const y = e.clientY - rect.top - dragOffset.y;
-        
+
         // Находим scale для преобразования координат
         const width = parseInt(document.getElementById('width').value) || 1200;
         const height = parseInt(document.getElementById('height').value) || 800;
@@ -511,11 +536,11 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const maxWidth = Math.min(container.clientWidth - 40, width);
         const maxHeight = Math.min(window.innerHeight * 0.5, height);
         const scale = Math.min(maxWidth / width, maxHeight / height);
-        
+
         // Преобразуем координаты обратно в реальные
         const realX = Math.max(0, Math.min(width, x / scale));
         const realY = Math.max(0, Math.min(height, y / scale));
-        
+
         // Обновляем значения в форме
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 3) {
@@ -528,7 +553,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        
+
         let overElement = false;
         for (let i = textElementRects.length - 1; i >= 0; i--) {
             const textRect = textElementRects[i];
@@ -538,7 +563,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
                 break;
             }
         }
-        
+
         this.style.cursor = overElement ? 'move' : 'crosshair';
     }
 });
@@ -612,12 +637,14 @@ function prepareFormData() {
             const color = inputs[4]?.value; // color
 
             if (text && text.trim() !== '') {
+                const letterSpacing = parseFloat(inputs[5]?.value || 0);
                 textElements.push({
                     text: text.trim(),
                     x: parseInt(x) || 0,
                     y: parseInt(y) || 0,
                     size: parseInt(size) || 24,
                     color: color || '#000000',
+                    letterSpacing: letterSpacing || 0,
                     align: 'left'
                 });
             }
