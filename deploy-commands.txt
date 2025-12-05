@@ -15,6 +15,16 @@ echo "Проверка пользователя PHP-FPM:"
 WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
 echo "Пользователь worker процесса: $WORKER_USER"
 
+# Если не найден, проверяем через PHP (для ISPmanager часто используется www-root)
+if [ -z "$WORKER_USER" ] || [ "$WORKER_USER" = "www-data" ]; then
+    if id "www-root" &>/dev/null && ps aux | grep "php-fpm" | grep -q "www-root"; then
+        echo "⚠️  Обнаружен пользователь www-root для PHP-FPM"
+        WORKER_USER="www-root"
+    fi
+fi
+
+echo "Используемый пользователь: $WORKER_USER"
+
 # Удаляем старые скомпилированные представления
 echo "Очистка старых представлений..."
 rm -rf storage/framework/views/*

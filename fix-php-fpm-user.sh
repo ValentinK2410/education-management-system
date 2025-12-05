@@ -34,11 +34,36 @@ echo "Найденные пользователи: $ALL_USERS"
 # Определяем пользователя из активного процесса
 ACTIVE_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
 
+# Также проверяем через тестовый PHP скрипт (если доступен)
+if [ -f public/test-views-write.php ]; then
+    echo "Проверка пользователя через PHP скрипт..."
+    PHP_USER=$(php -r "echo posix_getpwuid(posix_geteuid())['name'];")
+    echo "Пользователь PHP (через CLI): $PHP_USER"
+fi
+
 echo "👤 Основной активный пользователь PHP-FPM worker: $ACTIVE_USER"
 
+# Если не удалось определить, пробуем www-root (ISPmanager часто использует этот пользователь)
 if [ -z "$ACTIVE_USER" ]; then
-    echo "⚠️  Не удалось определить пользователя PHP-FPM, используем www-data"
-    ACTIVE_USER="www-data"
+    echo "⚠️  Не удалось определить пользователя PHP-FPM из процессов"
+    # Проверяем, существует ли www-root
+    if id "www-root" &>/dev/null; then
+        echo "Найден пользователь www-root, используем его"
+        ACTIVE_USER="www-root"
+    else
+        echo "Используем www-data по умолчанию"
+        ACTIVE_USER="www-data"
+    fi
+fi
+
+# Если активный пользователь www-data, но PHP работает от www-root, используем www-root
+if [ "$ACTIVE_USER" = "www-data" ] && id "www-root" &>/dev/null; then
+    echo "⚠️  Обнаружен пользователь www-root, проверяем его использование..."
+    # Проверяем, есть ли процессы PHP-FPM от www-root
+    if ps aux | grep "php-fpm" | grep -q "www-root"; then
+        echo "✅ Найдены процессы PHP-FPM от www-root, используем www-root"
+        ACTIVE_USER="www-root"
+    fi
 fi
 
 echo ""
@@ -88,9 +113,13 @@ for user in $ALL_USERS; do
     fi
 done
 
-# Устанавливаем группу www-data для всех файлов (если несколько пользователей)
-chgrp -R www-data storage 2>/dev/null || chgrp -R $ACTIVE_USER storage
-chgrp -R www-data bootstrap/cache 2>/dev/null || chgrp -R $ACTIVE_USER bootstrap/cache
+# Определяем группу пользователя
+ACTIVE_GROUP=$(id -gn $ACTIVE_USER 2>/dev/null || echo $ACTIVE_USER)
+
+# Устанавливаем группу для всех файлов
+echo "Установка группы: $ACTIVE_GROUP"
+chgrp -R $ACTIVE_GROUP storage 2>/dev/null || chgrp -R $ACTIVE_USER storage
+chgrp -R $ACTIVE_GROUP bootstrap/cache 2>/dev/null || chgrp -R $ACTIVE_USER bootstrap/cache
 
 # Устанавливаем setgid бит для директорий (новые файлы будут наследовать группу)
 find storage -type d -exec chmod g+s {} \;
