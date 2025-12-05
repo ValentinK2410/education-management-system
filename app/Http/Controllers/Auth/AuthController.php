@@ -56,7 +56,13 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended('/dashboard');
+            // Перенаправление в зависимости от роли пользователя
+            $user = Auth::user();
+            if ($user->hasRole('admin')) {
+                return redirect()->intended('/admin/dashboard');
+            } else {
+                return redirect()->intended('/');
+            }
         }
 
         return redirect()->back()
@@ -111,7 +117,12 @@ class AuthController extends Controller
         // Автоматический вход после регистрации
         Auth::login($user);
 
-        return redirect('/dashboard');
+        // Перенаправление в зависимости от роли пользователя
+        if ($user->hasRole('admin')) {
+            return redirect('/admin/dashboard');
+        } else {
+            return redirect('/');
+        }
     }
 
     /**
