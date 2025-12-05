@@ -171,7 +171,7 @@
                     <form action="{{ route('admin.certificate-templates.store') }}" method="POST" enctype="multipart/form-data" id="templateForm">
                         @csrf
 
-                        <input type="hidden" name="text_elements_json" id="text_elements_json">
+                        <input type="hidden" name="text_elements_json" id="text_elements_json" value="[]" tabindex="-1" aria-hidden="true">
 
                         <!-- Верхняя часть: основные настройки на всю ширину -->
                         <div class="row mb-4">
@@ -317,7 +317,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <input type="hidden" name="background_gradient" id="background_gradient">
+                                    <input type="hidden" name="background_gradient" id="background_gradient" tabindex="-1" aria-hidden="true">
                                 </div>
 
                                 <div class="mb-3 mt-4">
@@ -1964,6 +1964,14 @@ function prepareFormData() {
             return false;
         }
 
+        // Убеждаемся, что поле доступно для записи
+        if (textElementsField.disabled || textElementsField.readOnly) {
+            textElementsField.disabled = false;
+            textElementsField.readOnly = false;
+        }
+
+        // Устанавливаем значение без установки фокуса
+        textElementsField.setAttribute('value', jsonValue);
         textElementsField.value = jsonValue;
 
         // Проверяем валидность JSON
@@ -2001,8 +2009,24 @@ function initFormSubmitHandler() {
     }
 
     templateForm.setAttribute('data-submit-handler-attached', 'true');
+
+    // Предотвращаем автоматическую валидацию браузера для скрытых полей
+    const hiddenFields = templateForm.querySelectorAll('input[type="hidden"]');
+    hiddenFields.forEach(function(field) {
+        field.setAttribute('tabindex', '-1');
+        field.setAttribute('aria-hidden', 'true');
+    });
+
+    let isSubmitting = false; // Флаг для предотвращения повторной отправки
+
     templateForm.addEventListener('submit', function(e) {
+        // Если форма уже отправляется программно, пропускаем обработку
+        if (isSubmitting) {
+            return true;
+        }
+
         console.log('Форма отправляется...');
+
         try {
             if (!prepareFormData()) {
                 console.log('prepareFormData вернула false, отменяем отправку');
@@ -2010,10 +2034,15 @@ function initFormSubmitHandler() {
                 return false;
             }
             console.log('Данные подготовлены успешно, форма отправляется');
+
+            // Устанавливаем флаг и позволяем форме отправиться естественным образом
+            isSubmitting = true;
+            // Форма отправится автоматически после успешной подготовки данных
         } catch (error) {
             console.error('Ошибка при отправке формы:', error);
             alert('Произошла ошибка при подготовке данных: ' + error.message);
             e.preventDefault();
+            isSubmitting = false;
             return false;
         }
     });

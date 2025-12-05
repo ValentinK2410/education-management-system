@@ -155,7 +155,7 @@
                         @csrf
                         @method('PUT')
 
-                        <input type="hidden" name="text_elements_json" id="text_elements_json">
+                        <input type="hidden" name="text_elements_json" id="text_elements_json" value="[]" tabindex="-1" aria-hidden="true">
 
                         <!-- Верхняя часть: основные настройки на всю ширину -->
                         <div class="row mb-4">
@@ -1773,7 +1773,24 @@ function prepareFormData() {
     });
 
     const jsonValue = JSON.stringify(filteredElements);
-    document.getElementById('text_elements_json').value = jsonValue;
+
+    // Проверяем существование поля перед установкой значения
+    const textElementsField = document.getElementById('text_elements_json');
+    if (!textElementsField) {
+        console.error('Поле text_elements_json не найдено');
+        alert('Ошибка: поле формы не найдено. Пожалуйста, обновите страницу.');
+        return false;
+    }
+
+    // Убеждаемся, что поле доступно для записи
+    if (textElementsField.disabled || textElementsField.readOnly) {
+        textElementsField.disabled = false;
+        textElementsField.readOnly = false;
+    }
+
+    // Устанавливаем значение без установки фокуса
+    textElementsField.setAttribute('value', jsonValue);
+    textElementsField.value = jsonValue;
 
     try {
         JSON.parse(jsonValue);
@@ -1827,12 +1844,71 @@ document.getElementById('background_type')?.addEventListener('change', function(
 });
 
 // Обработка отправки формы
-document.getElementById('templateForm').addEventListener('submit', function(e) {
-    if (!prepareFormData()) {
-        e.preventDefault();
-        return false;
+function initFormSubmitHandler() {
+    const templateForm = document.getElementById('templateForm');
+    if (!templateForm) {
+        console.error('Форма templateForm не найдена!');
+        return;
     }
-});
+
+    // Проверяем, не был ли уже добавлен обработчик
+    if (templateForm.hasAttribute('data-submit-handler-attached')) {
+        console.log('Обработчик формы уже добавлен');
+        return;
+    }
+
+    templateForm.setAttribute('data-submit-handler-attached', 'true');
+
+    // Предотвращаем автоматическую валидацию браузера для скрытых полей
+    const hiddenFields = templateForm.querySelectorAll('input[type="hidden"]');
+    hiddenFields.forEach(function(field) {
+        field.setAttribute('tabindex', '-1');
+        field.setAttribute('aria-hidden', 'true');
+    });
+
+    let isSubmitting = false; // Флаг для предотвращения повторной отправки
+
+    templateForm.addEventListener('submit', function(e) {
+        // Если форма уже отправляется программно, пропускаем обработку
+        if (isSubmitting) {
+            return true;
+        }
+
+        console.log('Форма отправляется...');
+
+        try {
+            if (!prepareFormData()) {
+                console.log('prepareFormData вернула false, отменяем отправку');
+                e.preventDefault();
+                return false;
+            }
+            console.log('Данные подготовлены успешно, форма отправляется');
+
+            // Устанавливаем флаг и позволяем форме отправиться естественным образом
+            isSubmitting = true;
+            // Форма отправится автоматически после успешной подготовки данных
+        } catch (error) {
+            console.error('Ошибка при отправке формы:', error);
+            alert('Произошла ошибка при подготовке данных: ' + error.message);
+            e.preventDefault();
+            isSubmitting = false;
+            return false;
+        }
+    });
+    console.log('Обработчик формы инициализирован');
+}
+
+// Инициализация после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM загружен, инициализация...');
+        initFormSubmitHandler();
+    });
+} else {
+    // DOM уже загружен
+    console.log('DOM уже загружен, инициализация...');
+    initFormSubmitHandler();
+}
 
 // Добавляем слушатели для существующих текстовых элементов
 document.querySelectorAll('.text-element-input, select.text-element-input').forEach(input => {
