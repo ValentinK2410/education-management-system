@@ -1,0 +1,37 @@
+# Быстрое обновление на сервере
+# Скопируйте и выполните эти команды на сервере:
+
+cd /var/www/www-root/data/www/m.dekan.pro
+
+# 1. Обновить код из Git
+git pull origin main
+
+# 2. Определить пользователя PHP-FPM
+WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
+if [ -z "$WORKER_USER" ]; then
+    if id "www-root" &>/dev/null; then
+        WORKER_USER="www-root"
+    else
+        WORKER_USER="www-data"
+    fi
+fi
+echo "Пользователь PHP-FPM: $WORKER_USER"
+
+# 3. Очистить кеш Laravel
+rm -rf storage/framework/views/*
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+
+# 4. Создать директории и установить права
+mkdir -p storage/app/public/certificate-templates
+chown -R $WORKER_USER:$WORKER_USER storage
+chmod -R 775 storage
+chown -R $WORKER_USER:$WORKER_USER storage/app/public/certificate-templates
+chmod -R 775 storage/app/public/certificate-templates
+
+# 5. Перезапустить PHP-FPM
+systemctl restart php84-php-fpm 2>/dev/null || systemctl restart php8.3-fpm 2>/dev/null || echo "PHP-FPM не перезапущен автоматически"
+
+echo "✅ Обновление завершено!"
