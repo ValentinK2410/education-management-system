@@ -2233,7 +2233,7 @@ function initializePage() {
         loadElementSettings(0);
         selectedElementIndex = 0;
     }
-    
+
     // Обновляем предпросмотр после небольшой задержки, чтобы изображения успели загрузиться
     setTimeout(function() {
         console.log('Обновление предпросмотра...');
