@@ -293,21 +293,21 @@
                                         <div class="col-md-6">
                                             <label for="gradient_color1" class="form-label">Цвет 1</label>
                                             <input type="color" class="form-control form-control-color" id="gradient_color1"
-                                                   value="{{ old('gradient_color1', $certificateTemplate->background_gradient['colors'][0] ?? '#ffffff') }}">
+                                                   value="{{ old('gradient_color1', isset($certificateTemplate->background_gradient['colors'][0]) ? $certificateTemplate->background_gradient['colors'][0] : '#ffffff') }}">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="gradient_color2" class="form-label">Цвет 2</label>
                                             <input type="color" class="form-control form-control-color" id="gradient_color2"
-                                                   value="{{ old('gradient_color2', $certificateTemplate->background_gradient['colors'][1] ?? '#f0f0f0') }}">
+                                                   value="{{ old('gradient_color2', isset($certificateTemplate->background_gradient['colors'][1]) ? $certificateTemplate->background_gradient['colors'][1] : '#f0f0f0') }}">
                                         </div>
                                     </div>
                                     <div class="mt-3">
                                         <label for="gradient_angle" class="form-label">
-                                            Угол градиента: <span id="gradient_angle_value">{{ old('gradient_angle', $certificateTemplate->background_gradient['angle'] ?? 0) }}</span>°
+                                            Угол градиента: <span id="gradient_angle_value">{{ old('gradient_angle', isset($certificateTemplate->background_gradient['angle']) ? $certificateTemplate->background_gradient['angle'] : 0) }}</span>°
                                         </label>
                                         <div class="gradient-angle-slider-container">
                                             <input type="range" class="form-range gradient-angle-slider" id="gradient_angle"
-                                                   min="0" max="360" value="{{ old('gradient_angle', $certificateTemplate->background_gradient['angle'] ?? 0) }}" step="1">
+                                                   min="0" max="360" value="{{ old('gradient_angle', isset($certificateTemplate->background_gradient['angle']) ? $certificateTemplate->background_gradient['angle'] : 0) }}" step="1">
                                             <div class="gradient-angle-visual">
                                                 <div class="gradient-preview-box" id="gradientPreviewBox"></div>
                                             </div>
@@ -1332,10 +1332,17 @@ const existingImg = new Image();
 existingImg.crossOrigin = 'anonymous';
 existingImg.onload = function() {
     backgroundImage = existingImg;
-    updatePreview();
+    // Обновляем предпросмотр после загрузки изображения
+    if (typeof updatePreview === 'function') {
+        updatePreview();
+    }
 };
 existingImg.onerror = function() {
-    console.error('Не удалось загрузить существующее изображение');
+    console.error('Не удалось загрузить существующее изображение:', existingImageUrl);
+    backgroundImage = null;
+    if (typeof updatePreview === 'function') {
+        updatePreview();
+    }
 };
 existingImg.src = existingImageUrl;
 @endif
@@ -2010,10 +2017,77 @@ document.querySelectorAll('.text-element-input, select.text-element-input').forE
     input.addEventListener('change', updatePreview);
 });
 
-// Инициализация
-updatePreview();
-updateGradient();
-updateGradientPreview();
+// Инициализация после загрузки DOM и всех ресурсов
+function initializePage() {
+    console.log('Инициализация страницы редактирования...');
+
+    // Инициализируем градиент из базы данных
+    @php
+        $hasGradient = !empty($certificateTemplate->background_gradient) && is_array($certificateTemplate->background_gradient);
+    @endphp
+
+    @if($hasGradient)
+        const savedGradient = @json($certificateTemplate->background_gradient);
+        console.log('Загружен градиент из БД:', savedGradient);
+        if (savedGradient && savedGradient.colors && savedGradient.colors.length >= 2) {
+            const color1Input = document.getElementById('gradient_color1');
+            const color2Input = document.getElementById('gradient_color2');
+            const angleInput = document.getElementById('gradient_angle');
+            const angleValueSpan = document.getElementById('gradient_angle_value');
+
+            if (color1Input) color1Input.value = savedGradient.colors[0] || '#ffffff';
+            if (color2Input) color2Input.value = savedGradient.colors[1] || '#f0f0f0';
+            if (angleInput) angleInput.value = savedGradient.angle || 0;
+            if (angleValueSpan) angleValueSpan.textContent = savedGradient.angle || 0;
+
+            if (typeof updateGradient === 'function') {
+                updateGradient();
+            }
+            if (typeof updateGradientPreview === 'function') {
+                updateGradientPreview();
+            }
+        }
+    @else
+        console.log('Градиент не найден, используем значения по умолчанию');
+        if (typeof updateGradient === 'function') {
+            updateGradient();
+        }
+        if (typeof updateGradientPreview === 'function') {
+            updateGradientPreview();
+        }
+    @endif
+
+    // Убеждаемся, что правильные панели фона отображаются
+    const bgTypeSelect = document.getElementById('background_type');
+    if (bgTypeSelect) {
+        const bgType = bgTypeSelect.value;
+        const colorBg = document.getElementById('colorBackground');
+        const imageBg = document.getElementById('imageBackground');
+        const gradientBg = document.getElementById('gradientBackground');
+
+        if (colorBg) colorBg.style.display = bgType === 'color' ? 'block' : 'none';
+        if (imageBg) imageBg.style.display = bgType === 'image' ? 'block' : 'none';
+        if (gradientBg) gradientBg.style.display = bgType === 'gradient' ? 'block' : 'none';
+    }
+
+    // Обновляем предпросмотр после небольшой задержки, чтобы изображения успели загрузиться
+    setTimeout(function() {
+        console.log('Обновление предпросмотра...');
+        if (typeof updatePreview === 'function') {
+            updatePreview();
+        }
+    }, 200);
+}
+
+// Инициализация после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePage();
+    });
+} else {
+    // DOM уже загружен
+    initializePage();
+}
 </script>
 @endpush
 @endsection
