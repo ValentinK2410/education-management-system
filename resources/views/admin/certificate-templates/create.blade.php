@@ -670,6 +670,20 @@
                                                 </div>
 
                                                 <div class="d-grid gap-2">
+                                                    <div class="btn-group mb-2" role="group">
+                                                        <button type="button" class="btn btn-outline-info btn-sm" id="moveToFrontBtn" title="На передний план">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-info btn-sm" id="moveUpBtn" title="На уровень выше">
+                                                            <i class="fas fa-chevron-up"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-info btn-sm" id="moveDownBtn" title="На уровень ниже">
+                                                            <i class="fas fa-chevron-down"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-info btn-sm" id="moveToBackBtn" title="На задний план">
+                                                            <i class="fas fa-arrow-down"></i>
+                                                        </button>
+                                                    </div>
                                                     <button type="button" class="btn btn-success mb-2" id="duplicateElementBtn">
                                                         <i class="fas fa-copy me-2"></i>Дублировать элемент
                                                     </button>
@@ -904,11 +918,38 @@ document.getElementById('addImageElement').addEventListener('click', function() 
     document.getElementById('imageFileInput').click();
 });
 
+// Обновление состояния кнопок управления порядком элементов
+function updateZIndexButtons() {
+    const moveToFrontBtn = document.getElementById('moveToFrontBtn');
+    const moveUpBtn = document.getElementById('moveUpBtn');
+    const moveDownBtn = document.getElementById('moveDownBtn');
+    const moveToBackBtn = document.getElementById('moveToBackBtn');
+
+    if (selectedElementIndex === null || selectedElementIndex < 0 || selectedElementIndex >= elements.length) {
+        // Элемент не выбран - отключаем все кнопки
+        moveToFrontBtn.disabled = true;
+        moveUpBtn.disabled = true;
+        moveDownBtn.disabled = true;
+        moveToBackBtn.disabled = true;
+        return;
+    }
+
+    // Элемент выбран - обновляем состояние кнопок
+    const isFirst = selectedElementIndex === 0;
+    const isLast = selectedElementIndex === elements.length - 1;
+
+    moveToFrontBtn.disabled = isLast; // Нельзя переместить на передний план, если уже там
+    moveUpBtn.disabled = isFirst; // Нельзя переместить вверх, если уже первый
+    moveDownBtn.disabled = isLast; // Нельзя переместить вниз, если уже последний
+    moveToBackBtn.disabled = isFirst; // Нельзя переместить на задний план, если уже там
+}
+
 // Загрузка настроек элемента в панель
 function loadElementSettings(index) {
     if (index === null || index < 0 || index >= elements.length) {
         document.getElementById('noElementSelectedAlert').style.display = 'block';
         document.getElementById('elementSettingsForm').style.display = 'none';
+        updateZIndexButtons(); // Обновляем состояние кнопок
         return;
     }
 
@@ -994,6 +1035,9 @@ function loadElementSettings(index) {
     // Общие настройки позиции
     document.getElementById('xInput').value = element.x || 100;
     document.getElementById('yInput').value = element.y || 100;
+
+    // Обновляем состояние кнопок управления порядком
+    updateZIndexButtons();
 }
 
 // Сохранение настроек элемента из панели
@@ -1130,6 +1174,53 @@ document.getElementById('duplicateElementBtn').addEventListener('click', functio
 
         // Выбираем новый элемент
         selectedElementIndex = elements.length - 1;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
+
+// Управление порядком элементов (z-index)
+document.getElementById('moveToFrontBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex >= 0 && selectedElementIndex < elements.length) {
+        // Перемещаем элемент в конец массива (рисуется последним, виден сверху)
+        const element = elements.splice(selectedElementIndex, 1)[0];
+        elements.push(element);
+        selectedElementIndex = elements.length - 1;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
+
+document.getElementById('moveUpBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex > 0 && selectedElementIndex < elements.length) {
+        // Перемещаем элемент на одну позицию вверх
+        const temp = elements[selectedElementIndex];
+        elements[selectedElementIndex] = elements[selectedElementIndex - 1];
+        elements[selectedElementIndex - 1] = temp;
+        selectedElementIndex = selectedElementIndex - 1;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
+
+document.getElementById('moveDownBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex >= 0 && selectedElementIndex < elements.length - 1) {
+        // Перемещаем элемент на одну позицию вниз
+        const temp = elements[selectedElementIndex];
+        elements[selectedElementIndex] = elements[selectedElementIndex + 1];
+        elements[selectedElementIndex + 1] = temp;
+        selectedElementIndex = selectedElementIndex + 1;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
+
+document.getElementById('moveToBackBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex >= 0 && selectedElementIndex < elements.length) {
+        // Перемещаем элемент в начало массива (рисуется первым, виден снизу)
+        const element = elements.splice(selectedElementIndex, 1)[0];
+        elements.unshift(element);
+        selectedElementIndex = 0;
         loadElementSettings(selectedElementIndex);
         updatePreview();
     }
