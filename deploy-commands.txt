@@ -1,98 +1,55 @@
-# Команды для применения изменений на сервере
-# Скопируйте и выполните эти команды на сервере:
+# Команды для обновления на сервере
+# Выполняйте по порядку
 
 cd /var/www/www-root/data/www/m.dekan.pro
+
+# Обновление кода из Git
 git pull origin main
 
-# Проверяем какой PHP используется
-echo "Проверка PHP:"
-which php
-php -v
-echo "---"
-
-# Проверяем пользователя PHP-FPM
-echo "Проверка пользователя PHP-FPM:"
+# Определение пользователя PHP-FPM
 WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
-echo "Пользователь worker процесса: $WORKER_USER"
-
-# Если не найден, проверяем через PHP (для ISPmanager часто используется www-root)
-if [ -z "$WORKER_USER" ] || [ "$WORKER_USER" = "www-data" ]; then
-    if id "www-root" &>/dev/null && ps aux | grep "php-fpm" | grep -q "www-root"; then
-        echo "⚠️  Обнаружен пользователь www-root для PHP-FPM"
+if [ -z "$WORKER_USER" ]; then
+    if id "www-root" &>/dev/null; then
         WORKER_USER="www-root"
+    else
+        WORKER_USER="www-data"
     fi
 fi
+echo "Пользователь PHP-FPM: $WORKER_USER"
 
-echo "Используемый пользователь: $WORKER_USER"
-
-# Удаляем старые скомпилированные представления
-echo "Очистка старых представлений..."
+# Очистка старых скомпилированных представлений и кеша
 rm -rf storage/framework/views/*
 rm -rf storage/framework/cache/*
 
-# Создаем необходимые директории (включая поддиректории)
-echo "Создание директорий..."
-mkdir -p storage/app/public/certificate-templates
+# Создание необходимых директорий
 mkdir -p storage/framework/views
-mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/cache
 mkdir -p storage/framework/sessions
 mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
-# Устанавливаем владельца ПЕРЕД установкой прав
-echo "Установка владельца..."
+# Установка прав доступа
 chown -R $WORKER_USER:$WORKER_USER storage
 chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
-
-# Устанавливаем права доступа для всех родительских директорий
-echo "Установка прав доступа..."
-chmod 755 storage
-chmod 755 storage/framework
-chmod 775 storage/framework/views
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
-
-# Убеждаемся, что директория views имеет правильные права
 chmod 775 storage/framework/views
 chown $WORKER_USER:$WORKER_USER storage/framework/views
 
-# Проверяем, что пользователь может писать в директорию
-echo "Проверка прав на запись..."
-sudo -u $WORKER_USER touch storage/framework/views/.test_write 2>&1
-if [ -f storage/framework/views/.test_write ]; then
-    sudo -u $WORKER_USER rm storage/framework/views/.test_write
-    echo "✅ Права на запись работают"
-else
-    echo "❌ Ошибка прав доступа"
-    echo "Проверяем текущие права:"
-    ls -la storage/framework/views
-fi
-
-# Очищаем кэш Laravel
+# Очистка кеша Laravel
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
 
-# Проверяем права доступа
-echo "Проверка прав доступа:"
-ls -la storage/framework/ | grep views
-ls -la storage/framework/views | head -3
-
-# Проверяем конфигурацию PHP-FPM 8.4
-echo "Проверка конфигурации PHP-FPM 8.4:"
-if [ -f /opt/php84/etc/php-fpm.conf ]; then
-    grep -E "^user|^group" /opt/php84/etc/php-fpm.conf 2>/dev/null || echo "Не найдено в основном конфиге"
-    find /opt/php84/etc/php-fpm.d -name "*.conf" -exec grep -H "^user\|^group" {} \; 2>/dev/null | head -5
+# Перезапуск PHP-FPM (если нужно)
+# Проверка и перезапуск PHP 8.4
+if systemctl is-active --quiet php84-php-fpm; then
+    systemctl restart php84-php-fpm
 fi
 
-# Проверяем конфигурацию PHP-FPM 8.3
-echo "Проверка конфигурации PHP-FPM 8.3:"
-if [ -f /etc/php/8.3/fpm/php-fpm.conf ]; then
-    grep -E "^user|^group" /etc/php/8.3/fpm/php-fpm.conf 2>/dev/null || echo "Не найдено в основном конфиге"
-    find /etc/php/8.3/fpm/pool.d -name "*.conf" -exec grep -H "^user\|^group" {} \; 2>/dev/null | head -5
+# Проверка и перезапуск PHP 8.3
+if systemctl is-active --quiet php8.3-fpm; then
+    systemctl restart php8.3-fpm
 fi
 
-# Перезапускаем PHP-FPM для применения изменений
-echo "Перезапуск PHP-FPM..."
-systemctl restart php84-php-fpm 2>/dev/null || service php84-php-fpm restart 2>/dev/null || echo "PHP 8.4 FPM не перезапущен"
-systemctl restart php8.3-fpm 2>/dev/null || service php8.3-fpm restart 2>/dev/null || echo "PHP 8.3 FPM не перезапущен"
+echo "✅ Обновление завершено!"
