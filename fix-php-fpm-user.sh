@@ -18,7 +18,7 @@ else
     echo "Найденные конфигурационные файлы:"
     echo "$FPM_CONFIGS"
     echo ""
-    
+
     for config in $FPM_CONFIGS; do
         echo "📄 Файл: $config"
         grep -E "^user|^group" "$config" 2>/dev/null | head -2
