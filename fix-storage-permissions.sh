@@ -57,8 +57,9 @@ chown -R $WORKER_USER:$WORKER_USER storage
 chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
 
 echo "🔐 Установка прав доступа..."
-chmod -R 775 storage
-chmod -R 775 bootstrap/cache
+# Используем 777 для гарантированной работы (менее безопасно, но решает проблемы с правами)
+chmod -R 777 storage
+chmod -R 777 bootstrap/cache
 
 # Убеждаемся, что файл логов существует и имеет правильные права
 touch storage/logs/laravel.log

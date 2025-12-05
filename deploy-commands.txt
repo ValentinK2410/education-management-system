@@ -32,8 +32,16 @@ mkdir -p bootstrap/cache
 # Установка прав доступа
 chown -R $WORKER_USER:$WORKER_USER storage
 chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
+
+# Сначала пробуем безопасные права 775
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
+
+# Если 775 не работает, используем 777 (менее безопасно, но гарантированно работает)
+# Раскомментируйте следующие строки, если права 775 не решают проблему:
+# chmod -R 777 storage
+# chmod -R 777 bootstrap/cache
+
 chmod 775 storage/framework/views
 chmod 775 storage/logs
 chown $WORKER_USER:$WORKER_USER storage/framework/views
