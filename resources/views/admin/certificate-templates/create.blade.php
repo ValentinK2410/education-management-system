@@ -403,6 +403,7 @@ function updatePreview() {
 
     // Сохраняем информацию о текстовых элементах для обработки кликов
     textElementRects = [];
+    resizeHandles = [];
     const textElementItems = document.querySelectorAll('.text-element-item');
 
     textElementItems.forEach((item, index) => {
@@ -453,13 +454,40 @@ function updatePreview() {
                     scale: scale
                 });
 
-                // Рисуем рамку вокруг текста (если элемент выбран)
+                // Рисуем рамку и точки для изменения размера (если элемент выбран)
                 if (item === selectedTextElement) {
                     ctx.strokeStyle = '#007bff';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([5, 5]);
                     ctx.strokeRect(x - 5, y - 5, totalWidth + 10, textHeight + 10);
                     ctx.setLineDash([]);
+                    
+                    // Сохраняем информацию о точках для изменения размера
+                    const handleSize = 8;
+                    const handles = [
+                        { x: x - 5, y: y + textHeight / 2, type: 'left' },    // Левая точка
+                        { x: x + totalWidth + 5, y: y + textHeight / 2, type: 'right' }  // Правая точка
+                    ];
+                    
+                    resizeHandles = handles.map(h => ({
+                        ...h,
+                        item: item,
+                        realX: (h.x / scale),
+                        realY: (h.y / scale),
+                        realWidth: (totalWidth / scale),
+                        realHeight: (textHeight / scale)
+                    }));
+                    
+                    // Рисуем круглые точки
+                    handles.forEach(handle => {
+                        ctx.fillStyle = '#007bff';
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
                 }
             }
         }
@@ -577,12 +605,12 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     // Обработка изменения размера текста
     if (isResizing && selectedTextElement && resizeHandleIndex !== -1) {
         const handle = resizeHandles[resizeHandleIndex];
         const deltaX = x - initialMouseX;
-        
+
         // Находим scale для преобразования координат
         const width = parseInt(document.getElementById('width').value) || 1200;
         const height = parseInt(document.getElementById('height').value) || 800;
@@ -590,7 +618,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const maxWidth = Math.min(container.clientWidth - 40, width);
         const maxHeight = Math.min(window.innerHeight * 0.5, height);
         const scale = Math.min(maxWidth / width, maxHeight / height);
-        
+
         // Вычисляем изменение размера в зависимости от направления перетаскивания
         let sizeDelta = 0;
         if (handle.type === 'left') {
@@ -598,21 +626,21 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         } else if (handle.type === 'right') {
             sizeDelta = deltaX / scale; // Увеличиваем при движении вправо
         }
-        
+
         // Вычисляем новый размер
         const newSize = Math.max(8, Math.min(200, initialSize + sizeDelta * 0.5));
-        
+
         // Обновляем значение в форме
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 4) {
             inputs[3].value = Math.round(newSize);
             updatePreview();
         }
-        
+
         this.style.cursor = 'ew-resize';
         return;
     }
-    
+
     // Проверка наведения на точки изменения размера
     if (!isDragging && !isResizing) {
         const handleIndex = checkResizeHandleClick(x, y);
@@ -621,7 +649,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
             return;
         }
     }
-    
+
     // Обработка перетаскивания текстового элемента
     if (isDragging && selectedTextElement) {
         const dragX = x - dragOffset.x;
@@ -646,7 +674,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
             inputs[2].value = Math.round(realY);
             updatePreview();
         }
-        
+
         this.style.cursor = 'move';
     } else {
         // Проверка наведения на текстовый элемент
