@@ -469,14 +469,14 @@ function updatePreview() {
                     ctx.setLineDash([5, 5]);
                     ctx.strokeRect(x - 5, y - 5, totalWidth + 10, textHeight + 10);
                     ctx.setLineDash([]);
-                    
+
                     // Сохраняем информацию о точках для изменения размера
                     const handleSize = 8;
                     const handles = [
                         { x: x - 5, y: y + textHeight / 2, type: 'left' },    // Левая точка
                         { x: x + totalWidth + 5, y: y + textHeight / 2, type: 'right' }  // Правая точка
                     ];
-                    
+
                     resizeHandles = handles.map(h => ({
                         ...h,
                         item: item,
@@ -485,7 +485,7 @@ function updatePreview() {
                         realWidth: (totalWidth / scale),
                         realHeight: (textHeight / scale)
                     }));
-                    
+
                     // Рисуем круглые точки
                     handles.forEach(handle => {
                         ctx.fillStyle = '#007bff';
@@ -576,21 +576,23 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
     const handleIndex = checkResizeHandleClick(x, y);
     if (handleIndex !== -1 && selectedTextElement) {
         isResizing = true;
+        isDragging = false; // Отключаем перетаскивание при изменении размера
         resizeHandleIndex = handleIndex;
         initialMouseX = x;
-
+        
         // Получаем текущий размер текста
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 4) {
             initialSize = parseInt(inputs[3]?.value || 24);
         }
-
+        
         this.style.cursor = 'ew-resize';
         e.preventDefault();
+        e.stopPropagation();
         return;
     }
 
-    // Проверяем, попал ли клик в какой-либо текстовый элемент
+    // Проверяем, попал ли клик в какой-либо текстовый элемент (но не на точки изменения размера)
     for (let i = textElementRects.length - 1; i >= 0; i--) {
         const textRect = textElementRects[i];
         if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
@@ -599,6 +601,7 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
             selectedTextElement = textRect.item;
             selectedTextElement.classList.add('selected');
             isDragging = true;
+            isResizing = false; // Отключаем изменение размера при перетаскивании
             dragOffset.x = x - textRect.x;
             dragOffset.y = y - textRect.y;
             this.style.cursor = 'move';
@@ -607,6 +610,10 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
             return;
         }
     }
+    
+    // Если клик не попал ни в элемент, ни в точку изменения размера
+    isDragging = false;
+    isResizing = false;
 });
 
 document.getElementById('previewCanvas').addEventListener('mousemove', function(e) {
