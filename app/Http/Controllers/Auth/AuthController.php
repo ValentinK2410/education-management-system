@@ -61,7 +61,7 @@ class AuthController extends Controller
             if ($user->hasRole('admin')) {
                 return redirect()->intended('/admin/dashboard');
             }
-            
+
             // Для обычных пользователей - на главную страницу
             return redirect()->intended('/');
         }
@@ -122,7 +122,7 @@ class AuthController extends Controller
         if ($user->hasRole('admin')) {
             return redirect('/admin/dashboard');
         }
-        
+
         // Для обычных пользователей - на главную страницу
         return redirect('/');
     }
