@@ -141,6 +141,11 @@ class CertificateTemplateController extends Controller
             $data['text_elements'] = [];
         }
 
+        // Явно сохраняем quality, чтобы убедиться, что оно сохраняется
+        if ($request->has('quality')) {
+            $data['quality'] = (int) $request->input('quality');
+        }
+
         $template = CertificateTemplate::create($data);
 
         return redirect()->route('admin.certificate-templates.index')
@@ -271,6 +276,11 @@ class CertificateTemplateController extends Controller
         }
         if ($data['background_type'] !== 'gradient') {
             unset($data['background_gradient']);
+        }
+
+        // Явно сохраняем quality, чтобы убедиться, что оно обновляется
+        if ($request->has('quality')) {
+            $data['quality'] = (int) $request->input('quality');
         }
 
         $certificateTemplate->update($data);

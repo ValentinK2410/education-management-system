@@ -213,15 +213,48 @@ class CertificateController extends Controller
         if (isset($gradient['colors']) && count($gradient['colors']) >= 2) {
             $color1 = $this->hexToRgb($gradient['colors'][0]);
             $color2 = $this->hexToRgb($gradient['colors'][1]);
+            $angle = isset($gradient['angle']) ? (float)$gradient['angle'] : 0; // Угол в градусах
 
+            // Преобразуем угол в радианы
+            $angleRad = deg2rad($angle);
+
+            // Вычисляем длину диагонали для покрытия всего изображения
+            $diagonal = sqrt($width * $width + $height * $height);
+
+            // Центр изображения
+            $centerX = $width / 2;
+            $centerY = $height / 2;
+
+            // Вычисляем координаты начала и конца градиента
+            $x1 = $centerX - cos($angleRad) * $diagonal / 2;
+            $y1 = $centerY - sin($angleRad) * $diagonal / 2;
+            $x2 = $centerX + cos($angleRad) * $diagonal / 2;
+            $y2 = $centerY + sin($angleRad) * $diagonal / 2;
+
+            // Для каждого пикселя вычисляем расстояние от линии градиента
             for ($y = 0; $y < $height; $y++) {
-                $ratio = $y / $height;
-                $r = (int)($color1['r'] + ($color2['r'] - $color1['r']) * $ratio);
-                $g = (int)($color1['g'] + ($color2['g'] - $color1['g']) * $ratio);
-                $b = (int)($color1['b'] + ($color2['b'] - $color1['b']) * $ratio);
+                for ($x = 0; $x < $width; $x++) {
+                    // Вычисляем проекцию точки на линию градиента
+                    $dx = $x2 - $x1;
+                    $dy = $y2 - $y1;
+                    $length = sqrt($dx * $dx + $dy * $dy);
 
-                $lineColor = imagecolorallocate($image, $r, $g, $b);
-                imageline($image, 0, $y, $width, $y, $lineColor);
+                    if ($length > 0) {
+                        $px = $x - $x1;
+                        $py = $y - $y1;
+                        $dot = ($px * $dx + $py * $dy) / ($length * $length);
+                        $ratio = max(0, min(1, $dot));
+                    } else {
+                        $ratio = 0;
+                    }
+
+                    $r = (int)($color1['r'] + ($color2['r'] - $color1['r']) * $ratio);
+                    $g = (int)($color1['g'] + ($color2['g'] - $color1['g']) * $ratio);
+                    $b = (int)($color1['b'] + ($color2['b'] - $color1['b']) * $ratio);
+
+                    $pixelColor = imagecolorallocate($image, $r, $g, $b);
+                    imagesetpixel($image, $x, $y, $pixelColor);
+                }
             }
         }
     }

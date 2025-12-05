@@ -57,6 +57,86 @@
     #previewCanvas {
         border: 1px solid #ccc;
     }
+
+    /* Стили для ползунка угла градиента */
+    .gradient-angle-slider-container {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .gradient-angle-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: linear-gradient(to right,
+            #ff0000 0%,
+            #ffff00 15%,
+            #00ff00 30%,
+            #00ffff 45%,
+            #0000ff 60%,
+            #ff00ff 75%,
+            #ff0000 100%);
+        outline: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .gradient-angle-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #007bff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .gradient-angle-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4);
+    }
+
+    .gradient-angle-slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #007bff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .gradient-angle-slider::-moz-range-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4);
+    }
+
+    .gradient-angle-visual {
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .gradient-preview-box {
+        width: 200px;
+        height: 60px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    #gradient_angle_value {
+        font-weight: 600;
+        color: #007bff;
+        font-size: 1.1em;
+    }
 </style>
 @endpush
 
@@ -219,6 +299,18 @@
                                             <label for="gradient_color2" class="form-label">Цвет 2</label>
                                             <input type="color" class="form-control form-control-color" id="gradient_color2"
                                                    value="{{ old('gradient_color2', $certificateTemplate->background_gradient['colors'][1] ?? '#f0f0f0') }}">
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label for="gradient_angle" class="form-label">
+                                            Угол градиента: <span id="gradient_angle_value">{{ old('gradient_angle', $certificateTemplate->background_gradient['angle'] ?? 0) }}</span>°
+                                        </label>
+                                        <div class="gradient-angle-slider-container">
+                                            <input type="range" class="form-range gradient-angle-slider" id="gradient_angle"
+                                                   min="0" max="360" value="{{ old('gradient_angle', $certificateTemplate->background_gradient['angle'] ?? 0) }}" step="1">
+                                            <div class="gradient-angle-visual">
+                                                <div class="gradient-preview-box" id="gradientPreviewBox"></div>
+                                            </div>
                                         </div>
                                     </div>
                                     <input type="hidden" name="background_gradient" id="background_gradient">
@@ -1166,9 +1258,24 @@ function updatePreview() {
         ctx.fillStyle = document.getElementById('background_color').value;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (bgType === 'gradient') {
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, document.getElementById('gradient_color1').value);
-        gradient.addColorStop(1, document.getElementById('gradient_color2').value);
+        const angle = parseInt(document.getElementById('gradient_angle').value) || 0;
+        const color1 = document.getElementById('gradient_color1').value;
+        const color2 = document.getElementById('gradient_color2').value;
+
+        // Преобразуем угол в радианы и вычисляем координаты для градиента
+        const angleRad = (angle * Math.PI) / 180;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const length = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
+
+        const x1 = centerX - Math.cos(angleRad) * length / 2;
+        const y1 = centerY - Math.sin(angleRad) * length / 2;
+        const x2 = centerX + Math.cos(angleRad) * length / 2;
+        const y2 = centerY + Math.sin(angleRad) * length / 2;
+
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, color1);
+        gradient.addColorStop(1, color2);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (bgType === 'image') {
@@ -1565,9 +1672,34 @@ function updateGradient() {
         colors: [
             document.getElementById('gradient_color1').value,
             document.getElementById('gradient_color2').value
-        ]
+        ],
+        angle: parseInt(document.getElementById('gradient_angle').value) || 0
     };
     document.getElementById('background_gradient').value = JSON.stringify(gradient);
+    updateGradientPreview();
+}
+
+function updateGradientPreview() {
+    const angle = parseInt(document.getElementById('gradient_angle').value) || 0;
+    const color1 = document.getElementById('gradient_color1').value;
+    const color2 = document.getElementById('gradient_color2').value;
+
+    const angleRad = (angle * Math.PI) / 180;
+    const previewBox = document.getElementById('gradientPreviewBox');
+
+    // Вычисляем координаты для градиента в превью
+    const length = Math.sqrt(200 * 200 + 60 * 60);
+    const centerX = 100;
+    const centerY = 30;
+
+    const x1 = centerX - Math.cos(angleRad) * length / 2;
+    const y1 = centerY - Math.sin(angleRad) * length / 2;
+    const x2 = centerX + Math.cos(angleRad) * length / 2;
+    const y2 = centerY + Math.sin(angleRad) * length / 2;
+
+    // Создаем градиент через CSS
+    const angleDeg = angle;
+    previewBox.style.background = `linear-gradient(${angleDeg}deg, ${color1}, ${color2})`;
 }
 
 function prepareFormData() {
@@ -1612,6 +1744,19 @@ document.getElementById('gradient_color2')?.addEventListener('change', function(
     updatePreview();
 });
 
+// Обновление угла градиента
+document.getElementById('gradient_angle')?.addEventListener('input', function() {
+    document.getElementById('gradient_angle_value').textContent = this.value;
+    updateGradient();
+    updatePreview();
+});
+
+document.getElementById('gradient_angle')?.addEventListener('change', function() {
+    document.getElementById('gradient_angle_value').textContent = this.value;
+    updateGradient();
+    updatePreview();
+});
+
 // Слушатели для текстовых элементов
 document.addEventListener('input', function(e) {
     if (e.target.closest('.text-element-item')) {
@@ -1642,6 +1787,7 @@ document.querySelectorAll('.text-element-input, select.text-element-input').forE
 // Инициализация
 updatePreview();
 updateGradient();
+updateGradientPreview();
 </script>
 @endpush
 @endsection
