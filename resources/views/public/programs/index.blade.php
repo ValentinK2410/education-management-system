@@ -293,8 +293,8 @@
                 <p class="lead mb-0">Выберите подходящую образовательную программу</p>
             </div>
         </div>
+        </div>
     </div>
-</div>
 
 <div class="container pb-5">
     <div class="row g-4">
@@ -321,7 +321,7 @@
                                     <a href="{{ route('institutions.show', $program->institution) }}">
                                         {{ $program->institution->name }}
                                     </a>
-                                </div>
+                        </div>
                             @endif
 
                             @if($program->duration)
@@ -374,7 +374,7 @@
                 <div class="empty-state">
                     <i class="fas fa-graduation-cap empty-state-icon"></i>
                     <h3 class="text-muted mb-3">Программы не найдены</h3>
-                    <p class="text-muted">Образовательные программы будут добавлены в ближайшее время</p>
+                        <p class="text-muted">Образовательные программы будут добавлены в ближайшее время</p>
                 </div>
             </div>
         @endforelse

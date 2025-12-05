@@ -26,6 +26,7 @@ mkdir -p storage/framework/views
 mkdir -p storage/framework/cache
 mkdir -p storage/framework/sessions
 mkdir -p storage/logs
+mkdir -p storage/app/public/certificate-templates
 mkdir -p bootstrap/cache
 
 # Установка прав доступа
@@ -34,7 +35,14 @@ chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
 chmod 775 storage/framework/views
+chmod 775 storage/logs
 chown $WORKER_USER:$WORKER_USER storage/framework/views
+chown $WORKER_USER:$WORKER_USER storage/logs
+
+# Убеждаемся, что файл логов существует и имеет правильные права
+touch storage/logs/laravel.log
+chown $WORKER_USER:$WORKER_USER storage/logs/laravel.log
+chmod 664 storage/logs/laravel.log
 
 # Очистка кеша Laravel
 php artisan view:clear

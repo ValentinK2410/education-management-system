@@ -436,13 +436,13 @@
         <a href="{{ route('admin.users.edit', $user) }}" class="btn-action btn-edit">
             <i class="fas fa-edit"></i>
             Редактировать
-        </a>
+                        </a>
         <a href="{{ route('admin.users.index') }}" class="btn-action btn-back">
             <i class="fas fa-arrow-left"></i>
             Назад к списку
-        </a>
-    </div>
-</div>
+                        </a>
+                    </div>
+                </div>
 
 <!-- Tabs Navigation -->
 <div class="tabs-container">
@@ -471,7 +471,7 @@
 
     <!-- Tab: Основная информация -->
     <div id="tab-info" class="tab-content active">
-        <div class="row">
+                    <div class="row">
             <div class="col-lg-6">
                 <div class="info-card">
                     <h5 class="info-card-title">
@@ -507,7 +507,7 @@
                             </div>
                             <div class="info-value">{{ $user->phone }}</div>
                         </div>
-                    @endif
+                                        @endif
                     <div class="info-item">
                         <div class="info-label">
                             <i class="fas fa-circle"></i>
@@ -528,8 +528,8 @@
                         </div>
                         <div class="info-value">{{ $user->created_at->format('d.m.Y H:i') }}</div>
                     </div>
-                </div>
-            </div>
+                        </div>
+                    </div>
 
             <div class="col-lg-6">
                 <div class="info-card">
@@ -543,12 +543,12 @@
                                 <span class="badge-custom badge-primary">{{ $role->name }}</span>
                             @endforeach
                         </div>
-                    @else
+                                                @else
                         <p class="text-muted mb-0">
                             <i class="fas fa-info-circle me-2"></i>
                             Роли не назначены
                         </p>
-                    @endif
+                                                @endif
 
                     @if($user->bio)
                         <div class="bio-section">

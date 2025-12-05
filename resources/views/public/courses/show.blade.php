@@ -271,51 +271,51 @@
                     <i class="fas fa-graduation-cap me-1"></i>{{ $course->program->name }}
                 </a>
             @endif
-            @if($course->credits)
+                @if($course->credits)
                 <span class="course-badge">
                     <i class="fas fa-star me-1"></i>{{ $course->credits }} кредитов
                 </span>
-            @endif
-        </div>
+                @endif
+            </div>
 
         <h1 class="course-title">{{ $course->name }}</h1>
         <p class="course-description">{{ $course->description }}</p>
 
         <div class="course-info-grid">
-            @if($course->code)
+                @if($course->code)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-code"></i></div>
                     <div class="info-item-label">Код курса</div>
                     <div class="info-item-value">{{ $course->code }}</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($course->duration)
+                @if($course->duration)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-clock"></i></div>
                     <div class="info-item-label">Продолжительность</div>
                     <div class="info-item-value">{{ $course->duration }}</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($course->schedule)
+                @if($course->schedule)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-calendar-alt"></i></div>
                     <div class="info-item-label">Расписание</div>
                     <div class="info-item-value">{{ $course->schedule }}</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($course->location)
+                @if($course->location)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-map-marker-alt"></i></div>
                     <div class="info-item-label">Место проведения</div>
                     <div class="info-item-value">{{ $course->location }}</div>
                 </div>
             @endif
+            </div>
         </div>
     </div>
-</div>
 
 <div class="container pb-5">
     <!-- Prerequisites Section -->
@@ -326,14 +326,14 @@
                 Предварительные требования
             </h2>
             <div class="row g-3">
-                @foreach($course->prerequisites as $prerequisite)
+                    @foreach($course->prerequisites as $prerequisite)
                     <div class="col-md-4 col-sm-6">
                         <div class="prerequisite-card">
                             <i class="fas fa-exclamation-triangle"></i>
                             <h6 class="mb-0 fw-bold">{{ $prerequisite }}</h6>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
             </div>
         </div>
     @endif
@@ -346,14 +346,14 @@
                 Результаты обучения
             </h2>
             <div class="row g-3">
-                @foreach($course->learning_outcomes as $outcome)
+                    @foreach($course->learning_outcomes as $outcome)
                     <div class="col-md-6">
                         <div class="outcome-card d-flex align-items-center">
                             <i class="fas fa-check-circle"></i>
                             <h6 class="mb-0">{{ $outcome }}</h6>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
             </div>
         </div>
     @endif
@@ -366,39 +366,39 @@
                 Преподаватель
             </h2>
             <div class="instructor-card">
-                <div class="row align-items-center">
+                        <div class="row align-items-center">
                     <div class="col-md-3 text-center mb-3 mb-md-0">
                         @php
                             $hasAvatar = isset($course->instructor->avatar) && !empty($course->instructor->avatar);
                         @endphp
                         @if($hasAvatar)
-                            <img src="{{ Storage::url($course->instructor->avatar) }}"
+                                    <img src="{{ Storage::url($course->instructor->avatar) }}"
                                  class="instructor-avatar" alt="Avatar"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="instructor-avatar-placeholder mx-auto" style="display: none;">
                                 <i class="fas fa-user"></i>
                             </div>
-                        @else
+                                @else
                             <div class="instructor-avatar-placeholder mx-auto">
                                 <i class="fas fa-user"></i>
+                                    </div>
+                                @endif
                             </div>
-                        @endif
-                    </div>
-                    <div class="col-md-9">
+                            <div class="col-md-9">
                         <h4 class="fw-bold mb-2">{{ $course->instructor->name }}</h4>
-                        @if($course->instructor->bio)
+                                @if($course->instructor->bio)
                             <p class="text-muted mb-3">{{ $course->instructor->bio }}</p>
-                        @endif
+                                @endif
                         <div class="d-flex gap-2 flex-wrap">
-                            @if($course->instructor->email)
+                                    @if($course->instructor->email)
                                 <a href="mailto:{{ $course->instructor->email }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-envelope me-1"></i>Email
-                                </a>
-                            @endif
+                                            <i class="fas fa-envelope me-1"></i>Email
+                                        </a>
+                                    @endif
                             @if(Route::has('instructors.show'))
                                 <a href="{{ route('instructors.show', $course->instructor) }}" class="btn btn-primary">
                                     <i class="fas fa-user me-1"></i>Профиль преподавателя
-                                </a>
+                                    </a>
                             @endif
                         </div>
                     </div>
@@ -412,88 +412,88 @@
         <div class="reviews-header">
             <h2 class="section-title mb-0">
                 <i class="fas fa-star"></i>
-                Отзывы о курсе
+                    Отзывы о курсе
             </h2>
             <div class="d-flex align-items-center gap-3 flex-wrap">
-                @if($course->reviews_count > 0)
+                    @if($course->reviews_count > 0)
                     <div class="rating-display">
-                        @for ($i = 1; $i <= 5; $i++)
-                            <i class="fas fa-star {{ $i <= round($course->average_rating) ? 'text-warning' : 'text-muted' }}"></i>
-                        @endfor
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="fas fa-star {{ $i <= round($course->average_rating) ? 'text-warning' : 'text-muted' }}"></i>
+                                @endfor
                         <span class="fw-bold ms-2">{{ number_format($course->average_rating, 1) }}</span>
-                        <span class="text-muted ms-1">({{ $course->reviews_count }} отзывов)</span>
-                    </div>
-                @endif
-                @auth
-                    @php
-                        $userReview = $course->reviews()->where('user_id', auth()->id())->first();
-                    @endphp
-                    @if(!$userReview)
-                        <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Оставить отзыв
-                        </a>
-                    @else
-                        <a href="{{ route('reviews.edit', $userReview) }}" class="btn btn-outline-primary">
-                            <i class="fas fa-edit me-1"></i>Редактировать отзыв
-                        </a>
+                                <span class="text-muted ms-1">({{ $course->reviews_count }} отзывов)</span>
+                        </div>
                     @endif
-                @else
-                    <a href="{{ route('login') }}" class="btn btn-outline-primary">
+                    @auth
+                        @php
+                            $userReview = $course->reviews()->where('user_id', auth()->id())->first();
+                        @endphp
+                        @if(!$userReview)
+                            <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Оставить отзыв
+                            </a>
+                        @else
+                            <a href="{{ route('reviews.edit', $userReview) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>Редактировать отзыв
+                            </a>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary">
                         <i class="fas fa-sign-in-alt me-1"></i>Войти для отзыва
-                    </a>
-                @endauth
+                        </a>
+                    @endauth
+                </div>
             </div>
-        </div>
 
-        @if($course->approvedReviews->count() > 0)
+            @if($course->approvedReviews->count() > 0)
             <div class="row g-4">
-                @foreach($course->approvedReviews->take(6) as $review)
+                    @foreach($course->approvedReviews->take(6) as $review)
                     <div class="col-lg-6">
                         <div class="review-card">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                                        {{ substr($review->user->name, 0, 1) }}
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                {{ substr($review->user->name, 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ $review->user->name }}</h6>
+                                                <small class="text-muted">{{ $review->created_at->format('d.m.Y') }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="rating-display">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
+                                            @endfor
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h6 class="mb-0 fw-bold">{{ $review->user->name }}</h6>
-                                        <small class="text-muted">{{ $review->created_at->format('d.m.Y') }}</small>
-                                    </div>
-                                </div>
-                                <div class="rating-display">
-                                    @for ($i = 1; $i <= 5; $i++)
-                                        <i class="fas fa-star {{ $i <= $review->rating ? 'text-warning' : 'text-muted' }}"></i>
-                                    @endfor
-                                </div>
-                            </div>
                             <p class="mb-0 text-muted">{{ $review->comment }}</p>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
-
-            @if($course->approvedReviews->count() > 6)
-                <div class="text-center mt-4">
-                    <button class="btn btn-outline-primary" onclick="showAllReviews()">
-                        <i class="fas fa-eye me-1"></i>
-                        Показать все отзывы ({{ $course->approvedReviews->count() }})
-                    </button>
+                    @endforeach
                 </div>
-            @endif
-        @else
-            <div class="text-center py-5">
-                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+
+                @if($course->approvedReviews->count() > 6)
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary" onclick="showAllReviews()">
+                            <i class="fas fa-eye me-1"></i>
+                            Показать все отзывы ({{ $course->approvedReviews->count() }})
+                        </button>
+                    </div>
+                @endif
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted mb-2">Пока нет отзывов</h5>
                 <p class="text-muted mb-4">Станьте первым, кто оставит отзыв об этом курсе</p>
-                @auth
-                    <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
+                    @auth
+                        <a href="{{ route('reviews.create', $course) }}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>Оставить отзыв
-                    </a>
-                @endauth
-            </div>
-        @endif
+                        </a>
+                    @endauth
+                </div>
+            @endif
+        </div>
     </div>
-</div>
 
 <script>
 function showAllReviews() {

@@ -69,7 +69,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h5 class="mb-3">Основные настройки</h5>
-
+                                
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -107,7 +107,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Размер и качество</h5>
-
+                                
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="mb-3">
@@ -144,7 +144,7 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Настройки фона</h5>
-
+                                
                                 <div class="mb-3">
                                     <label for="background_type" class="form-label">Тип фона *</label>
                                     <select class="form-select @error('background_type') is-invalid @enderror"
@@ -205,27 +205,27 @@
                                 </div>
 
                                 <h5 class="mb-3 mt-4">Текстовые элементы</h5>
-
+                                
                                 <div id="textElements">
                                     @if($certificateTemplate->text_elements)
                                         @foreach($certificateTemplate->text_elements as $index => $element)
-                                            <div class="text-element-item">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Текст</label>
+                                    <div class="text-element-item">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Текст</label>
                                                         <input type="text" class="form-control text-element-input"
                                                                value="{{ $element['text'] ?? '' }}"
                                                                placeholder="Используйте {user_name}, {course_name}, {date}">
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">X</label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">X</label>
                                                         <input type="number" class="form-control text-element-input" value="{{ $element['x'] ?? 100 }}">
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">Y</label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Y</label>
                                                         <input type="number" class="form-control text-element-input" value="{{ $element['y'] ?? 200 }}">
-                                                    </div>
-                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="row mt-2">
                                             <div class="col-md-3">
                                                 <label class="form-label">Размер</label>
@@ -246,11 +246,11 @@
                                                 </button>
                                             </div>
                                         </div>
-                                            </div>
+                                    </div>
                                         @endforeach
                                     @endif
                                 </div>
-
+                                
                                 <button type="button" class="btn btn-sm btn-outline-primary" id="addTextElement">
                                     <i class="fas fa-plus"></i> Добавить текстовый элемент
                                 </button>
@@ -379,21 +379,21 @@ function updatePreview() {
     const ctx = canvas.getContext('2d');
     const width = parseInt(document.getElementById('width').value) || 1200;
     const height = parseInt(document.getElementById('height').value) || 800;
-
+    
     // Увеличиваем размер canvas до половины экрана
     const container = canvas.parentElement;
     const maxWidth = Math.min(container.clientWidth - 40, width);
     const maxHeight = Math.min(window.innerHeight * 0.5, height);
-
+    
     const scale = Math.min(maxWidth / width, maxHeight / height);
-
+    
     canvas.width = width * scale;
     canvas.height = height * scale;
     canvas.style.width = canvas.width + 'px';
     canvas.style.height = canvas.height + 'px';
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     const bgType = document.getElementById('background_type').value;
     if (bgType === 'color') {
         ctx.fillStyle = document.getElementById('background_color').value;
@@ -408,7 +408,7 @@ function updatePreview() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-
+    
     // Сохраняем информацию о текстовых элементах для обработки кликов
     textElementRects = [];
     resizeHandles = [];
@@ -428,7 +428,7 @@ function updatePreview() {
                 ctx.font = `bold ${size}px Arial`;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillStyle = color;
+            ctx.fillStyle = color;
 
                 let currentX = x;
                 let totalWidth = 0;

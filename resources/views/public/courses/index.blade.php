@@ -253,8 +253,8 @@ use Illuminate\Support\Facades\Storage;
                 <p class="lead mb-0">Изучайте новые навыки с лучшими преподавателями</p>
             </div>
         </div>
+        </div>
     </div>
-</div>
 
 <div class="container pb-5">
     <div class="row g-4">
@@ -289,28 +289,28 @@ use Illuminate\Support\Facades\Storage;
                                 <div class="course-info-item">
                                     <i class="fas fa-university"></i>
                                     <span>{{ $course->program->institution->name }}</span>
-                                </div>
+                        </div>
                             @endif
 
                             @if($course->program)
                                 <div class="course-info-item">
                                     <i class="fas fa-graduation-cap"></i>
                                     <span>{{ $course->program->name }}</span>
-                                </div>
+                        </div>
                             @endif
 
-                            @if($course->instructor)
+                        @if($course->instructor)
                                 <div class="course-info-item">
                                     <i class="fas fa-user-tie"></i>
                                     @if(Route::has('instructors.show'))
                                         <a href="{{ route('instructors.show', $course->instructor) }}">
-                                            {{ $course->instructor->name }}
-                                        </a>
+                                        {{ $course->instructor->name }}
+                                    </a>
                                     @else
                                         <span>{{ $course->instructor->name }}</span>
                                     @endif
-                                </div>
-                            @endif
+                            </div>
+                        @endif
 
                             @if($course->duration)
                                 <div class="course-info-item">
@@ -347,7 +347,7 @@ use Illuminate\Support\Facades\Storage;
                 <div class="empty-state">
                     <i class="fas fa-chalkboard-teacher empty-state-icon"></i>
                     <h3 class="text-muted mb-3">Курсы не найдены</h3>
-                    <p class="text-muted">Учебные курсы будут добавлены в ближайшее время</p>
+                        <p class="text-muted">Учебные курсы будут добавлены в ближайшее время</p>
                 </div>
             </div>
         @endforelse

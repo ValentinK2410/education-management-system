@@ -292,46 +292,46 @@
                     <i class="fas fa-graduation-cap me-1"></i>{{ $program->degree_level_label }}
                 </span>
             @endif
-        </div>
+            </div>
 
         <h1 class="program-title">{{ $program->name }}</h1>
         <p class="program-description">{{ $program->description }}</p>
 
         <div class="program-info-grid">
-            @if($program->duration)
+                @if($program->duration)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-clock"></i></div>
                     <div class="info-item-label">Продолжительность</div>
                     <div class="info-item-value">{{ $program->duration }}</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($program->tuition_fee)
+                @if($program->tuition_fee)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-ruble-sign"></i></div>
                     <div class="info-item-label">Стоимость</div>
                     <div class="info-item-value">{{ number_format($program->tuition_fee, 0, ',', ' ') }} ₽</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($program->language)
+                @if($program->language)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-language"></i></div>
                     <div class="info-item-label">Язык обучения</div>
                     <div class="info-item-value">{{ $program->language === 'ru' ? 'Русский' : 'English' }}</div>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if($program->location)
+                        @if($program->location)
                 <div class="info-item">
                     <div class="info-item-icon"><i class="fas fa-map-marker-alt"></i></div>
                     <div class="info-item-label">Место проведения</div>
                     <div class="info-item-value">{{ $program->location }}</div>
                 </div>
             @endif
+            </div>
         </div>
     </div>
-</div>
 
 <div class="container pb-5">
     <!-- Requirements Section -->
@@ -342,14 +342,14 @@
                 Требования для поступления
             </h2>
             <div class="row g-3">
-                @foreach($program->requirements as $requirement)
+                    @foreach($program->requirements as $requirement)
                     <div class="col-md-4 col-sm-6">
                         <div class="requirement-card">
                             <i class="fas fa-check-circle"></i>
                             <h6 class="mb-0 fw-bold">{{ $requirement }}</h6>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
             </div>
         </div>
     @endif
@@ -361,14 +361,14 @@
             Курсы программы
         </h2>
 
-        @if($program->courses->count() > 0)
+            @if($program->courses->count() > 0)
             <div class="row g-4">
-                @foreach($program->courses as $course)
+                    @foreach($program->courses as $course)
                     <div class="col-lg-6">
                         <div class="course-card">
                             <div class="course-header">
                                 <h5 class="course-title">{{ $course->name }}</h5>
-                                @if($course->credits)
+                                        @if($course->credits)
                                     <span class="course-badge">{{ $course->credits }} кредитов</span>
                                 @endif
                             </div>
@@ -386,24 +386,24 @@
                                         @else
                                             <span>{{ $course->instructor->name }}</span>
                                         @endif
-                                    </div>
-                                @endif
+                                        </div>
+                                    @endif
 
-                                @if($course->duration)
+                                        @if($course->duration)
                                     <div class="course-info-item">
                                         <i class="fas fa-clock"></i>
                                         <span>{{ $course->duration }}</span>
-                                    </div>
-                                @endif
+                                            </div>
+                                        @endif
 
-                                @if($course->schedule)
+                                        @if($course->schedule)
                                     <div class="course-info-item">
                                         <i class="fas fa-calendar-alt"></i>
                                         <span>{{ $course->schedule }}</span>
                                     </div>
                                 @endif
 
-                                @if($course->location)
+                                        @if($course->location)
                                     <div class="course-info-item">
                                         <i class="fas fa-map-marker-alt"></i>
                                         <span>{{ $course->location }}</span>
@@ -415,18 +415,18 @@
                                 <a href="{{ route('courses.show', $course) }}" class="course-btn">
                                     Подробнее <i class="fas fa-arrow-right ms-1"></i>
                                 </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
+                    @endforeach
+                </div>
+            @else
             <div class="text-center py-5">
-                <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                        <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted mb-2">Курсы не найдены</h5>
-                <p class="text-muted">В этой программе пока нет курсов</p>
-            </div>
-        @endif
+                        <p class="text-muted">В этой программе пока нет курсов</p>
+                </div>
+            @endif
     </div>
 </div>
 @endsection
