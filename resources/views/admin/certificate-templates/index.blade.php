@@ -21,10 +21,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="input-group">
-                                    <input type="text" 
-                                           name="search" 
-                                           class="form-control" 
-                                           placeholder="Поиск по названию или описанию..." 
+                                    <input type="text"
+                                           name="search"
+                                           class="form-control"
+                                           placeholder="Поиск по названию или описанию..."
                                            value="{{ request('search') }}">
                                     <button class="btn btn-outline-secondary" type="submit">
                                         <i class="fas fa-search me-2"></i>Найти

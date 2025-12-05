@@ -27,7 +27,7 @@ class CertificateTemplateController extends Controller
         }
 
         $templates = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
-        
+
         return view('admin.certificate-templates.index', compact('templates'));
     }
 
