@@ -46,13 +46,30 @@ class SettingsController extends Controller
      */
     public function getUserSettings()
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        return response()->json([
-            'theme' => $user->theme_preference ?? 'light',
-            'sidebar_collapsed' => $user->sidebar_collapsed ?? false,
-            'notifications_enabled' => $user->notifications_enabled ?? true,
-        ]);
+            if (!$user) {
+                return response()->json([
+                    'theme' => 'light',
+                    'sidebar_collapsed' => false,
+                    'notifications_enabled' => true,
+                ], 200);
+            }
+
+            return response()->json([
+                'theme' => $user->theme_preference ?? 'light',
+                'sidebar_collapsed' => $user->sidebar_collapsed ?? false,
+                'notifications_enabled' => $user->notifications_enabled ?? true,
+            ]);
+        } catch (\Exception $e) {
+            // В случае ошибки возвращаем настройки по умолчанию
+            return response()->json([
+                'theme' => 'light',
+                'sidebar_collapsed' => false,
+                'notifications_enabled' => true,
+            ], 200);
+        }
     }
 
     /**

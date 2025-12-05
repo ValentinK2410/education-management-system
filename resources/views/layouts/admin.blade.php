@@ -743,21 +743,34 @@
         // Load user theme preference from server
         function loadUserThemePreference() {
             fetch('/admin/user-settings')
-                .then(response => response.json())
+                .then(response => {
+                    // Проверяем, что ответ успешный и является JSON
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Response is not JSON');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.theme) {
+                    if (data && data.theme) {
                         document.documentElement.setAttribute('data-theme', data.theme);
                         localStorage.setItem('theme', data.theme);
                         updateThemeIcon(data.theme);
                     }
 
-                    if (data.sidebar_collapsed) {
+                    if (data && data.sidebar_collapsed) {
                         sidebar.classList.add('collapsed');
                         mainContent.classList.add('expanded');
                         localStorage.setItem('sidebarCollapsed', 'true');
                     }
                 })
-                .catch(error => console.log('User settings not loaded:', error));
+                .catch(error => {
+                    // Тихая обработка ошибки - используем настройки по умолчанию
+                    console.log('User settings not loaded, using defaults:', error.message);
+                });
         }
 
         // User Menu Toggle
