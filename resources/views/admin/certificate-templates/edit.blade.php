@@ -16,6 +16,25 @@
         position: relative;
         overflow: auto;
     }
+    #textElements {
+        max-height: calc(100vh - 300px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    #textElements::-webkit-scrollbar {
+        width: 6px;
+    }
+    #textElements::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    #textElements::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    #textElements::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
     .preview-canvas {
         background: white;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -66,8 +85,9 @@
 
                         <input type="hidden" name="text_elements_json" id="text_elements_json">
 
-                        <div class="row">
-                            <div class="col-md-6">
+                        <!-- Верхняя часть: основные настройки на всю ширину -->
+                        <div class="row mb-4">
+                            <div class="col-12">
                                 <h5 class="mb-3">Основные настройки</h5>
 
                                 <div class="row">
@@ -105,8 +125,12 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+                            </div>
+                        </div>
 
-                                <h5 class="mb-3 mt-4">Размер и качество</h5>
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Размер и качество</h5>
 
                                 <div class="row">
                                     <div class="col-md-4">
@@ -142,8 +166,12 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <h5 class="mb-3 mt-4">Настройки фона</h5>
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Настройки фона</h5>
 
                                 <div class="mb-3">
                                     <label for="background_type" class="form-label">Тип фона *</label>
@@ -204,8 +232,32 @@
                                     <input type="hidden" name="background_gradient" id="background_gradient">
                                 </div>
 
-                                <h5 class="mb-3 mt-4">Текстовые элементы</h5>
+                                <div class="mb-3 mt-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1"
+                                               {{ old('is_active', $certificateTemplate->is_active) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_active">
+                                            Активен
+                                        </label>
+                                    </div>
+                                </div>
 
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_default" name="is_default" value="1"
+                                               {{ old('is_default', $certificateTemplate->is_default) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_default">
+                                            Шаблон по умолчанию
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Нижняя часть: 40% текстовые элементы, 60% предпросмотр -->
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h5 class="mb-3">Текстовые элементы</h5>
                                 <div id="textElements">
                                     @if($certificateTemplate->text_elements)
                                         @foreach($certificateTemplate->text_elements as $index => $element)
@@ -265,40 +317,14 @@
                                         @endforeach
                                     @endif
                                 </div>
-
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="addTextElement">
+                                <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addTextElement">
                                     <i class="fas fa-plus"></i> Добавить текстовый элемент
                                 </button>
-
-                                <div class="mb-3 mt-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1"
-                                               {{ old('is_active', $certificateTemplate->is_active) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_active">
-                                            Активен
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_default" name="is_default" value="1"
-                                               {{ old('is_default', $certificateTemplate->is_default) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_default">
-                                            Шаблон по умолчанию
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-end gap-2 mt-4">
-                                    <a href="{{ route('admin.certificate-templates.index') }}" class="btn btn-secondary">Отмена</a>
-                                    <button type="submit" class="btn btn-primary" id="submitBtn">Сохранить изменения</button>
-                                </div>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-7">
                                 <h5 class="mb-3">Предпросмотр <small class="text-muted">(перетащите текстовые элементы для изменения позиции)</small></h5>
-                                <div class="preview-container" style="position: relative;">
+                                <div class="preview-container" style="position: sticky; top: 20px; max-height: calc(100vh - 100px); overflow-y: auto;">
                                     <canvas id="previewCanvas" class="preview-canvas" style="cursor: crosshair;"></canvas>
                                     <div id="canvasOverlay" style="position: absolute; top: 0; left: 0; pointer-events: none;"></div>
                                 </div>
@@ -306,6 +332,16 @@
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle"></i> Кликните на текстовый элемент в предпросмотре для его выбора, затем перетащите для изменения позиции
                                     </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ route('admin.certificate-templates.index') }}" class="btn btn-secondary">Отмена</a>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">Сохранить изменения</button>
                                 </div>
                             </div>
                         </div>
