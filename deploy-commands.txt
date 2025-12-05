@@ -1,0 +1,72 @@
+# Команды для применения изменений на сервере
+# Скопируйте и выполните эти команды на сервере:
+
+cd /var/www/www-root/data/www/m.dekan.pro
+git pull origin main
+
+# Проверяем какой PHP используется
+echo "Проверка PHP:"
+which php
+php -v
+echo "---"
+
+# Проверяем пользователя PHP-FPM
+echo "Проверка пользователя PHP-FPM:"
+WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
+echo "Пользователь worker процесса: $WORKER_USER"
+
+# Удаляем старые скомпилированные представления
+echo "Очистка старых представлений..."
+rm -rf storage/framework/views/*
+rm -rf storage/framework/cache/*
+
+# Создаем необходимые директории (включая поддиректории)
+echo "Создание директорий..."
+mkdir -p storage/app/public/certificate-templates
+mkdir -p storage/framework/views
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/logs
+mkdir -p bootstrap/cache
+
+# Устанавливаем владельца ПЕРЕД установкой прав
+echo "Установка владельца..."
+chown -R $WORKER_USER:$WORKER_USER storage
+chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
+
+# Устанавливаем права доступа для всех родительских директорий
+echo "Установка прав доступа..."
+chmod 755 storage
+chmod 755 storage/framework
+chmod 775 storage/framework/views
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+
+# Убеждаемся, что директория views имеет правильные права
+chmod 775 storage/framework/views
+chown $WORKER_USER:$WORKER_USER storage/framework/views
+
+# Проверяем, что пользователь может писать в директорию
+echo "Проверка прав на запись..."
+sudo -u $WORKER_USER touch storage/framework/views/.test_write 2>&1
+if [ -f storage/framework/views/.test_write ]; then
+    sudo -u $WORKER_USER rm storage/framework/views/.test_write
+    echo "✅ Права на запись работают"
+else
+    echo "❌ Ошибка прав доступа"
+    echo "Проверяем текущие права:"
+    ls -la storage/framework/views
+fi
+
+# Очищаем кэш Laravel
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+
+# Проверяем права доступа
+echo "Проверка прав доступа:"
+ls -la storage/framework/ | grep views
+ls -la storage/framework/views | head -3
+
+# Перезапускаем PHP-FPM для применения изменений
+systemctl restart php84-php-fpm 2>/dev/null || service php84-php-fpm restart 2>/dev/null || echo "Перезапустите PHP-FPM вручную"

@@ -64,17 +64,17 @@ class CertificateTemplateController extends Controller
         if ($request->hasFile('background_image')) {
             $directory = 'certificate-templates';
             $fullPath = storage_path('app/public/' . $directory);
-            
+
             // Создаем директорию, если её нет
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0755, true);
             }
-            
+
             // Проверяем права доступа
             if (!is_writable($fullPath)) {
                 chmod($fullPath, 0755);
             }
-            
+
             $image = $request->file('background_image');
             $imageName = time() . '_' . Str::slug($request->name) . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs('certificate-templates', $imageName, 'public');
@@ -203,12 +203,12 @@ class CertificateTemplateController extends Controller
         if ($request->hasFile('background_image')) {
             $directory = 'certificate-templates';
             $fullPath = storage_path('app/public/' . $directory);
-            
+
             // Создаем директорию, если её нет
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0755, true);
             }
-            
+
             // Проверяем права доступа
             if (!is_writable($fullPath)) {
                 chmod($fullPath, 0755);

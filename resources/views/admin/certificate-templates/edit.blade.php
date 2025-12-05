@@ -318,13 +318,13 @@ document.getElementById('addTextElement').addEventListener('click', function() {
     `;
     container.appendChild(newElement);
     textElementIndex++;
-    
+
     // Добавляем слушатели для новых элементов
     newElement.querySelectorAll('.text-element-input').forEach(input => {
         input.addEventListener('input', updatePreview);
         input.addEventListener('change', updatePreview);
     });
-    
+
     updatePreview();
 });
 
@@ -355,7 +355,7 @@ function updatePreview() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    
+
     // Текстовые элементы
     const textElementItems = document.querySelectorAll('.text-element-item');
     textElementItems.forEach((item) => {
@@ -366,7 +366,7 @@ function updatePreview() {
             const y = parseInt(inputs[2]?.value || 200) * scale;
             const size = parseInt(inputs[3]?.value || 24) * scale;
             const color = inputs[4]?.value || '#000000';
-            
+
             if (text && text.trim() !== '') {
                 ctx.fillStyle = color;
                 ctx.font = `bold ${size}px Arial`;
