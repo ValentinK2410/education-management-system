@@ -252,17 +252,32 @@
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="mb-0">
-                                            <i class="fas fa-cog me-2"></i>Настройки текста
+                                            <i class="fas fa-cog me-2"></i>Настройки элементов
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <div id="textSettingsPanel" class="text-settings-panel">
-                                            <div class="alert alert-info mb-3" id="noTextSelectedAlert">
+                                        <div id="elementSettingsPanel" class="text-settings-panel">
+                                            <div class="alert alert-info mb-3" id="noElementSelectedAlert">
                                                 <i class="fas fa-info-circle me-2"></i>
-                                                Кликните на текст в предпросмотре для редактирования или добавьте новый элемент
+                                                Кликните на элемент в предпросмотре для редактирования или добавьте новый элемент
                                             </div>
 
-                                            <div id="textSettingsForm" style="display: none;">
+                                            <div id="elementSettingsForm" style="display: none;">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Тип элемента</label>
+                                                    <select class="form-select" id="elementTypeInput">
+                                                        <option value="text">Текст</option>
+                                                        <option value="line">Линия</option>
+                                                        <option value="circle">Круг</option>
+                                                        <option value="square">Квадрат</option>
+                                                        <option value="rectangle">Прямоугольник</option>
+                                                        <option value="trapezoid">Трапеция</option>
+                                                        <option value="image">Изображение/Иконка</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Настройки для текста -->
+                                                <div id="textSettings" class="element-type-settings">
                                                 <div class="mb-3">
                                                     <label class="form-label fw-bold">Текст</label>
                                                     <input type="text" class="form-control" id="textInput"
@@ -318,17 +333,279 @@
                                                     </div>
                                                 </div>
 
+                                                </div>
+
+                                                <!-- Настройки для линии -->
+                                                <div id="lineSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X1 (начало)</label>
+                                                            <input type="number" class="form-control" id="lineX1Input" value="100">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y1 (начало)</label>
+                                                            <input type="number" class="form-control" id="lineY1Input" value="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X2 (конец)</label>
+                                                            <input type="number" class="form-control" id="lineX2Input" value="200">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y2 (конец)</label>
+                                                            <input type="number" class="form-control" id="lineY2Input" value="200">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Толщина линии</label>
+                                                        <input type="number" class="form-control" id="lineWidthInput" value="2" min="1" max="50">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет</label>
+                                                        <input type="color" class="form-control form-control-color" id="lineColorInput" value="#000000">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Настройки для круга -->
+                                                <div id="circleSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Центр X</label>
+                                                            <input type="number" class="form-control" id="circleXInput" value="200">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Центр Y</label>
+                                                            <input type="number" class="form-control" id="circleYInput" value="200">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Радиус</label>
+                                                        <input type="number" class="form-control" id="circleRadiusInput" value="50" min="1">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет заливки</label>
+                                                        <input type="color" class="form-control form-control-color" id="circleFillColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет обводки</label>
+                                                        <input type="color" class="form-control form-control-color" id="circleStrokeColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Толщина обводки</label>
+                                                        <input type="number" class="form-control" id="circleStrokeWidthInput" value="2" min="0" max="50">
+                                                    </div>
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="circleFilledInput" checked>
+                                                        <label class="form-check-label" for="circleFilledInput">
+                                                            Заливка
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Настройки для квадрата -->
+                                                <div id="squareSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="squareXInput" value="100">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="squareYInput" value="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Размер стороны</label>
+                                                        <input type="number" class="form-control" id="squareSizeInput" value="100" min="1">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет заливки</label>
+                                                        <input type="color" class="form-control form-control-color" id="squareFillColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет обводки</label>
+                                                        <input type="color" class="form-control form-control-color" id="squareStrokeColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Толщина обводки</label>
+                                                        <input type="number" class="form-control" id="squareStrokeWidthInput" value="2" min="0" max="50">
+                                                    </div>
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="squareFilledInput" checked>
+                                                        <label class="form-check-label" for="squareFilledInput">
+                                                            Заливка
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Настройки для прямоугольника -->
+                                                <div id="rectangleSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="rectXInput" value="100">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="rectYInput" value="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Ширина</label>
+                                                            <input type="number" class="form-control" id="rectWidthInput" value="200" min="1">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Высота</label>
+                                                            <input type="number" class="form-control" id="rectHeightInput" value="100" min="1">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет заливки</label>
+                                                        <input type="color" class="form-control form-control-color" id="rectFillColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет обводки</label>
+                                                        <input type="color" class="form-control form-control-color" id="rectStrokeColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Толщина обводки</label>
+                                                        <input type="number" class="form-control" id="rectStrokeWidthInput" value="2" min="0" max="50">
+                                                    </div>
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="rectFilledInput" checked>
+                                                        <label class="form-check-label" for="rectFilledInput">
+                                                            Заливка
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Настройки для трапеции -->
+                                                <div id="trapezoidSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="trapXInput" value="100">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y (левый верхний угол)</label>
+                                                            <input type="number" class="form-control" id="trapYInput" value="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Верхняя ширина</label>
+                                                            <input type="number" class="form-control" id="trapTopWidthInput" value="200" min="1">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Нижняя ширина</label>
+                                                            <input type="number" class="form-control" id="trapBottomWidthInput" value="300" min="1">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Высота</label>
+                                                        <input type="number" class="form-control" id="trapHeightInput" value="100" min="1">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет заливки</label>
+                                                        <input type="color" class="form-control form-control-color" id="trapFillColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Цвет обводки</label>
+                                                        <input type="color" class="form-control form-control-color" id="trapStrokeColorInput" value="#000000">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Толщина обводки</label>
+                                                        <input type="number" class="form-control" id="trapStrokeWidthInput" value="2" min="0" max="50">
+                                                    </div>
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="trapFilledInput" checked>
+                                                        <label class="form-check-label" for="trapFilledInput">
+                                                            Заливка
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Настройки для изображения -->
+                                                <div id="imageSettings" class="element-type-settings" style="display: none;">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Изображение</label>
+                                                        <input type="file" class="form-control" id="imageFileInput" accept="image/*">
+                                                        <small class="text-muted">Загрузите изображение или иконку</small>
+                                                    </div>
+                                                    <div id="imagePreview" class="mb-3" style="display: none;">
+                                                        <img id="imagePreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px;" class="img-thumbnail">
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">X</label>
+                                                            <input type="number" class="form-control" id="imageXInput" value="100">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Y</label>
+                                                            <input type="number" class="form-control" id="imageYInput" value="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Ширина</label>
+                                                            <input type="number" class="form-control" id="imageWidthInput" value="100" min="1">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Высота</label>
+                                                            <input type="number" class="form-control" id="imageHeightInput" value="100" min="1">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Поворот (градусы)</label>
+                                                        <input type="number" class="form-control" id="imageRotationInput" value="0" min="-360" max="360" step="1">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Общие настройки для всех элементов -->
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Позиция X</label>
+                                                        <input type="number" class="form-control" id="xInput" value="100">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Позиция Y</label>
+                                                        <input type="number" class="form-control" id="yInput" value="200">
+                                                    </div>
+                                                </div>
+
                                                 <div class="d-grid gap-2">
-                                                    <button type="button" class="btn btn-danger" id="deleteTextBtn">
-                                                        <i class="fas fa-trash me-2"></i>Удалить текст
+                                                    <button type="button" class="btn btn-danger" id="deleteElementBtn">
+                                                        <i class="fas fa-trash me-2"></i>Удалить элемент
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div class="mt-3 pt-3 border-top">
-                                                <button type="button" class="btn btn-outline-primary w-100" id="addTextElement">
-                                                    <i class="fas fa-plus me-2"></i>Добавить новый текст
-                                                </button>
+                                                <div class="btn-group-vertical w-100" role="group">
+                                                    <button type="button" class="btn btn-outline-primary mb-2" id="addTextElement">
+                                                        <i class="fas fa-font me-2"></i>Добавить текст
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary mb-2" id="addLineElement">
+                                                        <i class="fas fa-minus me-2"></i>Добавить линию
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary mb-2" id="addCircleElement">
+                                                        <i class="fas fa-circle me-2"></i>Добавить круг
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary mb-2" id="addSquareElement">
+                                                        <i class="fas fa-square me-2"></i>Добавить квадрат
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary mb-2" id="addRectangleElement">
+                                                        <i class="fas fa-square-full me-2"></i>Добавить прямоугольник
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary mb-2" id="addTrapezoidElement">
+                                                        <i class="fas fa-shapes me-2"></i>Добавить трапецию
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" id="addImageElement">
+                                                        <i class="fas fa-image me-2"></i>Добавить изображение
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -348,7 +625,7 @@
                                 </div>
                                 <div class="mt-2">
                                     <small class="text-muted">
-                                        <i class="fas fa-info-circle"></i> Кликните на текстовый элемент в предпросмотре для его выбора и редактирования
+                                        <i class="fas fa-info-circle"></i> Кликните на элемент в предпросмотре для его выбора и редактирования
                                     </small>
                                 </div>
                             </div>
@@ -372,9 +649,10 @@
 
 @push('scripts')
 <script>
-// Массив текстовых элементов - загружаем из шаблона
-let textElements = @json($certificateTemplate->text_elements ?? [
+// Массив всех элементов - загружаем из шаблона
+let elements = @json($certificateTemplate->text_elements ?? [
     {
+        type: 'text',
         text: 'Сертификат',
         x: 100,
         y: 200,
@@ -386,22 +664,24 @@ let textElements = @json($certificateTemplate->text_elements ?? [
     }
 ]);
 
-// Добавляем rotation если его нет
-textElements = textElements.map(el => ({
+// Добавляем type и rotation если их нет (для совместимости со старыми шаблонами)
+elements = elements.map(el => ({
+    type: el.type || 'text',
     ...el,
     rotation: el.rotation || 0
 }));
 
-let selectedTextIndex = null;
+let selectedElementIndex = null;
 let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
-let textElementRects = [];
+let elementRects = [];
 let resizeHandles = [];
 let isResizing = false;
 let resizeHandleIndex = -1;
 let initialSize = 0;
 let initialMouseX = 0;
 let backgroundImage = null;
+let elementImages = {}; // Хранилище загруженных изображений для элементов
 
 // Инициализация
 document.getElementById('background_type').addEventListener('change', function() {
@@ -411,9 +691,10 @@ document.getElementById('background_type').addEventListener('change', function()
     updatePreview();
 });
 
-// Добавление нового текстового элемента
+// Добавление новых элементов
 document.getElementById('addTextElement').addEventListener('click', function() {
-    const newText = {
+    const newElement = {
+        type: 'text',
         text: 'Новый текст',
         x: 100,
         y: 200,
@@ -423,69 +704,373 @@ document.getElementById('addTextElement').addEventListener('click', function() {
         letterSpacing: 0,
         rotation: 0
     };
-    textElements.push(newText);
-    selectedTextIndex = textElements.length - 1;
-    loadTextSettings(selectedTextIndex);
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
     updatePreview();
 });
 
-// Загрузка настроек текста в панель
-function loadTextSettings(index) {
-    if (index === null || index < 0 || index >= textElements.length) {
-        document.getElementById('noTextSelectedAlert').style.display = 'block';
-        document.getElementById('textSettingsForm').style.display = 'none';
+document.getElementById('addLineElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'line',
+        x1: 100,
+        y1: 100,
+        x2: 200,
+        y2: 200,
+        lineWidth: 2,
+        color: '#000000'
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    updatePreview();
+});
+
+document.getElementById('addCircleElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'circle',
+        x: 200,
+        y: 200,
+        radius: 50,
+        fillColor: '#000000',
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        filled: true
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    updatePreview();
+});
+
+document.getElementById('addSquareElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'square',
+        x: 100,
+        y: 100,
+        size: 100,
+        fillColor: '#000000',
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        filled: true
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    updatePreview();
+});
+
+document.getElementById('addRectangleElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'rectangle',
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 100,
+        fillColor: '#000000',
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        filled: true
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    updatePreview();
+});
+
+document.getElementById('addTrapezoidElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'trapezoid',
+        x: 100,
+        y: 100,
+        topWidth: 200,
+        bottomWidth: 300,
+        height: 100,
+        fillColor: '#000000',
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        filled: true
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    updatePreview();
+});
+
+document.getElementById('addImageElement').addEventListener('click', function() {
+    const newElement = {
+        type: 'image',
+        x: 100,
+        y: 100,
+        width: 100,
+        height: 100,
+        rotation: 0,
+        imageData: null
+    };
+    elements.push(newElement);
+    selectedElementIndex = elements.length - 1;
+    loadElementSettings(selectedElementIndex);
+    document.getElementById('imageFileInput').click();
+});
+
+// Загрузка настроек элемента в панель
+function loadElementSettings(index) {
+    if (index === null || index < 0 || index >= elements.length) {
+        document.getElementById('noElementSelectedAlert').style.display = 'block';
+        document.getElementById('elementSettingsForm').style.display = 'none';
         return;
     }
 
-    const text = textElements[index];
-    document.getElementById('noTextSelectedAlert').style.display = 'none';
-    document.getElementById('textSettingsForm').style.display = 'block';
+    const element = elements[index];
+    document.getElementById('noElementSelectedAlert').style.display = 'none';
+    document.getElementById('elementSettingsForm').style.display = 'block';
 
-    document.getElementById('textInput').value = text.text;
-    document.getElementById('xInput').value = text.x;
-    document.getElementById('yInput').value = text.y;
-    document.getElementById('sizeInput').value = text.size;
-    document.getElementById('colorInput').value = text.color;
-    document.getElementById('fontInput').value = text.font || 'Arial';
-    document.getElementById('letterSpacingInput').value = text.letterSpacing || 0;
-    document.getElementById('rotationInput').value = text.rotation || 0;
+    document.querySelectorAll('.element-type-settings').forEach(el => el.style.display = 'none');
+    document.getElementById('elementTypeInput').value = element.type;
+
+    if (element.type === 'text') {
+        document.getElementById('textSettings').style.display = 'block';
+        document.getElementById('textInput').value = element.text || '';
+        document.getElementById('sizeInput').value = element.size || 24;
+        document.getElementById('colorInput').value = element.color || '#000000';
+        document.getElementById('fontInput').value = element.font || 'Arial';
+        document.getElementById('letterSpacingInput').value = element.letterSpacing || 0;
+        document.getElementById('rotationInput').value = element.rotation || 0;
+    } else if (element.type === 'line') {
+        document.getElementById('lineSettings').style.display = 'block';
+        document.getElementById('lineX1Input').value = element.x1 || 100;
+        document.getElementById('lineY1Input').value = element.y1 || 100;
+        document.getElementById('lineX2Input').value = element.x2 || 200;
+        document.getElementById('lineY2Input').value = element.y2 || 200;
+        document.getElementById('lineWidthInput').value = element.lineWidth || 2;
+        document.getElementById('lineColorInput').value = element.color || '#000000';
+    } else if (element.type === 'circle') {
+        document.getElementById('circleSettings').style.display = 'block';
+        document.getElementById('circleXInput').value = element.x || 200;
+        document.getElementById('circleYInput').value = element.y || 200;
+        document.getElementById('circleRadiusInput').value = element.radius || 50;
+        document.getElementById('circleFillColorInput').value = element.fillColor || '#000000';
+        document.getElementById('circleStrokeColorInput').value = element.strokeColor || '#000000';
+        document.getElementById('circleStrokeWidthInput').value = element.strokeWidth || 2;
+        document.getElementById('circleFilledInput').checked = element.filled !== false;
+    } else if (element.type === 'square') {
+        document.getElementById('squareSettings').style.display = 'block';
+        document.getElementById('squareXInput').value = element.x || 100;
+        document.getElementById('squareYInput').value = element.y || 100;
+        document.getElementById('squareSizeInput').value = element.size || 100;
+        document.getElementById('squareFillColorInput').value = element.fillColor || '#000000';
+        document.getElementById('squareStrokeColorInput').value = element.strokeColor || '#000000';
+        document.getElementById('squareStrokeWidthInput').value = element.strokeWidth || 2;
+        document.getElementById('squareFilledInput').checked = element.filled !== false;
+    } else if (element.type === 'rectangle') {
+        document.getElementById('rectangleSettings').style.display = 'block';
+        document.getElementById('rectXInput').value = element.x || 100;
+        document.getElementById('rectYInput').value = element.y || 100;
+        document.getElementById('rectWidthInput').value = element.width || 200;
+        document.getElementById('rectHeightInput').value = element.height || 100;
+        document.getElementById('rectFillColorInput').value = element.fillColor || '#000000';
+        document.getElementById('rectStrokeColorInput').value = element.strokeColor || '#000000';
+        document.getElementById('rectStrokeWidthInput').value = element.strokeWidth || 2;
+        document.getElementById('rectFilledInput').checked = element.filled !== false;
+    } else if (element.type === 'trapezoid') {
+        document.getElementById('trapezoidSettings').style.display = 'block';
+        document.getElementById('trapXInput').value = element.x || 100;
+        document.getElementById('trapYInput').value = element.y || 100;
+        document.getElementById('trapTopWidthInput').value = element.topWidth || 200;
+        document.getElementById('trapBottomWidthInput').value = element.bottomWidth || 300;
+        document.getElementById('trapHeightInput').value = element.height || 100;
+        document.getElementById('trapFillColorInput').value = element.fillColor || '#000000';
+        document.getElementById('trapStrokeColorInput').value = element.strokeColor || '#000000';
+        document.getElementById('trapStrokeWidthInput').value = element.strokeWidth || 2;
+        document.getElementById('trapFilledInput').checked = element.filled !== false;
+    } else if (element.type === 'image') {
+        document.getElementById('imageSettings').style.display = 'block';
+        document.getElementById('imageXInput').value = element.x || 100;
+        document.getElementById('imageYInput').value = element.y || 100;
+        document.getElementById('imageWidthInput').value = element.width || 100;
+        document.getElementById('imageHeightInput').value = element.height || 100;
+        document.getElementById('imageRotationInput').value = element.rotation || 0;
+        if (element.imageData && elementImages[element.imageData]) {
+            document.getElementById('imagePreviewImg').src = elementImages[element.imageData].src;
+            document.getElementById('imagePreview').style.display = 'block';
+        }
+    }
+
+    document.getElementById('xInput').value = element.x || 100;
+    document.getElementById('yInput').value = element.y || 100;
 }
 
-// Сохранение настроек текста из панели
-function saveTextSettings() {
-    if (selectedTextIndex === null || selectedTextIndex < 0 || selectedTextIndex >= textElements.length) {
+// Сохранение настроек элемента из панели
+function saveElementSettings() {
+    if (selectedElementIndex === null || selectedElementIndex < 0 || selectedElementIndex >= elements.length) {
         return;
     }
 
-    textElements[selectedTextIndex] = {
-        text: document.getElementById('textInput').value,
+    const type = document.getElementById('elementTypeInput').value;
+    let elementData = {
+        type: type,
         x: parseInt(document.getElementById('xInput').value) || 0,
-        y: parseInt(document.getElementById('yInput').value) || 0,
-        size: parseInt(document.getElementById('sizeInput').value) || 24,
-        color: document.getElementById('colorInput').value,
-        font: document.getElementById('fontInput').value || 'Arial',
-        letterSpacing: parseFloat(document.getElementById('letterSpacingInput').value) || 0,
-        rotation: parseFloat(document.getElementById('rotationInput').value) || 0
+        y: parseInt(document.getElementById('yInput').value) || 0
     };
+
+    if (type === 'text') {
+        elementData = {
+            ...elementData,
+            text: document.getElementById('textInput').value,
+            size: parseInt(document.getElementById('sizeInput').value) || 24,
+            color: document.getElementById('colorInput').value,
+            font: document.getElementById('fontInput').value || 'Arial',
+            letterSpacing: parseFloat(document.getElementById('letterSpacingInput').value) || 0,
+            rotation: parseFloat(document.getElementById('rotationInput').value) || 0
+        };
+    } else if (type === 'line') {
+        elementData = {
+            ...elementData,
+            x1: parseInt(document.getElementById('lineX1Input').value) || 100,
+            y1: parseInt(document.getElementById('lineY1Input').value) || 100,
+            x2: parseInt(document.getElementById('lineX2Input').value) || 200,
+            y2: parseInt(document.getElementById('lineY2Input').value) || 200,
+            lineWidth: parseInt(document.getElementById('lineWidthInput').value) || 2,
+            color: document.getElementById('lineColorInput').value
+        };
+    } else if (type === 'circle') {
+        elementData = {
+            ...elementData,
+            radius: parseInt(document.getElementById('circleRadiusInput').value) || 50,
+            fillColor: document.getElementById('circleFillColorInput').value,
+            strokeColor: document.getElementById('circleStrokeColorInput').value,
+            strokeWidth: parseInt(document.getElementById('circleStrokeWidthInput').value) || 2,
+            filled: document.getElementById('circleFilledInput').checked
+        };
+    } else if (type === 'square') {
+        elementData = {
+            ...elementData,
+            size: parseInt(document.getElementById('squareSizeInput').value) || 100,
+            fillColor: document.getElementById('squareFillColorInput').value,
+            strokeColor: document.getElementById('squareStrokeColorInput').value,
+            strokeWidth: parseInt(document.getElementById('squareStrokeWidthInput').value) || 2,
+            filled: document.getElementById('squareFilledInput').checked
+        };
+    } else if (type === 'rectangle') {
+        elementData = {
+            ...elementData,
+            width: parseInt(document.getElementById('rectWidthInput').value) || 200,
+            height: parseInt(document.getElementById('rectHeightInput').value) || 100,
+            fillColor: document.getElementById('rectFillColorInput').value,
+            strokeColor: document.getElementById('rectStrokeColorInput').value,
+            strokeWidth: parseInt(document.getElementById('rectStrokeWidthInput').value) || 2,
+            filled: document.getElementById('rectFilledInput').checked
+        };
+    } else if (type === 'trapezoid') {
+        elementData = {
+            ...elementData,
+            topWidth: parseInt(document.getElementById('trapTopWidthInput').value) || 200,
+            bottomWidth: parseInt(document.getElementById('trapBottomWidthInput').value) || 300,
+            height: parseInt(document.getElementById('trapHeightInput').value) || 100,
+            fillColor: document.getElementById('trapFillColorInput').value,
+            strokeColor: document.getElementById('trapStrokeColorInput').value,
+            strokeWidth: parseInt(document.getElementById('trapStrokeWidthInput').value) || 2,
+            filled: document.getElementById('trapFilledInput').checked
+        };
+    } else if (type === 'image') {
+        elementData = {
+            ...elementData,
+            width: parseInt(document.getElementById('imageWidthInput').value) || 100,
+            height: parseInt(document.getElementById('imageHeightInput').value) || 100,
+            rotation: parseFloat(document.getElementById('imageRotationInput').value) || 0,
+            imageData: elements[selectedElementIndex].imageData || null
+        };
+    }
+
+    elements[selectedElementIndex] = elementData;
     updatePreview();
 }
 
-// Удаление текста
-document.getElementById('deleteTextBtn').addEventListener('click', function() {
-    if (selectedTextIndex !== null && selectedTextIndex >= 0 && selectedTextIndex < textElements.length) {
-        textElements.splice(selectedTextIndex, 1);
-        selectedTextIndex = null;
-        loadTextSettings(null);
+// Удаление элемента
+document.getElementById('deleteElementBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex >= 0 && selectedElementIndex < elements.length) {
+        const element = elements[selectedElementIndex];
+        if (element.type === 'image' && element.imageData && elementImages[element.imageData]) {
+            delete elementImages[element.imageData];
+        }
+        elements.splice(selectedElementIndex, 1);
+        selectedElementIndex = null;
+        loadElementSettings(null);
         updatePreview();
     }
 });
 
-// Слушатели для полей настроек
-['textInput', 'xInput', 'yInput', 'sizeInput', 'colorInput', 'fontInput', 'letterSpacingInput', 'rotationInput'].forEach(id => {
+// Обработка изменения типа элемента
+document.getElementById('elementTypeInput').addEventListener('change', function() {
+    if (selectedElementIndex !== null) {
+        const oldElement = elements[selectedElementIndex];
+        const newType = this.value;
+
+        let newElement = {
+            type: newType,
+            x: oldElement.x || 100,
+            y: oldElement.y || 100
+        };
+
+        if (newType === 'text') {
+            newElement = { ...newElement, text: 'Новый текст', size: 24, color: '#000000', font: 'Arial', letterSpacing: 0, rotation: 0 };
+        } else if (newType === 'line') {
+            newElement = { ...newElement, x1: 100, y1: 100, x2: 200, y2: 200, lineWidth: 2, color: '#000000' };
+        } else if (newType === 'circle') {
+            newElement = { ...newElement, radius: 50, fillColor: '#000000', strokeColor: '#000000', strokeWidth: 2, filled: true };
+        } else if (newType === 'square') {
+            newElement = { ...newElement, size: 100, fillColor: '#000000', strokeColor: '#000000', strokeWidth: 2, filled: true };
+        } else if (newType === 'rectangle') {
+            newElement = { ...newElement, width: 200, height: 100, fillColor: '#000000', strokeColor: '#000000', strokeWidth: 2, filled: true };
+        } else if (newType === 'trapezoid') {
+            newElement = { ...newElement, topWidth: 200, bottomWidth: 300, height: 100, fillColor: '#000000', strokeColor: '#000000', strokeWidth: 2, filled: true };
+        } else if (newType === 'image') {
+            newElement = { ...newElement, width: 100, height: 100, rotation: 0, imageData: null };
+        }
+
+        elements[selectedElementIndex] = newElement;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
+
+// Обработка загрузки изображения для элемента
+document.getElementById('imageFileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && selectedElementIndex !== null) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const imageId = 'img_' + Date.now() + '_' + selectedElementIndex;
+                elementImages[imageId] = img;
+                elements[selectedElementIndex].imageData = imageId;
+                document.getElementById('imagePreviewImg').src = event.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+                updatePreview();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Слушатели для всех полей настроек
+const allInputIds = [
+    'textInput', 'xInput', 'yInput', 'sizeInput', 'colorInput', 'fontInput', 'letterSpacingInput', 'rotationInput',
+    'lineX1Input', 'lineY1Input', 'lineX2Input', 'lineY2Input', 'lineWidthInput', 'lineColorInput',
+    'circleXInput', 'circleYInput', 'circleRadiusInput', 'circleFillColorInput', 'circleStrokeColorInput', 'circleStrokeWidthInput', 'circleFilledInput',
+    'squareXInput', 'squareYInput', 'squareSizeInput', 'squareFillColorInput', 'squareStrokeColorInput', 'squareStrokeWidthInput', 'squareFilledInput',
+    'rectXInput', 'rectYInput', 'rectWidthInput', 'rectHeightInput', 'rectFillColorInput', 'rectStrokeColorInput', 'rectStrokeWidthInput', 'rectFilledInput',
+    'trapXInput', 'trapYInput', 'trapTopWidthInput', 'trapBottomWidthInput', 'trapHeightInput', 'trapFillColorInput', 'trapStrokeColorInput', 'trapStrokeWidthInput', 'trapFilledInput',
+    'imageXInput', 'imageYInput', 'imageWidthInput', 'imageHeightInput', 'imageRotationInput', 'elementTypeInput'
+];
+
+allInputIds.forEach(id => {
     const element = document.getElementById(id);
     if (element) {
-        element.addEventListener('input', saveTextSettings);
-        element.addEventListener('change', saveTextSettings);
+        element.addEventListener('input', saveElementSettings);
+        element.addEventListener('change', saveElementSettings);
     }
 });
 
@@ -601,11 +1186,15 @@ function updatePreview() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    textElementRects = [];
+    elementRects = [];
     resizeHandles = [];
 
-    // Рисуем текстовые элементы
-    textElements.forEach((textData, index) => {
+    // Рисуем все элементы
+    elements.forEach((elementData, index) => {
+        ctx.save();
+        let bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+
+        if (elementData.type === 'text') {
         if (!textData.text || textData.text.trim() === '') return;
 
         const x = textData.x * scale;
@@ -751,14 +1340,14 @@ function checkResizeHandleClick(x, y) {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    if (textElements.length > 0) {
-        loadTextSettings(0);
-        selectedTextIndex = 0;
+    if (elements.length > 0) {
+        loadElementSettings(0);
+        selectedElementIndex = 0;
     }
     updatePreview();
 });
 
-// Обработка кликов на canvas для выбора текстового элемента
+// Обработка кликов на canvas для выбора элемента
 document.getElementById('previewCanvas').addEventListener('click', function(e) {
     if (isResizing) {
         return;
@@ -773,53 +1362,60 @@ document.getElementById('previewCanvas').addEventListener('click', function(e) {
         return;
     }
 
-    for (let i = textElementRects.length - 1; i >= 0; i--) {
-        const textRect = textElementRects[i];
-        if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
-            y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+    for (let i = elementRects.length - 1; i >= 0; i--) {
+        const elementRect = elementRects[i];
+        if (x >= elementRect.x - 5 && x <= elementRect.x + elementRect.width + 5 &&
+            y >= elementRect.y - 5 && y <= elementRect.y + elementRect.height + 5) {
 
-            selectedTextIndex = textRect.index;
-            loadTextSettings(selectedTextIndex);
+            selectedElementIndex = elementRect.index;
+            loadElementSettings(selectedElementIndex);
             updatePreview();
             return;
         }
     }
 
-    selectedTextIndex = null;
-    loadTextSettings(null);
+    selectedElementIndex = null;
+    loadElementSettings(null);
     updatePreview();
 });
 
-// Обработка перетаскивания текстовых элементов
+// Обработка перетаскивания элементов
 document.getElementById('previewCanvas').addEventListener('mousedown', function(e) {
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     const handleIndex = checkResizeHandleClick(x, y);
-    if (handleIndex !== -1 && selectedTextIndex !== null) {
+    if (handleIndex !== -1 && selectedElementIndex !== null) {
         isResizing = true;
         isDragging = false;
         resizeHandleIndex = handleIndex;
         initialMouseX = x;
-        initialSize = textElements[selectedTextIndex].size;
+        const element = elements[selectedElementIndex];
+        if (element.type === 'text') {
+            initialSize = element.size || 24;
+        } else if (element.type === 'image' || element.type === 'rectangle') {
+            initialSize = element.width || 100;
+        } else if (element.type === 'square') {
+            initialSize = element.size || 100;
+        }
         this.style.cursor = 'ew-resize';
         e.preventDefault();
         e.stopPropagation();
         return;
     }
 
-    for (let i = textElementRects.length - 1; i >= 0; i--) {
-        const textRect = textElementRects[i];
-        if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
-            y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+    for (let i = elementRects.length - 1; i >= 0; i--) {
+        const elementRect = elementRects[i];
+        if (x >= elementRect.x - 5 && x <= elementRect.x + elementRect.width + 5 &&
+            y >= elementRect.y - 5 && y <= elementRect.y + elementRect.height + 5) {
 
-            selectedTextIndex = textRect.index;
-            loadTextSettings(selectedTextIndex);
+            selectedElementIndex = elementRect.index;
+            loadElementSettings(selectedElementIndex);
             isDragging = true;
             isResizing = false;
-            dragOffset.x = x - textRect.centerX;
-            dragOffset.y = y - textRect.centerY;
+            dragOffset.x = x - elementRect.centerX;
+            dragOffset.y = y - elementRect.centerY;
             this.style.cursor = 'move';
             updatePreview();
             e.preventDefault();
@@ -836,9 +1432,10 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (isResizing && selectedTextIndex !== null && resizeHandleIndex !== -1) {
+    if (isResizing && selectedElementIndex !== null && resizeHandleIndex !== -1) {
         const handle = resizeHandles[resizeHandleIndex];
         const deltaX = x - initialMouseX;
+        const element = elements[selectedElementIndex];
 
         const width = parseInt(document.getElementById('width').value) || 1200;
         const height = parseInt(document.getElementById('height').value) || 800;
@@ -854,9 +1451,23 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
             sizeDelta = deltaX / scale;
         }
 
-        const newSize = Math.max(8, Math.min(200, initialSize + sizeDelta * 0.5));
-        textElements[selectedTextIndex].size = Math.round(newSize);
-        document.getElementById('sizeInput').value = Math.round(newSize);
+        if (element.type === 'text') {
+            const newSize = Math.max(8, Math.min(200, initialSize + sizeDelta * 0.5));
+            element.size = Math.round(newSize);
+            document.getElementById('sizeInput').value = Math.round(newSize);
+        } else if (element.type === 'image' || element.type === 'rectangle') {
+            const newWidth = Math.max(10, initialSize + sizeDelta);
+            element.width = Math.round(newWidth);
+            document.getElementById('imageWidthInput').value = Math.round(newWidth);
+            if (element.type === 'rectangle') {
+                document.getElementById('rectWidthInput').value = Math.round(newWidth);
+            }
+        } else if (element.type === 'square') {
+            const newSize = Math.max(10, initialSize + sizeDelta);
+            element.size = Math.round(newSize);
+            document.getElementById('squareSizeInput').value = Math.round(newSize);
+        }
+
         updatePreview();
         this.style.cursor = 'ew-resize';
         return;
@@ -870,7 +1481,7 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         }
     }
 
-    if (isDragging && selectedTextIndex !== null) {
+    if (isDragging && selectedElementIndex !== null) {
         const width = parseInt(document.getElementById('width').value) || 1200;
         const height = parseInt(document.getElementById('height').value) || 800;
         const container = this.parentElement;
@@ -881,18 +1492,32 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const realX = Math.max(0, Math.min(width, (x - dragOffset.x) / scale));
         const realY = Math.max(0, Math.min(height, (y - dragOffset.y) / scale));
 
-        textElements[selectedTextIndex].x = Math.round(realX);
-        textElements[selectedTextIndex].y = Math.round(realY);
+        const element = elements[selectedElementIndex];
+        element.x = Math.round(realX);
+        element.y = Math.round(realY);
+
+        if (element.type === 'line') {
+            const deltaX = realX - element.x1;
+            const deltaY = realY - element.y1;
+            element.x1 = realX;
+            element.y1 = realY;
+            element.x2 += deltaX;
+            element.y2 += deltaY;
+        } else if (element.type === 'circle') {
+            element.x = Math.round(realX);
+            element.y = Math.round(realY);
+        }
+
         document.getElementById('xInput').value = Math.round(realX);
         document.getElementById('yInput').value = Math.round(realY);
         updatePreview();
         this.style.cursor = 'move';
     } else {
         let overElement = false;
-        for (let i = textElementRects.length - 1; i >= 0; i--) {
-            const textRect = textElementRects[i];
-            if (x >= textRect.x - 5 && x <= textRect.x + textRect.width + 5 &&
-                y >= textRect.y - 5 && y <= textRect.y + textRect.height + 5) {
+        for (let i = elementRects.length - 1; i >= 0; i--) {
+            const elementRect = elementRects[i];
+            if (x >= elementRect.x - 5 && x <= elementRect.x + elementRect.width + 5 &&
+                y >= elementRect.y - 5 && y <= elementRect.y + elementRect.height + 5) {
                 overElement = true;
                 break;
             }
@@ -946,11 +1571,20 @@ function updateGradient() {
 }
 
 function prepareFormData() {
-    if (selectedTextIndex !== null) {
-        saveTextSettings();
+    if (selectedElementIndex !== null) {
+        saveElementSettings();
     }
 
-    const jsonValue = JSON.stringify(textElements.filter(t => t.text && t.text.trim() !== ''));
+    const filteredElements = elements.filter(el => {
+        if (el.type === 'text') {
+            return el.text && el.text.trim() !== '';
+        } else if (el.type === 'image') {
+            return el.imageData && elementImages[el.imageData];
+        }
+        return true;
+    });
+
+    const jsonValue = JSON.stringify(filteredElements);
     document.getElementById('text_elements_json').value = jsonValue;
 
     try {

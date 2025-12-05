@@ -227,42 +227,245 @@ class CertificateController extends Controller
     }
 
     /**
-     * Добавить текстовые элементы
+     * Добавить элементы (текст, фигуры, изображения)
      */
     private function addTextElements($image, $elements, $user, $course, $program)
     {
         foreach ($elements as $element) {
-            $text = $this->replacePlaceholders($element['text'] ?? '', $user, $course, $program);
-            $x = $element['x'] ?? 0;
-            $y = $element['y'] ?? 0;
-            $size = $element['size'] ?? 24;
-            $color = $element['color'] ?? '#000000';
-            $font = $element['font'] ?? 'Arial';
-            $letterSpacing = $element['letterSpacing'] ?? 0;
+            $type = $element['type'] ?? 'text';
 
-            $rgb = $this->hexToRgb($color);
-            $textColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
+            if ($type === 'text') {
+                $this->addTextElement($image, $element, $user, $course, $program);
+            } elseif ($type === 'line') {
+                $this->addLineElement($image, $element);
+            } elseif ($type === 'circle') {
+                $this->addCircleElement($image, $element);
+            } elseif ($type === 'square') {
+                $this->addSquareElement($image, $element);
+            } elseif ($type === 'rectangle') {
+                $this->addRectangleElement($image, $element);
+            } elseif ($type === 'trapezoid') {
+                $this->addTrapezoidElement($image, $element);
+            } elseif ($type === 'image') {
+                $this->addImageElement($image, $element);
+            }
+        }
+    }
 
-            // Используем встроенный шрифт GD (можно заменить на imagettftext для кастомных TTF шрифтов)
-            // Размер шрифта 1-5 соответствует встроенным шрифтам GD
-            $fontSize = max(1, min(5, (int)($size / 10))); // Размер шрифта 1-5
+    /**
+     * Добавить текстовый элемент
+     */
+    private function addTextElement($image, $element, $user, $course, $program)
+    {
+        $text = $this->replacePlaceholders($element['text'] ?? '', $user, $course, $program);
+        $x = $element['x'] ?? 0;
+        $y = $element['y'] ?? 0;
+        $size = $element['size'] ?? 24;
+        $color = $element['color'] ?? '#000000';
+        $font = $element['font'] ?? 'Arial';
+        $letterSpacing = $element['letterSpacing'] ?? 0;
 
-            // Если есть растяжение (letter-spacing), рисуем каждую букву отдельно
-            if ($letterSpacing > 0) {
-                $currentX = $x;
-                $textLength = mb_strlen($text, 'UTF-8');
+        $rgb = $this->hexToRgb($color);
+        $textColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
 
-                for ($i = 0; $i < $textLength; $i++) {
-                    $char = mb_substr($text, $i, 1, 'UTF-8');
-                    imagestring($image, $fontSize, $currentX, $y, $char, $textColor);
+        $fontSize = max(1, min(5, (int)($size / 10)));
 
-                    // Вычисляем ширину символа (приблизительно)
-                    $charWidth = imagefontwidth($fontSize);
-                    $currentX += $charWidth + $letterSpacing;
+        if ($letterSpacing > 0) {
+            $currentX = $x;
+            $textLength = mb_strlen($text, 'UTF-8');
+
+            for ($i = 0; $i < $textLength; $i++) {
+                $char = mb_substr($text, $i, 1, 'UTF-8');
+                imagestring($image, $fontSize, $currentX, $y, $char, $textColor);
+                $charWidth = imagefontwidth($fontSize);
+                $currentX += $charWidth + $letterSpacing;
+            }
+        } else {
+            imagestring($image, $fontSize, $x, $y, $text, $textColor);
+        }
+    }
+
+    /**
+     * Добавить линию
+     */
+    private function addLineElement($image, $element)
+    {
+        $x1 = $element['x1'] ?? 0;
+        $y1 = $element['y1'] ?? 0;
+        $x2 = $element['x2'] ?? 0;
+        $y2 = $element['y2'] ?? 0;
+        $lineWidth = $element['lineWidth'] ?? 2;
+        $color = $element['color'] ?? '#000000';
+
+        $rgb = $this->hexToRgb($color);
+        $lineColor = imagecolorallocate($image, $rgb['r'], $rgb['g'], $rgb['b']);
+
+        imagesetthickness($image, $lineWidth);
+        imageline($image, $x1, $y1, $x2, $y2, $lineColor);
+        imagesetthickness($image, 1);
+    }
+
+    /**
+     * Добавить круг
+     */
+    private function addCircleElement($image, $element)
+    {
+        $x = $element['x'] ?? 0;
+        $y = $element['y'] ?? 0;
+        $radius = $element['radius'] ?? 50;
+        $fillColor = $element['fillColor'] ?? '#000000';
+        $strokeColor = $element['strokeColor'] ?? '#000000';
+        $strokeWidth = $element['strokeWidth'] ?? 2;
+        $filled = $element['filled'] ?? true;
+
+        $fillRgb = $this->hexToRgb($fillColor);
+        $strokeRgb = $this->hexToRgb($strokeColor);
+        $fillColorRes = imagecolorallocate($image, $fillRgb['r'], $fillRgb['g'], $fillRgb['b']);
+        $strokeColorRes = imagecolorallocate($image, $strokeRgb['r'], $strokeRgb['g'], $strokeRgb['b']);
+
+        if ($filled) {
+            imagefilledellipse($image, $x, $y, $radius * 2, $radius * 2, $fillColorRes);
+        }
+
+        if ($strokeWidth > 0) {
+            imagesetthickness($image, $strokeWidth);
+            imageellipse($image, $x, $y, $radius * 2, $radius * 2, $strokeColorRes);
+            imagesetthickness($image, 1);
+        }
+    }
+
+    /**
+     * Добавить квадрат
+     */
+    private function addSquareElement($image, $element)
+    {
+        $x = $element['x'] ?? 0;
+        $y = $element['y'] ?? 0;
+        $size = $element['size'] ?? 100;
+        $fillColor = $element['fillColor'] ?? '#000000';
+        $strokeColor = $element['strokeColor'] ?? '#000000';
+        $strokeWidth = $element['strokeWidth'] ?? 2;
+        $filled = $element['filled'] ?? true;
+
+        $fillRgb = $this->hexToRgb($fillColor);
+        $strokeRgb = $this->hexToRgb($strokeColor);
+        $fillColorRes = imagecolorallocate($image, $fillRgb['r'], $fillRgb['g'], $fillRgb['b']);
+        $strokeColorRes = imagecolorallocate($image, $strokeRgb['r'], $strokeRgb['g'], $strokeRgb['b']);
+
+        if ($filled) {
+            imagefilledrectangle($image, $x, $y, $x + $size, $y + $size, $fillColorRes);
+        }
+
+        if ($strokeWidth > 0) {
+            imagesetthickness($image, $strokeWidth);
+            imagerectangle($image, $x, $y, $x + $size, $y + $size, $strokeColorRes);
+            imagesetthickness($image, 1);
+        }
+    }
+
+    /**
+     * Добавить прямоугольник
+     */
+    private function addRectangleElement($image, $element)
+    {
+        $x = $element['x'] ?? 0;
+        $y = $element['y'] ?? 0;
+        $width = $element['width'] ?? 200;
+        $height = $element['height'] ?? 100;
+        $fillColor = $element['fillColor'] ?? '#000000';
+        $strokeColor = $element['strokeColor'] ?? '#000000';
+        $strokeWidth = $element['strokeWidth'] ?? 2;
+        $filled = $element['filled'] ?? true;
+
+        $fillRgb = $this->hexToRgb($fillColor);
+        $strokeRgb = $this->hexToRgb($strokeColor);
+        $fillColorRes = imagecolorallocate($image, $fillRgb['r'], $fillRgb['g'], $fillRgb['b']);
+        $strokeColorRes = imagecolorallocate($image, $strokeRgb['r'], $strokeRgb['g'], $strokeRgb['b']);
+
+        if ($filled) {
+            imagefilledrectangle($image, $x, $y, $x + $width, $y + $height, $fillColorRes);
+        }
+
+        if ($strokeWidth > 0) {
+            imagesetthickness($image, $strokeWidth);
+            imagerectangle($image, $x, $y, $x + $width, $y + $height, $strokeColorRes);
+            imagesetthickness($image, 1);
+        }
+    }
+
+    /**
+     * Добавить трапецию
+     */
+    private function addTrapezoidElement($image, $element)
+    {
+        $x = $element['x'] ?? 0;
+        $y = $element['y'] ?? 0;
+        $topWidth = $element['topWidth'] ?? 200;
+        $bottomWidth = $element['bottomWidth'] ?? 300;
+        $height = $element['height'] ?? 100;
+        $fillColor = $element['fillColor'] ?? '#000000';
+        $strokeColor = $element['strokeColor'] ?? '#000000';
+        $strokeWidth = $element['strokeWidth'] ?? 2;
+        $filled = $element['filled'] ?? true;
+
+        $topLeftX = $x;
+        $topRightX = $x + $topWidth;
+        $bottomLeftX = $x + ($topWidth - $bottomWidth) / 2;
+        $bottomRightX = $bottomLeftX + $bottomWidth;
+
+        $fillRgb = $this->hexToRgb($fillColor);
+        $strokeRgb = $this->hexToRgb($strokeColor);
+        $fillColorRes = imagecolorallocate($image, $fillRgb['r'], $fillRgb['g'], $fillRgb['b']);
+        $strokeColorRes = imagecolorallocate($image, $strokeRgb['r'], $strokeRgb['g'], $strokeRgb['b']);
+
+        $points = [
+            $topLeftX, $y,
+            $topRightX, $y,
+            $bottomRightX, $y + $height,
+            $bottomLeftX, $y + $height
+        ];
+
+        if ($filled) {
+            imagefilledpolygon($image, $points, 4, $fillColorRes);
+        }
+
+        if ($strokeWidth > 0) {
+            imagesetthickness($image, $strokeWidth);
+            imagepolygon($image, $points, 4, $strokeColorRes);
+            imagesetthickness($image, 1);
+        }
+    }
+
+    /**
+     * Добавить изображение
+     */
+    private function addImageElement($image, $element)
+    {
+        // Примечание: Для полной поддержки изображений в элементах потребуется
+        // сохранение загруженных изображений на сервере и их загрузка при генерации
+        // Сейчас это заглушка - изображения элементов не будут отображаться в финальном сертификате
+        // Для реализации нужно:
+        // 1. Сохранять загруженные изображения в storage/app/public/certificate-elements/
+        // 2. Сохранять путь к изображению в imageData вместо base64
+        // 3. Загружать изображение при генерации сертификата
+
+        // Временная реализация: если imageData содержит путь к файлу
+        if (isset($element['imageData']) && !empty($element['imageData'])) {
+            $imagePath = storage_path('app/public/certificate-elements/' . $element['imageData']);
+            if (file_exists($imagePath)) {
+                $sourceImage = imagecreatefromstring(file_get_contents($imagePath));
+                if ($sourceImage) {
+                    $x = $element['x'] ?? 0;
+                    $y = $element['y'] ?? 0;
+                    $width = $element['width'] ?? 100;
+                    $height = $element['height'] ?? 100;
+
+                    $sourceWidth = imagesx($sourceImage);
+                    $sourceHeight = imagesy($sourceImage);
+
+                    imagecopyresampled($image, $sourceImage, $x, $y, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
+                    imagedestroy($sourceImage);
                 }
-            } else {
-                // Обычная отрисовка без растяжения
-                imagestring($image, $fontSize, $x, $y, $text, $textColor);
             }
         }
     }
