@@ -365,6 +365,27 @@ let isResizing = false;
 let resizeHandleIndex = -1;
 let initialSize = 0;
 let initialMouseX = 0;
+let backgroundImage = null;
+
+// Загрузка фонового изображения
+document.getElementById('background_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                backgroundImage = img;
+                updatePreview();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        backgroundImage = null;
+        updatePreview();
+    }
+});
 
 function updatePreview() {
     const canvas = document.getElementById('previewCanvas');
@@ -396,6 +417,16 @@ function updatePreview() {
         gradient.addColorStop(1, document.getElementById('gradient_color2').value);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (bgType === 'image') {
+        // Рисуем белый фон по умолчанию
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Если изображение загружено, рисуем его
+        if (backgroundImage) {
+            // Масштабируем изображение под размер canvas
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        }
     } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);

@@ -373,6 +373,65 @@ let isResizing = false;
 let resizeHandleIndex = -1;
 let initialSize = 0;
 let initialMouseX = 0;
+let backgroundImage = null;
+
+// Загрузка существующего изображения при редактировании
+@if($certificateTemplate->background_image)
+const existingImageUrl = '{{ Storage::url($certificateTemplate->background_image) }}';
+const existingImg = new Image();
+existingImg.crossOrigin = 'anonymous';
+existingImg.onload = function() {
+    backgroundImage = existingImg;
+    updatePreview();
+};
+existingImg.onerror = function() {
+    console.error('Не удалось загрузить существующее изображение');
+};
+existingImg.src = existingImageUrl;
+@endif
+
+// Загрузка нового фонового изображения
+document.getElementById('background_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                backgroundImage = img;
+                updatePreview();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Если файл не выбран, используем существующее изображение (если есть)
+        @if($certificateTemplate->background_image)
+        if (!backgroundImage && existingImageUrl) {
+            existingImg.src = existingImageUrl;
+        }
+        @else
+        backgroundImage = null;
+        @endif
+        updatePreview();
+    }
+});
+
+// Обработка удаления изображения
+document.getElementById('remove_background_image')?.addEventListener('change', function(e) {
+    if (e.target.checked) {
+        backgroundImage = null;
+        updatePreview();
+    } else {
+        // Восстанавливаем существующее изображение
+        @if($certificateTemplate->background_image)
+        if (!backgroundImage && existingImageUrl) {
+            existingImg.src = existingImageUrl;
+        }
+        @endif
+        updatePreview();
+    }
+});
 
 function updatePreview() {
     const canvas = document.getElementById('previewCanvas');
@@ -404,6 +463,16 @@ function updatePreview() {
         gradient.addColorStop(1, document.getElementById('gradient_color2').value);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (bgType === 'image') {
+        // Рисуем белый фон по умолчанию
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Если изображение загружено, рисуем его
+        if (backgroundImage) {
+            // Масштабируем изображение под размер canvas
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        }
     } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
