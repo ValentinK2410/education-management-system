@@ -495,7 +495,7 @@ document.getElementById('previewCanvas').addEventListener('click', function(e) {
     if (isResizing) {
         return;
     }
-    
+
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -550,13 +550,13 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
         isResizing = true;
         resizeHandleIndex = handleIndex;
         initialMouseX = x;
-        
+
         // Получаем текущий размер текста
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 4) {
             initialSize = parseInt(inputs[3]?.value || 24);
         }
-        
+
         this.style.cursor = 'ew-resize';
         e.preventDefault();
         return;
@@ -582,10 +582,58 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
 });
 
 document.getElementById('previewCanvas').addEventListener('mousemove', function(e) {
+    const rect = this.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Обработка изменения размера текста
+    if (isResizing && selectedTextElement && resizeHandleIndex !== -1) {
+        const handle = resizeHandles[resizeHandleIndex];
+        const deltaX = x - initialMouseX;
+        
+        // Находим scale для преобразования координат
+        const width = parseInt(document.getElementById('width').value) || 1200;
+        const height = parseInt(document.getElementById('height').value) || 800;
+        const container = this.parentElement;
+        const maxWidth = Math.min(container.clientWidth - 40, width);
+        const maxHeight = Math.min(window.innerHeight * 0.5, height);
+        const scale = Math.min(maxWidth / width, maxHeight / height);
+        
+        // Вычисляем изменение размера в зависимости от направления перетаскивания
+        let sizeDelta = 0;
+        if (handle.type === 'left') {
+            sizeDelta = -deltaX / scale; // Уменьшаем при движении влево
+        } else if (handle.type === 'right') {
+            sizeDelta = deltaX / scale; // Увеличиваем при движении вправо
+        }
+        
+        // Вычисляем новый размер
+        const newSize = Math.max(8, Math.min(200, initialSize + sizeDelta * 0.5));
+        
+        // Обновляем значение в форме
+        const inputs = selectedTextElement.querySelectorAll('input');
+        if (inputs.length >= 4) {
+            inputs[3].value = Math.round(newSize);
+            updatePreview();
+        }
+        
+        this.style.cursor = 'ew-resize';
+        return;
+    }
+    
+    // Проверка наведения на точки изменения размера
+    if (!isDragging && !isResizing) {
+        const handleIndex = checkResizeHandleClick(x, y);
+        if (handleIndex !== -1) {
+            this.style.cursor = 'ew-resize';
+            return;
+        }
+    }
+    
+    // Обработка перетаскивания текстового элемента
     if (isDragging && selectedTextElement) {
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left - dragOffset.x;
-        const y = e.clientY - rect.top - dragOffset.y;
+        const dragX = x - dragOffset.x;
+        const dragY = y - dragOffset.y;
 
         // Находим scale для преобразования координат
         const width = parseInt(document.getElementById('width').value) || 1200;
@@ -596,8 +644,8 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
         const scale = Math.min(maxWidth / width, maxHeight / height);
 
         // Преобразуем координаты обратно в реальные
-        const realX = Math.max(0, Math.min(width, x / scale));
-        const realY = Math.max(0, Math.min(height, y / scale));
+        const realX = Math.max(0, Math.min(width, dragX / scale));
+        const realY = Math.max(0, Math.min(height, dragY / scale));
 
         // Обновляем значения в форме
         const inputs = selectedTextElement.querySelectorAll('input');
@@ -606,12 +654,10 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
             inputs[2].value = Math.round(realY);
             updatePreview();
         }
+        
+        this.style.cursor = 'move';
     } else {
-        // Проверяем, находится ли курсор над текстовым элементом
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
+        // Проверка наведения на текстовый элемент
         let overElement = false;
         for (let i = textElementRects.length - 1; i >= 0; i--) {
             const textRect = textElementRects[i];
@@ -621,7 +667,6 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
                 break;
             }
         }
-
         this.style.cursor = overElement ? 'move' : 'crosshair';
     }
 });
