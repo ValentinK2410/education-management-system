@@ -67,12 +67,14 @@ class CertificateTemplateController extends Controller
 
             // Создаем директорию, если её нет
             if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                if (!mkdir($fullPath, 0755, true)) {
+                    return back()->withErrors(['background_image' => 'Не удалось создать директорию для хранения изображений. Обратитесь к администратору.']);
+                }
             }
 
             // Проверяем права доступа
             if (!is_writable($fullPath)) {
-                chmod($fullPath, 0755);
+                return back()->withErrors(['background_image' => 'Директория для хранения изображений недоступна для записи. Выполните на сервере: chmod -R 775 storage/app/public/certificate-templates']);
             }
 
             $image = $request->file('background_image');
@@ -206,12 +208,14 @@ class CertificateTemplateController extends Controller
 
             // Создаем директорию, если её нет
             if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                if (!mkdir($fullPath, 0755, true)) {
+                    return back()->withErrors(['background_image' => 'Не удалось создать директорию для хранения изображений. Обратитесь к администратору.']);
+                }
             }
 
             // Проверяем права доступа
             if (!is_writable($fullPath)) {
-                chmod($fullPath, 0755);
+                return back()->withErrors(['background_image' => 'Директория для хранения изображений недоступна для записи. Выполните на сервере: chmod -R 775 storage/app/public/certificate-templates']);
             }
 
             // Удаляем старое изображение
