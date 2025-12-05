@@ -670,6 +670,9 @@
                                                 </div>
 
                                                 <div class="d-grid gap-2">
+                                                    <button type="button" class="btn btn-success mb-2" id="duplicateElementBtn">
+                                                        <i class="fas fa-copy me-2"></i>Дублировать элемент
+                                                    </button>
                                                     <button type="button" class="btn btn-danger" id="deleteElementBtn">
                                                         <i class="fas fa-trash me-2"></i>Удалить элемент
                                                     </button>
@@ -1078,6 +1081,59 @@ function saveElementSettings() {
     elements[selectedElementIndex] = elementData;
     updatePreview();
 }
+
+// Дублирование элемента
+document.getElementById('duplicateElementBtn').addEventListener('click', function() {
+    if (selectedElementIndex !== null && selectedElementIndex >= 0 && selectedElementIndex < elements.length) {
+        const originalElement = elements[selectedElementIndex];
+
+        // Создаем глубокую копию элемента
+        const duplicatedElement = JSON.parse(JSON.stringify(originalElement));
+
+        // Смещаем новый элемент на 30 пикселей вправо и вниз
+        const offsetX = 30;
+        const offsetY = 30;
+
+        // Обновляем позицию в зависимости от типа элемента
+        if (duplicatedElement.type === 'text') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+        } else if (duplicatedElement.type === 'line') {
+            duplicatedElement.x1 = (duplicatedElement.x1 || 100) + offsetX;
+            duplicatedElement.y1 = (duplicatedElement.y1 || 100) + offsetY;
+            duplicatedElement.x2 = (duplicatedElement.x2 || 200) + offsetX;
+            duplicatedElement.y2 = (duplicatedElement.y2 || 200) + offsetY;
+        } else if (duplicatedElement.type === 'circle') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+        } else if (duplicatedElement.type === 'square') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+        } else if (duplicatedElement.type === 'rectangle') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+        } else if (duplicatedElement.type === 'trapezoid') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+        } else if (duplicatedElement.type === 'image') {
+            duplicatedElement.x = (duplicatedElement.x || 100) + offsetX;
+            duplicatedElement.y = (duplicatedElement.y || 100) + offsetY;
+            // Для изображений копируем imageData, если оно есть
+            if (duplicatedElement.imageData && elementImages[duplicatedElement.imageData]) {
+                // Изображение уже есть в хранилище, можно использовать тот же imageData
+                // или создать новый идентификатор, но проще использовать тот же
+            }
+        }
+
+        // Добавляем новый элемент в массив
+        elements.push(duplicatedElement);
+
+        // Выбираем новый элемент
+        selectedElementIndex = elements.length - 1;
+        loadElementSettings(selectedElementIndex);
+        updatePreview();
+    }
+});
 
 // Удаление элемента
 document.getElementById('deleteElementBtn').addEventListener('click', function() {
