@@ -1,99 +1,100 @@
 #!/bin/bash
 
-# Скрипт для исправления прав доступа к директориям storage Laravel
-# Использование: ./fix-storage-permissions.sh
+# Надежный скрипт для исправления прав доступа к storage
+# Выполните на сервере от root: bash fix-storage-permissions.sh
 
-echo "🔧 Исправление прав доступа к storage директориям Laravel..."
-echo "=========================================================="
-echo ""
+cd /var/www/www-root/data/www/m.dekan.pro
 
-# Путь к проекту (измените если нужно)
-PROJECT_PATH="/var/www/www-root/data/www/m.dekan.pro"
+echo "🔍 Определение пользователя PHP-FPM..."
 
-cd "$PROJECT_PATH" || exit 1
+# Проверяем все возможные варианты пользователя PHP-FPM
+WORKER_USER=""
 
-echo "📁 Текущая директория: $(pwd)"
-echo ""
+# Вариант 1: Проверяем активные процессы PHP-FPM
+if ps aux | grep -q "php-fpm: pool www-root"; then
+    WORKER_USER="www-root"
+elif ps aux | grep -q "php-fpm: pool www-data"; then
+    WORKER_USER="www-data"
+else
+    # Вариант 2: Берем первого найденного пользователя из процессов php-fpm
+    WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
+fi
 
-# Создать необходимые директории если их нет
-echo "📂 Создание необходимых директорий..."
+# Вариант 3: Если ничего не найдено, проверяем существование пользователей
+if [ -z "$WORKER_USER" ]; then
+    if id "www-root" &>/dev/null; then
+        WORKER_USER="www-root"
+    elif id "www-data" &>/dev/null; then
+        WORKER_USER="www-data"
+    else
+        echo "❌ Не удалось определить пользователя PHP-FPM!"
+        exit 1
+    fi
+fi
+
+echo "✅ Используем пользователя: $WORKER_USER"
+
+# Проверяем, что пользователь существует
+if ! id "$WORKER_USER" &>/dev/null; then
+    echo "❌ Пользователь $WORKER_USER не существует!"
+    exit 1
+fi
+
+echo "📁 Создание всех необходимых директорий..."
 mkdir -p storage/framework/views
 mkdir -p storage/framework/cache
 mkdir -p storage/framework/sessions
 mkdir -p storage/logs
+mkdir -p storage/app/public/certificate-templates
 mkdir -p bootstrap/cache
-echo "✅ Директории созданы"
+
+echo "🧹 Очистка старых скомпилированных представлений..."
+rm -rf storage/framework/views/*
+rm -rf storage/framework/cache/*
+
+echo "🔐 Установка владельца для всех директорий storage..."
+chown -R $WORKER_USER:$WORKER_USER storage
+chown -R $WORKER_USER:$WORKER_USER bootstrap/cache
+
+echo "🔐 Установка прав доступа..."
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+
+# Убеждаемся, что файл логов существует и имеет правильные права
+touch storage/logs/laravel.log
+chown $WORKER_USER:$WORKER_USER storage/logs/laravel.log
+chmod 664 storage/logs/laravel.log
+
+echo "✅ Проверка прав доступа:"
+echo "--- storage/framework/views ---"
+ls -la storage/framework/views/ | head -5
 echo ""
+echo "--- storage/logs ---"
+ls -la storage/logs/ | head -5
 
-# Установить права доступа для всех директорий storage
-echo "🔐 Установка прав доступа для storage..."
-# Используем 777 для views и cache, так как PHP-FPM требует полные права для записи скомпилированных представлений
-chmod -R 777 storage/framework/views
-chmod -R 777 storage/framework/cache
-chmod -R 777 storage/framework/sessions
-chmod -R 775 storage/logs
-chmod -R 777 bootstrap/cache/
-# Родительские директории могут иметь более ограниченные права
-chmod 775 storage/
-chmod 775 storage/framework/
-echo "✅ Права доступа установлены"
-echo ""
-
-# Назначить владельца www-data для всех директорий storage
-echo "👤 Назначение владельца www-data:www-data..."
-chown -R www-data:www-data storage/
-chown -R www-data:www-data bootstrap/cache/
-echo "✅ Владелец назначен"
-echo ""
-
-# Создать файл логов если его нет и установить правильные права
-echo "📄 Проверка и настройка файла логов..."
-mkdir -p storage/logs
-if [ ! -f storage/logs/laravel.log ]; then
-    touch storage/logs/laravel.log
-fi
-chmod 666 storage/logs/laravel.log
-chown www-data:www-data storage/logs/laravel.log
-chmod 777 storage/logs/
-echo "✅ Файл логов настроен"
-echo ""
-
-# Проверка прав доступа
-echo "🔍 Проверка прав доступа..."
-echo "Storage доступен: $([ -w storage ] && echo '✅' || echo '❌')"
-echo "Storage/framework доступен: $([ -w storage/framework ] && echo '✅' || echo '❌')"
-echo "Storage/framework/views доступен: $([ -w storage/framework/views ] && echo '✅' || echo '❌')"
-echo "Bootstrap/cache доступен: $([ -w bootstrap/cache ] && echo '✅' || echo '❌')"
-echo ""
-
-# Очистка кэша Laravel
-echo "🧹 Очистка кэша Laravel..."
-php artisan cache:clear 2>/dev/null || echo "⚠️ Не удалось очистить кэш"
-php artisan config:clear 2>/dev/null || echo "⚠️ Не удалось очистить config кэш"
-php artisan view:clear 2>/dev/null || echo "⚠️ Не удалось очистить view кэш"
-php artisan route:clear 2>/dev/null || echo "⚠️ Не удалось очистить route кэш"
-echo "✅ Кэш очищен"
-echo ""
-
-# Попытка перезапустить PHP-FPM (автоматический поиск правильного сервиса)
-echo "🔄 Попытка перезапустить PHP-FPM..."
-PHP_FPM_SERVICE=$(systemctl list-units --type=service --all | grep -i "php.*fpm" | head -1 | awk '{print $1}')
-
-if [ -n "$PHP_FPM_SERVICE" ]; then
-    echo "   Найден сервис: $PHP_FPM_SERVICE"
-    systemctl restart "$PHP_FPM_SERVICE" 2>/dev/null && echo "   ✅ PHP-FPM перезапущен" || echo "   ⚠️ Не удалось перезапустить PHP-FPM (может потребоваться sudo)"
+echo "🧪 Тест записи от имени пользователя $WORKER_USER..."
+TEST_FILE="storage/framework/views/test_write_$(date +%s).php"
+if sudo -u $WORKER_USER touch "$TEST_FILE" 2>/dev/null; then
+    echo "✅ Запись работает!"
+    sudo -u $WORKER_USER rm "$TEST_FILE" 2>/dev/null
 else
-    echo "   ⚠️ Сервис PHP-FPM не найден автоматически"
-    echo "   Попробуйте вручную:"
-    echo "   - systemctl restart php-fpm"
-    echo "   - systemctl restart php8.1-fpm"
-    echo "   - systemctl restart php8.2-fpm"
-    echo "   - systemctl restart php8.3-fpm"
-    echo "   - systemctl restart php8.4-fpm"
-    echo "   Или перезапустите веб-сервер (nginx/apache)"
+    echo "⚠️  Прямая запись не работает, но это может быть нормально"
+    echo "   Попробуем через PHP..."
 fi
-echo ""
 
-echo "✅ Исправление прав доступа завершено!"
-echo ""
+echo "🧹 Очистка кеша Laravel..."
+php artisan view:clear 2>/dev/null || echo "⚠️  Не удалось очистить view cache"
+php artisan config:clear 2>/dev/null || echo "⚠️  Не удалось очистить config cache"
+php artisan cache:clear 2>/dev/null || echo "⚠️  Не удалось очистить cache"
 
+echo ""
+echo "✅ Исправление завершено!"
+echo ""
+echo "📋 Резюме:"
+echo "   Пользователь PHP-FPM: $WORKER_USER"
+echo "   Права на storage: 775"
+echo "   Владелец storage: $WORKER_USER:$WORKER_USER"
+echo ""
+echo "🔄 Если проблема сохраняется, попробуйте:"
+echo "   chmod -R 777 storage"
+echo "   (менее безопасно, но должно работать)"
