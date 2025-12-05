@@ -55,11 +55,11 @@ class ProgramController extends Controller
             'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|max:10',
+            'language' => 'nullable|string|max:10',
             'requirements' => 'nullable|array',
             'requirements.*' => 'string',
-            'is_active' => 'boolean',
-            'is_paid' => 'boolean',
+            'is_active' => 'nullable|boolean',
+            'is_paid' => 'nullable|boolean',
             'price' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
@@ -72,10 +72,26 @@ class ProgramController extends Controller
             $data['price'] = null;
         }
 
-        Program::create($data);
+        // Устанавливаем значения по умолчанию для обязательных полей
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_paid'] = $request->boolean('is_paid', false);
+        $data['language'] = $request->input('language', 'ru');
 
-        return $data;//redirect()->route('admin.programs.index')
-            //->with('success', 'Учебная программа успешно создана.');
+        try {
+            Program::create($data);
+
+            return redirect()->route('admin.programs.index')
+                ->with('success', 'Учебная программа успешно создана.');
+        } catch (\Exception $e) {
+            \Log::error('Ошибка создания программы: ' . $e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при создании программы: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -121,11 +137,11 @@ class ProgramController extends Controller
             'credits' => 'nullable|numeric|min:0',
             'degree_level' => 'nullable|string|max:100',
             'tuition_fee' => 'nullable|numeric|min:0',
-            'language' => 'required|string|max:10',
+            'language' => 'nullable|string|max:10',
             'requirements' => 'nullable|array',
             'requirements.*' => 'string',
-            'is_active' => 'boolean',
-            'is_paid' => 'boolean',
+            'is_active' => 'nullable|boolean',
+            'is_paid' => 'nullable|boolean',
             'price' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|in:RUB,USD,EUR',
         ]);
@@ -138,12 +154,27 @@ class ProgramController extends Controller
             $data['price'] = null;
         }
 
-        $program->update($data);
+        // Устанавливаем значения по умолчанию для обязательных полей
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_paid'] = $request->boolean('is_paid', false);
+        $data['language'] = $request->input('language', $program->language ?? 'ru');
 
-       /* return redirect()->route('admin.programs.index')
-            ->with('success', 'Учебная программа успешно обновлена.');
-    */
-    return $data;
+        try {
+            $program->update($data);
+
+            return redirect()->route('admin.programs.index')
+                ->with('success', 'Учебная программа успешно обновлена.');
+        } catch (\Exception $e) {
+            \Log::error('Ошибка обновления программы: ' . $e->getMessage(), [
+                'program_id' => $program->id,
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при обновлении программы: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
