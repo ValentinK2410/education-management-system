@@ -1410,6 +1410,7 @@ function updatePreview() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Рисуем фон
     const bgType = document.getElementById('background_type').value;
     if (bgType === 'color') {
         ctx.fillStyle = document.getElementById('background_color').value;
@@ -1436,13 +1437,9 @@ function updatePreview() {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (bgType === 'image') {
-        // Рисуем белый фон по умолчанию
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Если изображение загружено, рисуем его
         if (backgroundImage) {
-            // Масштабируем изображение под размер canvas
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
         }
     } else {
@@ -1459,131 +1456,299 @@ function updatePreview() {
         let bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
         if (elementData.type === 'text') {
-        if (!textData.text || textData.text.trim() === '') return;
-
-        const x = textData.x * scale;
-        const y = textData.y * scale;
-        const size = textData.size * scale;
-        const color = textData.color || '#000000';
-        const font = textData.font || 'Arial';
-        const letterSpacing = (textData.letterSpacing || 0) * scale;
-        const rotation = (textData.rotation || 0) * Math.PI / 180;
-
-        ctx.save();
-
-        if (rotation !== 0) {
-            ctx.translate(x, y);
-            ctx.rotate(rotation);
-            ctx.translate(-x, -y);
-        }
-
-        ctx.font = `bold ${size}px ${font}`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = color;
-
-        let currentX = x;
-        let totalWidth = 0;
-
-        if (letterSpacing > 0) {
-            for (let i = 0; i < textData.text.length; i++) {
-                const char = textData.text[i];
-                ctx.fillText(char, currentX, y);
-                const charWidth = ctx.measureText(char).width;
-                currentX += charWidth + letterSpacing;
-                totalWidth += charWidth + (i < textData.text.length - 1 ? letterSpacing : 0);
+            if (!elementData.text || elementData.text.trim() === '') {
+                ctx.restore();
+                return;
             }
-        } else {
-            ctx.fillText(textData.text, x, y);
-            const metrics = ctx.measureText(textData.text);
-            totalWidth = metrics.width;
-        }
 
-        ctx.restore();
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const size = elementData.size * scale;
+            const color = elementData.color || '#000000';
+            const font = elementData.font || 'Arial';
+            const letterSpacing = (elementData.letterSpacing || 0) * scale;
+            const rotation = (elementData.rotation || 0) * Math.PI / 180;
 
-        const textHeight = size * 1.2;
-
-        let bounds = {
-            minX: x,
-            maxX: x + totalWidth,
-            minY: y,
-            maxY: y + textHeight
-        };
-
-        if (rotation !== 0) {
-            const cos = Math.cos(rotation);
-            const sin = Math.sin(rotation);
-            const corners = [
-                { x: x, y: y },
-                { x: x + totalWidth, y: y },
-                { x: x + totalWidth, y: y + textHeight },
-                { x: x, y: y + textHeight }
-            ];
-
-            const rotatedCorners = corners.map(corner => {
-                const dx = corner.x - x;
-                const dy = corner.y - y;
-                return {
-                    x: x + dx * cos - dy * sin,
-                    y: y + dx * sin + dy * cos
-                };
-            });
-
-            bounds.minX = Math.min(...rotatedCorners.map(c => c.x));
-            bounds.maxX = Math.max(...rotatedCorners.map(c => c.x));
-            bounds.minY = Math.min(...rotatedCorners.map(c => c.y));
-            bounds.maxY = Math.max(...rotatedCorners.map(c => c.y));
-        }
-
-        textElementRects.push({
-            index: index,
-            x: bounds.minX,
-            y: bounds.minY,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY,
-            scale: scale,
-            centerX: x,
-            centerY: y
-        });
-
-        if (index === selectedTextIndex) {
-            ctx.save();
             if (rotation !== 0) {
                 ctx.translate(x, y);
                 ctx.rotate(rotation);
                 ctx.translate(-x, -y);
             }
 
+            ctx.font = `bold ${size}px ${font}`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = color;
+
+            let currentX = x;
+            let totalWidth = 0;
+
+            if (letterSpacing > 0) {
+                for (let i = 0; i < elementData.text.length; i++) {
+                    const char = elementData.text[i];
+                    ctx.fillText(char, currentX, y);
+                    const charWidth = ctx.measureText(char).width;
+                    currentX += charWidth + letterSpacing;
+                    totalWidth += charWidth + (i < elementData.text.length - 1 ? letterSpacing : 0);
+                }
+            } else {
+                ctx.fillText(elementData.text, x, y);
+                const metrics = ctx.measureText(elementData.text);
+                totalWidth = metrics.width;
+            }
+
+            const textHeight = size * 1.2;
+            bounds = { minX: x, maxX: x + totalWidth, minY: y, maxY: y + textHeight };
+
+            if (rotation !== 0) {
+                const cos = Math.cos(rotation);
+                const sin = Math.sin(rotation);
+                const corners = [
+                    { x: x, y: y },
+                    { x: x + totalWidth, y: y },
+                    { x: x + totalWidth, y: y + textHeight },
+                    { x: x, y: y + textHeight }
+                ];
+
+                const rotatedCorners = corners.map(corner => {
+                    const dx = corner.x - x;
+                    const dy = corner.y - y;
+                    return {
+                        x: x + dx * cos - dy * sin,
+                        y: y + dx * sin + dy * cos
+                    };
+                });
+
+                bounds.minX = Math.min(...rotatedCorners.map(c => c.x));
+                bounds.maxX = Math.max(...rotatedCorners.map(c => c.x));
+                bounds.minY = Math.min(...rotatedCorners.map(c => c.y));
+                bounds.maxY = Math.max(...rotatedCorners.map(c => c.y));
+            }
+
+        } else if (elementData.type === 'line') {
+            const x1 = elementData.x1 * scale;
+            const y1 = elementData.y1 * scale;
+            const x2 = elementData.x2 * scale;
+            const y2 = elementData.y2 * scale;
+            const lineWidth = elementData.lineWidth || 2;
+            const color = elementData.color || '#000000';
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            bounds = {
+                minX: Math.min(x1, x2) - lineWidth,
+                maxX: Math.max(x1, x2) + lineWidth,
+                minY: Math.min(y1, y2) - lineWidth,
+                maxY: Math.max(y1, y2) + lineWidth
+            };
+
+        } else if (elementData.type === 'circle') {
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const radius = (elementData.radius || 50) * scale;
+            const fillColor = elementData.fillColor || '#000000';
+            const strokeColor = elementData.strokeColor || '#000000';
+            const strokeWidth = (elementData.strokeWidth || 2) * scale;
+            const filled = elementData.filled !== false;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+            if (filled) {
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+            }
+
+            if (strokeWidth > 0) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.stroke();
+            }
+
+            bounds = {
+                minX: x - radius - strokeWidth,
+                maxX: x + radius + strokeWidth,
+                minY: y - radius - strokeWidth,
+                maxY: y + radius + strokeWidth
+            };
+
+        } else if (elementData.type === 'square') {
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const size = (elementData.size || 100) * scale;
+            const fillColor = elementData.fillColor || '#000000';
+            const strokeColor = elementData.strokeColor || '#000000';
+            const strokeWidth = (elementData.strokeWidth || 2) * scale;
+            const filled = elementData.filled !== false;
+
+            if (filled) {
+                ctx.fillStyle = fillColor;
+                ctx.fillRect(x, y, size, size);
+            }
+
+            if (strokeWidth > 0) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeRect(x, y, size, size);
+            }
+
+            bounds = {
+                minX: x - strokeWidth,
+                maxX: x + size + strokeWidth,
+                minY: y - strokeWidth,
+                maxY: y + size + strokeWidth
+            };
+
+        } else if (elementData.type === 'rectangle') {
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const width = (elementData.width || 200) * scale;
+            const height = (elementData.height || 100) * scale;
+            const fillColor = elementData.fillColor || '#000000';
+            const strokeColor = elementData.strokeColor || '#000000';
+            const strokeWidth = (elementData.strokeWidth || 2) * scale;
+            const filled = elementData.filled !== false;
+
+            if (filled) {
+                ctx.fillStyle = fillColor;
+                ctx.fillRect(x, y, width, height);
+            }
+
+            if (strokeWidth > 0) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeRect(x, y, width, height);
+            }
+
+            bounds = {
+                minX: x - strokeWidth,
+                maxX: x + width + strokeWidth,
+                minY: y - strokeWidth,
+                maxY: y + height + strokeWidth
+            };
+
+        } else if (elementData.type === 'trapezoid') {
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const topWidth = (elementData.topWidth || 200) * scale;
+            const bottomWidth = (elementData.bottomWidth || 300) * scale;
+            const height = (elementData.height || 100) * scale;
+            const fillColor = elementData.fillColor || '#000000';
+            const strokeColor = elementData.strokeColor || '#000000';
+            const strokeWidth = (elementData.strokeWidth || 2) * scale;
+            const filled = elementData.filled !== false;
+
+            const topLeftX = x;
+            const topRightX = x + topWidth;
+            const bottomLeftX = x + (topWidth - bottomWidth) / 2;
+            const bottomRightX = bottomLeftX + bottomWidth;
+
+            ctx.beginPath();
+            ctx.moveTo(topLeftX, y);
+            ctx.lineTo(topRightX, y);
+            ctx.lineTo(bottomRightX, y + height);
+            ctx.lineTo(bottomLeftX, y + height);
+            ctx.closePath();
+
+            if (filled) {
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+            }
+
+            if (strokeWidth > 0) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.stroke();
+            }
+
+            bounds = {
+                minX: Math.min(topLeftX, bottomLeftX) - strokeWidth,
+                maxX: Math.max(topRightX, bottomRightX) + strokeWidth,
+                minY: y - strokeWidth,
+                maxY: y + height + strokeWidth
+            };
+
+        } else if (elementData.type === 'image') {
+            if (!elementData.imageData || !elementImages[elementData.imageData]) {
+                ctx.restore();
+                return;
+            }
+
+            const img = elementImages[elementData.imageData];
+            const x = elementData.x * scale;
+            const y = elementData.y * scale;
+            const width = (elementData.width || 100) * scale;
+            const height = (elementData.height || 100) * scale;
+            const rotation = (elementData.rotation || 0) * Math.PI / 180;
+
+            if (rotation !== 0) {
+                ctx.translate(x + width / 2, y + height / 2);
+                ctx.rotate(rotation);
+                ctx.translate(-width / 2, -height / 2);
+                ctx.drawImage(img, 0, 0, width, height);
+            } else {
+                ctx.drawImage(img, x, y, width, height);
+            }
+
+            bounds = {
+                minX: x,
+                maxX: x + width,
+                minY: y,
+                maxY: y + height
+            };
+        }
+
+        ctx.restore();
+
+        // Сохраняем границы для обработки кликов
+        elementRects.push({
+            index: index,
+            x: bounds.minX,
+            y: bounds.minY,
+            width: bounds.maxX - bounds.minX,
+            height: bounds.maxY - bounds.minY,
+            scale: scale,
+            centerX: elementData.x * scale,
+            centerY: elementData.y * scale
+        });
+
+        // Рисуем рамку выделения для выбранного элемента
+        if (index === selectedElementIndex) {
+            ctx.save();
             ctx.strokeStyle = '#007bff';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
-            ctx.strokeRect(x - 5, y - 5, totalWidth + 10, textHeight + 10);
+            ctx.strokeRect(bounds.minX - 5, bounds.minY - 5, bounds.maxX - bounds.minX + 10, bounds.maxY - bounds.minY + 10);
             ctx.setLineDash([]);
 
-            const handleSize = 8;
-            const handles = [
-                { x: x - 5, y: y + textHeight / 2, type: 'left' },
-                { x: x + totalWidth + 5, y: y + textHeight / 2, type: 'right' }
-            ];
+            // Рисуем точки для изменения размера (только для некоторых типов)
+            if (elementData.type === 'text' || elementData.type === 'image' || elementData.type === 'rectangle' || elementData.type === 'square') {
+                const handleSize = 8;
+                const handles = [
+                    { x: bounds.minX - 5, y: bounds.minY + (bounds.maxY - bounds.minY) / 2, type: 'left' },
+                    { x: bounds.maxX + 5, y: bounds.minY + (bounds.maxY - bounds.minY) / 2, type: 'right' }
+                ];
 
-            resizeHandles = handles.map(h => ({
-                ...h,
-                index: index,
-                realX: (h.x / scale),
-                realY: (h.y / scale),
-                realWidth: (totalWidth / scale),
-                realHeight: (textHeight / scale)
-            }));
+                resizeHandles = handles.map(h => ({
+                    ...h,
+                    index: index
+                }));
 
-            handles.forEach(handle => {
-                ctx.fillStyle = '#007bff';
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-            });
+                handles.forEach(handle => {
+                    ctx.fillStyle = '#007bff';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                });
+            }
 
             ctx.restore();
         }
@@ -1602,14 +1767,7 @@ function checkResizeHandleClick(x, y) {
     return -1;
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    if (elements.length > 0) {
-        loadElementSettings(0);
-        selectedElementIndex = 0;
-    }
-    updatePreview();
-});
+// Инициализация элементов при загрузке страницы (будет вызвана из initializePage)
 
 // Обработка кликов на canvas для выбора элемента
 document.getElementById('previewCanvas').addEventListener('click', function(e) {
@@ -2070,6 +2228,12 @@ function initializePage() {
         if (gradientBg) gradientBg.style.display = bgType === 'gradient' ? 'block' : 'none';
     }
 
+    // Инициализируем первый элемент, если есть элементы
+    if (elements.length > 0 && typeof loadElementSettings === 'function') {
+        loadElementSettings(0);
+        selectedElementIndex = 0;
+    }
+    
     // Обновляем предпросмотр после небольшой задержки, чтобы изображения успели загрузиться
     setTimeout(function() {
         console.log('Обновление предпросмотра...');
