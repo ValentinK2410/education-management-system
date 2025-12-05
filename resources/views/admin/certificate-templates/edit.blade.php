@@ -579,13 +579,13 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
         isDragging = false; // Отключаем перетаскивание при изменении размера
         resizeHandleIndex = handleIndex;
         initialMouseX = x;
-        
+
         // Получаем текущий размер текста
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 4) {
             initialSize = parseInt(inputs[3]?.value || 24);
         }
-        
+
         this.style.cursor = 'ew-resize';
         e.preventDefault();
         e.stopPropagation();
@@ -610,7 +610,7 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
             return;
         }
     }
-    
+
     // Если клик не попал ни в элемент, ни в точку изменения размера
     isDragging = false;
     isResizing = false;
@@ -706,17 +706,46 @@ document.getElementById('previewCanvas').addEventListener('mousemove', function(
     }
 });
 
-document.getElementById('previewCanvas').addEventListener('mouseup', function() {
+document.getElementById('previewCanvas').addEventListener('mouseup', function(e) {
     if (isDragging) {
         isDragging = false;
         this.style.cursor = 'crosshair';
     }
+    if (isResizing) {
+        isResizing = false;
+        resizeHandleIndex = -1;
+        initialMouseX = 0;
+        initialSize = 0;
+        this.style.cursor = 'crosshair';
+        e.preventDefault();
+        e.stopPropagation();
+    }
 });
 
-document.getElementById('previewCanvas').addEventListener('mouseleave', function() {
+document.getElementById('previewCanvas').addEventListener('mouseleave', function(e) {
     if (isDragging) {
         isDragging = false;
         this.style.cursor = 'crosshair';
+    }
+    if (isResizing) {
+        isResizing = false;
+        resizeHandleIndex = -1;
+        initialMouseX = 0;
+        initialSize = 0;
+        this.style.cursor = 'crosshair';
+    }
+});
+
+// Также добавляем обработчик на уровне документа для гарантированного сброса
+document.addEventListener('mouseup', function(e) {
+    if (isResizing) {
+        isResizing = false;
+        resizeHandleIndex = -1;
+        initialMouseX = 0;
+        initialSize = 0;
+    }
+    if (isDragging) {
+        isDragging = false;
     }
 });
 

@@ -571,13 +571,13 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
         isDragging = false; // Отключаем перетаскивание при изменении размера
         resizeHandleIndex = handleIndex;
         initialMouseX = x;
-        
+
         // Получаем текущий размер текста
         const inputs = selectedTextElement.querySelectorAll('input');
         if (inputs.length >= 4) {
             initialSize = parseInt(inputs[3]?.value || 24);
         }
-        
+
         this.style.cursor = 'ew-resize';
         e.preventDefault();
         e.stopPropagation();
@@ -602,7 +602,7 @@ document.getElementById('previewCanvas').addEventListener('mousedown', function(
             return;
         }
     }
-    
+
     // Если клик не попал ни в элемент, ни в точку изменения размера
     isDragging = false;
     isResizing = false;
