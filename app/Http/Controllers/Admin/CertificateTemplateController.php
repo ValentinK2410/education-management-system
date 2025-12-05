@@ -13,9 +13,21 @@ class CertificateTemplateController extends Controller
     /**
      * Отобразить список всех шаблонов
      */
-    public function index()
+    public function index(Request $request)
     {
-        $templates = CertificateTemplate::orderBy('created_at', 'desc')->paginate(15);
+        $query = CertificateTemplate::query();
+
+        // Поиск по названию и описанию
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $templates = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        
         return view('admin.certificate-templates.index', compact('templates'));
     }
 

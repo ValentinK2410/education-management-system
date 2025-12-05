@@ -16,6 +16,36 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    <!-- Форма поиска -->
+                    <form method="GET" action="{{ route('admin.certificate-templates.index') }}" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           name="search" 
+                                           class="form-control" 
+                                           placeholder="Поиск по названию или описанию..." 
+                                           value="{{ request('search') }}">
+                                    <button class="btn btn-outline-secondary" type="submit">
+                                        <i class="fas fa-search me-2"></i>Найти
+                                    </button>
+                                    @if(request('search'))
+                                        <a href="{{ route('admin.certificate-templates.index') }}" class="btn btn-outline-danger">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    @if(request('search'))
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Найдено результатов по запросу: <strong>"{{ request('search') }}"</strong>
+                        </div>
+                    @endif
+
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
