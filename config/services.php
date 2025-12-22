@@ -46,4 +46,9 @@ return [
         'url' => env('LARAVEL_API_URL', ''),
     ],
 
+    'wordpress' => [
+        'url' => env('WORDPRESS_URL', ''),
+        'sso_api_key' => env('WORDPRESS_SSO_API_KEY', ''),
+    ],
+
 ];

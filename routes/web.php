@@ -106,6 +106,10 @@ Route::prefix('api')->group(function () {
         ->name('api.users.sync-from-wordpress');
 });
 
+// SSO маршруты (без CSRF защиты)
+Route::get('/sso/login', [\App\Http\Controllers\Auth\SsoController::class, 'login'])
+    ->name('sso.login');
+
 // Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

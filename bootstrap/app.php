@@ -15,12 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'check.role' => \App\Http\Middleware\CheckRole::class,
         ]);
-        
+
         // Добавляем middleware для установки языка в глобальные middleware
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);
-        
+
         // Исключаем API маршруты из CSRF проверки
         $middleware->validateCsrfTokens(except: [
             'api/users/sync-from-wordpress',
