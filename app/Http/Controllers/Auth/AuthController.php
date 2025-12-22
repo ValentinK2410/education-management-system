@@ -104,23 +104,17 @@ class AuthController extends Controller
                 ->withInput($request->except('password', 'password_confirmation'));
         }
 
-        // Сохраняем незахэшированный пароль для синхронизации с Moodle
-        $plainPassword = $request->password;
-
         // Создание нового пользователя
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($plainPassword),
+            'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'is_active' => true,
         ]);
 
         // Назначение роли студента по умолчанию
         $user->roles()->attach(Role::where('slug', 'student')->first());
-
-        // Вызываем событие создания пользователя для синхронизации с Moodle
-        event(new UserCreated($user, $plainPassword));
 
         // Автоматический вход после регистрации
         Auth::login($user);

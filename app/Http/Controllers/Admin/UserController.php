@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\UserCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
@@ -92,17 +91,11 @@ class UserController extends Controller
             \Log::info('Photo uploaded for new user', ['path' => $path]);
         }
 
-        // Сохраняем незахэшированный пароль для синхронизации с Moodle
-        $plainPassword = $request->password;
-
         // Создание нового пользователя
         $user = User::create($data);
 
         // Назначение ролей пользователю
         $user->roles()->sync($request->roles);
-
-        // Вызываем событие создания пользователя для синхронизации с Moodle
-        event(new UserCreated($user, $plainPassword));
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Пользователь успешно создан.');

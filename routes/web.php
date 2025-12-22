@@ -100,6 +100,12 @@ Route::get('/admin/test-courses', function () {
     }
 })->name('admin.test-courses');
 
+// API маршруты для синхронизации с WordPress (без CSRF защиты)
+Route::prefix('api')->group(function () {
+    Route::post('/users/sync-from-wordpress', [\App\Http\Controllers\Api\UserSyncController::class, 'createFromWordPress'])
+        ->name('api.users.sync-from-wordpress');
+});
+
 // Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

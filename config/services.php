@@ -41,4 +41,9 @@ return [
         'enabled' => env('MOODLE_SYNC_ENABLED', true),
     ],
 
+    'wordpress_api' => [
+        'token' => env('WORDPRESS_API_TOKEN', ''),
+        'url' => env('LARAVEL_API_URL', ''),
+    ],
+
 ];
