@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'moodle' => [
+        'url' => env('MOODLE_URL', ''),
+        'token' => env('MOODLE_TOKEN', ''),
+        'enabled' => env('MOODLE_SYNC_ENABLED', true),
+    ],
+
 ];

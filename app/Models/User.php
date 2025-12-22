@@ -43,6 +43,7 @@ class User extends Authenticatable
         'marital_status',          // Семейное положение
         'education',               // Образование
         'about_me',                // Кратко о себе
+        'moodle_user_id',          // ID пользователя в Moodle
     ];
 
     /**
