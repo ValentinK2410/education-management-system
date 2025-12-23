@@ -21,9 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
         ]);
 
-        // Исключаем API маршруты из CSRF проверки
+        // Исключаем API маршруты и SSO маршруты из CSRF проверки
         $middleware->validateCsrfTokens(except: [
             'api/users/sync-from-wordpress',
+            'sso/login',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
