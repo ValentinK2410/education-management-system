@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\UserSwitchController;
 use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 
@@ -451,6 +452,15 @@ Route::middleware(['auth'])->group(function () {
 
     // Главная панель администратора - доступна всем авторизованным пользователям
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Маршруты для переключения пользователей и ролей (только для админов)
+    Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/user-switch/users', [UserSwitchController::class, 'getUsers'])->name('user-switch.users');
+        Route::get('/user-switch/switch/{user}', [UserSwitchController::class, 'switchToUser'])->name('user-switch.switch');
+        Route::get('/user-switch/back', [UserSwitchController::class, 'switchBack'])->name('user-switch.back');
+        Route::get('/role-switch/switch/{role}', [UserSwitchController::class, 'switchToRole'])->name('role-switch.switch');
+        Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
+    });
 
     // Административные маршруты - требуют роль администратора
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {

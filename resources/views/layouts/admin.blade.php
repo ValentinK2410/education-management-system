@@ -633,6 +633,64 @@
                     </div>
                 </div>
 
+                @if(auth()->user()->hasRole('admin'))
+                <!-- Переключение пользователей/ролей (только для админов) -->
+                <div class="user-switch-menu me-3">
+                    @if(session('is_switched'))
+                        <div class="alert alert-warning alert-dismissible fade show mb-0 py-1 px-2" role="alert" style="font-size: 0.75rem;">
+                            <i class="fas fa-user-secret me-1"></i>
+                            Вы работаете под пользователем: <strong>{{ auth()->user()->name }}</strong>
+                            <a href="{{ route('admin.user-switch.back') }}" class="btn btn-sm btn-outline-danger ms-2">
+                                <i class="fas fa-undo me-1"></i>Вернуться
+                            </a>
+                        </div>
+                    @else
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                    id="userSwitchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-friends me-1"></i>Переключиться
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userSwitchDropdown" style="min-width: 300px;">
+                                <li><h6 class="dropdown-header">Переключиться на пользователя</h6></li>
+                                <li>
+                                    <div class="px-3 py-2">
+                                        <input type="text" id="userSearchInput" class="form-control form-control-sm" 
+                                               placeholder="Поиск пользователя..." autocomplete="off">
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <div id="userSwitchList" style="max-height: 300px; overflow-y: auto;">
+                                        <div class="text-center py-3 text-muted">
+                                            <small>Начните вводить имя или email</small>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Переключиться на роль</h6></li>
+                                @foreach(\App\Models\Role::all() as $role)
+                                    @if(!auth()->user()->hasRole($role->slug))
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.role-switch.switch', $role) }}">
+                                            <i class="fas fa-user-tag me-2"></i>{{ $role->name }}
+                                        </a>
+                                    </li>
+                                    @endif
+                                @endforeach
+                                @if(session('role_switched'))
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ route('admin.role-switch.back') }}">
+                                        <i class="fas fa-undo me-2"></i>Вернуться к своим ролям
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
+                        </div>
+                    @endif
+                </div>
+                @endif
+
                 <button class="theme-toggle" id="themeToggle" title="{{ __('messages.light_theme') }}">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
@@ -844,6 +902,61 @@
         if (window.innerWidth <= 768) {
             sidebarToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('show');
+            });
+        }
+
+        // Поиск пользователей для переключения
+        const userSearchInput = document.getElementById('userSearchInput');
+        const userSwitchList = document.getElementById('userSwitchList');
+        let searchTimeout;
+
+        if (userSearchInput && userSwitchList) {
+            userSearchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.trim();
+                
+                clearTimeout(searchTimeout);
+                
+                if (searchTerm.length < 2) {
+                    userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>Введите минимум 2 символа</small></div>';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`{{ route('admin.user-switch.users') }}?search=${encodeURIComponent(searchTerm)}`)
+                        .then(response => response.json())
+                        .then(users => {
+                            if (users.length === 0) {
+                                userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>Пользователи не найдены</small></div>';
+                                return;
+                            }
+
+                            let html = '';
+                            users.forEach(user => {
+                                const roles = user.roles ? user.roles.map(r => r.name).join(', ') : '';
+                                html += `
+                                    <a class="dropdown-item" href="{{ url('/admin/user-switch/switch') }}/${user.id}">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <div class="avatar-title bg-primary text-white rounded-circle" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                                    ${user.name.charAt(0)}
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold">${user.name}</div>
+                                                <small class="text-muted">${user.email}</small>
+                                                ${roles ? `<br><small class="text-muted">${roles}</small>` : ''}
+                                            </div>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            userSwitchList.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error('Ошибка поиска пользователей:', error);
+                            userSwitchList.innerHTML = '<div class="text-center py-3 text-danger"><small>Ошибка загрузки</small></div>';
+                        });
+                }, 300);
             });
         }
 

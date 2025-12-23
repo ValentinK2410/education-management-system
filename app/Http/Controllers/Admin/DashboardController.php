@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Контроллер для панели управления
- * 
+ *
  * Отображает разные блоки в зависимости от роли пользователя:
  * - Студент: его курсы, программы, прогресс
  * - Преподаватель: его курсы, студенты, статистика
@@ -28,16 +28,21 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
+        // Проверяем, переключен ли пользователь
+        $isSwitched = session('is_switched', false);
+        $originalUserId = session('original_user_id');
+
         // Определяем роль пользователя
-        if ($user->hasRole('admin')) {
+        // Если админ переключился на другого пользователя, показываем dashboard для роли этого пользователя
+        if ($user->hasRole('admin') && !$isSwitched) {
             return $this->adminDashboard($user);
         } elseif ($user->hasRole('instructor')) {
             return $this->instructorDashboard($user);
         } elseif ($user->hasRole('student')) {
             return $this->studentDashboard($user);
         }
-        
+
         // По умолчанию показываем студентский dashboard
         return $this->studentDashboard($user);
     }
