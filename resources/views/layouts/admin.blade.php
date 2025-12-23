@@ -636,15 +636,29 @@
                 @php
                     // Проверяем, является ли пользователь реальным админом (не переключенным)
                     $isRealAdmin = false;
+                    $showSwitchMenu = false;
+                    
                     if (session('original_user_id')) {
+                        // Переключены на пользователя - проверяем оригинального
                         $originalUser = \App\Models\User::find(session('original_user_id'));
                         $isRealAdmin = $originalUser && $originalUser->hasRole('admin');
-                    } elseif (!session('role_switched') && !session('is_switched')) {
+                        $showSwitchMenu = $isRealAdmin;
+                    } elseif (session('role_switched')) {
+                        // Переключены на роль - проверяем оригинальные роли
+                        $originalRoles = session('original_roles', []);
+                        if (!empty($originalRoles)) {
+                            $adminRole = \App\Models\Role::where('slug', 'admin')->first();
+                            $isRealAdmin = $adminRole && in_array($adminRole->id, $originalRoles);
+                            $showSwitchMenu = $isRealAdmin;
+                        }
+                    } elseif (!session('is_switched')) {
+                        // Не переключены - проверяем текущего пользователя
                         $isRealAdmin = auth()->user()->hasRole('admin');
+                        $showSwitchMenu = $isRealAdmin;
                     }
                 @endphp
 
-                @if($isRealAdmin)
+                @if($showSwitchMenu || session('role_switched') || session('is_switched'))
                 <!-- Переключение пользователей/ролей (только для реальных админов) -->
                 <div class="user-switch-menu me-3">
                     @if(session('is_switched'))
@@ -655,7 +669,15 @@
                                 <i class="fas fa-undo me-1"></i>Вернуться
                             </a>
                         </div>
-                    @else
+                    @elseif(session('role_switched'))
+                        <div class="alert alert-info alert-dismissible fade show mb-0 py-1 px-2" role="alert" style="font-size: 0.75rem;">
+                            <i class="fas fa-user-tag me-1"></i>
+                            Вы переключены на роль: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? 'Неизвестная роль' }}</strong>
+                            <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fas fa-undo me-1"></i>Вернуться к своим ролям
+                            </a>
+                        </div>
+                    @elseif($isRealAdmin)
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                     id="userSwitchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -708,6 +730,15 @@
                             </ul>
                         </div>
                     @endif
+                </div>
+                @endif
+
+                {{-- Кнопка возврата к своим ролям (показывается всегда при переключении на роль) --}}
+                @if(session('role_switched') && !session('is_switched'))
+                <div class="me-3">
+                    <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-outline-warning" title="Вернуться к своим ролям">
+                        <i class="fas fa-undo me-1"></i>Вернуться к ролям админа
+                    </a>
                 </div>
                 @endif
 
