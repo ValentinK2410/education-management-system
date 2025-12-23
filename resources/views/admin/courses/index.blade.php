@@ -141,7 +141,7 @@
                     </div>
 
                     @if($courses->hasPages())
-                        <div class="d-flex justify-content-center mt-4">
+                        <div class="d-flex justify-content-center mt-4 pagination-wrapper">
                             {{ $courses->links() }}
                         </div>
                     @endif
@@ -165,6 +165,45 @@
     justify-content: center;
     font-weight: 600;
     font-size: 0.8rem;
+}
+
+/* Стили для уменьшения размера пагинации */
+.pagination-wrapper .pagination {
+    margin-bottom: 0;
+}
+
+.pagination-wrapper .pagination .page-link {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    min-width: 38px;
+    text-align: center;
+}
+
+.pagination-wrapper .pagination .page-item {
+    margin: 0 2px;
+}
+
+.pagination-wrapper .pagination .page-item:first-child .page-link {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.pagination-wrapper .pagination .page-item:last-child .page-link {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.pagination-wrapper .pagination .page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-wrapper .pagination .page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #6366f1;
+    border-color: #6366f1;
 }
 </style>
 @endsection
