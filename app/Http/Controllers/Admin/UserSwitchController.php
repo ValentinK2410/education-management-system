@@ -130,12 +130,21 @@ class UserSwitchController extends Controller
      */
     public function switchRoleBack(Request $request)
     {
+        // Проверяем, что пользователь действительно переключался на роль
         if (!Session::has('original_roles')) {
             return redirect()->route('admin.dashboard')
                 ->with('error', 'Нет информации об оригинальных ролях');
         }
 
+        // Проверяем, что в оригинальных ролях была роль админа (безопасность)
         $originalRoles = Session::get('original_roles');
+        $adminRole = Role::where('slug', 'admin')->first();
+        
+        if (!$adminRole || !in_array($adminRole->id, $originalRoles)) {
+            // Если в оригинальных ролях не было админа, очищаем сессию и запрещаем доступ
+            Session::forget(['original_roles', 'role_switched', 'switched_role_id', 'switched_role_slug']);
+            abort(403, 'Недостаточно прав доступа.');
+        }
 
         // Восстанавливаем оригинальные роли
         Auth::user()->roles()->sync($originalRoles);

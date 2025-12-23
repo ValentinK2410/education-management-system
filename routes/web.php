@@ -439,6 +439,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/user-switch/switch/{user}', [UserSwitchController::class, 'switchToUser'])->name('user-switch.switch');
         Route::get('/user-switch/back', [UserSwitchController::class, 'switchBack'])->name('user-switch.back');
         Route::get('/role-switch/switch/{role}', [UserSwitchController::class, 'switchToRole'])->name('role-switch.switch');
+    });
+    
+    // Маршрут возврата к ролям (без middleware, так как пользователь может иметь временно роль студента)
+    // Проверка безопасности выполняется внутри контроллера через проверку сессии original_roles
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
     });
 
