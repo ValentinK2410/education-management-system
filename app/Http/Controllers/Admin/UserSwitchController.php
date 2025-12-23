@@ -89,7 +89,7 @@ class UserSwitchController extends Controller
         // Проверяем, что текущий пользователь - реальный администратор
         $isRealAdmin = false;
         $originalUserId = Session::get('original_user_id');
-        
+
         // Если переключены на пользователя, проверяем оригинального
         if ($originalUserId) {
             $originalUser = User::find($originalUserId);
@@ -97,10 +97,13 @@ class UserSwitchController extends Controller
         } elseif (!session('role_switched') && !session('is_switched')) {
             $isRealAdmin = Auth::user()->hasRole('admin');
         }
-        
+
         if (!$isRealAdmin) {
             abort(403, 'Только администраторы могут переключаться между ролями');
         }
+
+        // Получаем текущего пользователя
+        $currentUser = Auth::user();
 
         // Сохраняем текущие роли пользователя (если еще не сохранены)
         if (!Session::has('original_roles')) {
@@ -160,7 +163,7 @@ class UserSwitchController extends Controller
         } elseif (!session('role_switched') && !session('is_switched')) {
             $isRealAdmin = Auth::user()->hasRole('admin');
         }
-        
+
         if (!$isRealAdmin) {
             abort(403);
         }
