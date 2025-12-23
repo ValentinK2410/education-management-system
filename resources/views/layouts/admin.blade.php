@@ -515,61 +515,77 @@
                 </a>
             </div>
 
+            @if(auth()->user()->hasPermission('view_sidebar_users') && !auth()->user()->hasPermission('hide_user_links'))
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i>
                     <span>{{ __('messages.users') }}</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_institutions'))
             <div class="nav-item">
                 <a href="{{ route('admin.institutions.index') }}" class="nav-link {{ request()->routeIs('admin.institutions.*') ? 'active' : '' }}">
                     <i class="fas fa-university"></i>
                     <span>{{ __('messages.institutions') }}</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_programs'))
             <div class="nav-item">
                 <a href="{{ route('admin.programs.index') }}" class="nav-link {{ request()->routeIs('admin.programs.*') ? 'active' : '' }}">
                     <i class="fas fa-book"></i>
                     <span>{{ __('messages.programs') }}</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_courses'))
             <div class="nav-item">
                 <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>{{ __('messages.courses') }}</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_roles'))
             <div class="nav-item">
                 <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
                     <i class="fas fa-shield-alt"></i>
                     <span>Роли</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_reviews'))
             <div class="nav-item">
                 <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
                     <i class="fas fa-star"></i>
                     <span>Отзывы</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_certificates'))
             <div class="nav-item">
                 <a href="{{ route('admin.certificate-templates.index') }}" class="nav-link {{ request()->routeIs('admin.certificate-templates.*') ? 'active' : '' }}">
                     <i class="fas fa-certificate"></i>
                     <span>Шаблоны сертификатов</span>
                 </a>
             </div>
+            @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_archive'))
             <div class="nav-item">
                 <a href="{{ route('admin.user-archive.index') }}" class="nav-link {{ request()->routeIs('admin.user-archive.*') ? 'active' : '' }}">
                     <i class="fas fa-archive"></i>
                     <span>Архив пользователей</span>
                 </a>
             </div>
+            @endif
 
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
