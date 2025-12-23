@@ -83,7 +83,8 @@ class SsoController extends Controller
         ]);
 
         // Перенаправляем всех пользователей в админ панель
-        return redirect()->intended(route('admin.dashboard'));
+        // Используем прямой редирект вместо intended, чтобы избежать проблем с сохраненными URL
+        return redirect()->route('admin.dashboard');
     }
 }
 
