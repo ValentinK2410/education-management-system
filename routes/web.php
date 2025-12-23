@@ -437,13 +437,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/user-switch/users', [UserSwitchController::class, 'getUsers'])->name('user-switch.users');
         Route::get('/user-switch/switch/{user}', [UserSwitchController::class, 'switchToUser'])->name('user-switch.switch');
-        Route::get('/user-switch/back', [UserSwitchController::class, 'switchBack'])->name('user-switch.back');
         Route::get('/role-switch/switch/{role}', [UserSwitchController::class, 'switchToRole'])->name('role-switch.switch');
     });
-    
-    // Маршрут возврата к ролям (без middleware, так как пользователь может иметь временно роль студента)
-    // Проверка безопасности выполняется внутри контроллера через проверку сессии original_roles
+
+    // Маршруты возврата (без middleware check.role:admin, так как пользователь может иметь временно другую роль)
+    // Проверка безопасности выполняется внутри контроллеров через проверку сессий
     Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/user-switch/back', [UserSwitchController::class, 'switchBack'])->name('user-switch.back');
         Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
     });
 

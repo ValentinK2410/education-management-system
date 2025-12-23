@@ -52,19 +52,26 @@ class UserSwitchController extends Controller
      */
     public function switchBack(Request $request)
     {
+        // Проверяем, что пользователь действительно переключался на другого пользователя
         if (!Session::has('original_user_id')) {
             return redirect()->route('admin.dashboard')
                 ->with('error', 'Нет информации об оригинальном пользователе');
         }
 
         $originalUserId = Session::get('original_user_id');
-        $originalUser = User::findOrFail($originalUserId);
+        $originalUser = User::find($originalUserId);
 
-        // Проверяем, что это действительно администратор
-        if (!$originalUser->hasRole('admin')) {
+        // Проверяем, что оригинальный пользователь существует и является администратором
+        if (!$originalUser) {
             Session::forget(['original_user_id', 'is_switched']);
             return redirect()->route('admin.dashboard')
-                ->with('error', 'Ошибка возврата к аккаунту');
+                ->with('error', 'Оригинальный пользователь не найден');
+        }
+
+        // Проверяем, что это действительно администратор (безопасность)
+        if (!$originalUser->hasRole('admin')) {
+            Session::forget(['original_user_id', 'is_switched']);
+            abort(403, 'Недостаточно прав доступа.');
         }
 
         // Возвращаемся к оригинальному пользователю
@@ -139,7 +146,7 @@ class UserSwitchController extends Controller
         // Проверяем, что в оригинальных ролях была роль админа (безопасность)
         $originalRoles = Session::get('original_roles');
         $adminRole = Role::where('slug', 'admin')->first();
-        
+
         if (!$adminRole || !in_array($adminRole->id, $originalRoles)) {
             // Если в оригинальных ролях не было админа, очищаем сессию и запрещаем доступ
             Session::forget(['original_roles', 'role_switched', 'switched_role_id', 'switched_role_slug']);
