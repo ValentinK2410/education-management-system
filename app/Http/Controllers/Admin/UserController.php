@@ -41,16 +41,22 @@ class UserController extends Controller
         // Оптимизация: используем индексы для быстрого поиска
         if ($search) {
             $query->where(function ($q) use ($search) {
-                // Для email используем точное совпадение начала (использует индекс)
-                if (filter_var($search, FILTER_VALIDATE_EMAIL)) {
-                    $q->where('email', 'like', "{$search}%");
+                // Проверяем, содержит ли поисковый запрос символ @ (вероятно email)
+                $isEmailSearch = strpos($search, '@') !== false;
+                
+                if ($isEmailSearch) {
+                    // Если есть @, ищем по email (частичное совпадение)
+                    $q->where('email', 'like', "%{$search}%");
                 } else {
                     // Для имени и телефона используем LIKE с началом строки (более эффективно)
                     $q->where('name', 'like', "{$search}%")
                       ->orWhere('name', 'like', "% {$search}%") // Поиск по словам
-                      ->orWhere('phone', 'like', "{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                      ->orWhere('phone', 'like', "{$search}%");
                 }
+                
+                // Всегда добавляем поиск по email (на случай частичного ввода без @)
+                // Например, если пользователь вводит "gmail", мы найдем "user@gmail.com"
+                $q->orWhere('email', 'like', "%{$search}%");
             });
         }
 
