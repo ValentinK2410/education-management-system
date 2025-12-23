@@ -24,12 +24,27 @@ class UserController extends Controller
     /**
      * Отобразить список всех пользователей
      *
+     * @param Request $request
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->paginate(15);
-        return view('admin.users.index', compact('users'));
+        $search = $request->input('search', '');
+        
+        $query = User::with('roles');
+        
+        // Поиск по имени, email или телефону
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+        
+        $users = $query->orderBy('name')->paginate(15)->withQueryString();
+        
+        return view('admin.users.index', compact('users', 'search'));
     }
 
     /**

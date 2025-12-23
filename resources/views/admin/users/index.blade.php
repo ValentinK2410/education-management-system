@@ -17,6 +17,37 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    {{-- Форма поиска --}}
+                    <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           name="search" 
+                                           class="form-control" 
+                                           placeholder="Поиск по имени, email или телефону..." 
+                                           value="{{ $search ?? '' }}"
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="fas fa-search me-1"></i>Поиск
+                                    </button>
+                                    @if($search ?? '')
+                                    <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary" type="button">
+                                        <i class="fas fa-times me-1"></i>Очистить
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    @if($search ?? '')
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Результаты поиска по запросу: <strong>"{{ $search }}"</strong>
+                        <span class="badge bg-primary ms-2">Найдено: {{ $users->total() }}</span>
+                    </div>
+                    @endif
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
