@@ -187,7 +187,7 @@
                                                             $certificate = $certificates->where('course_id', $course->id)->first();
                                                         @endphp
                                                         @if($certificate)
-                                                            <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}" 
+                                                            <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}"
                                                                class="btn btn-sm btn-success" title="Скачать сертификат">
                                                                 <i class="fas fa-download"></i>
                                                             </a>
@@ -293,7 +293,7 @@
                                                             $certificate = $certificates->where('program_id', $program->id)->first();
                                                         @endphp
                                                         @if($certificate)
-                                                            <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}" 
+                                                            <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}"
                                                                class="btn btn-sm btn-success" title="Скачать сертификат">
                                                                 <i class="fas fa-download"></i>
                                                             </a>
@@ -495,7 +495,7 @@
                                                 <p class="text-muted mb-3">
                                                     <small>Выдан: {{ $certificate->issued_at->format('d.m.Y') }}</small>
                                                 </p>
-                                                <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}" 
+                                                <a href="{{ route('admin.user-archive.download-certificate', [$user, $certificate]) }}"
                                                    class="btn btn-primary btn-sm">
                                                     <i class="fas fa-download me-1"></i>Скачать
                                                 </a>

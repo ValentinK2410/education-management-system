@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Миграция для добавления статуса оплаты в таблицы связей
- * 
+ *
  * Добавляет поле payment_status в user_courses и user_programs
  */
 return new class extends Migration

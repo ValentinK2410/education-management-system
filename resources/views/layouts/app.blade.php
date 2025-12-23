@@ -213,7 +213,7 @@
                                 @if(auth()->user()->isAdmin())
                                     <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-home me-2"></i>Панель управления</a></li>
                                 @endif
-                                <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Миграция для создания таблицы платежей
- * 
+ *
  * Создает таблицу для отслеживания платежей за курсы и программы:
  * - Оплата курса
  * - Оплата программы
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->text('notes')->nullable(); // Заметки
             $table->timestamp('paid_at')->nullable(); // Дата оплаты
             $table->timestamps();
-            
+
             // Индексы для быстрого поиска
             $table->index(['user_id', 'entity_type']);
             $table->index(['course_id']);

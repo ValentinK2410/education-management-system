@@ -12,6 +12,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\UserArchiveController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +49,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     Route::post('/courses/{course}/generate-certificate', [CertificateController::class, 'generateForCourse'])->name('certificates.generate.course');
     Route::post('/programs/{program}/generate-certificate', [CertificateController::class, 'generateForProgram'])->name('certificates.generate.program');
+
+    // Профиль пользователя (публичный маршрут)
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // Тестовые маршруты админки (временно без авторизации)

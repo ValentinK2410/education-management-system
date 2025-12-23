@@ -1,0 +1,44 @@
+# Быстрое восстановление .env на сервере
+# Скопируйте и выполните эти команды на сервере по порядку
+
+cd /var/www/www-root/data/www/m.dekan.pro
+
+# 1. Создать .env из шаблона
+cp .env.example .env
+
+# 2. Определить пользователя PHP-FPM
+WORKER_USER=$(ps aux | grep "php-fpm: pool" | grep -v grep | head -1 | awk '{print $1}')
+if [ -z "$WORKER_USER" ]; then
+    if id "www-root" &>/dev/null; then
+        WORKER_USER="www-root"
+    else
+        WORKER_USER="www-data"
+    fi
+fi
+
+# 3. Установить права доступа
+chown $WORKER_USER:$WORKER_USER .env
+chmod 640 .env
+
+# 4. Сгенерировать APP_KEY
+php artisan key:generate --force
+
+# 5. Очистить кеш
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+
+# 6. ВАЖНО: Отредактировать .env и настроить:
+#    - APP_NAME, APP_URL
+#    - DB_* (настройки базы данных)
+#    - MAIL_* (настройки почты, если используются)
+nano .env
+
+# После редактирования снова очистить кеш:
+php artisan config:clear
+php artisan cache:clear
+
+# 7. Перезапустить PHP-FPM (если нужно)
+systemctl restart php84-php-fpm || systemctl restart php8.3-fpm
+
+echo "✅ Готово! Проверьте работу сайта."

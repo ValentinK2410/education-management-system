@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Миграция для создания таблицы истории зачислений/отчислений
- * 
+ *
  * Создает таблицу для отслеживания всех изменений статуса обучения:
  * - Зачисление на курс/программу
  * - Активация обучения
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->foreignId('changed_by')->nullable()->constrained('users')->onDelete('set null'); // Кто изменил статус
             $table->timestamp('changed_at')->useCurrent(); // Когда изменен статус
             $table->timestamps();
-            
+
             // Индексы для быстрого поиска
             $table->index(['user_id', 'entity_type']);
             $table->index(['course_id']);

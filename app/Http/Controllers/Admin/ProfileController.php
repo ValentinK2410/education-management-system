@@ -24,6 +24,14 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
+        
+        // Определяем, какой layout использовать в зависимости от маршрута
+        if (request()->routeIs('profile.*')) {
+            // Публичный маршрут - используем публичное представление
+            return view('public.profile.show', compact('user'));
+        }
+        
+        // Админский маршрут - используем админское представление
         return view('admin.profile.show', compact('user'));
     }
 
@@ -35,6 +43,15 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
+        
+        // Определяем, какой layout использовать в зависимости от маршрута
+        if (request()->routeIs('profile.*')) {
+            // Публичный маршрут - используем админское представление редактирования
+            // (можно создать публичное представление редактирования позже)
+            return view('admin.profile.edit', compact('user'));
+        }
+        
+        // Админский маршрут - используем админское представление
         return view('admin.profile.edit', compact('user'));
     }
 
@@ -87,6 +104,12 @@ class ProfileController extends Controller
 
         // Обновить пользователя
         $user->update($data);
+
+        // Определяем, на какой маршрут перенаправлять
+        if (request()->routeIs('profile.*')) {
+            return redirect()->route('profile.show')
+                ->with('success', 'Профиль успешно обновлен.');
+        }
 
         return redirect()->route('admin.profile.show')
             ->with('success', 'Профиль успешно обновлен.');

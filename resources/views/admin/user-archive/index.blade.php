@@ -19,10 +19,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="input-group">
-                                    <input type="text" 
-                                           name="search" 
-                                           class="form-control" 
-                                           placeholder="Поиск по имени или email..." 
+                                    <input type="text"
+                                           name="search"
+                                           class="form-control"
+                                           placeholder="Поиск по имени или email..."
                                            value="{{ request('search') }}">
                                     <button class="btn btn-outline-secondary" type="submit">
                                         <i class="fas fa-search me-2"></i>Найти
@@ -83,7 +83,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin.user-archive.show', $user) }}" 
+                                            <a href="{{ route('admin.user-archive.show', $user) }}"
                                                class="btn btn-sm btn-primary">
                                                 <i class="fas fa-history me-1"></i>История обучения
                                             </a>
