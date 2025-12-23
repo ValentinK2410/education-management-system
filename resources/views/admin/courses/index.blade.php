@@ -167,7 +167,7 @@
     font-size: 0.8rem;
 }
 
-/* Стили для уменьшения размера пагинации */
+/* Стили для уменьшения размера пагинации (Bootstrap) */
 .pagination-wrapper .pagination {
     margin-bottom: 0 !important;
     font-size: 0.875rem !important;
@@ -215,14 +215,49 @@
     padding: 0.25rem 0.5rem !important;
 }
 
-/* Уменьшаем размер иконок в пагинации */
 .pagination-wrapper .pagination .page-link i {
     font-size: 0.75rem !important;
 }
 
-/* Уменьшаем размер текста "Previous" и "Next" */
 .pagination-wrapper .pagination .page-link span {
     font-size: 0.875rem !important;
+}
+
+/* Стили для Laravel Tailwind пагинации */
+.pagination-wrapper nav[role="navigation"] a,
+.pagination-wrapper nav[role="navigation"] span[aria-disabled="true"] span {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.pagination-wrapper nav[role="navigation"] svg {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+.pagination-wrapper nav[role="navigation"] .text-sm {
+    font-size: 0.875rem !important;
+}
+
+.pagination-wrapper nav[role="navigation"] .px-4 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+.pagination-wrapper nav[role="navigation"] .py-2 {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
+.pagination-wrapper nav[role="navigation"] .px-2 {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
 }
 </style>
 @endsection

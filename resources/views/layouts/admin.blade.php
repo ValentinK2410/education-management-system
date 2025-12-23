@@ -628,6 +628,28 @@
         .pagination .page-link span {
             font-size: 0.875rem !important;
         }
+
+        /* Стили для Laravel Tailwind пагинации */
+        .pagination-wrapper nav[role="navigation"] a,
+        .pagination-wrapper nav[role="navigation"] span {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] svg {
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .text-sm {
+            font-size: 0.875rem !important;
+        }
     </style>
 </head>
 <body>
