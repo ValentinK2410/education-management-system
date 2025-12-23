@@ -86,41 +86,22 @@ class CourseSyncController extends Controller
                 'moodle_course_id' => $data['moodle_course_id'] ?? null,
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
+                'short_description' => $data['short_description'] ?? null,
                 'duration' => $data['duration'] ?? null,
                 'price' => $data['price'] ?? null,
-                'is_active' => ($data['status'] ?? 'publish') === 'publish',
-                'is_paid' => !empty($data['price']) && $data['price'] > 0,
-            ];
-            
-            // Сохраняем дополнительные данные в JSON поле или отдельные поля
-            // Если в модели Course есть поле для хранения дополнительных данных
-            $additionalData = [
-                'short_description' => $data['short_description'] ?? null,
                 'category_id' => $data['category_id'] ?? null,
                 'category_name' => $data['category_name'] ?? null,
                 'start_date' => $data['start_date'] ?? null,
                 'end_date' => $data['end_date'] ?? null,
                 'capacity' => $data['capacity'] ?? null,
                 'enrolled' => $data['enrolled'] ?? 0,
+                'is_active' => ($data['status'] ?? 'publish') === 'publish',
+                'is_paid' => !empty($data['price']) && $data['price'] > 0,
             ];
             
             if ($course) {
                 // Обновляем существующий курс
                 $course->update($courseData);
-                
-                // Сохраняем дополнительные данные в метаполе или отдельные поля
-                // Если в модели есть метод для сохранения метаданных
-                if (method_exists($course, 'setMeta')) {
-                    foreach ($additionalData as $key => $value) {
-                        $course->setMeta($key, $value);
-                    }
-                } else {
-                    // Сохраняем в JSON поле, если оно есть
-                    $meta = $course->meta ?? [];
-                    $meta = array_merge($meta, $additionalData);
-                    $course->meta = $meta;
-                    $course->save();
-                }
                 
                 Log::info('Course successfully updated from WordPress', [
                     'course_id' => $course->id,
