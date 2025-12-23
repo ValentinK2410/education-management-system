@@ -22,6 +22,7 @@ class Course extends Model
     protected $fillable = [
         'name',              // Название курса
         'description',       // Описание курса
+        'short_description', // Краткое описание
         'image',             // Изображение обложки курса
         'program_id',        // ID образовательной программы
         'instructor_id',     // ID преподавателя
@@ -36,6 +37,15 @@ class Course extends Model
         'is_paid',           // Платный курс или бесплатный
         'price',             // Цена курса
         'currency',          // Валюта
+        'wordpress_course_id', // ID курса в WordPress
+        'moodle_course_id',   // ID курса в Moodle
+        'category_id',       // ID категории из Moodle
+        'category_name',     // Название категории
+        'start_date',         // Дата начала курса
+        'end_date',           // Дата окончания курса
+        'capacity',           // Вместимость курса
+        'enrolled',           // Количество записанных студентов
+        'meta',               // Дополнительные метаданные (JSON)
     ];
 
     /**
@@ -47,6 +57,9 @@ class Course extends Model
         'is_active' => 'boolean',       // Статус активности как булево значение
         'is_paid' => 'boolean',         // Платный курс как булево значение
         'price' => 'decimal:2',         // Цена как десятичное число
+        'start_date' => 'date',         // Дата начала как дата
+        'end_date' => 'date',           // Дата окончания как дата
+        'meta' => 'array',              // Метаданные как массив
     ];
 
     /**

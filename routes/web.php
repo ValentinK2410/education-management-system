@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserSwitchController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
 
 // Главная страница (современный дизайн)
@@ -113,6 +114,8 @@ Route::get('/admin/test-courses', function () {
 Route::prefix('api')->group(function () {
     Route::post('/users/sync-from-wordpress', [\App\Http\Controllers\Api\UserSyncController::class, 'createFromWordPress'])
         ->name('api.users.sync-from-wordpress');
+    Route::post('/courses/sync-from-wordpress', [CourseSyncController::class, 'syncFromWordPress'])
+        ->name('api.courses.sync-from-wordpress');
 });
 
 // SSO маршруты (без CSRF защиты) - должны быть в начале файла

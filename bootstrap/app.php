@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Исключаем API маршруты и SSO маршруты из CSRF проверки
         $middleware->validateCsrfTokens(except: [
             'api/users/sync-from-wordpress',
+            'api/courses/sync-from-wordpress',
             'sso/login',
         ]);
     })
