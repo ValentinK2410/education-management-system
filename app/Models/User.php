@@ -100,6 +100,11 @@ class User extends Authenticatable
      */
     public function hasRole(string $role): bool
     {
+        // Если переключены на роль, проверяем только переключенную роль
+        if (session('role_switched') && session('switched_role_slug')) {
+            return session('switched_role_slug') === $role;
+        }
+        
         return $this->roles()->where('slug', $role)->exists();
     }
 
@@ -121,6 +126,14 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
+        // Если переключены на роль, проверяем разрешения только переключенной роли
+        if (session('role_switched') && session('switched_role_id')) {
+            $switchedRole = \App\Models\Role::find(session('switched_role_id'));
+            if ($switchedRole) {
+                return $switchedRole->hasPermission($permission);
+            }
+        }
+        
         return $this->roles()->whereHas('permissions', function ($query) use ($permission) {
             $query->where('slug', $permission);
         })->exists();

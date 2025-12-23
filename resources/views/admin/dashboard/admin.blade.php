@@ -1,4 +1,34 @@
 {{-- Dashboard для администратора --}}
+@if(session('is_switched'))
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-user-secret me-2"></i>
+            <strong>Внимание!</strong> Вы работаете под пользователем: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->email }})
+            <a href="{{ route('admin.user-switch.back') }}" class="btn btn-sm btn-outline-danger ms-3">
+                <i class="fas fa-undo me-1"></i>Вернуться к своему аккаунту
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+@endif
+
+@if(session('role_switched'))
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-user-tag me-2"></i>
+            <strong>Информация:</strong> Вы переключились на роль: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? 'Неизвестная роль' }}</strong>
+            <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-outline-primary ms-3">
+                <i class="fas fa-undo me-1"></i>Вернуться к своим ролям
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Статистические карточки -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">

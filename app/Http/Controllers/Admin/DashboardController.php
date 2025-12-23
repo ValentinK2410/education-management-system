@@ -31,11 +31,24 @@ class DashboardController extends Controller
 
         // Проверяем, переключен ли пользователь
         $isSwitched = session('is_switched', false);
-        $originalUserId = session('original_user_id');
+        $roleSwitched = session('role_switched', false);
+
+        // Если переключены на роль, используем эту роль для определения dashboard
+        if ($roleSwitched && session('switched_role_slug')) {
+            $switchedRoleSlug = session('switched_role_slug');
+            
+            if ($switchedRoleSlug === 'admin') {
+                return $this->adminDashboard($user);
+            } elseif ($switchedRoleSlug === 'instructor') {
+                return $this->instructorDashboard($user);
+            } elseif ($switchedRoleSlug === 'student') {
+                return $this->studentDashboard($user);
+            }
+        }
 
         // Определяем роль пользователя
         // Если админ переключился на другого пользователя, показываем dashboard для роли этого пользователя
-        if ($user->hasRole('admin') && !$isSwitched) {
+        if ($user->hasRole('admin') && !$isSwitched && !$roleSwitched) {
             return $this->adminDashboard($user);
         } elseif ($user->hasRole('instructor')) {
             return $this->instructorDashboard($user);

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Session;
 
 /**
  * Контроллер для переключения между пользователями и ролями
- * 
+ *
  * Позволяет администратору:
  * - Переключаться между ролями
  * - Входить под другим пользователем
@@ -78,7 +78,7 @@ class UserSwitchController extends Controller
     }
 
     /**
-     * Переключиться на роль (временно добавить роль к текущему пользователю)
+     * Переключиться на роль (временно заменяем все роли на выбранную)
      *
      * @param Request $request
      * @param Role $role
@@ -86,27 +86,37 @@ class UserSwitchController extends Controller
      */
     public function switchToRole(Request $request, Role $role)
     {
-        // Проверяем, что текущий пользователь - администратор
-        if (!Auth::user()->hasRole('admin')) {
+        // Проверяем, что текущий пользователь - реальный администратор
+        $isRealAdmin = false;
+        $originalUserId = Session::get('original_user_id');
+        
+        // Если переключены на пользователя, проверяем оригинального
+        if ($originalUserId) {
+            $originalUser = User::find($originalUserId);
+            $isRealAdmin = $originalUser && $originalUser->hasRole('admin');
+        } elseif (!session('role_switched') && !session('is_switched')) {
+            $isRealAdmin = Auth::user()->hasRole('admin');
+        }
+        
+        if (!$isRealAdmin) {
             abort(403, 'Только администраторы могут переключаться между ролями');
         }
 
-        // Сохраняем текущие роли пользователя
+        // Сохраняем текущие роли пользователя (если еще не сохранены)
         if (!Session::has('original_roles')) {
-            Session::put('original_roles', Auth::user()->roles->pluck('id')->toArray());
+            Session::put('original_roles', $currentUser->roles->pluck('id')->toArray());
         }
 
-        // Временно добавляем выбранную роль
-        $currentRoles = Auth::user()->roles->pluck('id')->toArray();
-        if (!in_array($role->id, $currentRoles)) {
-            Auth::user()->roles()->attach($role->id);
-        }
+        // ВРЕМЕННО заменяем все роли на выбранную роль
+        // Это позволит видеть интерфейс так, как его видит пользователь с этой ролью
+        $currentUser->roles()->sync([$role->id]);
 
         Session::put('role_switched', true);
         Session::put('switched_role_id', $role->id);
+        Session::put('switched_role_slug', $role->slug);
 
         return redirect()->route('admin.dashboard')
-            ->with('success', 'Вы переключились на роль: ' . $role->name);
+            ->with('success', 'Вы переключились на роль: ' . $role->name . '. Теперь вы видите интерфейс как пользователь с этой ролью.');
     }
 
     /**
@@ -123,7 +133,7 @@ class UserSwitchController extends Controller
         }
 
         $originalRoles = Session::get('original_roles');
-        
+
         // Восстанавливаем оригинальные роли
         Auth::user()->roles()->sync($originalRoles);
 
@@ -142,12 +152,21 @@ class UserSwitchController extends Controller
      */
     public function getUsers(Request $request)
     {
-        if (!Auth::user()->hasRole('admin')) {
+        // Проверяем, является ли пользователь реальным админом
+        $isRealAdmin = false;
+        if (session('original_user_id')) {
+            $originalUser = User::find(session('original_user_id'));
+            $isRealAdmin = $originalUser && $originalUser->hasRole('admin');
+        } elseif (!session('role_switched') && !session('is_switched')) {
+            $isRealAdmin = Auth::user()->hasRole('admin');
+        }
+        
+        if (!$isRealAdmin) {
             abort(403);
         }
 
         $search = $request->input('search', '');
-        
+
         $users = User::query()
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")

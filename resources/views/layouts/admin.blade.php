@@ -633,8 +633,19 @@
                     </div>
                 </div>
 
-                @if(auth()->user()->hasRole('admin'))
-                <!-- Переключение пользователей/ролей (только для админов) -->
+                @php
+                    // Проверяем, является ли пользователь реальным админом (не переключенным)
+                    $isRealAdmin = false;
+                    if (session('original_user_id')) {
+                        $originalUser = \App\Models\User::find(session('original_user_id'));
+                        $isRealAdmin = $originalUser && $originalUser->hasRole('admin');
+                    } elseif (!session('role_switched') && !session('is_switched')) {
+                        $isRealAdmin = auth()->user()->hasRole('admin');
+                    }
+                @endphp
+
+                @if($isRealAdmin)
+                <!-- Переключение пользователей/ролей (только для реальных админов) -->
                 <div class="user-switch-menu me-3">
                     @if(session('is_switched'))
                         <div class="alert alert-warning alert-dismissible fade show mb-0 py-1 px-2" role="alert" style="font-size: 0.75rem;">
@@ -654,7 +665,7 @@
                                 <li><h6 class="dropdown-header">Переключиться на пользователя</h6></li>
                                 <li>
                                     <div class="px-3 py-2">
-                                        <input type="text" id="userSearchInput" class="form-control form-control-sm" 
+                                        <input type="text" id="userSearchInput" class="form-control form-control-sm"
                                                placeholder="Поиск пользователя..." autocomplete="off">
                                     </div>
                                 </li>
@@ -669,7 +680,16 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Переключиться на роль</h6></li>
                                 @foreach(\App\Models\Role::all() as $role)
-                                    @if(!auth()->user()->hasRole($role->slug))
+                                    @php
+                                        // Проверяем текущую роль с учетом переключения
+                                        $hasCurrentRole = false;
+                                        if (session('role_switched') && session('switched_role_slug') === $role->slug) {
+                                            $hasCurrentRole = true;
+                                        } elseif (!session('role_switched') && auth()->user()->hasRole($role->slug)) {
+                                            $hasCurrentRole = true;
+                                        }
+                                    @endphp
+                                    @if(!$hasCurrentRole)
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.role-switch.switch', $role) }}">
                                             <i class="fas fa-user-tag me-2"></i>{{ $role->name }}
@@ -913,9 +933,9 @@
         if (userSearchInput && userSwitchList) {
             userSearchInput.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.trim();
-                
+
                 clearTimeout(searchTimeout);
-                
+
                 if (searchTerm.length < 2) {
                     userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>Введите минимум 2 символа</small></div>';
                     return;
