@@ -82,8 +82,8 @@ class SsoController extends Controller
             'email' => $user->email
         ]);
         
-        // Перенаправляем на главную страницу или dashboard
-        return redirect()->intended('/');
+        // Перенаправляем всех пользователей в админ панель
+        return redirect()->intended('/admin/dashboard');
     }
 }
 
