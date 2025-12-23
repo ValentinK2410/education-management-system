@@ -110,7 +110,7 @@ class AddUserPermissionsSeeder extends Seeder
                 'view_sidebar_courses', 'view_sidebar_roles', 'view_sidebar_reviews',
                 'view_sidebar_certificates', 'view_sidebar_archive'
             ];
-            
+
             $newPermissionIds = Permission::whereIn('slug', $newPermissionSlugs)
                 ->pluck('id');
 

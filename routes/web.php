@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
@@ -449,10 +450,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('test-price-form');
 
     // Главная панель администратора - доступна всем авторизованным пользователям
-    Route::get('/admin/dashboard', function () {
-        $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
-        return view('admin.dashboard', $dashboardData);
-    })->name('admin.dashboard');
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     // Административные маршруты - требуют роль администратора
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
