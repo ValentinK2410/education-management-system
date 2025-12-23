@@ -658,8 +658,8 @@
                     }
                 @endphp
 
-                {{-- Кнопка возврата при переключении на роль (всегда видна) --}}
-                @if(session('role_switched') && !session('is_switched'))
+                {{-- Кнопка возврата при переключении на роль (всегда видна в header) --}}
+                @if(session('role_switched'))
                 <div class="me-3">
                     <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-warning" title="Вернуться к ролям админа">
                         <i class="fas fa-undo me-1"></i>Вернуться к ролям админа
@@ -736,15 +736,6 @@
                             </ul>
                         </div>
                     @endif
-                </div>
-                @endif
-
-                {{-- Кнопка возврата к своим ролям (показывается всегда при переключении на роль) --}}
-                @if(session('role_switched'))
-                <div class="me-3">
-                    <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-warning" title="Вернуться к ролям админа">
-                        <i class="fas fa-undo me-1"></i>Вернуться к ролям админа
-                    </a>
                 </div>
                 @endif
 
