@@ -87,6 +87,7 @@ class CourseSyncController extends Controller
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'short_description' => $data['short_description'] ?? null,
+                'program_id' => null, // Курсы из WordPress/Moodle не привязаны к программам по умолчанию
                 'duration' => $data['duration'] ?? null,
                 'price' => $data['price'] ?? null,
                 'category_id' => $data['category_id'] ?? null,
