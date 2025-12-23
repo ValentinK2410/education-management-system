@@ -169,41 +169,60 @@
 
 /* Стили для уменьшения размера пагинации */
 .pagination-wrapper .pagination {
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
+    font-size: 0.875rem !important;
 }
 
 .pagination-wrapper .pagination .page-link {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    min-width: 38px;
-    text-align: center;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .pagination-wrapper .pagination .page-item {
-    margin: 0 2px;
+    margin: 0 1px !important;
 }
 
 .pagination-wrapper .pagination .page-item:first-child .page-link {
-    border-top-left-radius: 0.375rem;
-    border-bottom-left-radius: 0.375rem;
+    border-top-left-radius: 0.375rem !important;
+    border-bottom-left-radius: 0.375rem !important;
+    padding: 0.25rem 0.5rem !important;
 }
 
 .pagination-wrapper .pagination .page-item:last-child .page-link {
-    border-top-right-radius: 0.375rem;
-    border-bottom-right-radius: 0.375rem;
+    border-top-right-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+    padding: 0.25rem 0.5rem !important;
 }
 
 .pagination-wrapper .pagination .page-item.disabled .page-link {
-    opacity: 0.5;
-    cursor: not-allowed;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    padding: 0.25rem 0.5rem !important;
 }
 
 .pagination-wrapper .pagination .page-item.active .page-link {
-    z-index: 3;
-    color: #fff;
-    background-color: #6366f1;
-    border-color: #6366f1;
+    z-index: 3 !important;
+    color: #fff !important;
+    background-color: #6366f1 !important;
+    border-color: #6366f1 !important;
+    padding: 0.25rem 0.5rem !important;
+}
+
+/* Уменьшаем размер иконок в пагинации */
+.pagination-wrapper .pagination .page-link i {
+    font-size: 0.75rem !important;
+}
+
+/* Уменьшаем размер текста "Previous" и "Next" */
+.pagination-wrapper .pagination .page-link span {
+    font-size: 0.875rem !important;
 }
 </style>
 @endsection
