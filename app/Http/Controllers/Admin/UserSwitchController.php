@@ -141,7 +141,7 @@ class UserSwitchController extends Controller
         Auth::user()->roles()->sync($originalRoles);
 
         // Очищаем сессию переключения ролей
-        Session::forget(['original_roles', 'role_switched', 'switched_role_id']);
+        Session::forget(['original_roles', 'role_switched', 'switched_role_id', 'switched_role_slug']);
 
         return redirect()->route('admin.dashboard')
             ->with('success', 'Вы вернулись к своим оригинальным ролям');
