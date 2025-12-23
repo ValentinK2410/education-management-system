@@ -40,6 +40,9 @@ class DatabaseSeeder extends Seeder
         // Create permissions
         $permissions = [
             ['name' => 'Управление пользователями', 'slug' => 'manage_users'],
+            ['name' => 'Просматривать пользователей', 'slug' => 'view_users', 'description' => 'Право на просмотр списка пользователей и их профилей'],
+            ['name' => 'Редактировать пользователей', 'slug' => 'edit_users', 'description' => 'Право на редактирование информации о пользователях'],
+            ['name' => 'Удалять пользователей', 'slug' => 'delete_users', 'description' => 'Право на удаление пользователей из системы'],
             ['name' => 'Управление заведениями', 'slug' => 'manage_institutions'],
             ['name' => 'Управление программами', 'slug' => 'manage_programs'],
             ['name' => 'Управление курсами', 'slug' => 'manage_courses'],
@@ -47,7 +50,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create($permission);
+            Permission::firstOrCreate(
+                ['slug' => $permission['slug']],
+                $permission
+            );
         }
 
         // Assign permissions to roles
