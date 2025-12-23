@@ -57,7 +57,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Перенаправление всех пользователей в админ панель
-            return redirect()->intended(route('admin.dashboard.simple'));
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         return redirect()->back()

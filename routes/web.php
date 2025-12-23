@@ -143,26 +143,6 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('admin.simple');
 
-    // Простой маршрут для админки (без middleware для тестирования)
-    Route::get('/admin/dashboard', function () {
-        try {
-            // Простая статистика без сложных запросов
-            $stats = [
-                'users' => \App\Models\User::count(),
-                'institutions' => \App\Models\Institution::count(),
-                'programs' => \App\Models\Program::count(),
-                'courses' => \App\Models\Course::count(),
-            ];
-
-            return view('admin.dashboard-simple', compact('stats'));
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Ошибка загрузки данных',
-                'message' => $e->getMessage(),
-                'user' => auth()->user() ? auth()->user()->name : 'Not authenticated'
-            ]);
-        }
-    })->name('admin.dashboard.simple');
 
     // Простой маршрут для списка пользователей
     Route::get('/admin/users', function () {
