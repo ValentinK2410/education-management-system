@@ -43,7 +43,7 @@ class UserController extends Controller
             $query->where(function ($q) use ($search) {
                 // Проверяем, содержит ли поисковый запрос символ @ (вероятно email)
                 $isEmailSearch = strpos($search, '@') !== false;
-                
+
                 if ($isEmailSearch) {
                     // Если есть @, ищем по email (частичное совпадение)
                     $q->where('email', 'like', "%{$search}%");
@@ -53,7 +53,7 @@ class UserController extends Controller
                       ->orWhere('name', 'like', "% {$search}%") // Поиск по словам
                       ->orWhere('phone', 'like', "{$search}%");
                 }
-                
+
                 // Всегда добавляем поиск по email (на случай частичного ввода без @)
                 // Например, если пользователь вводит "gmail", мы найдем "user@gmail.com"
                 $q->orWhere('email', 'like', "%{$search}%");
@@ -67,8 +67,8 @@ class UserController extends Controller
             });
         }
 
-        // Фильтр по статусу
-        if ($statusFilter !== '') {
+        // Фильтр по статусу (только если выбран конкретный статус, не "Все")
+        if (!empty($statusFilter) && in_array($statusFilter, ['active', 'inactive'])) {
             $query->where('is_active', $statusFilter === 'active');
         }
 
