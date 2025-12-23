@@ -515,7 +515,30 @@
                 </a>
             </div>
 
-            @if(auth()->user()->hasPermission('view_sidebar_users') && !auth()->user()->hasPermission('hide_user_links'))
+            @php
+                // Проверяем, является ли пользователь реальным админом (даже если переключен на роль)
+                $isRealAdminForSidebar = false;
+                if (session('original_user_id')) {
+                    $originalUser = \App\Models\User::find(session('original_user_id'));
+                    $isRealAdminForSidebar = $originalUser && $originalUser->hasRole('admin');
+                } elseif (session('role_switched')) {
+                    $originalRoles = session('original_roles', []);
+                    if (!empty($originalRoles)) {
+                        $adminRole = \App\Models\Role::where('slug', 'admin')->first();
+                        $isRealAdminForSidebar = $adminRole && in_array($adminRole->id, $originalRoles);
+                    }
+                } else {
+                    $isRealAdminForSidebar = auth()->user()->hasRole('admin');
+                }
+                
+                // Показываем раздел "Пользователи" если:
+                // 1. Пользователь имеет разрешение view_sidebar_users И не имеет hide_user_links
+                // 2. ИЛИ пользователь является реальным админом (даже при переключении на роль)
+                $showUsersLink = ($isRealAdminForSidebar) || 
+                                 (auth()->user()->hasPermission('view_sidebar_users') && !auth()->user()->hasPermission('hide_user_links'));
+            @endphp
+            
+            @if($showUsersLink)
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i>
