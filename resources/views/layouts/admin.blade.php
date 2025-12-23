@@ -631,7 +631,8 @@
 
         /* Стили для Laravel Tailwind пагинации */
         .pagination-wrapper nav[role="navigation"] a,
-        .pagination-wrapper nav[role="navigation"] span {
+        .pagination-wrapper nav[role="navigation"] span[aria-disabled="true"] span,
+        .pagination-wrapper nav[role="navigation"] span[aria-current="page"] span {
             padding: 0.25rem 0.5rem !important;
             font-size: 0.875rem !important;
             line-height: 1.4 !important;
@@ -649,6 +650,31 @@
 
         .pagination-wrapper nav[role="navigation"] .text-sm {
             font-size: 0.875rem !important;
+        }
+
+        /* Переопределение Tailwind padding классов в пагинации */
+        .pagination-wrapper nav[role="navigation"] .px-4 {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .py-2 {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .px-2 {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
+
+        /* Уменьшаем размер иконок в пагинации */
+        .pagination-wrapper nav[role="navigation"] .w-5 {
+            width: 1rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .h-5 {
+            height: 1rem !important;
         }
     </style>
 </head>
