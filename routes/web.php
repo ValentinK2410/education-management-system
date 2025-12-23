@@ -448,13 +448,14 @@ Route::middleware(['auth'])->group(function () {
         return response()->file(public_path('test-price.html'));
     })->name('test-price-form');
 
+    // Главная панель администратора - доступна всем авторизованным пользователям
+    Route::get('/admin/dashboard', function () {
+        $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
+        return view('admin.dashboard', $dashboardData);
+    })->name('admin.dashboard');
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        // Главная панель администратора
-        Route::get('/dashboard', function () {
-            $dashboardData = \App\Http\Controllers\Admin\UserController::getDashboardStats();
-            return view('admin.dashboard', $dashboardData);
-        })->name('dashboard');
 
         // Управление пользователями
         Route::resource('users', UserController::class);

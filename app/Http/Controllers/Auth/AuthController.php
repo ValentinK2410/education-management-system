@@ -57,7 +57,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Перенаправление всех пользователей в админ панель
-            return redirect()->intended('/admin/dashboard');
+            return redirect()->intended(route('admin.dashboard.simple'));
         }
 
         return redirect()->back()
@@ -113,7 +113,7 @@ class AuthController extends Controller
         Auth::login($user);
 
         // Перенаправление всех пользователей в админ панель
-        return redirect('/admin/dashboard');
+        return redirect(route('admin.dashboard'));
     }
 
     /**

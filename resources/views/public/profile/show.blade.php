@@ -10,9 +10,9 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-body text-center">
                     @if($user->photo)
-                        <img src="{{ asset('storage/' . $user->photo) }}" 
-                             alt="Фото пользователя" 
-                             class="rounded-circle mb-3" 
+                        <img src="{{ asset('storage/' . $user->photo) }}"
+                             alt="Фото пользователя"
+                             class="rounded-circle mb-3"
                              style="width: 150px; height: 150px; object-fit: cover;">
                     @else
                         <div class="avatar-lg mx-auto mb-3">
@@ -21,18 +21,18 @@
                             </div>
                         </div>
                     @endif
-                    
+
                     <h4>{{ $user->name }}</h4>
                     <p class="text-muted">{{ $user->email }}</p>
-                    
+
                     @if($user->phone)
                         <p><i class="fas fa-phone me-2"></i>{{ $user->phone }}</p>
                     @endif
-                    
+
                     @if($user->city)
                         <p><i class="fas fa-map-marker-alt me-2"></i>{{ $user->city }}</p>
                     @endif
-                    
+
                     <a href="{{ route('profile.edit') }}" class="btn btn-primary">
                         <i class="fas fa-edit me-2"></i>Редактировать профиль
                     </a>

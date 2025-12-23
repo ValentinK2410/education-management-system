@@ -10,7 +10,7 @@ use Illuminate\Validation\Rules\File;
 
 /**
  * Контроллер для управления профилем пользователя
- * 
+ *
  * Обрабатывает просмотр и редактирование профиля авторизованного пользователя.
  * Включает загрузку фото и управление личной информацией.
  */
@@ -24,13 +24,13 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
-        
+
         // Определяем, какой layout использовать в зависимости от маршрута
         if (request()->routeIs('profile.*')) {
             // Публичный маршрут - используем публичное представление
             return view('public.profile.show', compact('user'));
         }
-        
+
         // Админский маршрут - используем админское представление
         return view('admin.profile.show', compact('user'));
     }
@@ -43,14 +43,14 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        
+
         // Определяем, какой layout использовать в зависимости от маршрута
         if (request()->routeIs('profile.*')) {
             // Публичный маршрут - используем админское представление редактирования
             // (можно создать публичное представление редактирования позже)
             return view('admin.profile.edit', compact('user'));
         }
-        
+
         // Админский маршрут - используем админское представление
         return view('admin.profile.edit', compact('user'));
     }
