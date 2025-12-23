@@ -11,6 +11,7 @@ use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 
 /**
@@ -30,21 +31,52 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search', '');
-        
-        $query = User::with('roles');
-        
+        $roleFilter = $request->input('role', '');
+        $statusFilter = $request->input('status', '');
+
+        // Используем select для оптимизации - загружаем только нужные поля
+        $query = User::with('roles:id,name,slug')
+            ->select('id', 'name', 'email', 'phone', 'is_active', 'created_at');
+
         // Поиск по имени, email или телефону
+        // Оптимизация: используем индексы для быстрого поиска
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                // Для email используем точное совпадение начала (использует индекс)
+                if (filter_var($search, FILTER_VALIDATE_EMAIL)) {
+                    $q->where('email', 'like', "{$search}%");
+                } else {
+                    // Для имени и телефона используем LIKE с началом строки (более эффективно)
+                    $q->where('name', 'like', "{$search}%")
+                      ->orWhere('name', 'like', "% {$search}%") // Поиск по словам
+                      ->orWhere('phone', 'like', "{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                }
             });
         }
-        
-        $users = $query->orderBy('name')->paginate(15)->withQueryString();
-        
-        return view('admin.users.index', compact('users', 'search'));
+
+        // Фильтр по роли
+        if ($roleFilter) {
+            $query->whereHas('roles', function ($q) use ($roleFilter) {
+                $q->where('slug', $roleFilter);
+            });
+        }
+
+        // Фильтр по статусу
+        if ($statusFilter !== '') {
+            $query->where('is_active', $statusFilter === 'active');
+        }
+
+        // Сортировка по имени с использованием индекса
+        $users = $query->orderBy('name')
+            ->orderBy('id') // Дополнительная сортировка для стабильности
+            ->paginate(15)
+            ->withQueryString();
+
+        // Получаем список ролей для фильтра
+        $roles = Role::orderBy('name')->get();
+
+        return view('admin.users.index', compact('users', 'search', 'roles', 'roleFilter', 'statusFilter'));
     }
 
     /**

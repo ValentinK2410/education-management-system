@@ -17,30 +17,57 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    {{-- Форма поиска --}}
+                    {{-- Форма поиска и фильтров --}}
                     <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4">
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Поиск</label>
                                 <div class="input-group">
-                                    <input type="text" 
-                                           name="search" 
-                                           class="form-control" 
-                                           placeholder="Поиск по имени, email или телефону..." 
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text"
+                                           name="search"
+                                           class="form-control"
+                                           placeholder="Имя, email или телефон..."
                                            value="{{ $search ?? '' }}"
                                            autocomplete="off">
-                                    <button class="btn btn-outline-primary" type="submit">
-                                        <i class="fas fa-search me-1"></i>Поиск
-                                    </button>
-                                    @if($search ?? '')
-                                    <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary" type="button">
-                                        <i class="fas fa-times me-1"></i>Очистить
-                                    </a>
-                                    @endif
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Роль</label>
+                                <select name="role" class="form-select">
+                                    <option value="">Все роли</option>
+                                    @foreach($roles ?? [] as $role)
+                                        <option value="{{ $role->slug }}" {{ ($roleFilter ?? '') === $role->slug ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Статус</label>
+                                <select name="status" class="form-select">
+                                    <option value="">Все</option>
+                                    <option value="active" {{ ($statusFilter ?? '') === 'active' ? 'selected' : '' }}>Активные</option>
+                                    <option value="inactive" {{ ($statusFilter ?? '') === 'inactive' ? 'selected' : '' }}>Неактивные</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" type="submit">
+                                    <i class="fas fa-filter me-1"></i>Применить
+                                </button>
+                            </div>
                         </div>
+                        @if($search || ($roleFilter ?? '') || ($statusFilter ?? ''))
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Сбросить фильтры
+                                </a>
+                            </div>
+                        </div>
+                        @endif
                     </form>
-                    
+
                     @if($search ?? '')
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle me-2"></i>
