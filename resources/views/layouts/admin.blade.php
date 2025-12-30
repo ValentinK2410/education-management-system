@@ -493,9 +493,190 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-color);
         }
+
+        /* Компактная пагинация для админ-панели */
+        .pagination-wrapper .pagination,
+        .pagination {
+            margin-bottom: 0 !important;
+            font-size: 0.875rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link,
+        .pagination .page-link {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .pagination-wrapper .pagination .page-item,
+        .pagination .page-item {
+            margin: 0 1px !important;
+        }
+
+        .pagination-wrapper .pagination .page-item:first-child .page-link,
+        .pagination .page-item:first-child .page-link {
+            border-top-left-radius: 0.375rem !important;
+            border-bottom-left-radius: 0.375rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item:last-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            border-top-right-radius: 0.375rem !important;
+            border-bottom-right-radius: 0.375rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item.disabled .page-link,
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item.active .page-link,
+        .pagination .page-item.active .page-link {
+            z-index: 3 !important;
+            color: #fff !important;
+            background-color: #6366f1 !important;
+            border-color: #6366f1 !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link i,
+        .pagination .page-link i {
+            font-size: 0.75rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link span,
+        .pagination .page-link span {
+            font-size: 0.875rem !important;
+        }
     </style>
 
     @stack('styles')
+    
+    <!-- Компактная пагинация - переопределение после Bootstrap -->
+    <style>
+        /* Компактная пагинация для админ-панели - переопределение Bootstrap */
+        .pagination-wrapper .pagination,
+        .pagination {
+            margin-bottom: 0 !important;
+            font-size: 0.875rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link,
+        .pagination .page-link {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .pagination-wrapper .pagination .page-item,
+        .pagination .page-item {
+            margin: 0 1px !important;
+        }
+
+        .pagination-wrapper .pagination .page-item:first-child .page-link,
+        .pagination .page-item:first-child .page-link {
+            border-top-left-radius: 0.375rem !important;
+            border-bottom-left-radius: 0.375rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item:last-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            border-top-right-radius: 0.375rem !important;
+            border-bottom-right-radius: 0.375rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item.disabled .page-link,
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-item.active .page-link,
+        .pagination .page-item.active .page-link {
+            z-index: 3 !important;
+            color: #fff !important;
+            background-color: #6366f1 !important;
+            border-color: #6366f1 !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link i,
+        .pagination .page-link i {
+            font-size: 0.75rem !important;
+        }
+
+        .pagination-wrapper .pagination .page-link span,
+        .pagination .page-link span {
+            font-size: 0.875rem !important;
+        }
+
+        /* Стили для Laravel Tailwind пагинации */
+        .pagination-wrapper nav[role="navigation"] a,
+        .pagination-wrapper nav[role="navigation"] span[aria-disabled="true"] span,
+        .pagination-wrapper nav[role="navigation"] span[aria-current="page"] span {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] svg {
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .text-sm {
+            font-size: 0.875rem !important;
+        }
+
+        /* Переопределение Tailwind padding классов в пагинации */
+        .pagination-wrapper nav[role="navigation"] .px-4 {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .py-2 {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .px-2 {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
+
+        /* Уменьшаем размер иконок в пагинации */
+        .pagination-wrapper nav[role="navigation"] .w-5 {
+            width: 1rem !important;
+        }
+
+        .pagination-wrapper nav[role="navigation"] .h-5 {
+            height: 1rem !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
