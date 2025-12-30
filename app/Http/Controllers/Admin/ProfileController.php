@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
+use App\Services\MoodleApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\File;
 
@@ -24,15 +27,54 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
+        
+        // Получаем данные о заданиях курса id=15
+        $assignmentsData = null;
+        $course15 = Course::find(15);
+        
+        if ($course15 && $user->moodle_user_id) {
+            // Проверяем, записан ли студент на курс id=15
+            $isEnrolled = $user->courses()->where('courses.id', 15)->exists();
+            
+            if ($isEnrolled) {
+                try {
+                    $moodleApiService = new MoodleApiService();
+                    
+                    // Получаем задания из раздела "ПОСЛЕ СЕССИИ"
+                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
+                        15, // ID курса в Moodle (предполагаем, что это тот же ID)
+                        $user->moodle_user_id,
+                        'ПОСЛЕ СЕССИИ'
+                    );
+                    
+                    if ($assignments !== false) {
+                        $assignmentsData = $assignments;
+                    } else {
+                        Log::warning('Не удалось получить задания из Moodle', [
+                            'user_id' => $user->id,
+                            'moodle_user_id' => $user->moodle_user_id,
+                            'course_id' => 15
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка при получении заданий из Moodle', [
+                        'user_id' => $user->id,
+                        'moodle_user_id' => $user->moodle_user_id,
+                        'course_id' => 15,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
 
         // Определяем, какой layout использовать в зависимости от маршрута
         if (request()->routeIs('profile.*')) {
             // Публичный маршрут - используем публичное представление
-            return view('public.profile.show', compact('user'));
+            return view('public.profile.show', compact('user', 'assignmentsData', 'course15'));
         }
 
         // Админский маршрут - используем админское представление
-        return view('admin.profile.show', compact('user'));
+        return view('admin.profile.show', compact('user', 'assignmentsData', 'course15'));
     }
 
     /**

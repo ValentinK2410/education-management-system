@@ -249,5 +249,264 @@ class MoodleApiService
         $result = $this->updateUser($moodleUserId, ['password' => $password]);
         return $result !== false;
     }
+
+    /**
+     * Получить содержимое курса (разделы и модули)
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с разделами курса или false в случае ошибки
+     */
+    public function getCourseContents(int $courseId): array|false
+    {
+        $result = $this->call('core_course_get_contents', [
+            'courseid' => $courseId
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Получить задания курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с заданиями курса или false в случае ошибки
+     */
+    public function getCourseAssignments(int $courseId): array|false
+    {
+        $result = $this->call('mod_assign_get_assignments', [
+            'courseids' => [$courseId]
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+
+        // Возвращаем задания из первого курса
+        if (isset($result['courses'][0]['assignments'])) {
+            return $result['courses'][0]['assignments'];
+        }
+
+        return [];
+    }
+
+    /**
+     * Получить сдачи студента по заданиям курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с сдачами или false в случае ошибки
+     */
+    public function getStudentSubmissions(int $courseId, int $studentMoodleId): array|false
+    {
+        // Сначала получаем список заданий курса
+        $assignments = $this->getCourseAssignments($courseId);
+        
+        if ($assignments === false || empty($assignments)) {
+            return [];
+        }
+
+        $assignmentIds = array_column($assignments, 'id');
+        
+        $result = $this->call('mod_assign_get_submissions', [
+            'assignmentids' => $assignmentIds,
+            'status' => '',
+            'since' => 0,
+            'before' => 0
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+
+        // Фильтруем сдачи только для нужного студента
+        $studentSubmissions = [];
+        if (isset($result['assignments'])) {
+            foreach ($result['assignments'] as $assignment) {
+                if (isset($assignment['submissions'])) {
+                    foreach ($assignment['submissions'] as $submission) {
+                        if (isset($submission['userid']) && $submission['userid'] == $studentMoodleId) {
+                            $studentSubmissions[$assignment['assignmentid']] = $submission;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $studentSubmissions;
+    }
+
+    /**
+     * Получить оценки студента по заданиям курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с оценками или false в случае ошибки
+     */
+    public function getStudentGrades(int $courseId, int $studentMoodleId): array|false
+    {
+        // Сначала получаем список заданий курса
+        $assignments = $this->getCourseAssignments($courseId);
+        
+        if ($assignments === false || empty($assignments)) {
+            return [];
+        }
+
+        $assignmentIds = array_column($assignments, 'id');
+        
+        $result = $this->call('mod_assign_get_grades', [
+            'assignmentids' => $assignmentIds
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+
+        // Фильтруем оценки только для нужного студента
+        $studentGrades = [];
+        if (isset($result['assignments'])) {
+            foreach ($result['assignments'] as $assignment) {
+                if (isset($assignment['grades'])) {
+                    foreach ($assignment['grades'] as $grade) {
+                        if (isset($grade['userid']) && $grade['userid'] == $studentMoodleId) {
+                            $studentGrades[$assignment['assignmentid']] = $grade;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $studentGrades;
+    }
+
+    /**
+     * Получить информацию о заданиях курса с их статусами для студента
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @param string|null $sectionName Название раздела для фильтрации (например, "ПОСЛЕ СЕССИИ")
+     * @return array|false Массив с заданиями и их статусами или false в случае ошибки
+     */
+    public function getCourseAssignmentsWithStatus(int $courseId, int $studentMoodleId, ?string $sectionName = null): array|false
+    {
+        // Получаем содержимое курса для поиска раздела
+        $courseContents = $this->getCourseContents($courseId);
+        
+        if ($courseContents === false) {
+            return false;
+        }
+
+        // Получаем задания курса
+        $assignments = $this->getCourseAssignments($courseId);
+        
+        if ($assignments === false) {
+            return false;
+        }
+
+        // Получаем сдачи студента
+        $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
+        
+        if ($submissions === false) {
+            $submissions = [];
+        }
+
+        // Получаем оценки студента
+        $grades = $this->getStudentGrades($courseId, $studentMoodleId);
+        
+        if ($grades === false) {
+            $grades = [];
+        }
+
+        // Создаем массив заданий с их статусами
+        $assignmentsWithStatus = [];
+        
+        // Находим нужный раздел
+        $targetSection = null;
+        if ($sectionName) {
+            foreach ($courseContents as $section) {
+                if (isset($section['name']) && stripos($section['name'], $sectionName) !== false) {
+                    $targetSection = $section;
+                    break;
+                }
+            }
+        }
+
+        // Если раздел не найден, используем все разделы
+        $sectionsToProcess = $targetSection ? [$targetSection] : $courseContents;
+
+        foreach ($sectionsToProcess as $section) {
+            if (!isset($section['modules'])) {
+                continue;
+            }
+
+            foreach ($section['modules'] as $module) {
+                // Проверяем, является ли модуль заданием
+                if ($module['modname'] !== 'assign') {
+                    continue;
+                }
+
+                $assignmentId = $module['instance'] ?? null;
+                
+                if (!$assignmentId) {
+                    continue;
+                }
+
+                // Находим задание в списке заданий
+                $assignment = null;
+                foreach ($assignments as $assign) {
+                    if ($assign['id'] == $assignmentId) {
+                        $assignment = $assign;
+                        break;
+                    }
+                }
+
+                if (!$assignment) {
+                    continue;
+                }
+
+                // Определяем статус задания
+                $submission = $submissions[$assignmentId] ?? null;
+                $grade = $grades[$assignmentId] ?? null;
+
+                $status = 'not_submitted'; // По умолчанию - не сдано
+                $statusText = 'Не сдано';
+                $gradeValue = null;
+
+                // Если есть сдача (файл загружен)
+                if ($submission) {
+                    // Проверяем, есть ли оценка
+                    if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
+                        // Есть оценка - задание проверено
+                        $status = 'graded';
+                        $statusText = (string)$grade['grade'];
+                        $gradeValue = (float)$grade['grade'];
+                    } else {
+                        // Есть сдача, но нет оценки - не проверено
+                        $status = 'pending';
+                        $statusText = 'Не проверено';
+                    }
+                }
+
+                $assignmentsWithStatus[] = [
+                    'id' => $assignmentId,
+                    'name' => $assignment['name'] ?? $module['name'] ?? 'Без названия',
+                    'section_name' => $section['name'] ?? '',
+                    'status' => $status,
+                    'status_text' => $statusText,
+                    'grade' => $gradeValue,
+                    'submission' => $submission,
+                    'submitted_at' => $submission['timecreated'] ?? null,
+                    'graded_at' => $grade['timecreated'] ?? null,
+                ];
+            }
+        }
+
+        return $assignmentsWithStatus;
+    }
 }
 

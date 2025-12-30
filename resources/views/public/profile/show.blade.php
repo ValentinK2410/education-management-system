@@ -238,6 +238,55 @@
                     </div>
                 </div>
             @endif
+
+            <!-- Задания курса "ПОСЛЕ СЕССИИ" -->
+            @if(isset($course15) && isset($assignmentsData) && !empty($assignmentsData))
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i>ПОСЛЕ СЕССИИ - {{ $course15->name }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach($assignmentsData as $assignment)
+                                <div class="col-md-12 mb-3">
+                                    <div class="card assignment-card assignment-status-{{ $assignment['status'] }}">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="card-title mb-1">{{ $assignment['name'] }}</h6>
+                                                    @if($assignment['submitted_at'])
+                                                        <small class="text-muted">
+                                                            Сдано: {{ \Carbon\Carbon::createFromTimestamp($assignment['submitted_at'])->format('d.m.Y H:i') }}
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                                <div class="assignment-status-badge assignment-status-{{ $assignment['status'] }}">
+                                                    {{ $assignment['status_text'] }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @elseif(isset($course15) && $user->courses()->where('courses.id', 15)->exists() && !$user->moodle_user_id)
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Внимание
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0 text-muted">
+                            Не удалось загрузить информацию о заданиях. Убедитесь, что ваш аккаунт синхронизирован с Moodle.
+                        </p>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -256,6 +305,66 @@
     justify-content: center;
     font-weight: 600;
     font-size: 3rem;
+}
+
+/* Стили для заданий */
+.assignment-card {
+    border-left: 4px solid;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.assignment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Красный - не сдано */
+.assignment-status-not-submitted {
+    border-left-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.assignment-status-not-submitted .assignment-status-badge {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Желтый - не проверено */
+.assignment-status-pending {
+    border-left-color: #ffc107;
+    background-color: #fffbf0;
+}
+
+.assignment-status-pending .assignment-status-badge {
+    background-color: #ffc107;
+    color: #000;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Зеленый - оценка */
+.assignment-status-graded {
+    border-left-color: #28a745;
+    background-color: #f0fff4;
+}
+
+.assignment-status-graded .assignment-status-badge {
+    background-color: #28a745;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.assignment-status-badge {
+    white-space: nowrap;
 }
 </style>
 @endsection
