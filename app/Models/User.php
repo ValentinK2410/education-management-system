@@ -104,7 +104,7 @@ class User extends Authenticatable
         if (session('role_switched') && session('switched_role_slug')) {
             return session('switched_role_slug') === $role;
         }
-        
+
         return $this->roles()->where('slug', $role)->exists();
     }
 
@@ -133,7 +133,7 @@ class User extends Authenticatable
                 return $switchedRole->hasPermission($permission);
             }
         }
-        
+
         return $this->roles()->whereHas('permissions', function ($query) use ($permission) {
             $query->where('slug', $permission);
         })->exists();

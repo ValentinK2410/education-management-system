@@ -530,14 +530,14 @@
                 } else {
                     $isRealAdminForSidebar = auth()->user()->hasRole('admin');
                 }
-                
+
                 // Показываем раздел "Пользователи" если:
                 // 1. Пользователь имеет разрешение view_sidebar_users И не имеет hide_user_links
                 // 2. ИЛИ пользователь является реальным админом (даже при переключении на роль)
-                $showUsersLink = ($isRealAdminForSidebar) || 
+                $showUsersLink = ($isRealAdminForSidebar) ||
                                  (auth()->user()->hasPermission('view_sidebar_users') && !auth()->user()->hasPermission('hide_user_links'));
             @endphp
-            
+
             @if($showUsersLink)
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">

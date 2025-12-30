@@ -36,7 +36,7 @@ class DashboardController extends Controller
         // Если переключены на роль, используем эту роль для определения dashboard
         if ($roleSwitched && session('switched_role_slug')) {
             $switchedRoleSlug = session('switched_role_slug');
-            
+
             if ($switchedRoleSlug === 'admin') {
                 return $this->adminDashboard($user);
             } elseif ($switchedRoleSlug === 'instructor') {
