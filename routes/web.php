@@ -450,10 +450,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
     });
 
-    // Маршруты просмотра пользователей - доступны администраторам и преподавателям
+    // Маршруты просмотра пользователей и аналитики - доступны администраторам и преподавателям
     Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+        
+        // Аналитика курсов (доступна преподавателям и админам)
+        Route::get('analytics', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::post('analytics/sync', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'sync'])->name('analytics.sync');
+        Route::get('analytics/course/{course}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'course'])->name('analytics.course');
+        Route::get('analytics/student/{user}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'student'])->name('analytics.student');
+        Route::get('analytics/export/excel', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportExcel'])->name('analytics.export.excel');
+        Route::get('analytics/export/csv', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportCsv'])->name('analytics.export.csv');
+        Route::get('analytics/export/pdf', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportPdf'])->name('analytics.export.pdf');
     });
 
     // Административные маршруты - требуют роль администратора
