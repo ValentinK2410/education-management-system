@@ -311,15 +311,46 @@ class MoodleApiService
      */
     public function getCourseContents(int $courseId): array|false
     {
-        $result = $this->call('core_course_get_contents', [
-            'courseid' => $courseId
-        ]);
+        try {
+            Log::info('getCourseContents: запрос содержимого курса', [
+                'course_id' => $courseId
+            ]);
+            
+            $result = $this->call('core_course_get_contents', [
+                'courseid' => $courseId
+            ]);
 
-        if ($result === false || isset($result['exception'])) {
+            if ($result === false) {
+                Log::warning('getCourseContents: запрос вернул false', [
+                    'course_id' => $courseId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getCourseContents: Moodle вернул исключение', [
+                    'course_id' => $courseId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка',
+                    'errorcode' => $result['errorcode'] ?? ''
+                ]);
+                return false;
+            }
+
+            Log::info('getCourseContents: успешно получено содержимое курса', [
+                'course_id' => $courseId,
+                'sections_count' => is_array($result) ? count($result) : 0
+            ]);
+
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('getCourseContents: исключение при получении содержимого курса', [
+                'course_id' => $courseId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
-
-        return $result;
     }
 
     /**
