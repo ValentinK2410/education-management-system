@@ -941,6 +941,22 @@
                 @php
                     $courseAnalytics = collect($detailedAnalytics)->filter(function($item) use ($course) {
                         return $item['course']->id === $course->id;
+                    })->sortBy(function($item) {
+                        // Сортировка: сначала по статусу (не начато -> сдано -> проверено), потом по дате сдачи
+                        $progress = $item['progress'];
+                        if (!$progress) {
+                            return 1; // Не начато - в начале
+                        }
+                        $statusOrder = [
+                            'not_started' => 1,
+                            'in_progress' => 2,
+                            'submitted' => 3,
+                            'graded' => 4,
+                            'completed' => 5,
+                        ];
+                        $order = $statusOrder[$progress->status] ?? 99;
+                        $date = $progress->submitted_at ? $progress->submitted_at->timestamp : 0;
+                        return $order * 1000000000 + (999999999 - $date); // Сначала по статусу, потом по дате (новые сначала)
                     });
                 @endphp
                 
@@ -956,14 +972,14 @@
                                 <table class="table table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Элемент курса</th>
-                                            <th>Тип</th>
-                                            <th>Раздел</th>
-                                            <th>Статус</th>
-                                            <th>Оценка</th>
-                                            <th>Дата сдачи</th>
-                                            <th>Дата проверки</th>
-                                            <th>История</th>
+                                            <th style="width: 25%;">Элемент курса</th>
+                                            <th style="width: 10%;">Тип</th>
+                                            <th style="width: 15%;">Статус</th>
+                                            <th style="width: 10%;">Оценка</th>
+                                            <th style="width: 12%;">Дата сдачи</th>
+                                            <th style="width: 12%;">Дата проверки</th>
+                                            <th style="width: 10%;">Раздел</th>
+                                            <th style="width: 6%;">История</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -995,7 +1011,6 @@
                                                         @endif
                                                     </span>
                                                 </td>
-                                                <td>{{ $activity->section_name ?? '—' }}</td>
                                                 <td>
                                                     @if($progress)
                                                         @php
@@ -1024,16 +1039,31 @@
                                                 </td>
                                                 <td>
                                                     @if($progress && $progress->grade !== null)
-                                                        <strong>{{ $progress->grade }}</strong>
+                                                        <strong class="text-success">{{ $progress->grade }}</strong>
                                                         @if($progress->max_grade)
-                                                            / {{ $progress->max_grade }}
+                                                            <span class="text-muted">/ {{ $progress->max_grade }}</span>
                                                         @endif
                                                     @else
                                                         <span class="text-muted">—</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $progress->submitted_at?->format('d.m.Y H:i') ?? '—' }}</td>
-                                                <td>{{ $progress->graded_at?->format('d.m.Y H:i') ?? '—' }}</td>
+                                                <td>
+                                                    @if($progress && $progress->submitted_at)
+                                                        <span class="text-primary">{{ $progress->submitted_at->format('d.m.Y H:i') }}</span>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($progress && $progress->graded_at)
+                                                        <span class="text-success">{{ $progress->graded_at->format('d.m.Y H:i') }}</span>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">{{ $activity->section_name ?? '—' }}</small>
+                                                </td>
                                                 <td>
                                                     @if($history->count() > 0)
                                                         <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#historyModal{{ $activity->id }}">
