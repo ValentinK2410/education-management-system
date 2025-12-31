@@ -257,6 +257,21 @@ class CourseActivitySyncService
                     $status = $this->mapStatus($activityData['status'] ?? 'not_started');
                     $grade = $activityData['grade'] ?? null;
                     $maxGrade = $activityData['max_grade'] ?? $activity->max_grade;
+                    
+                    // Преобразуем timestamp в datetime для submitted_at и graded_at
+                    $submittedAt = null;
+                    if (isset($activityData['submitted_at']) && $activityData['submitted_at']) {
+                        $submittedAt = is_numeric($activityData['submitted_at']) 
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['submitted_at'])
+                            : $activityData['submitted_at'];
+                    }
+                    
+                    $gradedAt = null;
+                    if (isset($activityData['graded_at']) && $activityData['graded_at']) {
+                        $gradedAt = is_numeric($activityData['graded_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['graded_at'])
+                            : $activityData['graded_at'];
+                    }
 
                     // Ищем существующий прогресс
                     $progress = StudentActivityProgress::where('user_id', $user->id)
@@ -271,8 +286,8 @@ class CourseActivitySyncService
                         'status' => $status,
                         'grade' => $grade,
                         'max_grade' => $maxGrade,
-                        'submitted_at' => $activityData['submitted_at'] ?? null,
-                        'graded_at' => $activityData['graded_at'] ?? null,
+                        'submitted_at' => $submittedAt,
+                        'graded_at' => $gradedAt,
                         'progress_data' => $activityData,
                     ];
 
