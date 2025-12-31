@@ -966,16 +966,16 @@ class MoodleApiService
                     
                     if ($attemptStatus === 'finished') {
                         if ($grade && isset($grade['grade'])) {
-                            $status = 'completed';
-                            $statusText = 'Завершено';
+                            $status = 'graded';
+                            $statusText = (string)$grade['grade'];
                             $gradeValue = (float)$grade['grade'];
                         } else {
-                            $status = 'in_progress';
-                            $statusText = 'В процессе';
+                            $status = 'submitted';
+                            $statusText = 'Сдано';
                         }
                     } else {
-                        $status = 'in_progress';
-                        $statusText = 'В процессе';
+                        $status = 'submitted';
+                        $statusText = 'Сдано';
                     }
                 }
                 
@@ -984,7 +984,7 @@ class MoodleApiService
                 if (!empty($attempts)) {
                     $latestAttempt = end($attempts);
                     $submittedAt = $latestAttempt['timefinish'] ?? null;
-                    if ($status === 'completed' || $status === 'graded') {
+                    if ($status === 'graded') {
                         $gradedAt = $submittedAt;
                     }
                 }
