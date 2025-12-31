@@ -29,6 +29,11 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        $currentUser = auth()->user();
+        
+        // Проверяем, является ли пользователь преподавателем (но не администратором)
+        $isInstructor = $currentUser->hasRole('instructor') && !$currentUser->hasRole('admin');
+        
         $search = $request->input('search', '');
         $roleFilter = $request->input('role', '');
         $statusFilter = $request->input('status', '');
@@ -36,6 +41,16 @@ class UserController extends Controller
         // Используем select для оптимизации - загружаем только нужные поля
         $query = User::with('roles:id,name,slug')
             ->select('id', 'name', 'email', 'phone', 'is_active', 'created_at');
+        
+        // Если пользователь - преподаватель, показываем только студентов его курсов
+        if ($isInstructor) {
+            $instructorCourseIds = $currentUser->taughtCourses()->pluck('id');
+            
+            // Получаем только пользователей, которые записаны на курсы преподавателя
+            $query->whereHas('courses', function ($q) use ($instructorCourseIds) {
+                $q->whereIn('courses.id', $instructorCourseIds);
+            });
+        }
 
         // Поиск по имени, email или телефону
         // Оптимизация: используем индексы для быстрого поиска
@@ -161,6 +176,24 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $currentUser = auth()->user();
+        
+        // Проверяем, является ли пользователь преподавателем (но не администратором)
+        $isInstructor = $currentUser->hasRole('instructor') && !$currentUser->hasRole('admin');
+        
+        // Если преподаватель, проверяем, что студент записан на его курсы
+        if ($isInstructor) {
+            $instructorCourseIds = $currentUser->taughtCourses()->pluck('id');
+            $userCourseIds = $user->courses()->pluck('courses.id');
+            
+            // Проверяем, есть ли пересечение курсов
+            $hasAccess = $instructorCourseIds->intersect($userCourseIds)->isNotEmpty();
+            
+            if (!$hasAccess) {
+                abort(403, 'Недостаточно прав доступа. Вы можете просматривать только студентов своих курсов.');
+            }
+        }
+        
         $user->load([
             'roles',
             'taughtCourses.program.institution',
@@ -169,6 +202,14 @@ class UserController extends Controller
             'courses.instructor',
             'institutions'
         ]);
+        
+        // Если преподаватель, фильтруем курсы - показываем только курсы преподавателя
+        if ($isInstructor) {
+            $instructorCourseIds = $currentUser->taughtCourses()->pluck('id');
+            $user->setRelation('courses', $user->courses->filter(function($course) use ($instructorCourseIds) {
+                return $instructorCourseIds->contains($course->id);
+            }));
+        }
         
         // Получаем задания из Moodle для каждого курса студента
         $coursesWithAssignments = [];

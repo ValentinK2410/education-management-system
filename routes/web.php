@@ -450,11 +450,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
     });
 
+    // Маршруты просмотра пользователей - доступны администраторам и преподавателям
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+    });
+
     // Административные маршруты - требуют роль администратора
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
-        // Управление пользователями
-        Route::resource('users', UserController::class);
+        // Управление пользователями (создание, редактирование, удаление - только для администраторов)
+        Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         // Управление ролями
         Route::resource('roles', RoleController::class);
