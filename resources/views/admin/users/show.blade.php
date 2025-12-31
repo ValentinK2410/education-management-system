@@ -474,7 +474,7 @@
     </div>
 
     <!-- Tab: Основная информация -->
-    <div id="tab-info" class="tab-content active">
+    <div id="tab-info" class="tab-content {{ request('tab', 'info') === 'info' ? 'active' : '' }}">
                     <div class="row">
             <div class="col-lg-6">
                 <div class="info-card">
@@ -660,7 +660,7 @@
     </div>
 
     <!-- Tab: Курсы -->
-    <div id="tab-courses" class="tab-content">
+    <div id="tab-courses" class="tab-content {{ request('tab') === 'courses' ? 'active' : '' }}">
         @if($user->courses->count() > 0)
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
@@ -885,7 +885,7 @@
     </style>
 
     <!-- Tab: Учебные заведения -->
-    <div id="tab-institutions" class="tab-content">
+    <div id="tab-institutions" class="tab-content {{ request('tab') === 'institutions' ? 'active' : '' }}">
         @if($user->institutions->count() > 0)
             <div class="row">
                 @foreach($user->institutions as $institution)
@@ -935,7 +935,7 @@
     </div>
 
     <!-- Tab: Детальная аналитика -->
-    <div id="tab-analytics" class="tab-content">
+    <div id="tab-analytics" class="tab-content {{ request('tab') === 'analytics' ? 'active' : '' }}">
         @if(isset($detailedAnalytics) && count($detailedAnalytics) > 0)
             @foreach($user->courses as $course)
                 @php
@@ -1109,7 +1109,7 @@
     </div>
 
     <!-- Tab: Сертификаты и дипломы -->
-    <div id="tab-certificates" class="tab-content">
+    <div id="tab-certificates" class="tab-content {{ request('tab') === 'certificates' ? 'active' : '' }}">
         <div class="empty-state">
             <i class="fas fa-certificate"></i>
             <h5>Сертификаты и дипломы</h5>
