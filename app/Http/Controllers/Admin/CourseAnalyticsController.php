@@ -62,8 +62,17 @@ class CourseAnalyticsController extends Controller
         
         $courses = $coursesQuery->get();
         
+        // Получаем список студентов для фильтра (до применения фильтров)
+        $studentsQuery = User::whereHas('courses');
+        if (!$user->hasRole('admin')) {
+            $studentsQuery->whereHas('courses', function ($q) use ($user) {
+                $q->where('instructor_id', $user->id);
+            });
+        }
+        $students = $studentsQuery->get();
+        
         // Применяем фильтры
-        $filteredData = $this->applyFilters($request, $courses);
+        $filteredData = $this->applyFilters($request, $courses, null, null, $students);
         
         return view('admin.analytics.index', [
             'courses' => $courses,
@@ -264,11 +273,15 @@ class CourseAnalyticsController extends Controller
      * @param int|null $userId
      * @return array
      */
-    protected function applyFilters(Request $request, $courses = null, ?int $courseId = null, ?int $userId = null): array
+    protected function applyFilters(Request $request, $courses = null, ?int $courseId = null, ?int $userId = null, $students = null): array
     {
+        // Получаем фильтры из запроса, преобразуя строки в числа где нужно
+        $courseIdParam = $request->get('course_id', $courseId);
+        $userIdParam = $request->get('user_id', $userId);
+        
         $filters = [
-            'course_id' => $request->get('course_id', $courseId),
-            'user_id' => $request->get('user_id', $userId),
+            'course_id' => $courseIdParam ? (int)$courseIdParam : null,
+            'user_id' => $userIdParam ? (int)$userIdParam : null,
             'activity_type' => $request->get('activity_type'),
             'status' => $request->get('status'),
             'date_from' => $request->get('date_from'),
