@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
 use App\Models\User;
+use App\Services\MoodleApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -25,8 +28,81 @@ class CourseController extends Controller
      */
     public function index()
     {
-        $courses = Course::with(['program.institution', 'instructor'])->paginate(15);
-        return view('admin.courses.index', compact('courses'));
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('admin');
+        
+        // Если пользователь - админ, показываем все курсы
+        if ($isAdmin) {
+            $courses = Course::with(['program.institution', 'instructor'])->paginate(15);
+            $coursesWithAssignments = [];
+            return view('admin.courses.index', compact('courses', 'isAdmin', 'coursesWithAssignments'));
+        }
+        
+        // Если пользователь - студент, показываем только его курсы
+        // Получаем ID курсов студента из таблицы связей
+        $userCourseIds = \DB::table('user_courses')
+            ->where('user_id', $user->id)
+            ->pluck('course_id')
+            ->toArray();
+        
+        // Логируем для отладки
+        Log::info('Курсы студента', [
+            'user_id' => $user->id,
+            'user_course_ids' => $userCourseIds
+        ]);
+        
+        // Получаем курсы по ID
+        if (empty($userCourseIds)) {
+            $courses = Course::whereIn('id', [0])->with(['program.institution', 'instructor'])->paginate(15);
+        } else {
+            $courses = Course::whereIn('id', $userCourseIds)
+                ->with(['program.institution', 'instructor'])
+                ->paginate(15);
+        }
+        
+        // Получаем задания из Moodle для каждого курса
+        $coursesWithAssignments = [];
+        $moodleApiService = null;
+        
+        if ($user->moodle_user_id) {
+            try {
+                $moodleApiService = new MoodleApiService();
+            } catch (\Exception $e) {
+                Log::error('Ошибка инициализации MoodleApiService', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        foreach ($courses as $course) {
+            $assignmentsData = null;
+            
+            // Получаем задания только если есть moodle_user_id и moodle_course_id
+            if ($moodleApiService && $user->moodle_user_id && $course->moodle_course_id) {
+                try {
+                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
+                        $course->moodle_course_id,
+                        $user->moodle_user_id,
+                        'ПОСЛЕ СЕССИИ'
+                    );
+                    
+                    if ($assignments !== false && !empty($assignments)) {
+                        $assignmentsData = $assignments;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка при получении заданий из Moodle', [
+                        'course_id' => $course->id,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'moodle_user_id' => $user->moodle_user_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            $coursesWithAssignments[$course->id] = $assignmentsData;
+        }
+        
+        return view('admin.courses.index', compact('courses', 'isAdmin', 'coursesWithAssignments'));
     }
 
     /**

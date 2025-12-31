@@ -11,10 +11,15 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
                         <i class="fas fa-chalkboard-teacher me-2"></i>Курсы
+                        @if(!$isAdmin)
+                            <small class="text-muted ms-2">(Мои курсы)</small>
+                        @endif
                     </h3>
-                    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Добавить курс
-                    </a>
+                    @if($isAdmin)
+                        <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Добавить курс
+                        </a>
+                    @endif
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -100,32 +105,76 @@
                                                    class="btn btn-sm btn-info" title="Просмотр">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('admin.courses.edit', $course) }}"
-                                                   class="btn btn-sm btn-warning" title="Редактировать">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('admin.courses.duplicate', $course) }}"
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-secondary"
-                                                            title="Дублировать курс"
-                                                            onclick="return confirm('Создать копию этого курса?')">
-                                                        <i class="fas fa-copy"></i>
+                                                @if($isAdmin)
+                                                    <a href="{{ route('admin.courses.edit', $course) }}"
+                                                       class="btn btn-sm btn-warning" title="Редактировать">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('admin.courses.duplicate', $course) }}"
+                                                          method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-secondary"
+                                                                title="Дублировать курс"
+                                                                onclick="return confirm('Создать копию этого курса?')">
+                                                            <i class="fas fa-copy"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('admin.courses.destroy', $course) }}"
+                                                          method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                                title="Удалить"
+                                                                onclick="return confirm('Вы уверены, что хотите удалить этот курс?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                @if(!$isAdmin && isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-outline-primary assignment-toggle"
+                                                            data-course-id="{{ $course->id }}"
+                                                            title="Показать задания">
+                                                        <i class="fas fa-tasks"></i>
                                                     </button>
-                                                </form>
-                                                <form action="{{ route('admin.courses.destroy', $course) }}"
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"
-                                                            title="Удалить"
-                                                            onclick="return confirm('Вы уверены, что хотите удалить этот курс?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
+                                    @if(!$isAdmin && isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
+                                        <tr class="assignment-row" id="assignments-{{ $course->id }}" style="display: none;">
+                                            <td colspan="8">
+                                                <div class="p-3 bg-light">
+                                                    <h6 class="mb-3">
+                                                        <i class="fas fa-tasks me-2"></i>ПОСЛЕ СЕССИИ
+                                                    </h6>
+                                                    <div class="row">
+                                                        @foreach($coursesWithAssignments[$course->id] as $assignment)
+                                                            <div class="col-md-12 mb-2">
+                                                                <div class="card assignment-card assignment-status-{{ $assignment['status'] }}">
+                                                                    <div class="card-body py-2">
+                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                            <div>
+                                                                                <h6 class="card-title mb-1">{{ $assignment['name'] }}</h6>
+                                                                                @if($assignment['submitted_at'])
+                                                                                    <small class="text-muted">
+                                                                                        Сдано: {{ \Carbon\Carbon::createFromTimestamp($assignment['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                    </small>
+                                                                                @endif
+                                                                            </div>
+                                                                            <div class="assignment-status-badge assignment-status-{{ $assignment['status'] }}">
+                                                                                {{ $assignment['status_text'] }}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @empty
                                     <tr>
                                         <td colspan="8" class="text-center py-4">
@@ -270,5 +319,97 @@
 .pagination-wrapper nav[role="navigation"] .h-5 {
     height: 1rem !important;
 }
+
+/* Стили для заданий */
+.assignment-card {
+    border-left: 4px solid;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.assignment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Красный - не сдано */
+.assignment-status-not-submitted {
+    border-left-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.assignment-status-not-submitted .assignment-status-badge {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Желтый - не проверено */
+.assignment-status-pending {
+    border-left-color: #ffc107;
+    background-color: #fffbf0;
+}
+
+.assignment-status-pending .assignment-status-badge {
+    background-color: #ffc107;
+    color: #000;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Зеленый - оценка */
+.assignment-status-graded {
+    border-left-color: #28a745;
+    background-color: #f0fff4;
+}
+
+.assignment-status-graded .assignment-status-badge {
+    background-color: #28a745;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.assignment-status-badge {
+    white-space: nowrap;
+}
+
+.assignment-row {
+    background-color: #f8f9fa;
+}
 </style>
+
+@if(!$isAdmin)
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButtons = document.querySelectorAll('.assignment-toggle');
+    
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const assignmentRow = document.getElementById('assignments-' + courseId);
+            const icon = this.querySelector('i');
+            
+            if (assignmentRow.style.display === 'none') {
+                assignmentRow.style.display = '';
+                icon.classList.remove('fa-tasks');
+                icon.classList.add('fa-chevron-up');
+                this.setAttribute('title', 'Скрыть задания');
+            } else {
+                assignmentRow.style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-tasks');
+                this.setAttribute('title', 'Показать задания');
+            }
+        });
+    });
+});
+</script>
+@endif
 @endsection

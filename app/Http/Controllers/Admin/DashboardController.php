@@ -136,29 +136,35 @@ class DashboardController extends Controller
      */
     private function studentDashboard(User $user)
     {
-        // Активные курсы студента
-        $myCourses = $user->courses()
+        // Получаем все курсы студента (без фильтрации по статусу)
+        $allCourses = $user->courses()
             ->with(['program.institution', 'instructor'])
-            ->wherePivot('status', 'active')
             ->get();
 
-        // Завершенные курсы
-        $completedCourses = $user->courses()
-            ->with(['program.institution', 'instructor'])
-            ->wherePivot('status', 'completed')
-            ->get();
+        // Разделяем на активные (enrolled или active) и завершенные
+        $myCourses = $allCourses->filter(function ($course) {
+            $status = $course->pivot->status ?? 'enrolled';
+            return in_array($status, ['enrolled', 'active']);
+        });
 
-        // Активные программы
-        $myPrograms = $user->programs()
+        $completedCourses = $allCourses->filter(function ($course) {
+            return ($course->pivot->status ?? 'enrolled') === 'completed';
+        });
+
+        // Получаем все программы студента
+        $allPrograms = $user->programs()
             ->with('institution')
-            ->wherePivot('status', 'active')
             ->get();
 
-        // Завершенные программы
-        $completedPrograms = $user->programs()
-            ->with('institution')
-            ->wherePivot('status', 'completed')
-            ->get();
+        // Разделяем на активные (enrolled или active) и завершенные
+        $myPrograms = $allPrograms->filter(function ($program) {
+            $status = $program->pivot->status ?? 'enrolled';
+            return in_array($status, ['enrolled', 'active']);
+        });
+
+        $completedPrograms = $allPrograms->filter(function ($program) {
+            return ($program->pivot->status ?? 'enrolled') === 'completed';
+        });
 
         // Статистика студента
         $stats = [

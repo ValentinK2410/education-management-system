@@ -508,5 +508,81 @@ class MoodleApiService
 
         return $assignmentsWithStatus;
     }
+
+    /**
+     * Получить все курсы из Moodle
+     * 
+     * @param array $options Опции фильтрации:
+     *                       - 'ids' - массив ID курсов для получения (если пусто - все курсы)
+     * @return array|false Массив курсов или false в случае ошибки
+     */
+    public function getAllCourses(array $options = []): array|false
+    {
+        $params = [];
+        
+        // Если указаны конкретные ID курсов
+        if (!empty($options['ids']) && is_array($options['ids'])) {
+            $params['options'] = [
+                'ids' => $options['ids']
+            ];
+        }
+        
+        $result = $this->call('core_course_get_courses', $params);
+        
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+        
+        // Возвращаем массив курсов (исключаем системный курс с id=1)
+        if (is_array($result)) {
+            return array_values(array_filter($result, function($course) {
+                return isset($course['id']) && $course['id'] > 1;
+            }));
+        }
+        
+        return [];
+    }
+
+    /**
+     * Получить список пользователей, записанных на курс
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив пользователей или false в случае ошибки
+     */
+    public function getCourseEnrolledUsers(int $courseId): array|false
+    {
+        $result = $this->call('core_enrol_get_enrolled_users', [
+            'courseid' => $courseId
+        ]);
+        
+        if ($result === false || isset($result['exception'])) {
+            return false;
+        }
+        
+        // Возвращаем массив пользователей
+        if (is_array($result)) {
+            return $result;
+        }
+        
+        return [];
+    }
+
+    /**
+     * Получить информацию о конкретном курсе
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с данными курса или false в случае ошибки
+     */
+    public function getCourse(int $courseId): array|false
+    {
+        $result = $this->getAllCourses(['ids' => [$courseId]]);
+        
+        if ($result === false || empty($result)) {
+            return false;
+        }
+        
+        // Возвращаем первый курс
+        return $result[0] ?? false;
+    }
 }
 
