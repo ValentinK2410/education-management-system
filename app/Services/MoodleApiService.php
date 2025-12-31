@@ -1033,23 +1033,14 @@ class MoodleApiService
             }
         }
 
-        // Получаем материалы курса
-        $resources = $this->getCourseResources($courseId);
+        // Получаем материалы курса (resources) - этот метод тоже использует getCourseContents
+        // Пока пропускаем, так как он требует getCourseContents
+        // Можно добавить позже, если будет доступ к другим методам API
         
-        if ($resources !== false) {
-            foreach ($resources as $resource) {
-                $activities[] = [
-                    'type' => 'resource',
-                    'moodle_id' => $resource['id'],
-                    'name' => $resource['name'],
-                    'section_name' => $resource['section_name'],
-                    'resource_type' => $resource['modname'],
-                    'status' => 'available',
-                    'status_text' => 'Доступно',
-                    'url' => $resource['url'] ?? null,
-                ];
-            }
-        }
+        Log::info('getAllCourseActivities: завершено', [
+            'course_id' => $courseId,
+            'total_activities' => count($activities)
+        ]);
 
         return $activities;
     }
