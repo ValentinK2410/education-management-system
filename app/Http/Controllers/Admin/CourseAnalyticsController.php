@@ -447,11 +447,11 @@ class CourseAnalyticsController extends Controller
         }
         
         // Применяем фильтры (проверяем на пустоту и null)
-        if (!empty($filters['course_id']) && $filters['course_id'] !== '0') {
+        if ($filters['course_id'] !== null && $filters['course_id'] !== '' && $filters['course_id'] !== '0') {
             $query->where('student_activity_progress.course_id', (int)$filters['course_id']);
         }
         
-        if (!empty($filters['user_id']) && $filters['user_id'] !== '0') {
+        if ($filters['user_id'] !== null && $filters['user_id'] !== '' && $filters['user_id'] !== '0') {
             $query->where('student_activity_progress.user_id', (int)$filters['user_id']);
         }
         
