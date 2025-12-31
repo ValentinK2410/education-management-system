@@ -50,46 +50,64 @@ class CourseAnalyticsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-        
-        // Получаем курсы преподавателя (если не админ)
-        $coursesQuery = Course::with(['instructor', 'program.institution']);
-        
-        if (!$user->hasRole('admin')) {
-            // Преподаватель видит только свои курсы
-            $coursesQuery->where('instructor_id', $user->id);
+        try {
+            $user = auth()->user();
+            
+            // Получаем курсы преподавателя (если не админ)
+            $coursesQuery = Course::with(['instructor', 'program.institution']);
+            
+            if (!$user->hasRole('admin')) {
+                // Преподаватель видит только свои курсы
+                $coursesQuery->where('instructor_id', $user->id);
+            }
+            
+            $courses = $coursesQuery->get();
+            
+            // Получаем список студентов для фильтра (до применения фильтров)
+            $studentsQuery = User::whereHas('courses');
+            if (!$user->hasRole('admin')) {
+                $studentsQuery->whereHas('courses', function ($q) use ($user) {
+                    $q->where('instructor_id', $user->id);
+                });
+            }
+            $students = $studentsQuery->get();
+            
+            // Проверяем наличие данных в базе
+            $totalProgressCount = \App\Models\StudentActivityProgress::count();
+            Log::info('Проверка данных аналитики', [
+                'total_progress_records' => $totalProgressCount,
+                'courses_count' => $courses->count(),
+                'students_count' => $students->count(),
+                'request_params' => $request->all()
+            ]);
+            
+            // Применяем фильтры
+            $filteredData = $this->applyFilters($request, $courses, null, null, $students);
+            
+            return view('admin.analytics.index', [
+                'courses' => $courses,
+                'activities' => $filteredData['activities'],
+                'students' => $filteredData['students'],
+                'filters' => $filteredData['filters'],
+                'stats' => $filteredData['stats'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ошибка в методе index контроллера аналитики', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return view('admin.analytics.index', [
+                'courses' => collect(),
+                'activities' => collect(),
+                'students' => collect(),
+                'filters' => [],
+                'stats' => ['total' => 0, 'not_started' => 0, 'submitted' => 0, 'graded' => 0, 'completed' => 0],
+                'error' => 'Произошла ошибка при загрузке данных: ' . $e->getMessage()
+            ]);
         }
-        
-        $courses = $coursesQuery->get();
-        
-        // Получаем список студентов для фильтра (до применения фильтров)
-        $studentsQuery = User::whereHas('courses');
-        if (!$user->hasRole('admin')) {
-            $studentsQuery->whereHas('courses', function ($q) use ($user) {
-                $q->where('instructor_id', $user->id);
-            });
-        }
-        $students = $studentsQuery->get();
-        
-        // Проверяем наличие данных в базе
-        $totalProgressCount = \App\Models\StudentActivityProgress::count();
-        Log::info('Проверка данных аналитики', [
-            'total_progress_records' => $totalProgressCount,
-            'courses_count' => $courses->count(),
-            'students_count' => $students->count(),
-            'request_params' => $request->all()
-        ]);
-        
-        // Применяем фильтры
-        $filteredData = $this->applyFilters($request, $courses, null, null, $students);
-        
-        return view('admin.analytics.index', [
-            'courses' => $courses,
-            'activities' => $filteredData['activities'],
-            'students' => $filteredData['students'],
-            'filters' => $filteredData['filters'],
-            'stats' => $filteredData['stats'],
-        ]);
     }
 
     /**
