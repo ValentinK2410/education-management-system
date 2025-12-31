@@ -755,6 +755,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('instructor'))
+            <div class="nav-item">
+                <a href="{{ route('admin.analytics.index') }}" class="nav-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Аналитика курсов</span>
+                </a>
+            </div>
+            @endif
+
             @if(auth()->user()->hasPermission('view_sidebar_roles'))
             <div class="nav-item">
                 <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">

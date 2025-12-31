@@ -170,6 +170,36 @@ class Course extends Model
     }
 
     /**
+     * Получить элементы курса (activities)
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(CourseActivity::class);
+    }
+
+    /**
+     * Получить прогресс студентов по курсу
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function studentActivityProgress()
+    {
+        return $this->hasMany(StudentActivityProgress::class);
+    }
+
+    /**
+     * Получить историю действий студентов по курсу
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function studentActivityHistory()
+    {
+        return $this->hasMany(StudentActivityHistory::class);
+    }
+
+    /**
      * Получить URL изображения обложки курса
      *
      * @return string

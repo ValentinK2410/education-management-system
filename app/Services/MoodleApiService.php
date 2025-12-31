@@ -586,6 +586,423 @@ class MoodleApiService
     }
 
     /**
+     * Получить тесты/квизы курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с тестами курса или false в случае ошибки
+     */
+    public function getCourseQuizzes(int $courseId): array|false
+    {
+        $result = $this->call('mod_quiz_get_quizzes_by_courses', [
+            'courseids' => [$courseId]
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            Log::error('Ошибка получения тестов из Moodle', [
+                'course_id' => $courseId,
+                'exception' => $result['exception'] ?? null,
+                'message' => $result['message'] ?? null
+            ]);
+            return false;
+        }
+
+        // Возвращаем тесты из первого курса
+        if (isset($result['quizzes'])) {
+            return $result['quizzes'];
+        }
+
+        return [];
+    }
+
+    /**
+     * Получить попытки студента по тестам курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с попытками или false в случае ошибки
+     */
+    public function getStudentQuizAttempts(int $courseId, int $studentMoodleId): array|false
+    {
+        // Сначала получаем список тестов курса
+        $quizzes = $this->getCourseQuizzes($courseId);
+        
+        if ($quizzes === false || empty($quizzes)) {
+            return [];
+        }
+
+        $quizIds = array_column($quizzes, 'id');
+        $allAttempts = [];
+
+        foreach ($quizIds as $quizId) {
+            $result = $this->call('mod_quiz_get_user_attempts', [
+                'quizid' => $quizId,
+                'userid' => $studentMoodleId,
+                'status' => 'all'
+            ]);
+
+            if ($result !== false && !isset($result['exception']) && isset($result['attempts'])) {
+                foreach ($result['attempts'] as $attempt) {
+                    $allAttempts[$quizId][] = $attempt;
+                }
+            }
+        }
+
+        return $allAttempts;
+    }
+
+    /**
+     * Получить оценки студента за тесты курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с оценками или false в случае ошибки
+     */
+    public function getStudentQuizGrades(int $courseId, int $studentMoodleId): array|false
+    {
+        // Сначала получаем список тестов курса
+        $quizzes = $this->getCourseQuizzes($courseId);
+        
+        if ($quizzes === false || empty($quizzes)) {
+            return [];
+        }
+
+        $quizIds = array_column($quizzes, 'id');
+        $grades = [];
+
+        foreach ($quizIds as $quizId) {
+            $result = $this->call('mod_quiz_get_user_best_grade', [
+                'quizid' => $quizId,
+                'userid' => $studentMoodleId
+            ]);
+
+            if ($result !== false && !isset($result['exception']) && isset($result['grade'])) {
+                $grades[$quizId] = $result;
+            }
+        }
+
+        return $grades;
+    }
+
+    /**
+     * Получить форумы курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с форумами курса или false в случае ошибки
+     */
+    public function getCourseForums(int $courseId): array|false
+    {
+        $result = $this->call('mod_forum_get_forums_by_courses', [
+            'courseids' => [$courseId]
+        ]);
+
+        if ($result === false || isset($result['exception'])) {
+            Log::error('Ошибка получения форумов из Moodle', [
+                'course_id' => $courseId,
+                'exception' => $result['exception'] ?? null,
+                'message' => $result['message'] ?? null
+            ]);
+            return false;
+        }
+
+        // Возвращаем форумы из первого курса
+        if (isset($result['forums'])) {
+            return $result['forums'];
+        }
+
+        return [];
+    }
+
+    /**
+     * Получить посты студента в форумах курса
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с постами или false в случае ошибки
+     */
+    public function getStudentForumPosts(int $courseId, int $studentMoodleId): array|false
+    {
+        // Сначала получаем список форумов курса
+        $forums = $this->getCourseForums($courseId);
+        
+        if ($forums === false || empty($forums)) {
+            return [];
+        }
+
+        $allPosts = [];
+
+        foreach ($forums as $forum) {
+            $forumId = $forum['id'] ?? null;
+            if (!$forumId) {
+                continue;
+            }
+
+            // Получаем обсуждения форума
+            $discussionsResult = $this->call('mod_forum_get_forum_discussions', [
+                'forumid' => $forumId
+            ]);
+
+            if ($discussionsResult === false || isset($discussionsResult['exception'])) {
+                continue;
+            }
+
+            $discussions = $discussionsResult['discussions'] ?? [];
+            
+            foreach ($discussions as $discussion) {
+                $discussionId = $discussion['discussion'] ?? null;
+                if (!$discussionId) {
+                    continue;
+                }
+
+                // Получаем посты в обсуждении
+                $postsResult = $this->call('mod_forum_get_discussion_posts', [
+                    'discussionid' => $discussionId
+                ]);
+
+                if ($postsResult !== false && !isset($postsResult['exception']) && isset($postsResult['posts'])) {
+                    foreach ($postsResult['posts'] as $post) {
+                        // Фильтруем только посты студента
+                        if (isset($post['author']['id']) && $post['author']['id'] == $studentMoodleId) {
+                            $allPosts[$forumId][] = $post;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $allPosts;
+    }
+
+    /**
+     * Получить материалы курса (resources)
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с материалами курса или false в случае ошибки
+     */
+    public function getCourseResources(int $courseId): array|false
+    {
+        // Получаем содержимое курса, которое включает все модули
+        $courseContents = $this->getCourseContents($courseId);
+        
+        if ($courseContents === false) {
+            return false;
+        }
+
+        $resources = [];
+
+        foreach ($courseContents as $section) {
+            if (!isset($section['modules'])) {
+                continue;
+            }
+
+            foreach ($section['modules'] as $module) {
+                // Типы ресурсов в Moodle: resource, file, folder, page, url и т.д.
+                $resourceTypes = ['resource', 'file', 'folder', 'page', 'url', 'book'];
+                
+                if (in_array($module['modname'] ?? '', $resourceTypes)) {
+                    $resources[] = [
+                        'id' => $module['id'] ?? null,
+                        'instance' => $module['instance'] ?? null,
+                        'name' => $module['name'] ?? '',
+                        'modname' => $module['modname'] ?? '',
+                        'section_name' => $section['name'] ?? '',
+                        'section_id' => $section['id'] ?? null,
+                        'url' => $module['url'] ?? null,
+                        'description' => $module['description'] ?? null,
+                    ];
+                }
+            }
+        }
+
+        return $resources;
+    }
+
+    /**
+     * Получить просмотры материалов студентом
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив с просмотрами или false в случае ошибки
+     */
+    public function getStudentResourceViews(int $courseId, int $studentMoodleId): array|false
+    {
+        // Получаем материалы курса
+        $resources = $this->getCourseResources($courseId);
+        
+        if ($resources === false || empty($resources)) {
+            return [];
+        }
+
+        $views = [];
+
+        // Для получения просмотров используем core_course_get_contents с параметром userid
+        // Но это может не работать для всех типов ресурсов
+        // Альтернатива: использовать logstore для получения просмотров
+        
+        // Пока возвращаем пустой массив, так как Moodle API не предоставляет прямой способ
+        // получить просмотры ресурсов для конкретного студента через REST API
+        // Это потребует использования logstore или других методов
+        
+        return $views;
+    }
+
+    /**
+     * Получить все активности курса с их статусами для студента
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @param int $studentMoodleId ID студента в Moodle
+     * @return array|false Массив со всеми активностями и их статусами или false в случае ошибки
+     */
+    public function getAllCourseActivities(int $courseId, int $studentMoodleId): array|false
+    {
+        $activities = [];
+
+        // Получаем содержимое курса
+        $courseContents = $this->getCourseContents($courseId);
+        
+        if ($courseContents === false) {
+            return false;
+        }
+
+        // Получаем задания с статусами
+        $assignments = $this->getCourseAssignmentsWithStatus($courseId, $studentMoodleId);
+        if ($assignments !== false) {
+            foreach ($assignments as $assignment) {
+                $activities[] = [
+                    'type' => 'assign',
+                    'moodle_id' => $assignment['id'],
+                    'name' => $assignment['name'],
+                    'section_name' => $assignment['section_name'],
+                    'status' => $assignment['status'],
+                    'status_text' => $assignment['status_text'],
+                    'grade' => $assignment['grade'],
+                    'submitted_at' => $assignment['submitted_at'],
+                    'graded_at' => $assignment['graded_at'],
+                ];
+            }
+        }
+
+        // Получаем тесты с попытками и оценками
+        $quizzes = $this->getCourseQuizzes($courseId);
+        $quizAttempts = $this->getStudentQuizAttempts($courseId, $studentMoodleId);
+        $quizGrades = $this->getStudentQuizGrades($courseId, $studentMoodleId);
+        
+        if ($quizzes !== false) {
+            foreach ($quizzes as $quiz) {
+                $quizId = $quiz['id'];
+                $attempts = $quizAttempts[$quizId] ?? [];
+                $grade = $quizGrades[$quizId] ?? null;
+                
+                $status = 'not_started';
+                $statusText = 'Не начато';
+                $gradeValue = null;
+                
+                if (!empty($attempts)) {
+                    $latestAttempt = end($attempts);
+                    $attemptStatus = $latestAttempt['state'] ?? '';
+                    
+                    if ($attemptStatus === 'finished') {
+                        if ($grade && isset($grade['grade'])) {
+                            $status = 'completed';
+                            $statusText = 'Завершено';
+                            $gradeValue = (float)$grade['grade'];
+                        } else {
+                            $status = 'in_progress';
+                            $statusText = 'В процессе';
+                        }
+                    } else {
+                        $status = 'in_progress';
+                        $statusText = 'В процессе';
+                    }
+                }
+                
+                // Находим раздел для теста
+                $sectionName = '';
+                foreach ($courseContents as $section) {
+                    if (isset($section['modules'])) {
+                        foreach ($section['modules'] as $module) {
+                            if (($module['modname'] ?? '') === 'quiz' && ($module['instance'] ?? null) == $quizId) {
+                                $sectionName = $section['name'] ?? '';
+                                break 2;
+                            }
+                        }
+                    }
+                }
+                
+                $activities[] = [
+                    'type' => 'quiz',
+                    'moodle_id' => $quizId,
+                    'name' => $quiz['name'] ?? 'Без названия',
+                    'section_name' => $sectionName,
+                    'status' => $status,
+                    'status_text' => $statusText,
+                    'grade' => $gradeValue,
+                    'max_grade' => $quiz['grade'] ?? null,
+                    'attempts_count' => count($attempts),
+                    'last_attempt_at' => !empty($attempts) ? (end($attempts)['timefinish'] ?? null) : null,
+                ];
+            }
+        }
+
+        // Получаем форумы с постами студента
+        $forums = $this->getCourseForums($courseId);
+        $forumPosts = $this->getStudentForumPosts($courseId, $studentMoodleId);
+        
+        if ($forums !== false) {
+            foreach ($forums as $forum) {
+                $forumId = $forum['id'];
+                $posts = $forumPosts[$forumId] ?? [];
+                
+                // Находим раздел для форума
+                $sectionName = '';
+                foreach ($courseContents as $section) {
+                    if (isset($section['modules'])) {
+                        foreach ($section['modules'] as $module) {
+                            if (($module['modname'] ?? '') === 'forum' && ($module['instance'] ?? null) == $forumId) {
+                                $sectionName = $section['name'] ?? '';
+                                break 2;
+                            }
+                        }
+                    }
+                }
+                
+                $status = empty($posts) ? 'not_participated' : 'participated';
+                $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
+                
+                $activities[] = [
+                    'type' => 'forum',
+                    'moodle_id' => $forumId,
+                    'name' => $forum['name'] ?? 'Без названия',
+                    'section_name' => $sectionName,
+                    'status' => $status,
+                    'status_text' => $statusText,
+                    'posts_count' => count($posts),
+                    'last_post_at' => !empty($posts) ? (max(array_column($posts, 'timecreated')) ?? null) : null,
+                ];
+            }
+        }
+
+        // Получаем материалы курса
+        $resources = $this->getCourseResources($courseId);
+        
+        if ($resources !== false) {
+            foreach ($resources as $resource) {
+                $activities[] = [
+                    'type' => 'resource',
+                    'moodle_id' => $resource['id'],
+                    'name' => $resource['name'],
+                    'section_name' => $resource['section_name'],
+                    'resource_type' => $resource['modname'],
+                    'status' => 'available',
+                    'status_text' => 'Доступно',
+                    'url' => $resource['url'] ?? null,
+                ];
+            }
+        }
+
+        return $activities;
+    }
+
+    /**
      * Получить все курсы из Moodle
      * 
      * @param array $options Опции фильтрации:

@@ -175,6 +175,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Получить прогресс по элементам курса
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activityProgress()
+    {
+        return $this->hasMany(StudentActivityProgress::class);
+    }
+
+    /**
+     * Получить историю действий по элементам курса
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activityHistory()
+    {
+        return $this->hasMany(StudentActivityHistory::class);
+    }
+
+    /**
      * Получить учебные заведения, с которыми связан пользователь
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany

@@ -212,7 +212,39 @@ class UserController extends Controller
             $coursesWithAssignments[$course->id] = $assignmentsData;
         }
         
-        return view('admin.users.show', compact('user', 'coursesWithAssignments'));
+        // Получаем детальную аналитику по всем элементам курса
+        $detailedAnalytics = [];
+        
+        foreach ($user->courses as $course) {
+            if (!$course->moodle_course_id) {
+                continue;
+            }
+            
+            // Получаем все элементы курса
+            $activities = \App\Models\CourseActivity::where('course_id', $course->id)->get();
+            
+            foreach ($activities as $activity) {
+                $progress = \App\Models\StudentActivityProgress::where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('activity_id', $activity->id)
+                    ->first();
+                
+                $history = \App\Models\StudentActivityHistory::where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('activity_id', $activity->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                $detailedAnalytics[] = [
+                    'course' => $course,
+                    'activity' => $activity,
+                    'progress' => $progress,
+                    'history' => $history,
+                ];
+            }
+        }
+        
+        return view('admin.users.show', compact('user', 'coursesWithAssignments', 'detailedAnalytics'));
     }
 
     /**

@@ -467,6 +467,10 @@
             <i class="fas fa-certificate"></i>
             <span>Сертификаты и дипломы</span>
         </button>
+        <button class="tab-button" onclick="switchTab(event, 'analytics')">
+            <i class="fas fa-chart-line"></i>
+            <span>Детальная аналитика</span>
+        </button>
     </div>
 
     <!-- Tab: Основная информация -->
@@ -837,6 +841,16 @@
         color: white;
         border: 1px solid #28a745;
     }
+
+    /* Стили для истории действий */
+    .timeline-item {
+        border-left: 2px solid #e3e6f0;
+        padding-left: 1rem;
+    }
+
+    .timeline-marker {
+        margin-left: -1.5rem;
+    }
     </style>
 
     <!-- Tab: Учебные заведения -->
@@ -885,6 +899,180 @@
                 <i class="fas fa-university"></i>
                 <h5>Учебные заведения не найдены</h5>
                 <p>Пользователь не связан ни с одним учебным заведением</p>
+            </div>
+        @endif
+    </div>
+
+    <!-- Tab: Детальная аналитика -->
+    <div id="tab-analytics" class="tab-content">
+        @if(isset($detailedAnalytics) && count($detailedAnalytics) > 0)
+            @foreach($user->courses as $course)
+                @php
+                    $courseAnalytics = collect($detailedAnalytics)->filter(function($item) use ($course) {
+                        return $item['course']->id === $course->id;
+                    });
+                @endphp
+                
+                @if($courseAnalytics->count() > 0)
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-book me-2"></i>{{ $course->name }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Элемент курса</th>
+                                            <th>Тип</th>
+                                            <th>Раздел</th>
+                                            <th>Статус</th>
+                                            <th>Оценка</th>
+                                            <th>Дата сдачи</th>
+                                            <th>Дата проверки</th>
+                                            <th>История</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($courseAnalytics as $item)
+                                            @php
+                                                $activity = $item['activity'];
+                                                $progress = $item['progress'];
+                                                $history = $item['history'];
+                                            @endphp
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ $activity->name }}</strong>
+                                                    @if($activity->description)
+                                                        <br><small class="text-muted">{{ Str::limit($activity->description, 50) }}</small>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        @if($activity->activity_type == 'assign')
+                                                            Задание
+                                                        @elseif($activity->activity_type == 'quiz')
+                                                            Тест
+                                                        @elseif($activity->activity_type == 'forum')
+                                                            Форум
+                                                        @elseif($activity->activity_type == 'resource')
+                                                            Материал
+                                                        @else
+                                                            {{ $activity->activity_type }}
+                                                        @endif
+                                                    </span>
+                                                </td>
+                                                <td>{{ $activity->section_name ?? '—' }}</td>
+                                                <td>
+                                                    @if($progress)
+                                                        @php
+                                                            $statusClass = [
+                                                                'not_started' => 'bg-secondary',
+                                                                'in_progress' => 'bg-warning',
+                                                                'submitted' => 'bg-info',
+                                                                'graded' => 'bg-success',
+                                                                'completed' => 'bg-primary',
+                                                            ];
+                                                            $class = $statusClass[$progress->status] ?? 'bg-secondary';
+                                                            $statusText = [
+                                                                'not_started' => 'Не начато',
+                                                                'in_progress' => 'В процессе',
+                                                                'submitted' => 'Сдано',
+                                                                'graded' => 'Проверено',
+                                                                'completed' => 'Завершено',
+                                                            ];
+                                                        @endphp
+                                                        <span class="badge {{ $class }}">
+                                                            {{ $statusText[$progress->status] ?? $progress->status }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-secondary">Не начато</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($progress && $progress->grade !== null)
+                                                        <strong>{{ $progress->grade }}</strong>
+                                                        @if($progress->max_grade)
+                                                            / {{ $progress->max_grade }}
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $progress->submitted_at?->format('d.m.Y H:i') ?? '—' }}</td>
+                                                <td>{{ $progress->graded_at?->format('d.m.Y H:i') ?? '—' }}</td>
+                                                <td>
+                                                    @if($history->count() > 0)
+                                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#historyModal{{ $activity->id }}">
+                                                            <i class="fas fa-history me-1"></i>{{ $history->count() }}
+                                                        </button>
+                                                        
+                                                        <!-- Модальное окно истории -->
+                                                        <div class="modal fade" id="historyModal{{ $activity->id }}" tabindex="-1">
+                                                            <div class="modal-dialog modal-lg">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">История действий: {{ $activity->name }}</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <div class="timeline">
+                                                                            @foreach($history as $historyItem)
+                                                                                <div class="timeline-item mb-3">
+                                                                                    <div class="d-flex">
+                                                                                        <div class="timeline-marker me-3">
+                                                                                            <i class="fas fa-circle text-primary"></i>
+                                                                                        </div>
+                                                                                        <div class="flex-grow-1">
+                                                                                            <div class="d-flex justify-content-between">
+                                                                                                <strong>
+                                                                                                    @if($historyItem->action_type == 'submitted')
+                                                                                                        Сдано
+                                                                                                    @elseif($historyItem->action_type == 'graded')
+                                                                                                        Проверено
+                                                                                                    @elseif($historyItem->action_type == 'started')
+                                                                                                        Начато
+                                                                                                    @elseif($historyItem->action_type == 'completed')
+                                                                                                        Завершено
+                                                                                                    @else
+                                                                                                        {{ $historyItem->action_type }}
+                                                                                                    @endif
+                                                                                                </strong>
+                                                                                                <small class="text-muted">{{ $historyItem->created_at->format('d.m.Y H:i') }}</small>
+                                                                                            </div>
+                                                                                            @if($historyItem->description)
+                                                                                                <div class="mt-1">{{ $historyItem->description }}</div>
+                                                                                            @endif
+                                                                                            @if($historyItem->performedBy)
+                                                                                                <small class="text-muted">Выполнено: {{ $historyItem->performedBy->name }}</small>
+                                                                                            @endif
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">Нет истории</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+        @else
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>Нет данных аналитики. Запустите синхронизацию элементов курса.
             </div>
         @endif
     </div>
