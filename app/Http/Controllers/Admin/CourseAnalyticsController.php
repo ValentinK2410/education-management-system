@@ -422,9 +422,13 @@ class CourseAnalyticsController extends Controller
         $courseIdParam = $request->get('course_id', $courseId);
         $userIdParam = $request->get('user_id', $userId);
         
+        // Преобразуем пустые строки в null
+        $courseIdParam = ($courseIdParam === '' || $courseIdParam === '0' || $courseIdParam === null) ? null : (int)$courseIdParam;
+        $userIdParam = ($userIdParam === '' || $userIdParam === '0' || $userIdParam === null) ? null : (int)$userIdParam;
+        
         $filters = [
-            'course_id' => $courseIdParam ? (int)$courseIdParam : null,
-            'user_id' => $userIdParam ? (int)$userIdParam : null,
+            'course_id' => $courseIdParam,
+            'user_id' => $userIdParam,
             'activity_type' => $request->get('activity_type'),
             'status' => $request->get('status'),
             'date_from' => $request->get('date_from'),
@@ -432,6 +436,11 @@ class CourseAnalyticsController extends Controller
             'min_grade' => $request->get('min_grade'),
             'max_grade' => $request->get('max_grade'),
         ];
+        
+        Log::info('Применение фильтров аналитики', [
+            'request_params' => $request->all(),
+            'processed_filters' => $filters
+        ]);
         
         // Строим запрос для получения данных
         $query = StudentActivityProgress::with(['user', 'course', 'activity', 'gradedBy'])
