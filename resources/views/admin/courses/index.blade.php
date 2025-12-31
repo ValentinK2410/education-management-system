@@ -60,6 +60,41 @@
                                             <div>
                                                 <h6 class="mb-0">{{ $course->name }}</h6>
                                                 <small class="text-muted">{{ $course->code ?? 'Без кода' }}</small>
+                                                @if(!$isAdmin)
+                                                    @if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
+                                                        <div class="mt-2">
+                                                            <small class="text-muted d-block mb-1">
+                                                                <i class="fas fa-tasks me-1"></i>ПОСЛЕ СЕССИИ:
+                                                            </small>
+                                                            <div class="d-flex flex-wrap gap-1">
+                                                                @foreach($coursesWithAssignments[$course->id] as $assignment)
+                                                                    <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
+                                                                          title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }}">
+                                                                        @if($assignment['status'] === 'not_submitted')
+                                                                            <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                        @elseif($assignment['status'] === 'pending')
+                                                                            <i class="fas fa-clock me-1"></i>Не проверено
+                                                                        @else
+                                                                            <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                                        @endif
+                                                                    </span>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @elseif($course->moodle_course_id && auth()->user()->moodle_user_id)
+                                                        <div class="mt-2">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-info-circle me-1"></i>Задания не найдены
+                                                            </small>
+                                                        </div>
+                                                    @elseif(!auth()->user()->moodle_user_id)
+                                                        <div class="mt-2">
+                                                            <small class="text-warning">
+                                                                <i class="fas fa-exclamation-triangle me-1"></i>Не настроена синхронизация с Moodle
+                                                            </small>
+                                                        </div>
+                                                    @endif
+                                                @endif
                                             </div>
                                         </td>
                                         <td>
@@ -146,11 +181,11 @@
                                                         </button>
                                                     </form>
                                                 @endif
-                                                @if(!$isAdmin && isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
+                                                @if(!$isAdmin && $course->moodle_course_id && auth()->user()->moodle_user_id)
                                                     <button type="button" 
                                                             class="btn btn-sm btn-outline-primary assignment-toggle"
                                                             data-course-id="{{ $course->id }}"
-                                                            title="Показать задания">
+                                                            title="@if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))Показать задания@elseПоказать информацию о заданиях@endif">
                                                         <i class="fas fa-tasks"></i>
                                                     </button>
                                                 @endif
@@ -160,32 +195,58 @@
                                     @if(!$isAdmin && isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
                                         <tr class="assignment-row" id="assignments-{{ $course->id }}" style="display: none;">
                                             <td colspan="8">
-                                                <div class="p-3 bg-light">
-                                                    <h6 class="mb-3">
-                                                        <i class="fas fa-tasks me-2"></i>ПОСЛЕ СЕССИИ
+                                                <div class="p-4 bg-light border-top">
+                                                    <h6 class="mb-3 fw-bold">
+                                                        <i class="fas fa-tasks me-2 text-primary"></i>ПОСЛЕ СЕССИИ
                                                     </h6>
-                                                    <div class="row">
+                                                    <div class="row g-3">
                                                         @foreach($coursesWithAssignments[$course->id] as $assignment)
-                                                            <div class="col-md-12 mb-2">
-                                                                <div class="card assignment-card assignment-status-{{ $assignment['status'] }}">
-                                                                    <div class="card-body py-2">
-                                                                        <div class="d-flex justify-content-between align-items-center">
-                                                                            <div>
-                                                                                <h6 class="card-title mb-1">{{ $assignment['name'] }}</h6>
+                                                            <div class="col-md-12">
+                                                                <div class="card assignment-card assignment-status-{{ $assignment['status'] }} shadow-sm">
+                                                                    <div class="card-body py-3">
+                                                                        <div class="d-flex justify-content-between align-items-start">
+                                                                            <div class="flex-grow-1">
+                                                                                <h6 class="card-title mb-2 fw-bold">{{ $assignment['name'] }}</h6>
                                                                                 @if($assignment['submitted_at'])
-                                                                                    <small class="text-muted">
+                                                                                    <small class="text-muted d-block mb-1">
+                                                                                        <i class="fas fa-calendar-check me-1"></i>
                                                                                         Сдано: {{ \Carbon\Carbon::createFromTimestamp($assignment['submitted_at'])->format('d.m.Y H:i') }}
                                                                                     </small>
                                                                                 @endif
+                                                                                @if($assignment['graded_at'])
+                                                                                    <small class="text-muted d-block">
+                                                                                        <i class="fas fa-check-double me-1"></i>
+                                                                                        Проверено: {{ \Carbon\Carbon::createFromTimestamp($assignment['graded_at'])->format('d.m.Y H:i') }}
+                                                                                    </small>
+                                                                                @endif
                                                                             </div>
-                                                                            <div class="assignment-status-badge assignment-status-{{ $assignment['status'] }}">
-                                                                                {{ $assignment['status_text'] }}
+                                                                            <div class="ms-3">
+                                                                                <div class="assignment-status-badge assignment-status-{{ $assignment['status'] }}">
+                                                                                    @if($assignment['status'] === 'not_submitted')
+                                                                                        <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                                    @elseif($assignment['status'] === 'pending')
+                                                                                        <i class="fas fa-clock me-1"></i>Не проверено
+                                                                                    @else
+                                                                                        <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                                                    @endif
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         @endforeach
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @elseif(!$isAdmin && $course->moodle_course_id && auth()->user()->moodle_user_id)
+                                        <tr class="assignment-row" id="assignments-{{ $course->id }}" style="display: none;">
+                                            <td colspan="8">
+                                                <div class="p-4 bg-light border-top">
+                                                    <div class="alert alert-info mb-0">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        Задания из раздела "ПОСЛЕ СЕССИИ" не найдены для этого курса.
                                                     </div>
                                                 </div>
                                             </td>
@@ -348,19 +409,25 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Мини-бейджи для статусов в таблице */
+.assignment-mini-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* Красный - не сдано */
 .assignment-status-not-submitted {
     border-left-color: #dc3545;
     background-color: #fff5f5;
 }
 
-.assignment-status-not-submitted .assignment-status-badge {
+.assignment-status-not-submitted .assignment-status-badge,
+.assignment-mini-badge.assignment-status-not-submitted {
     background-color: #dc3545;
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    font-weight: 600;
-    font-size: 0.875rem;
+    border: 1px solid #dc3545;
 }
 
 /* Желтый - не проверено */
@@ -369,13 +436,11 @@
     background-color: #fffbf0;
 }
 
-.assignment-status-pending .assignment-status-badge {
+.assignment-status-pending .assignment-status-badge,
+.assignment-mini-badge.assignment-status-pending {
     background-color: #ffc107;
     color: #000;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    font-weight: 600;
-    font-size: 0.875rem;
+    border: 1px solid #ffc107;
 }
 
 /* Зеленый - оценка */
@@ -384,17 +449,19 @@
     background-color: #f0fff4;
 }
 
-.assignment-status-graded .assignment-status-badge {
+.assignment-status-graded .assignment-status-badge,
+.assignment-mini-badge.assignment-status-graded {
     background-color: #28a745;
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    font-weight: 600;
-    font-size: 0.875rem;
+    border: 1px solid #28a745;
 }
 
 .assignment-status-badge {
     white-space: nowrap;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
 .assignment-row {
