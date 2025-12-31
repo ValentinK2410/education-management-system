@@ -354,8 +354,51 @@ class CourseAnalyticsController extends Controller
         }
         $students = $studentsQuery->get();
         
-        // Статистика
-        $stats = $this->calculateStats($query);
+        // Статистика - создаем отдельный запрос без select для агрегации
+        $statsQuery = StudentActivityProgress::query()
+            ->join('users', 'student_activity_progress.user_id', '=', 'users.id')
+            ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
+            ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id');
+        
+        // Применяем те же фильтры к запросу статистики
+        if ($filters['course_id']) {
+            $statsQuery->where('student_activity_progress.course_id', $filters['course_id']);
+        }
+        
+        if ($filters['user_id']) {
+            $statsQuery->where('student_activity_progress.user_id', $filters['user_id']);
+        }
+        
+        if ($filters['activity_type']) {
+            $statsQuery->where('course_activities.activity_type', $filters['activity_type']);
+        }
+        
+        if ($filters['status']) {
+            $statsQuery->where('student_activity_progress.status', $filters['status']);
+        }
+        
+        if ($filters['date_from']) {
+            $statsQuery->where('student_activity_progress.submitted_at', '>=', $filters['date_from']);
+        }
+        
+        if ($filters['date_to']) {
+            $statsQuery->where('student_activity_progress.submitted_at', '<=', $filters['date_to']);
+        }
+        
+        if ($filters['min_grade'] !== null) {
+            $statsQuery->where('student_activity_progress.grade', '>=', $filters['min_grade']);
+        }
+        
+        if ($filters['max_grade'] !== null) {
+            $statsQuery->where('student_activity_progress.grade', '<=', $filters['max_grade']);
+        }
+        
+        // Если преподаватель, показываем только его курсы
+        if (!$currentUser->hasRole('admin')) {
+            $statsQuery->where('courses.instructor_id', $currentUser->id);
+        }
+        
+        $stats = $this->calculateStats($statsQuery);
         
         return [
             'activities' => $formattedActivities,
