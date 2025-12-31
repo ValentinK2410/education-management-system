@@ -323,8 +323,61 @@ class TestMoodleApi extends Command
         }
 
         $this->newLine();
+        
+        // 7. Проверка доступных функций API
+        $this->info("7. Проверка доступных функций Moodle API...");
+        $this->line("   Попытка получить список доступных функций...");
+        
+        try {
+            // Пробуем получить информацию о токене
+            $siteInfo = $moodleApi->call('core_webservice_get_site_info', []);
+            if ($siteInfo !== false && !isset($siteInfo['exception'])) {
+                $this->info("   ✅ Подключение к Moodle API работает");
+                if (isset($siteInfo['functions'])) {
+                    $this->line("   Доступных функций: " . count($siteInfo['functions']));
+                }
+            } else {
+                $this->warn("   ⚠️  Не удалось получить информацию о сайте");
+            }
+        } catch (\Exception $e) {
+            $this->warn("   ⚠️  Ошибка при проверке функций: " . $e->getMessage());
+        }
+        
+        $this->newLine();
         $this->info("=== Тестирование завершено ===");
-
+        $this->newLine();
+        
+        // Выводим рекомендации по настройке прав доступа
+        if (isset($rawResult) && isset($rawResult['exception']) && $rawResult['exception'] === 'webservice_access_exception') {
+            $this->warn("⚠️  ВАЖНО: Обнаружена проблема с правами доступа!");
+            $this->newLine();
+            $this->line("Для исправления проблемы выполните следующие шаги:");
+            $this->newLine();
+            $this->line("1. Войдите в Moodle как администратор");
+            $this->line("2. Перейдите в: Настройки сайта → Плагины → Веб-сервисы → Управление токенами");
+            $this->line("3. Найдите ваш токен API (или создайте новый)");
+            $this->line("4. Перейдите в: Настройки сайта → Плагины → Веб-сервисы → Управление протоколами");
+            $this->line("5. Выберите протокол 'REST' и нажмите 'Изменить'");
+            $this->line("6. В разделе 'Функции' добавьте следующие функции:");
+            $this->line("   - mod_assign_get_assignments");
+            $this->line("   - mod_assign_get_submissions");
+            $this->line("   - mod_assign_get_grades");
+            $this->line("   - mod_quiz_get_quizzes_by_courses");
+            $this->line("   - mod_quiz_get_user_attempts");
+            $this->line("   - mod_quiz_get_user_best_grade");
+            $this->line("   - mod_forum_get_forums_by_courses");
+            $this->line("   - mod_forum_get_posts_by_discussion");
+            $this->line("   - core_grades_get_grades");
+            $this->line("   - core_course_get_contents (если нужно)");
+            $this->newLine();
+            $this->line("Альтернативно:");
+            $this->line("1. Перейдите в: Настройки сайта → Плагины → Веб-сервисы → Внешние службы");
+            $this->line("2. Создайте или отредактируйте службу");
+            $this->line("3. Добавьте необходимые функции в список разрешенных");
+            $this->line("4. Убедитесь, что токен использует эту службу");
+            $this->newLine();
+        }
+        
         return 0;
     }
 }
