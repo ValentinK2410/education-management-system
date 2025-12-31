@@ -90,7 +90,7 @@ class MoodleApiService
      * @param array $params Дополнительные параметры для запроса
      * @return array|false Массив данных в формате JSON или false в случае ошибки
      */
-    private function call(string $function, array $params = [])
+    public function call(string $function, array $params = [])
     {
         // Формируем URL для запроса к Moodle REST API
         $url = $this->url . '/webservice/rest/server.php';

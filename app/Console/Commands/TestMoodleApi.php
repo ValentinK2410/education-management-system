@@ -149,18 +149,45 @@ class TestMoodleApi extends Command
                 
                 // Получаем задания
                 $this->line("   Получение заданий...");
-                $assignments = $moodleApi->getCourseAssignments($courseId);
-                if ($assignments === false) {
-                    $this->error("      ❌ Не удалось получить задания");
-                    $this->line("      Проверьте логи: tail -n 50 storage/logs/laravel.log | grep getCourseAssignments");
+                
+                // Используем прямой вызов API для отладки
+                $rawResult = $moodleApi->call('mod_assign_get_assignments', [
+                    'courseids' => [$courseId]
+                ]);
+                
+                if ($rawResult === false) {
+                    $this->error("      ❌ Запрос к Moodle API вернул false (проверьте MOODLE_URL и MOODLE_TOKEN)");
+                } elseif (isset($rawResult['exception'])) {
+                    $this->error("      ❌ Moodle вернул ошибку:");
+                    $this->line("         Тип: " . ($rawResult['exception'] ?? 'unknown'));
+                    $this->line("         Сообщение: " . ($rawResult['message'] ?? 'неизвестная ошибка'));
+                    $this->line("         Код ошибки: " . ($rawResult['errorcode'] ?? 'N/A'));
+                    if (isset($rawResult['debuginfo'])) {
+                        $this->line("         Отладка: " . $rawResult['debuginfo']);
+                    }
                 } else {
-                    $this->info("      ✅ Заданий найдено: " . count($assignments));
-                    if (count($assignments) > 0) {
-                        foreach ($assignments as $assignment) {
-                            $this->line("         - ID: {$assignment['id']}, Название: " . ($assignment['name'] ?? 'N/A'));
+                    // Показываем структуру ответа
+                    $this->line("      Структура ответа: " . json_encode(array_keys($rawResult), JSON_UNESCAPED_UNICODE));
+                    
+                    if (isset($rawResult['courses']) && is_array($rawResult['courses']) && count($rawResult['courses']) > 0) {
+                        $firstCourse = $rawResult['courses'][0];
+                        $this->line("      Ключи первого курса: " . json_encode(array_keys($firstCourse), JSON_UNESCAPED_UNICODE));
+                        
+                        if (isset($firstCourse['assignments'])) {
+                            $assignments = $firstCourse['assignments'];
+                            $this->info("      ✅ Заданий найдено: " . count($assignments));
+                            if (count($assignments) > 0) {
+                                foreach ($assignments as $assignment) {
+                                    $this->line("         - ID: {$assignment['id']}, Название: " . ($assignment['name'] ?? 'N/A'));
+                                }
+                            }
+                        } else {
+                            $this->warn("      ⚠️  В ответе нет ключа 'assignments' в первом курсе");
+                            $this->line("      Полный ответ первого курса: " . json_encode($firstCourse, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                         }
                     } else {
-                        $this->warn("      ⚠️  Заданий в курсе нет (возможно, курс пустой)");
+                        $this->warn("      ⚠️  В ответе нет массива 'courses' или он пустой");
+                        $this->line("      Полный ответ: " . json_encode($rawResult, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                     }
                 }
 
@@ -193,18 +220,37 @@ class TestMoodleApi extends Command
 
                 // Получаем тесты
                 $this->line("   Получение тестов...");
-                $quizzes = $moodleApi->getCourseQuizzes($courseId);
-                if ($quizzes === false) {
-                    $this->error("      ❌ Не удалось получить тесты");
-                    $this->line("      Проверьте логи: tail -n 50 storage/logs/laravel.log | grep getCourseQuizzes");
+                
+                // Используем прямой вызов API для отладки
+                $rawQuizResult = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
+                    'courseids' => [$courseId]
+                ]);
+                
+                if ($rawQuizResult === false) {
+                    $this->error("      ❌ Запрос к Moodle API вернул false (проверьте MOODLE_URL и MOODLE_TOKEN)");
+                } elseif (isset($rawQuizResult['exception'])) {
+                    $this->error("      ❌ Moodle вернул ошибку:");
+                    $this->line("         Тип: " . ($rawQuizResult['exception'] ?? 'unknown'));
+                    $this->line("         Сообщение: " . ($rawQuizResult['message'] ?? 'неизвестная ошибка'));
+                    $this->line("         Код ошибки: " . ($rawQuizResult['errorcode'] ?? 'N/A'));
+                    if (isset($rawQuizResult['debuginfo'])) {
+                        $this->line("         Отладка: " . $rawQuizResult['debuginfo']);
+                    }
                 } else {
-                    $this->info("      ✅ Тестов найдено: " . count($quizzes));
-                    if (count($quizzes) > 0) {
-                        foreach ($quizzes as $quiz) {
-                            $this->line("         - ID: {$quiz['id']}, Название: " . ($quiz['name'] ?? 'N/A'));
+                    // Показываем структуру ответа
+                    $this->line("      Структура ответа: " . json_encode(array_keys($rawQuizResult), JSON_UNESCAPED_UNICODE));
+                    
+                    if (isset($rawQuizResult['quizzes'])) {
+                        $quizzes = $rawQuizResult['quizzes'];
+                        $this->info("      ✅ Тестов найдено: " . count($quizzes));
+                        if (count($quizzes) > 0) {
+                            foreach ($quizzes as $quiz) {
+                                $this->line("         - ID: {$quiz['id']}, Название: " . ($quiz['name'] ?? 'N/A'));
+                            }
                         }
                     } else {
-                        $this->warn("      ⚠️  Тестов в курсе нет (возможно, курс пустой)");
+                        $this->warn("      ⚠️  В ответе нет ключа 'quizzes'");
+                        $this->line("      Полный ответ: " . json_encode($rawQuizResult, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                     }
                 }
 
