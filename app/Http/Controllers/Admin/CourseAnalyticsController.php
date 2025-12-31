@@ -530,13 +530,18 @@ class CourseAnalyticsController extends Controller
             ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
             ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id');
         
-        // Применяем те же фильтры к запросу статистики (проверяем на пустоту и null)
-        if (!empty($filters['course_id'])) {
-            $statsQuery->where('student_activity_progress.course_id', $filters['course_id']);
+        // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
+        if (!$currentUser->hasRole('admin')) {
+            $statsQuery->where('courses.instructor_id', $currentUser->id);
         }
         
-        if (!empty($filters['user_id'])) {
-            $statsQuery->where('student_activity_progress.user_id', $filters['user_id']);
+        // Применяем те же фильтры к запросу статистики (проверяем на пустоту и null)
+        if ($filters['course_id'] !== null && $filters['course_id'] !== '' && $filters['course_id'] !== '0') {
+            $statsQuery->where('student_activity_progress.course_id', (int)$filters['course_id']);
+        }
+        
+        if ($filters['user_id'] !== null && $filters['user_id'] !== '' && $filters['user_id'] !== '0') {
+            $statsQuery->where('student_activity_progress.user_id', (int)$filters['user_id']);
         }
         
         if (!empty($filters['activity_type'])) {
@@ -561,11 +566,6 @@ class CourseAnalyticsController extends Controller
         
         if ($filters['max_grade'] !== null && $filters['max_grade'] !== '') {
             $statsQuery->where('student_activity_progress.grade', '<=', $filters['max_grade']);
-        }
-        
-        // Если преподаватель, показываем только его курсы
-        if (!$currentUser->hasRole('admin')) {
-            $statsQuery->where('courses.instructor_id', $currentUser->id);
         }
         
         $stats = $this->calculateStats($statsQuery);
