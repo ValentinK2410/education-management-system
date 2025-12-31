@@ -856,15 +856,34 @@ class MoodleApiService
     {
         $activities = [];
 
+        Log::info('getAllCourseActivities: начало', [
+            'course_id' => $courseId,
+            'student_moodle_id' => $studentMoodleId
+        ]);
+
         // Получаем содержимое курса
         $courseContents = $this->getCourseContents($courseId);
         
         if ($courseContents === false) {
+            Log::warning('getAllCourseActivities: не удалось получить содержимое курса', [
+                'course_id' => $courseId
+            ]);
             return false;
         }
 
+        Log::info('getAllCourseActivities: получено разделов курса', [
+            'course_id' => $courseId,
+            'sections_count' => count($courseContents)
+        ]);
+
         // Получаем задания с статусами
         $assignments = $this->getCourseAssignmentsWithStatus($courseId, $studentMoodleId);
+        
+        Log::info('getAllCourseActivities: получены задания', [
+            'course_id' => $courseId,
+            'assignments_count' => $assignments !== false ? count($assignments) : 0,
+            'assignments' => $assignments !== false ? $assignments : 'false'
+        ]);
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
                 $activities[] = [

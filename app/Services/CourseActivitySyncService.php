@@ -220,17 +220,40 @@ class CourseActivitySyncService
 
         try {
             // Получаем все активности курса с их статусами для студента
+            Log::info('Запрос активностей курса из Moodle', [
+                'moodle_course_id' => $course->moodle_course_id,
+                'moodle_user_id' => $user->moodle_user_id,
+                'course_id' => $course->id,
+                'user_id' => $user->id
+            ]);
+            
             $activities = $this->moodleApi->getAllCourseActivities($course->moodle_course_id, $user->moodle_user_id);
             
             if ($activities === false) {
-                Log::warning('Не удалось получить активности курса из Moodle', [
+                Log::warning('Не удалось получить активности курса из Moodle (вернул false)', [
                     'moodle_course_id' => $course->moodle_course_id,
                     'moodle_user_id' => $user->moodle_user_id
                 ]);
                 return $stats;
             }
 
+            Log::info('Получены активности из Moodle', [
+                'moodle_course_id' => $course->moodle_course_id,
+                'moodle_user_id' => $user->moodle_user_id,
+                'activities_count' => count($activities),
+                'activities_types' => array_unique(array_column($activities, 'type'))
+            ]);
+
             $stats['total'] = count($activities);
+            
+            if (empty($activities)) {
+                Log::warning('Moodle API вернул пустой массив активностей', [
+                    'moodle_course_id' => $course->moodle_course_id,
+                    'moodle_user_id' => $user->moodle_user_id,
+                    'course_id' => $course->id,
+                    'user_id' => $user->id
+                ]);
+            }
 
             foreach ($activities as $activityData) {
                 try {
