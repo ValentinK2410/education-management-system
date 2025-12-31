@@ -341,8 +341,10 @@ function syncActivities() {
     }
     
     // Получаем значения фильтров
-    const courseId = document.getElementById('course_id') ? document.getElementById('course_id').value : '';
-    const userId = document.getElementById('user_id') ? document.getElementById('user_id').value : '';
+    const courseIdEl = document.getElementById('course_id');
+    const userIdEl = document.getElementById('user_id');
+    const courseId = courseIdEl && courseIdEl.value ? courseIdEl.value : null;
+    const userId = userIdEl && userIdEl.value ? userIdEl.value : null;
     
     // Получаем CSRF токен
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
@@ -355,18 +357,23 @@ function syncActivities() {
         return;
     }
     
+    // Подготавливаем данные для отправки
+    const requestData = {};
+    if (courseId) requestData.course_id = courseId;
+    if (userId) requestData.user_id = userId;
+    
+    console.log('Отправка запроса синхронизации:', requestData);
+    
     // Отправляем запрос на синхронизацию
     fetch('{{ route("admin.analytics.sync") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({
-            course_id: courseId || null,
-            user_id: userId || null
-        })
+        body: JSON.stringify(requestData)
     })
     .then(response => {
         if (!response.ok) {
