@@ -71,6 +71,15 @@ class CourseAnalyticsController extends Controller
         }
         $students = $studentsQuery->get();
         
+        // Проверяем наличие данных в базе
+        $totalProgressCount = \App\Models\StudentActivityProgress::count();
+        Log::info('Проверка данных аналитики', [
+            'total_progress_records' => $totalProgressCount,
+            'courses_count' => $courses->count(),
+            'students_count' => $students->count(),
+            'request_params' => $request->all()
+        ]);
+        
         // Применяем фильтры
         $filteredData = $this->applyFilters($request, $courses, null, null, $students);
         
