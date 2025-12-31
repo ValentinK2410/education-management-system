@@ -21,7 +21,7 @@
                                 <select class="form-select" id="course_id" name="course_id">
                                     <option value="">Все курсы</option>
                                     @foreach($courses as $course)
-                                        <option value="{{ $course->id }}" {{ (request('course_id') == $course->id) ? 'selected' : '' }}>
+                                        <option value="{{ $course->id }}" {{ (request('course_id') == $course->id || request('course_id') == (string)$course->id) ? 'selected' : '' }}>
                                             {{ $course->name }}
                                         </option>
                                     @endforeach
@@ -33,7 +33,7 @@
                                 <select class="form-select" id="user_id" name="user_id">
                                     <option value="">Все студенты</option>
                                     @foreach($students as $student)
-                                        <option value="{{ $student->id }}" {{ (request('user_id') == $student->id) ? 'selected' : '' }}>
+                                        <option value="{{ $student->id }}" {{ (request('user_id') == $student->id || request('user_id') == (string)$student->id) ? 'selected' : '' }}>
                                             {{ $student->name }} ({{ $student->email }})
                                         </option>
                                     @endforeach

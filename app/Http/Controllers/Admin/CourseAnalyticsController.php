@@ -284,36 +284,36 @@ class CourseAnalyticsController extends Controller
             ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
             ->select('student_activity_progress.*');
         
-        // Применяем фильтры
-        if ($filters['course_id']) {
+        // Применяем фильтры (проверяем на пустоту и null)
+        if (!empty($filters['course_id'])) {
             $query->where('student_activity_progress.course_id', $filters['course_id']);
         }
         
-        if ($filters['user_id']) {
+        if (!empty($filters['user_id'])) {
             $query->where('student_activity_progress.user_id', $filters['user_id']);
         }
         
-        if ($filters['activity_type']) {
+        if (!empty($filters['activity_type'])) {
             $query->where('course_activities.activity_type', $filters['activity_type']);
         }
         
-        if ($filters['status']) {
+        if (!empty($filters['status'])) {
             $query->where('student_activity_progress.status', $filters['status']);
         }
         
-        if ($filters['date_from']) {
+        if (!empty($filters['date_from'])) {
             $query->where('student_activity_progress.submitted_at', '>=', $filters['date_from']);
         }
         
-        if ($filters['date_to']) {
+        if (!empty($filters['date_to'])) {
             $query->where('student_activity_progress.submitted_at', '<=', $filters['date_to']);
         }
         
-        if ($filters['min_grade'] !== null) {
+        if ($filters['min_grade'] !== null && $filters['min_grade'] !== '') {
             $query->where('student_activity_progress.grade', '>=', $filters['min_grade']);
         }
         
-        if ($filters['max_grade'] !== null) {
+        if ($filters['max_grade'] !== null && $filters['max_grade'] !== '') {
             $query->where('student_activity_progress.grade', '<=', $filters['max_grade']);
         }
         
@@ -360,36 +360,36 @@ class CourseAnalyticsController extends Controller
             ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
             ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id');
         
-        // Применяем те же фильтры к запросу статистики
-        if ($filters['course_id']) {
+        // Применяем те же фильтры к запросу статистики (проверяем на пустоту и null)
+        if (!empty($filters['course_id'])) {
             $statsQuery->where('student_activity_progress.course_id', $filters['course_id']);
         }
         
-        if ($filters['user_id']) {
+        if (!empty($filters['user_id'])) {
             $statsQuery->where('student_activity_progress.user_id', $filters['user_id']);
         }
         
-        if ($filters['activity_type']) {
+        if (!empty($filters['activity_type'])) {
             $statsQuery->where('course_activities.activity_type', $filters['activity_type']);
         }
         
-        if ($filters['status']) {
+        if (!empty($filters['status'])) {
             $statsQuery->where('student_activity_progress.status', $filters['status']);
         }
         
-        if ($filters['date_from']) {
+        if (!empty($filters['date_from'])) {
             $statsQuery->where('student_activity_progress.submitted_at', '>=', $filters['date_from']);
         }
         
-        if ($filters['date_to']) {
+        if (!empty($filters['date_to'])) {
             $statsQuery->where('student_activity_progress.submitted_at', '<=', $filters['date_to']);
         }
         
-        if ($filters['min_grade'] !== null) {
+        if ($filters['min_grade'] !== null && $filters['min_grade'] !== '') {
             $statsQuery->where('student_activity_progress.grade', '>=', $filters['min_grade']);
         }
         
-        if ($filters['max_grade'] !== null) {
+        if ($filters['max_grade'] !== null && $filters['max_grade'] !== '') {
             $statsQuery->where('student_activity_progress.grade', '<=', $filters['max_grade']);
         }
         
