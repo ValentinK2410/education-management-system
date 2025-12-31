@@ -33,11 +33,53 @@ class MoodleApiService
      * 
      * @param string|null $url URL сайта Moodle (если не указан, берется из конфига)
      * @param string|null $token Токен для доступа к REST API (если не указан, берется из конфига)
+     * @throws \InvalidArgumentException Если URL или токен не настроены корректно
      */
     public function __construct(?string $url = null, ?string $token = null)
     {
         $this->url = rtrim($url ?? config('services.moodle.url', ''), '/');
         $this->token = $token ?? config('services.moodle.token', '');
+        
+        // Валидация конфигурации
+        $this->validateConfiguration();
+    }
+    
+    /**
+     * Проверка корректности конфигурации Moodle API
+     * 
+     * @throws \InvalidArgumentException Если конфигурация некорректна
+     */
+    private function validateConfiguration(): void
+    {
+        // Проверяем наличие URL
+        if (empty($this->url)) {
+            Log::error('Moodle API: URL не настроен. Проверьте MOODLE_URL в .env файле.');
+            throw new \InvalidArgumentException('Moodle URL не настроен. Установите MOODLE_URL в .env файле.');
+        }
+        
+        // Проверяем наличие протокола в URL
+        if (!preg_match('/^https?:\/\//i', $this->url)) {
+            Log::error('Moodle API: URL должен содержать протокол (http:// или https://)', [
+                'url' => $this->url,
+                'hint' => 'Убедитесь, что MOODLE_URL в .env файле содержит полный URL, например: https://class.dekan.pro'
+            ]);
+            throw new \InvalidArgumentException(
+                "Moodle URL должен содержать протокол (http:// или https://). " .
+                "Текущее значение: '{$this->url}'. " .
+                "Пример правильного значения: https://class.dekan.pro"
+            );
+        }
+        
+        // Проверяем наличие токена
+        if (empty($this->token)) {
+            Log::error('Moodle API: Токен не настроен. Проверьте MOODLE_TOKEN в .env файле.');
+            throw new \InvalidArgumentException('Moodle токен не настроен. Установите MOODLE_TOKEN в .env файле.');
+        }
+        
+        Log::info('Moodle API: Конфигурация проверена', [
+            'url' => $this->url,
+            'token_set' => !empty($this->token)
+        ]);
     }
 
     /**
@@ -104,8 +146,19 @@ class MoodleApiService
             }
 
             return $data;
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            // Ошибка подключения (например, не может разрешить хост)
+            Log::error('Moodle API Connection Error', [
+                'url' => $url,
+                'message' => $e->getMessage(),
+                'hint' => 'Проверьте, что MOODLE_URL в .env файле содержит правильный домен. ' .
+                          'Ошибка указывает на проблему с DNS или неправильный URL.'
+            ]);
+            return false;
         } catch (\Exception $e) {
             Log::error('Moodle API Exception', [
+                'url' => $url,
+                'function' => $function,
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

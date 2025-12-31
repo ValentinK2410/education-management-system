@@ -25,7 +25,15 @@ class MoodleSyncController extends Controller
      */
     public function __construct()
     {
-        $this->syncService = new MoodleSyncService();
+        try {
+            $this->syncService = new MoodleSyncService();
+        } catch (\InvalidArgumentException $e) {
+            // Ошибка конфигурации будет обработана в методах синхронизации
+            Log::error('Ошибка инициализации MoodleSyncService в контроллере', [
+                'error' => $e->getMessage()
+            ]);
+            $this->syncService = null;
+        }
     }
 
     /**
@@ -54,6 +62,10 @@ class MoodleSyncController extends Controller
     public function syncCourses(Request $request)
     {
         try {
+            if (!$this->syncService) {
+                throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
+            }
+            
             $stats = $this->syncService->syncCourses();
             
             if ($request->expectsJson()) {
@@ -95,6 +107,10 @@ class MoodleSyncController extends Controller
     public function syncCourseEnrollments(Request $request, int $courseId)
     {
         try {
+            if (!$this->syncService) {
+                throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
+            }
+            
             $stats = $this->syncService->syncCourseEnrollments($courseId);
             
             if ($request->expectsJson()) {
@@ -136,6 +152,10 @@ class MoodleSyncController extends Controller
     public function syncAll(Request $request)
     {
         try {
+            if (!$this->syncService) {
+                throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
+            }
+            
             $stats = $this->syncService->syncAll();
             
             if ($request->expectsJson()) {

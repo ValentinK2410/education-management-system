@@ -25,10 +25,54 @@ class MoodleSyncService
      * Конструктор
      * 
      * @param MoodleApiService|null $moodleApi
+     * @throws \InvalidArgumentException Если конфигурация Moodle некорректна
      */
     public function __construct(?MoodleApiService $moodleApi = null)
     {
-        $this->moodleApi = $moodleApi ?? new MoodleApiService();
+        try {
+            $this->moodleApi = $moodleApi ?? new MoodleApiService();
+        } catch (\InvalidArgumentException $e) {
+            Log::error('Ошибка инициализации MoodleApiService', [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+    
+    /**
+     * Проверка конфигурации Moodle перед синхронизацией
+     * 
+     * @return bool true если конфигурация корректна
+     * @throws \InvalidArgumentException Если конфигурация некорректна
+     */
+    public function validateConfiguration(): bool
+    {
+        $url = config('services.moodle.url', '');
+        $token = config('services.moodle.token', '');
+        
+        if (empty($url)) {
+            throw new \InvalidArgumentException(
+                'MOODLE_URL не настроен в .env файле. ' .
+                'Установите полный URL Moodle, например: MOODLE_URL=https://class.dekan.pro'
+            );
+        }
+        
+        if (!preg_match('/^https?:\/\//i', $url)) {
+            throw new \InvalidArgumentException(
+                "MOODLE_URL должен содержать протокол (http:// или https://). " .
+                "Текущее значение: '{$url}'. " .
+                "Пример правильного значения: https://class.dekan.pro"
+            );
+        }
+        
+        if (empty($token)) {
+            throw new \InvalidArgumentException(
+                'MOODLE_TOKEN не настроен в .env файле. ' .
+                'Получите токен в Moodle: Site administration → Plugins → Web services → Manage tokens'
+            );
+        }
+        
+        return true;
     }
 
     /**
@@ -47,6 +91,21 @@ class MoodleSyncService
         ];
 
         Log::info('Начало синхронизации курсов из Moodle');
+        
+        // Проверяем конфигурацию перед началом синхронизации
+        try {
+            $this->validateConfiguration();
+        } catch (\InvalidArgumentException $e) {
+            Log::error('Ошибка конфигурации Moodle', [
+                'error' => $e->getMessage()
+            ]);
+            $stats['errors']++;
+            $stats['errors_list'][] = [
+                'type' => 'configuration',
+                'error' => $e->getMessage()
+            ];
+            return $stats;
+        }
 
         try {
             // Получаем все курсы из Moodle
@@ -429,6 +488,35 @@ class MoodleSyncService
         ];
 
         Log::info('Начало полной синхронизации из Moodle');
+        
+        // Проверяем конфигурацию перед началом синхронизации
+        try {
+            $this->validateConfiguration();
+        } catch (\InvalidArgumentException $e) {
+            Log::error('Ошибка конфигурации Moodle', [
+                'error' => $e->getMessage()
+            ]);
+            $stats['courses'] = [
+                'total' => 0,
+                'created' => 0,
+                'updated' => 0,
+                'errors' => 1,
+                'errors_list' => [
+                    [
+                        'type' => 'configuration',
+                        'error' => $e->getMessage()
+                    ]
+                ]
+            ];
+            $stats['enrollments'] = [
+                'total' => 0,
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => 0
+            ];
+            return $stats;
+        }
 
         // Синхронизируем курсы
         $stats['courses'] = $this->syncCourses();
