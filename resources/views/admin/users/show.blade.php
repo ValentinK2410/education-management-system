@@ -1120,6 +1120,10 @@
 
 <script>
 function switchTab(evt, tabName) {
+    if (evt) {
+        evt.preventDefault();
+    }
+    
     // Hide all tab contents
     const tabContents = document.getElementsByClassName('tab-content');
     for (let i = 0; i < tabContents.length; i++) {
@@ -1136,7 +1140,34 @@ function switchTab(evt, tabName) {
     document.getElementById('tab-' + tabName).classList.add('active');
 
     // Add active class to clicked button
-    evt.currentTarget.classList.add('active');
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('active');
+    } else {
+        // Если вызывается программно, находим кнопку по data-tab
+        const targetButton = document.querySelector(`button[data-tab="${tabName}"]`);
+        if (targetButton) {
+            targetButton.classList.add('active');
+        }
+    }
+    
+    // Обновляем URL без перезагрузки страницы
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tabName);
+    window.history.pushState({}, '', url);
 }
+
+// При загрузке страницы проверяем параметр tab в URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam) {
+        // Проверяем, что такая вкладка существует
+        const tabElement = document.getElementById('tab-' + tabParam);
+        if (tabElement) {
+            switchTab(null, tabParam);
+        }
+    }
+});
 </script>
 @endsection
