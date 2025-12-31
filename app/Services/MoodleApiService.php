@@ -381,10 +381,24 @@ class MoodleApiService
                 Log::error('getCourseAssignments: Moodle вернул исключение', [
                     'course_id' => $courseId,
                     'exception' => $result['exception'] ?? 'unknown',
-                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                    'message' => $result['message'] ?? 'неизвестная ошибка',
+                    'errorcode' => $result['errorcode'] ?? null,
+                    'debuginfo' => $result['debuginfo'] ?? null,
+                    'full_result' => $result
                 ]);
                 return false;
             }
+
+            // Логируем структуру ответа для отладки
+            Log::info('getCourseAssignments: структура ответа Moodle', [
+                'course_id' => $courseId,
+                'has_courses' => isset($result['courses']),
+                'courses_count' => isset($result['courses']) ? count($result['courses']) : 0,
+                'result_keys' => array_keys($result ?? []),
+                'first_course_keys' => isset($result['courses'][0]) ? array_keys($result['courses'][0]) : null,
+                'has_assignments' => isset($result['courses'][0]['assignments']),
+                'assignments_count' => isset($result['courses'][0]['assignments']) ? count($result['courses'][0]['assignments']) : 0
+            ]);
 
             // Возвращаем задания из первого курса
             if (isset($result['courses'][0]['assignments'])) {
@@ -398,7 +412,8 @@ class MoodleApiService
 
             Log::info('getCourseAssignments: заданий не найдено', [
                 'course_id' => $courseId,
-                'result_structure' => array_keys($result ?? [])
+                'result_structure' => array_keys($result ?? []),
+                'full_result' => $result
             ]);
 
             return [];

@@ -152,12 +152,15 @@ class TestMoodleApi extends Command
                 $assignments = $moodleApi->getCourseAssignments($courseId);
                 if ($assignments === false) {
                     $this->error("      ❌ Не удалось получить задания");
+                    $this->line("      Проверьте логи: tail -n 50 storage/logs/laravel.log | grep getCourseAssignments");
                 } else {
                     $this->info("      ✅ Заданий найдено: " . count($assignments));
                     if (count($assignments) > 0) {
                         foreach ($assignments as $assignment) {
                             $this->line("         - ID: {$assignment['id']}, Название: " . ($assignment['name'] ?? 'N/A'));
                         }
+                    } else {
+                        $this->warn("      ⚠️  Заданий в курсе нет (возможно, курс пустой)");
                     }
                 }
 
@@ -193,12 +196,15 @@ class TestMoodleApi extends Command
                 $quizzes = $moodleApi->getCourseQuizzes($courseId);
                 if ($quizzes === false) {
                     $this->error("      ❌ Не удалось получить тесты");
+                    $this->line("      Проверьте логи: tail -n 50 storage/logs/laravel.log | grep getCourseQuizzes");
                 } else {
                     $this->info("      ✅ Тестов найдено: " . count($quizzes));
                     if (count($quizzes) > 0) {
                         foreach ($quizzes as $quiz) {
                             $this->line("         - ID: {$quiz['id']}, Название: " . ($quiz['name'] ?? 'N/A'));
                         }
+                    } else {
+                        $this->warn("      ⚠️  Тестов в курсе нет (возможно, курс пустой)");
                     }
                 }
 
