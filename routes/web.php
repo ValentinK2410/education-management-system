@@ -492,11 +492,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('user-archive/{user}', [UserArchiveController::class, 'show'])->name('user-archive.show');
         Route::get('user-archive/{user}/certificates/{certificate}/download', [UserArchiveController::class, 'downloadCertificate'])->name('user-archive.download-certificate');
 
-        // Синхронизация с Moodle
-        Route::get('moodle-sync', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'index'])->name('moodle-sync.index');
-        Route::post('moodle-sync/courses', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourses'])->name('moodle-sync.sync-courses');
-        Route::post('moodle-sync/enrollments/{course}', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourseEnrollments'])->name('moodle-sync.sync-enrollments');
-        Route::post('moodle-sync/all', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncAll'])->name('moodle-sync.sync-all');
+        // Синхронизация с Moodle (требует право sync_moodle)
+        Route::middleware(['check.permission:sync_moodle'])->group(function () {
+            Route::get('moodle-sync', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'index'])->name('moodle-sync.index');
+            Route::post('moodle-sync/courses', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourses'])->name('moodle-sync.sync-courses');
+            Route::post('moodle-sync/enrollments/{course}', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourseEnrollments'])->name('moodle-sync.sync-enrollments');
+            Route::post('moodle-sync/all', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncAll'])->name('moodle-sync.sync-all');
+        });
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

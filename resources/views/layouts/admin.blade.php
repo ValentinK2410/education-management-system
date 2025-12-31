@@ -791,6 +791,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasPermission('sync_moodle'))
+            <div class="nav-item">
+                <a href="{{ route('admin.moodle-sync.index') }}" class="nav-link {{ request()->routeIs('admin.moodle-sync.*') ? 'active' : '' }}">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Синхронизация Moodle</span>
+                </a>
+            </div>
+            @endif
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>

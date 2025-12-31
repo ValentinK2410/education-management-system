@@ -136,6 +136,15 @@
                         </a>
                     </div>
                 </div>
+                @if(auth()->user()->hasPermission('sync_moodle'))
+                <div class="row mt-3">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ route('admin.moodle-sync.index') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-sync-alt me-2"></i>Синхронизация Moodle
+                        </a>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
