@@ -198,21 +198,29 @@
 
                 <ul class="navbar-nav">
                     @auth
-                        @if(auth()->user()->isAdmin())
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
-                                    <i class="fas fa-cog me-1"></i>Админ панель
-                                </a>
-                            </li>
-                        @endif
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                                <i class="fas fa-cog me-1"></i>
+                                @if(auth()->user()->isAdmin())
+                                    Админ панель
+                                @else
+                                    Личный кабинет
+                                @endif
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
                             </a>
                             <ul class="dropdown-menu">
-                                @if(auth()->user()->isAdmin())
-                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-home me-2"></i>Панель управления</a></li>
-                                @endif
+                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                    <i class="fas fa-home me-2"></i>
+                                    @if(auth()->user()->isAdmin())
+                                        Панель управления
+                                    @else
+                                        Личный кабинет
+                                    @endif
+                                </a></li>
                                 <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user me-2"></i>Мой профиль</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
