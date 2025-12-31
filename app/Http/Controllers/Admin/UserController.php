@@ -203,13 +203,13 @@ class UserController extends Controller
             'institutions'
         ]);
         
-        // Если преподаватель, фильтруем курсы - показываем только курсы преподавателя
-        if ($isInstructor) {
-            $instructorCourseIds = $currentUser->taughtCourses()->pluck('id');
-            $user->setRelation('courses', $user->courses->filter(function($course) use ($instructorCourseIds) {
+        // Получаем курсы для отображения (уже отфильтрованы для преподавателей)
+        $instructorCourseIds = $isInstructor ? $currentUser->taughtCourses()->pluck('id') : collect();
+        $coursesToShow = $isInstructor 
+            ? $user->courses->filter(function($course) use ($instructorCourseIds) {
                 return $instructorCourseIds->contains($course->id);
-            }));
-        }
+            })
+            : $user->courses;
         
         // Получаем задания из Moodle для каждого курса студента
         $coursesWithAssignments = [];
@@ -225,7 +225,7 @@ class UserController extends Controller
             }
         }
         
-        foreach ($user->courses as $course) {
+        foreach ($coursesToShow as $course) {
             $assignmentsData = null;
             
             // Получаем задания только если есть moodle_user_id и moodle_course_id
