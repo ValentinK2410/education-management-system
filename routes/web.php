@@ -510,14 +510,6 @@ Route::middleware(['auth'])->group(function () {
             Route::post('moodle-sync/all', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncAll'])->name('moodle-sync.sync-all');
         });
 
-        // Аналитика курсов (доступна преподавателям и админам)
-        Route::get('analytics', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'index'])->name('analytics.index');
-        Route::post('analytics/sync', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'sync'])->name('analytics.sync');
-        Route::get('analytics/course/{course}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'course'])->name('analytics.course');
-        Route::get('analytics/student/{user}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'student'])->name('analytics.student');
-        Route::get('analytics/export/excel', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportExcel'])->name('analytics.export.excel');
-        Route::get('analytics/export/csv', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportCsv'])->name('analytics.export.csv');
-        Route::get('analytics/export/pdf', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportPdf'])->name('analytics.export.pdf');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
