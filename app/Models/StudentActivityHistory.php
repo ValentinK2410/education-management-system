@@ -16,6 +16,11 @@ class StudentActivityHistory extends Model
     use HasFactory;
 
     /**
+     * Имя таблицы в базе данных
+     */
+    protected $table = 'student_activity_history';
+
+    /**
      * Отключить автоматическое управление timestamps
      * Используем только created_at
      */
