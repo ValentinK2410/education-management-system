@@ -650,6 +650,7 @@ class MoodleApiService
 
                 $assignmentsWithStatus[] = [
                     'id' => $assignmentId,
+                    'cmid' => $module['id'] ?? null, // Course Module ID для ссылки
                     'name' => $assignment['name'] ?? $module['name'] ?? 'Без названия',
                     'section_name' => $section['name'] ?? '',
                     'status' => $status,
