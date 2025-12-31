@@ -191,8 +191,19 @@ class CourseAnalyticsController extends Controller
     public function sync(Request $request)
     {
         try {
+            // Получаем параметры, преобразуя пустые строки в null
             $courseId = $request->input('course_id');
             $userId = $request->input('user_id');
+            
+            // Преобразуем пустые строки в null
+            $courseId = $courseId === '' || $courseId === '0' ? null : (int)$courseId;
+            $userId = $userId === '' || $userId === '0' ? null : (int)$userId;
+            
+            Log::info('Запрос синхронизации аналитики', [
+                'course_id' => $courseId,
+                'user_id' => $userId,
+                'user' => auth()->user()->id
+            ]);
             
             if (!$this->syncService) {
                 return response()->json([
