@@ -467,10 +467,12 @@
             <i class="fas fa-certificate"></i>
             <span>Сертификаты и дипломы</span>
         </button>
+        @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('instructor'))
         <button class="tab-button {{ request('tab') === 'analytics' ? 'active' : '' }}" onclick="switchTab(event, 'analytics')" data-tab="analytics">
             <i class="fas fa-chart-line"></i>
             <span>Детальная аналитика</span>
         </button>
+        @endif
     </div>
 
     <!-- Tab: Основная информация -->
