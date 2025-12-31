@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Сервис для работы с Moodle REST API
- * 
+ *
  * Предоставляет методы для взаимодействия с Moodle через REST API
  * Использует токен для аутентификации и выполняет запросы к различным функциям Moodle
  */
@@ -15,14 +15,14 @@ class MoodleApiService
 {
     /**
      * URL сайта Moodle (например: https://class.dekan.pro)
-     * 
+     *
      * @var string
      */
     private string $url;
 
     /**
      * Токен для доступа к Moodle REST API
-     * 
+     *
      * @var string
      */
     private string $token;
@@ -30,7 +30,7 @@ class MoodleApiService
     /**
      * Конструктор класса
      * Инициализирует URL и токен для работы с Moodle API
-     * 
+     *
      * @param string|null $url URL сайта Moodle (если не указан, берется из конфига)
      * @param string|null $token Токен для доступа к REST API (если не указан, берется из конфига)
      * @throws \InvalidArgumentException Если URL или токен не настроены корректно
@@ -39,14 +39,14 @@ class MoodleApiService
     {
         $this->url = rtrim($url ?? config('services.moodle.url', ''), '/');
         $this->token = $token ?? config('services.moodle.token', '');
-        
+
         // Валидация конфигурации
         $this->validateConfiguration();
     }
-    
+
     /**
      * Проверка корректности конфигурации Moodle API
-     * 
+     *
      * @throws \InvalidArgumentException Если конфигурация некорректна
      */
     private function validateConfiguration(): void
@@ -56,7 +56,7 @@ class MoodleApiService
             Log::error('Moodle API: URL не настроен. Проверьте MOODLE_URL в .env файле.');
             throw new \InvalidArgumentException('Moodle URL не настроен. Установите MOODLE_URL в .env файле.');
         }
-        
+
         // Проверяем наличие протокола в URL
         if (!preg_match('/^https?:\/\//i', $this->url)) {
             Log::error('Moodle API: URL должен содержать протокол (http:// или https://)', [
@@ -69,13 +69,13 @@ class MoodleApiService
                 "Пример правильного значения: https://class.dekan.pro"
             );
         }
-        
+
         // Проверяем наличие токена
         if (empty($this->token)) {
             Log::error('Moodle API: Токен не настроен. Проверьте MOODLE_TOKEN в .env файле.');
             throw new \InvalidArgumentException('Moodle токен не настроен. Установите MOODLE_TOKEN в .env файле.');
         }
-        
+
         Log::info('Moodle API: Конфигурация проверена', [
             'url' => $this->url,
             'token_set' => !empty($this->token)
@@ -85,7 +85,7 @@ class MoodleApiService
     /**
      * Выполнение запроса к Moodle REST API
      * Универсальный метод для вызова любых функций Moodle через REST API
-     * 
+     *
      * @param string $function Название функции Moodle API (например: 'core_user_create_users')
      * @param array $params Дополнительные параметры для запроса
      * @return array|false Массив данных в формате JSON или false в случае ошибки
@@ -168,7 +168,7 @@ class MoodleApiService
 
     /**
      * Создать пользователя в Moodle
-     * 
+     *
      * @param array $userData Данные пользователя:
      *                       - username (обязательно) - логин пользователя
      *                       - password (обязательно) - пароль (незахэшированный)
@@ -205,8 +205,8 @@ class MoodleApiService
                     'username' => $userData['username'],
                     'password' => $password,
                     'firstname' => $userData['firstname'],
-                    'lastname' => !empty($userData['lastname']) && trim($userData['lastname']) !== '' 
-                        ? trim($userData['lastname']) 
+                    'lastname' => !empty($userData['lastname']) && trim($userData['lastname']) !== ''
+                        ? trim($userData['lastname'])
                         : '-',
                     'email' => $userData['email'],
                 ]
@@ -235,7 +235,7 @@ class MoodleApiService
 
     /**
      * Получить пользователя из Moodle по email
-     * 
+     *
      * @param string $email Email адрес пользователя
      * @return array|false Массив с данными пользователя или false если не найден
      */
@@ -260,7 +260,7 @@ class MoodleApiService
 
     /**
      * Обновить пользователя в Moodle
-     * 
+     *
      * @param int $moodleUserId ID пользователя в Moodle
      * @param array $userData Данные для обновления
      * @return array|false Массив с обновленными данными или false в случае ошибки
@@ -284,7 +284,7 @@ class MoodleApiService
 
     /**
      * Обновить пароль пользователя в Moodle
-     * 
+     *
      * @param int $moodleUserId ID пользователя в Moodle
      * @param string $password Новый пароль (незахэшированный)
      * @return bool true если успешно, false в случае ошибки
@@ -305,7 +305,7 @@ class MoodleApiService
 
     /**
      * Получить содержимое курса (разделы и модули)
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с разделами курса или false в случае ошибки
      */
@@ -315,7 +315,7 @@ class MoodleApiService
             Log::info('getCourseContents: запрос содержимого курса', [
                 'course_id' => $courseId
             ]);
-            
+
             $result = $this->call('core_course_get_contents', [
                 'courseid' => $courseId
             ]);
@@ -355,7 +355,7 @@ class MoodleApiService
 
     /**
      * Получить задания курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с заданиями курса или false в случае ошибки
      */
@@ -365,7 +365,7 @@ class MoodleApiService
             Log::info('getCourseAssignments: запрос заданий курса', [
                 'course_id' => $courseId
             ]);
-            
+
             $result = $this->call('mod_assign_get_assignments', [
                 'courseids' => [$courseId]
             ]);
@@ -428,7 +428,7 @@ class MoodleApiService
 
     /**
      * Получить сдачи студента по заданиям курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с сдачами или false в случае ошибки
@@ -437,13 +437,13 @@ class MoodleApiService
     {
         // Сначала получаем список заданий курса
         $assignments = $this->getCourseAssignments($courseId);
-        
+
         if ($assignments === false || empty($assignments)) {
             return [];
         }
 
         $assignmentIds = array_column($assignments, 'id');
-        
+
         $result = $this->call('mod_assign_get_submissions', [
             'assignmentids' => $assignmentIds,
             'status' => '',
@@ -475,7 +475,7 @@ class MoodleApiService
 
     /**
      * Получить оценки студента по заданиям курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с оценками или false в случае ошибки
@@ -484,13 +484,13 @@ class MoodleApiService
     {
         // Сначала получаем список заданий курса
         $assignments = $this->getCourseAssignments($courseId);
-        
+
         if ($assignments === false || empty($assignments)) {
             return [];
         }
 
         $assignmentIds = array_column($assignments, 'id');
-        
+
         $result = $this->call('mod_assign_get_grades', [
             'assignmentids' => $assignmentIds
         ]);
@@ -519,7 +519,7 @@ class MoodleApiService
 
     /**
      * Получить информацию о заданиях курса с их статусами для студента
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @param string|null $sectionName Название раздела для фильтрации (например, "ПОСЛЕ СЕССИИ")
@@ -529,35 +529,35 @@ class MoodleApiService
     {
         // Получаем содержимое курса для поиска раздела
         $courseContents = $this->getCourseContents($courseId);
-        
+
         if ($courseContents === false) {
             return false;
         }
 
         // Получаем задания курса
         $assignments = $this->getCourseAssignments($courseId);
-        
+
         if ($assignments === false) {
             return false;
         }
 
         // Получаем сдачи студента
         $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
-        
+
         if ($submissions === false) {
             $submissions = [];
         }
 
         // Получаем оценки студента
         $grades = $this->getStudentGrades($courseId, $studentMoodleId);
-        
+
         if ($grades === false) {
             $grades = [];
         }
 
         // Создаем массив заданий с их статусами
         $assignmentsWithStatus = [];
-        
+
         // Находим нужный раздел
         $targetSection = null;
         if ($sectionName) {
@@ -584,7 +584,7 @@ class MoodleApiService
                 }
 
                 $assignmentId = $module['instance'] ?? null;
-                
+
                 if (!$assignmentId) {
                     continue;
                 }
@@ -615,14 +615,14 @@ class MoodleApiService
                     // Проверяем статус сдачи
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
-                    
+
                     // Проверяем, есть ли оценка (grade !== null и >= 0 означает, что преподаватель проверил)
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
                         // Есть оценка - задание проверено преподавателем
                         $status = 'graded';
                         $statusText = (string)$grade['grade'];
                         $gradeValue = (float)$grade['grade'];
-                        
+
                         Log::debug('Задание проверено преподавателем', [
                             'assignment_id' => $assignmentId,
                             'assignment_name' => $assignment['name'] ?? 'Без названия',
@@ -633,7 +633,7 @@ class MoodleApiService
                         // Есть сдача (файл или текст загружен), но нет оценки - не проверено преподавателем
                         $status = 'pending';
                         $statusText = 'Не проверено';
-                        
+
                         Log::debug('Задание сдано, но не проверено', [
                             'assignment_id' => $assignmentId,
                             'assignment_name' => $assignment['name'] ?? 'Без названия',
@@ -668,7 +668,7 @@ class MoodleApiService
 
     /**
      * Получить тесты/квизы курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с тестами курса или false в случае ошибки
      */
@@ -678,7 +678,7 @@ class MoodleApiService
             Log::info('getCourseQuizzes: запрос тестов курса', [
                 'course_id' => $courseId
             ]);
-            
+
             $result = $this->call('mod_quiz_get_quizzes_by_courses', [
                 'courseids' => [$courseId]
             ]);
@@ -738,7 +738,7 @@ class MoodleApiService
 
     /**
      * Получить попытки студента по тестам курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с попытками или false в случае ошибки
@@ -747,7 +747,7 @@ class MoodleApiService
     {
         // Сначала получаем список тестов курса
         $quizzes = $this->getCourseQuizzes($courseId);
-        
+
         if ($quizzes === false || empty($quizzes)) {
             return [];
         }
@@ -774,7 +774,7 @@ class MoodleApiService
 
     /**
      * Получить оценки студента за тесты курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с оценками или false в случае ошибки
@@ -783,7 +783,7 @@ class MoodleApiService
     {
         // Сначала получаем список тестов курса
         $quizzes = $this->getCourseQuizzes($courseId);
-        
+
         if ($quizzes === false || empty($quizzes)) {
             return [];
         }
@@ -807,7 +807,7 @@ class MoodleApiService
 
     /**
      * Получить форумы курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с форумами курса или false в случае ошибки
      */
@@ -836,7 +836,7 @@ class MoodleApiService
 
     /**
      * Получить посты студента в форумах курса
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с постами или false в случае ошибки
@@ -845,7 +845,7 @@ class MoodleApiService
     {
         // Сначала получаем список форумов курса
         $forums = $this->getCourseForums($courseId);
-        
+
         if ($forums === false || empty($forums)) {
             return [];
         }
@@ -868,7 +868,7 @@ class MoodleApiService
             }
 
             $discussions = $discussionsResult['discussions'] ?? [];
-            
+
             foreach ($discussions as $discussion) {
                 $discussionId = $discussion['discussion'] ?? null;
                 if (!$discussionId) {
@@ -896,7 +896,7 @@ class MoodleApiService
 
     /**
      * Получить материалы курса (resources)
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с материалами курса или false в случае ошибки
      */
@@ -904,7 +904,7 @@ class MoodleApiService
     {
         // Получаем содержимое курса, которое включает все модули
         $courseContents = $this->getCourseContents($courseId);
-        
+
         if ($courseContents === false) {
             return false;
         }
@@ -919,7 +919,7 @@ class MoodleApiService
             foreach ($section['modules'] as $module) {
                 // Типы ресурсов в Moodle: resource, file, folder, page, url и т.д.
                 $resourceTypes = ['resource', 'file', 'folder', 'page', 'url', 'book'];
-                
+
                 if (in_array($module['modname'] ?? '', $resourceTypes)) {
                     $resources[] = [
                         'id' => $module['id'] ?? null,
@@ -940,7 +940,7 @@ class MoodleApiService
 
     /**
      * Получить просмотры материалов студентом
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с просмотрами или false в случае ошибки
@@ -949,7 +949,7 @@ class MoodleApiService
     {
         // Получаем материалы курса
         $resources = $this->getCourseResources($courseId);
-        
+
         if ($resources === false || empty($resources)) {
             return [];
         }
@@ -959,17 +959,17 @@ class MoodleApiService
         // Для получения просмотров используем core_course_get_contents с параметром userid
         // Но это может не работать для всех типов ресурсов
         // Альтернатива: использовать logstore для получения просмотров
-        
+
         // Пока возвращаем пустой массив, так как Moodle API не предоставляет прямой способ
         // получить просмотры ресурсов для конкретного студента через REST API
         // Это потребует использования logstore или других методов
-        
+
         return $views;
     }
 
     /**
      * Получить все активности курса с их статусами для студента
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив со всеми активностями и их статусами или false в случае ошибки
@@ -985,45 +985,45 @@ class MoodleApiService
 
         // Получаем задания курса напрямую (без использования getCourseContents)
         $assignments = $this->getCourseAssignments($courseId);
-        
+
         Log::info('getAllCourseActivities: получены задания курса', [
             'course_id' => $courseId,
             'assignments' => $assignments !== false ? count($assignments) : 'false',
             'assignments_data' => $assignments !== false ? $assignments : 'false'
         ]);
-        
+
         $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
-        
+
         Log::info('getAllCourseActivities: получены сдачи студента', [
             'course_id' => $courseId,
             'student_moodle_id' => $studentMoodleId,
             'submissions' => $submissions !== false ? count($submissions) : 'false'
         ]);
-        
+
         $grades = $this->getStudentGrades($courseId, $studentMoodleId);
-        
+
         Log::info('getAllCourseActivities: получены оценки студента', [
             'course_id' => $courseId,
             'student_moodle_id' => $studentMoodleId,
             'grades' => $grades !== false ? count($grades) : 'false'
         ]);
-        
+
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
                 $assignmentId = $assignment['id'];
                 $submission = $submissions[$assignmentId] ?? null;
                 $grade = $grades[$assignmentId] ?? null;
-                
+
                 $status = 'not_submitted';
                 $statusText = 'Не сдано';
                 $gradeValue = null;
                 $submittedAt = null;
                 $gradedAt = null;
-                
+
                 if ($submission) {
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
-                    
+
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
                         $status = 'graded';
                         $statusText = (string)$grade['grade'];
@@ -1035,7 +1035,7 @@ class MoodleApiService
                     }
                     $submittedAt = isset($submission['timecreated']) ? $submission['timecreated'] : null;
                 }
-                
+
                 $activities[] = [
                     'type' => 'assign',
                     'moodle_id' => $assignmentId,
@@ -1050,7 +1050,7 @@ class MoodleApiService
                 ];
             }
         }
-        
+
         Log::info('getAllCourseActivities: получены задания', [
             'course_id' => $courseId,
             'assignments_count' => count($activities)
@@ -1060,21 +1060,21 @@ class MoodleApiService
         $quizzes = $this->getCourseQuizzes($courseId);
         $quizAttempts = $this->getStudentQuizAttempts($courseId, $studentMoodleId);
         $quizGrades = $this->getStudentQuizGrades($courseId, $studentMoodleId);
-        
+
         if ($quizzes !== false) {
             foreach ($quizzes as $quiz) {
                 $quizId = $quiz['id'];
                 $attempts = $quizAttempts[$quizId] ?? [];
                 $grade = $quizGrades[$quizId] ?? null;
-                
+
                 $status = 'not_started';
                 $statusText = 'Не начато';
                 $gradeValue = null;
-                
+
                 if (!empty($attempts)) {
                     $latestAttempt = end($attempts);
                     $attemptStatus = $latestAttempt['state'] ?? '';
-                    
+
                     if ($attemptStatus === 'finished') {
                         if ($grade && isset($grade['grade'])) {
                             $status = 'graded';
@@ -1089,7 +1089,7 @@ class MoodleApiService
                         $statusText = 'Сдано';
                     }
                 }
-                
+
                 $submittedAt = null;
                 $gradedAt = null;
                 if (!empty($attempts)) {
@@ -1099,7 +1099,7 @@ class MoodleApiService
                         $gradedAt = $submittedAt;
                     }
                 }
-                
+
                 $activities[] = [
                     'type' => 'quiz',
                     'moodle_id' => $quizId,
@@ -1132,16 +1132,16 @@ class MoodleApiService
             $forums = false;
             $forumPosts = [];
         }
-        
+
         if ($forums !== false) {
             foreach ($forums as $forum) {
                 $forumId = $forum['id'];
                 $posts = $forumPosts[$forumId] ?? [];
-                
+
                 $status = empty($posts) ? 'not_started' : 'completed';
                 $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
                 $submittedAt = !empty($posts) ? max(array_column($posts, 'timecreated')) : null;
-                
+
                 $activities[] = [
                     'type' => 'forum',
                     'moodle_id' => $forumId,
@@ -1160,7 +1160,7 @@ class MoodleApiService
         // Получаем материалы курса (resources) - этот метод тоже использует getCourseContents
         // Пока пропускаем, так как он требует getCourseContents
         // Можно добавить позже, если будет доступ к другим методам API
-        
+
         Log::info('getAllCourseActivities: завершено', [
             'course_id' => $courseId,
             'total_activities' => count($activities)
@@ -1171,7 +1171,7 @@ class MoodleApiService
 
     /**
      * Получить все курсы из Moodle
-     * 
+     *
      * @param array $options Опции фильтрации:
      *                       - 'ids' - массив ID курсов для получения (если пусто - все курсы)
      * @return array|false Массив курсов или false в случае ошибки
@@ -1181,15 +1181,15 @@ class MoodleApiService
         // Для получения всех курсов передаем пустой массив или без параметров
         // Moodle API core_course_get_courses возвращает все курсы, если не указаны фильтры
         $params = [];
-        
+
         // Если указаны конкретные ID курсов, используем другой подход
         if (!empty($options['ids']) && is_array($options['ids'])) {
             // Для получения конкретных курсов можно использовать фильтр
             // Но проще получить все и отфильтровать
         }
-        
+
         $result = $this->call('core_course_get_courses', $params);
-        
+
         if ($result === false || isset($result['exception'])) {
             Log::error('Ошибка получения курсов из Moodle', [
                 'exception' => $result['exception'] ?? null,
@@ -1197,13 +1197,13 @@ class MoodleApiService
             ]);
             return false;
         }
-        
+
         // Возвращаем массив курсов (исключаем системный курс с id=1)
         if (is_array($result)) {
             $courses = array_values(array_filter($result, function($course) {
                 return isset($course['id']) && $course['id'] > 1;
             }));
-            
+
             // Если указаны конкретные ID, фильтруем по ним
             if (!empty($options['ids']) && is_array($options['ids'])) {
                 $courses = array_filter($courses, function($course) use ($options) {
@@ -1211,16 +1211,16 @@ class MoodleApiService
                 });
                 $courses = array_values($courses);
             }
-            
+
             return $courses;
         }
-        
+
         return [];
     }
 
     /**
      * Получить список пользователей, записанных на курс
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив пользователей или false в случае ошибки
      */
@@ -1229,22 +1229,22 @@ class MoodleApiService
         $result = $this->call('core_enrol_get_enrolled_users', [
             'courseid' => $courseId
         ]);
-        
+
         if ($result === false || isset($result['exception'])) {
             return false;
         }
-        
+
         // Возвращаем массив пользователей
         if (is_array($result)) {
             return $result;
         }
-        
+
         return [];
     }
 
     /**
      * Получить преподавателей курса (пользователи с ролью editingteacher или teacher)
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив преподавателей или false в случае ошибки
      */
@@ -1252,11 +1252,11 @@ class MoodleApiService
     {
         // Получаем всех пользователей курса
         $enrolledUsers = $this->getCourseEnrolledUsers($courseId);
-        
+
         if ($enrolledUsers === false) {
             return false;
         }
-        
+
         // Фильтруем только преподавателей (роли editingteacher или teacher)
         $teachers = [];
         foreach ($enrolledUsers as $user) {
@@ -1271,7 +1271,7 @@ class MoodleApiService
                 }
             }
         }
-        
+
         Log::info('Преподаватели курса из Moodle', [
             'course_id' => $courseId,
             'teachers_count' => count($teachers),
@@ -1284,26 +1284,52 @@ class MoodleApiService
                 ];
             }, $teachers)
         ]);
-        
+
         return $teachers;
     }
 
     /**
      * Получить информацию о конкретном курсе
-     * 
+     *
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с данными курса или false в случае ошибки
      */
     public function getCourse(int $courseId)
     {
         $result = $this->getAllCourses(['ids' => [$courseId]]);
-        
+
         if ($result === false || empty($result)) {
             return false;
         }
-        
+
         // Возвращаем первый курс
         return $result[0] ?? false;
+    }
+
+    /**
+     * Получить URL для задания в Moodle
+     * 
+     * @param int|null $cmid Course Module ID (если есть)
+     * @param int|null $assignmentId Assignment ID (если cmid нет)
+     * @param int|null $courseId Course ID (если нужен альтернативный способ)
+     * @return string|null URL на задание или null если невозможно сформировать
+     */
+    public function getAssignmentUrl(?int $cmid = null, ?int $assignmentId = null, ?int $courseId = null): ?string
+    {
+        if ($cmid) {
+            // Используем cmid для прямого доступа к заданию
+            return $this->url . '/mod/assign/view.php?id=' . $cmid;
+        }
+        
+        // Если cmid нет, можно попробовать использовать assignment ID
+        // Но это менее надежно, так как нужен cmid
+        if ($assignmentId && $courseId) {
+            // Альтернативный способ - через курс и assignment ID
+            // Но лучше использовать cmid
+            return $this->url . '/mod/assign/view.php?id=' . $assignmentId;
+        }
+        
+        return null;
     }
 }
 
