@@ -166,9 +166,53 @@ class UserController extends Controller
             'taughtCourses.program.institution',
             'programs.institution',
             'courses.program.institution',
+            'courses.instructor',
             'institutions'
         ]);
-        return view('admin.users.show', compact('user'));
+        
+        // Получаем задания из Moodle для каждого курса студента
+        $coursesWithAssignments = [];
+        $moodleApiService = null;
+        
+        if ($user->moodle_user_id) {
+            try {
+                $moodleApiService = new \App\Services\MoodleApiService();
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Ошибка инициализации MoodleApiService в UserController', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        foreach ($user->courses as $course) {
+            $assignmentsData = null;
+            
+            // Получаем задания только если есть moodle_user_id и moodle_course_id
+            if ($moodleApiService && $user->moodle_user_id && $course->moodle_course_id) {
+                try {
+                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
+                        $course->moodle_course_id,
+                        $user->moodle_user_id,
+                        'ПОСЛЕ СЕССИИ'
+                    );
+                    
+                    if ($assignments !== false && !empty($assignments)) {
+                        $assignmentsData = $assignments;
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Ошибка при получении заданий из Moodle в UserController', [
+                        'course_id' => $course->id,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'moodle_user_id' => $user->moodle_user_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            $coursesWithAssignments[$course->id] = $assignmentsData;
+        }
+        
+        return view('admin.users.show', compact('user', 'coursesWithAssignments'));
     }
 
     /**

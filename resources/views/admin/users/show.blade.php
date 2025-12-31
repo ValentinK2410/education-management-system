@@ -658,56 +658,131 @@
     <!-- Tab: Курсы -->
     <div id="tab-courses" class="tab-content">
         @if($user->courses->count() > 0)
-            <div class="row">
-                @foreach($user->courses as $course)
-                    <div class="col-md-6 col-lg-4">
-                        <div class="item-card">
-                            <div class="item-title">
-                                <a href="{{ route('admin.courses.show', $course) }}">{{ $course->name }}</a>
-                            </div>
-                            <div class="item-meta">
-                                <div class="item-meta-item">
-                                    <i class="fas fa-graduation-cap"></i>
-                                    <span>{{ $course->program->name ?? 'Не указано' }}</span>
-                                </div>
-                                <div class="item-meta-item">
-                                    <i class="fas fa-university"></i>
-                                    <span>{{ $course->program->institution->name ?? 'Не указано' }}</span>
-                                </div>
-                                @if($course->pivot->enrolled_at)
-                                    <div class="item-meta-item">
-                                        <i class="fas fa-calendar"></i>
-                                        <span>Записан: {{ \Carbon\Carbon::parse($course->pivot->enrolled_at)->format('d.m.Y') }}</span>
-                                    </div>
-                                @endif
-                                @if($course->pivot->progress !== null)
-                                    <div class="item-meta-item">
-                                        <i class="fas fa-chart-line"></i>
-                                        <span>Прогресс: {{ $course->pivot->progress }}%</span>
-                                    </div>
-                                @endif
-                            </div>
-                            @if($course->pivot->progress !== null)
-                                <div class="progress-bar-custom">
-                                    <div class="progress-bar-fill" style="width: {{ $course->pivot->progress }}%"></div>
-                                </div>
-                            @endif
-                            <div class="item-status">
-                                @php
-                                    $status = $course->pivot->status ?? 'enrolled';
-                                    $statusLabels = [
-                                        'enrolled' => ['label' => 'Записан', 'class' => 'badge-info'],
-                                        'active' => ['label' => 'Активен', 'class' => 'badge-success'],
-                                        'completed' => ['label' => 'Завершен', 'class' => 'badge-primary'],
-                                        'cancelled' => ['label' => 'Отменен', 'class' => 'badge-danger'],
-                                    ];
-                                    $statusInfo = $statusLabels[$status] ?? $statusLabels['enrolled'];
-                                @endphp
-                                <span class="badge-custom {{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">ID</th>
+                            <th style="width: 25%;">Название курса</th>
+                            <th style="width: 15%;">Программа</th>
+                            <th style="width: 15%;">Преподаватель</th>
+                            <th style="width: 20%;">Статус заданий (ПОСЛЕ СЕССИИ)</th>
+                            <th style="width: 10%;">Прогресс</th>
+                            <th style="width: 10%;">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($user->courses as $course)
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ $course->id }}</span></td>
+                                <td>
+                                    <strong>
+                                        <a href="{{ route('admin.courses.show', $course) }}">{{ $course->name }}</a>
+                                    </strong>
+                                    @if($course->code)
+                                        <br><small class="text-muted">{{ $course->code }}</small>
+                                    @endif
+                                    @if($course->pivot->enrolled_at)
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Записан: {{ \Carbon\Carbon::parse($course->pivot->enrolled_at)->format('d.m.Y') }}
+                                        </small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($course->program)
+                                        <span class="badge bg-info">{{ $course->program->name }}</span>
+                                        @if($course->program->institution)
+                                            <br><small class="text-muted">{{ $course->program->institution->name }}</small>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">Без программы</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($course->instructor)
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <div class="avatar-title bg-success text-white rounded-circle">
+                                                    {{ substr($course->instructor->name, 0, 1) }}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <small class="d-block">{{ $course->instructor->name }}</small>
+                                                <small class="text-muted">{{ $course->instructor->email }}</small>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">Не назначен</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
+                                        <div class="d-flex flex-column gap-1">
+                                            @foreach($coursesWithAssignments[$course->id] as $assignment)
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
+                                                          title="{{ $assignment['name'] }}">
+                                                        @if($assignment['status'] === 'not_submitted')
+                                                            <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                        @elseif($assignment['status'] === 'pending')
+                                                            <i class="fas fa-clock me-1"></i>Не проверено
+                                                        @else
+                                                            <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                        @endif
+                                                    </span>
+                                                    <small class="text-muted ms-2" title="{{ $assignment['name'] }}">
+                                                        {{ \Illuminate\Support\Str::limit($assignment['name'], 30) }}
+                                                    </small>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @elseif($course->moodle_course_id && $user->moodle_user_id)
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>Задания не найдены
+                                        </small>
+                                    @elseif(!$user->moodle_user_id)
+                                        <small class="text-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Не настроена синхронизация
+                                        </small>
+                                    @else
+                                        <small class="text-muted">—</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($course->pivot->progress !== null)
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ $course->pivot->progress }}%"
+                                                     aria-valuenow="{{ $course->pivot->progress }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ $course->pivot->progress }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                        $status = $course->pivot->status ?? 'enrolled';
+                                        $statusLabels = [
+                                            'enrolled' => ['label' => 'Записан', 'class' => 'bg-info'],
+                                            'active' => ['label' => 'Активен', 'class' => 'bg-success'],
+                                            'completed' => ['label' => 'Завершен', 'class' => 'bg-primary'],
+                                            'cancelled' => ['label' => 'Отменен', 'class' => 'bg-danger'],
+                                        ];
+                                        $statusInfo = $statusLabels[$status] ?? $statusLabels['enrolled'];
+                                    @endphp
+                                    <span class="badge {{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         @else
             <div class="empty-state">
@@ -717,6 +792,52 @@
             </div>
         @endif
     </div>
+    
+    <style>
+    .avatar-sm {
+        width: 30px;
+        height: 30px;
+    }
+
+    .avatar-title {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    /* Мини-бейджи для статусов заданий */
+    .assignment-mini-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Красный - не сдано */
+    .assignment-mini-badge.assignment-status-not-submitted {
+        background-color: #dc3545;
+        color: white;
+        border: 1px solid #dc3545;
+    }
+
+    /* Желтый - не проверено */
+    .assignment-mini-badge.assignment-status-pending {
+        background-color: #ffc107;
+        color: #000;
+        border: 1px solid #ffc107;
+    }
+
+    /* Зеленый - оценка */
+    .assignment-mini-badge.assignment-status-graded {
+        background-color: #28a745;
+        color: white;
+        border: 1px solid #28a745;
+    }
+    </style>
 
     <!-- Tab: Учебные заведения -->
     <div id="tab-institutions" class="tab-content">
