@@ -469,17 +469,48 @@ class CourseAnalyticsController extends Controller
             'processed_filters' => $filters
         ]);
         
-        // Строим запрос для получения данных
-        $query = StudentActivityProgress::with(['user', 'course', 'activity', 'gradedBy'])
-            ->join('users', 'student_activity_progress.user_id', '=', 'users.id')
-            ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
-            ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
-            ->select('student_activity_progress.*');
+        // Проверяем существование таблиц перед запросом
+        try {
+            if (!\Schema::hasTable('student_activity_progress')) {
+                Log::warning('Таблица student_activity_progress не существует');
+                return [
+                    'activities' => collect(),
+                    'pagination' => new \Illuminate\Pagination\LengthAwarePaginator(collect(), 0, 50),
+                    'students' => $students ?? collect(),
+                    'filters' => $filters,
+                    'stats' => ['total' => 0, 'not_started' => 0, 'submitted' => 0, 'graded' => 0, 'completed' => 0],
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка проверки таблиц', ['error' => $e->getMessage()]);
+        }
         
-        // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
-        $currentUser = auth()->user();
-        if (!$currentUser->hasRole('admin')) {
-            $query->where('courses.instructor_id', $currentUser->id);
+        // Строим запрос для получения данных
+        try {
+            $query = StudentActivityProgress::with(['user', 'course', 'activity', 'gradedBy'])
+                ->join('users', 'student_activity_progress.user_id', '=', 'users.id')
+                ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
+                ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
+                ->select('student_activity_progress.*');
+            
+            // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
+            $currentUser = auth()->user();
+            if (!$currentUser->hasRole('admin')) {
+                $query->where('courses.instructor_id', $currentUser->id);
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка при построении запроса аналитики', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Возвращаем пустые данные в случае ошибки
+            return [
+                'activities' => collect(),
+                'pagination' => new \Illuminate\Pagination\LengthAwarePaginator(collect(), 0, 50),
+                'students' => $students ?? collect(),
+                'filters' => $filters,
+                'stats' => ['total' => 0, 'not_started' => 0, 'submitted' => 0, 'graded' => 0, 'completed' => 0],
+            ];
         }
         
         // Применяем фильтры (проверяем на пустоту и null)
