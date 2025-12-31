@@ -325,6 +325,31 @@ class CourseAnalyticsController extends Controller
                 ]);
             } else {
                 // Полная синхронизация
+                // Сначала проверяем, есть ли курсы с moodle_course_id
+                $coursesWithMoodle = Course::whereNotNull('moodle_course_id')->count();
+                $usersWithMoodle = User::whereNotNull('moodle_user_id')->count();
+                
+                Log::info('Проверка перед полной синхронизацией', [
+                    'courses_with_moodle_id' => $coursesWithMoodle,
+                    'users_with_moodle_id' => $usersWithMoodle,
+                    'total_courses' => Course::count(),
+                    'total_users' => User::count()
+                ]);
+                
+                if ($coursesWithMoodle == 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Нет курсов с настроенным moodle_course_id. Сначала выполните синхронизацию курсов из Moodle.'
+                    ], 400);
+                }
+                
+                if ($usersWithMoodle == 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Нет пользователей с настроенным moodle_user_id. Сначала выполните синхронизацию пользователей из Moodle.'
+                    ], 400);
+                }
+                
                 $stats = $this->syncService->syncAll();
                 
                 return response()->json([
