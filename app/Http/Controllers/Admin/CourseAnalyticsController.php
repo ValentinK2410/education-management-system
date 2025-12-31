@@ -539,12 +539,25 @@ class CourseAnalyticsController extends Controller
         }
         
         // Применяем фильтры (проверяем на пустоту и null)
-        if ($filters['course_id'] !== null && $filters['course_id'] !== '' && $filters['course_id'] !== '0') {
+        if (!empty($filters['course_id'])) {
             $query->where('student_activity_progress.course_id', (int)$filters['course_id']);
+            Log::info('Применен фильтр по курсу', ['course_id' => $filters['course_id']]);
         }
         
-        if ($filters['user_id'] !== null && $filters['user_id'] !== '' && $filters['user_id'] !== '0') {
+        if (!empty($filters['user_id'])) {
             $query->where('student_activity_progress.user_id', (int)$filters['user_id']);
+            Log::info('Применен фильтр по студенту', [
+                'user_id' => $filters['user_id'],
+                'user_id_type' => gettype($filters['user_id'])
+            ]);
+            
+            // Диагностика: проверяем, есть ли записи для этого студента
+            $studentProgressCount = StudentActivityProgress::where('user_id', (int)$filters['user_id'])->count();
+            Log::info('Диагностика фильтра по студенту', [
+                'user_id' => $filters['user_id'],
+                'student_progress_count' => $studentProgressCount,
+                'user_exists' => User::where('id', (int)$filters['user_id'])->exists()
+            ]);
         }
         
         if (!empty($filters['activity_type'])) {
