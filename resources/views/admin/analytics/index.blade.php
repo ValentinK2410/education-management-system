@@ -271,8 +271,16 @@
                                         <td colspan="10" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                                <p>Данные не найдены</p>
-                                                <p class="small">Попробуйте изменить фильтры или запустите синхронизацию</p>
+                                                <p><strong>Данные не найдены</strong></p>
+                                                <p class="small mb-3">Возможные причины:</p>
+                                                <ul class="list-unstyled small">
+                                                    <li>• Данные еще не синхронизированы из Moodle</li>
+                                                    <li>• Выбранные фильтры не соответствуют данным</li>
+                                                    <li>• Студенты не выполнили задания</li>
+                                                </ul>
+                                                <button type="button" class="btn btn-primary mt-3" onclick="syncActivities()">
+                                                    <i class="fas fa-sync me-2"></i>Запустить синхронизацию из Moodle
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
