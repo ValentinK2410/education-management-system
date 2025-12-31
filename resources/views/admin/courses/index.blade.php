@@ -68,16 +68,39 @@
                                                             </small>
                                                             <div class="d-flex flex-wrap gap-1">
                                                                 @foreach($coursesWithAssignments[$course->id] as $assignment)
-                                                                    <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
-                                                                          title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }}">
-                                                                        @if($assignment['status'] === 'not_submitted')
-                                                                            <i class="fas fa-times-circle me-1"></i>Не сдано
-                                                                        @elseif($assignment['status'] === 'pending')
-                                                                            <i class="fas fa-clock me-1"></i>Не проверено
-                                                                        @else
-                                                                            <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
-                                                                        @endif
-                                                                    </span>
+                                                                    @php
+                                                                        $moodleApiService = new \App\Services\MoodleApiService();
+                                                                        $assignmentUrl = $moodleApiService->getAssignmentUrl(
+                                                                            $assignment['cmid'] ?? null,
+                                                                            $assignment['id'] ?? null,
+                                                                            $course->moodle_course_id ?? null
+                                                                        );
+                                                                    @endphp
+                                                                    @if($assignmentUrl && ($assignment['status'] === 'not_submitted' || $assignment['status'] === 'pending'))
+                                                                        <a href="{{ $assignmentUrl }}" target="_blank" class="text-decoration-none">
+                                                                            <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
+                                                                                  title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }} - Нажмите для сдачи">
+                                                                                @if($assignment['status'] === 'not_submitted')
+                                                                                    <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                                @elseif($assignment['status'] === 'pending')
+                                                                                    <i class="fas fa-clock me-1"></i>Не проверено
+                                                                                @else
+                                                                                    <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                                                @endif
+                                                                            </span>
+                                                                        </a>
+                                                                    @else
+                                                                        <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
+                                                                              title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }}">
+                                                                            @if($assignment['status'] === 'not_submitted')
+                                                                                <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                            @elseif($assignment['status'] === 'pending')
+                                                                                <i class="fas fa-clock me-1"></i>Не проверено
+                                                                            @else
+                                                                                <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                                            @endif
+                                                                        </span>
+                                                                    @endif
                                                                 @endforeach
                                                             </div>
                                                         </div>
