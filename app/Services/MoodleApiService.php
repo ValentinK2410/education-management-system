@@ -1059,9 +1059,22 @@ class MoodleApiService
             }
         }
 
-        // Получаем форумы с постами студента
-        $forums = $this->getCourseForums($courseId);
-        $forumPosts = $this->getStudentForumPosts($courseId, $studentMoodleId);
+        // Получаем форумы с постами студента (пропускаем, если есть ошибки доступа)
+        try {
+            $forums = $this->getCourseForums($courseId);
+            $forumPosts = $this->getStudentForumPosts($courseId, $studentMoodleId);
+        } catch (\Exception $e) {
+            try {
+                Log::warning('getAllCourseActivities: ошибка получения форумов, пропускаем', [
+                    'course_id' => $courseId,
+                    'error' => $e->getMessage()
+                ]);
+            } catch (\Exception $logError) {
+                // Игнорируем ошибки логирования
+            }
+            $forums = false;
+            $forumPosts = [];
+        }
         
         if ($forums !== false) {
             foreach ($forums as $forum) {
