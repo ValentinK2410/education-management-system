@@ -1140,6 +1140,7 @@
             </div>
         @endif
     </div>
+    @endif
 
     <!-- Tab: Сертификаты и дипломы -->
     <div id="tab-certificates" class="tab-content {{ request('tab') === 'certificates' ? 'active' : '' }}">
