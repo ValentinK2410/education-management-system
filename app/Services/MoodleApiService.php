@@ -892,44 +892,58 @@ class MoodleApiService
             'student_moodle_id' => $studentMoodleId
         ]);
 
-        // Получаем содержимое курса
-        $courseContents = $this->getCourseContents($courseId);
+        // Получаем задания курса напрямую (без использования getCourseContents)
+        $assignments = $this->getCourseAssignments($courseId);
+        $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
+        $grades = $this->getStudentGrades($courseId, $studentMoodleId);
         
-        if ($courseContents === false) {
-            Log::warning('getAllCourseActivities: не удалось получить содержимое курса', [
-                'course_id' => $courseId
-            ]);
-            return false;
-        }
-
-        Log::info('getAllCourseActivities: получено разделов курса', [
-            'course_id' => $courseId,
-            'sections_count' => count($courseContents)
-        ]);
-
-        // Получаем задания с статусами
-        $assignments = $this->getCourseAssignmentsWithStatus($courseId, $studentMoodleId);
-        
-        Log::info('getAllCourseActivities: получены задания', [
-            'course_id' => $courseId,
-            'assignments_count' => $assignments !== false ? count($assignments) : 0,
-            'assignments' => $assignments !== false ? $assignments : 'false'
-        ]);
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
+                $assignmentId = $assignment['id'];
+                $submission = $submissions[$assignmentId] ?? null;
+                $grade = $grades[$assignmentId] ?? null;
+                
+                $status = 'not_submitted';
+                $statusText = 'Не сдано';
+                $gradeValue = null;
+                $submittedAt = null;
+                $gradedAt = null;
+                
+                if ($submission) {
+                    $submissionStatus = $submission['status'] ?? null;
+                    $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
+                    
+                    if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
+                        $status = 'graded';
+                        $statusText = (string)$grade['grade'];
+                        $gradeValue = (float)$grade['grade'];
+                        $gradedAt = isset($grade['timecreated']) ? $grade['timecreated'] : null;
+                    } elseif ($submissionSubmitted || isset($submission['filesubmissions']) || isset($submission['onlinetext'])) {
+                        $status = 'pending';
+                        $statusText = 'Не проверено';
+                    }
+                    $submittedAt = isset($submission['timecreated']) ? $submission['timecreated'] : null;
+                }
+                
                 $activities[] = [
                     'type' => 'assign',
-                    'moodle_id' => $assignment['id'],
-                    'name' => $assignment['name'],
-                    'section_name' => $assignment['section_name'],
-                    'status' => $assignment['status'],
-                    'status_text' => $assignment['status_text'],
-                    'grade' => $assignment['grade'],
-                    'submitted_at' => $assignment['submitted_at'],
-                    'graded_at' => $assignment['graded_at'],
+                    'moodle_id' => $assignmentId,
+                    'name' => $assignment['name'] ?? 'Без названия',
+                    'section_name' => '', // Не можем получить без getCourseContents
+                    'status' => $status,
+                    'status_text' => $statusText,
+                    'grade' => $gradeValue,
+                    'max_grade' => $assignment['grade'] ?? null,
+                    'submitted_at' => $submittedAt,
+                    'graded_at' => $gradedAt,
                 ];
             }
         }
+        
+        Log::info('getAllCourseActivities: получены задания', [
+            'course_id' => $courseId,
+            'assignments_count' => count($activities)
+        ]);
 
         // Получаем тесты с попытками и оценками
         $quizzes = $this->getCourseQuizzes($courseId);
