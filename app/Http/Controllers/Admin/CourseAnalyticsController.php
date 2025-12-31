@@ -407,7 +407,11 @@ class CourseAnalyticsController extends Controller
      */
     protected function calculateStats($query): array
     {
-        $stats = (clone $query)->selectRaw('
+        // Убираем select('student_activity_progress.*') и используем только агрегатные функции
+        $baseQuery = clone $query;
+        $baseQuery->getQuery()->columns = []; // Очищаем колонки
+        
+        $stats = $baseQuery->selectRaw('
             COUNT(*) as total,
             SUM(CASE WHEN student_activity_progress.status = "not_started" THEN 1 ELSE 0 END) as not_started,
             SUM(CASE WHEN student_activity_progress.status = "submitted" THEN 1 ELSE 0 END) as submitted,
