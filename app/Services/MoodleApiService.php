@@ -532,17 +532,40 @@ class MoodleApiService
 
                 // Если есть сдача (файл загружен)
                 if ($submission) {
-                    // Проверяем, есть ли оценка
+                    // Проверяем статус сдачи
+                    $submissionStatus = $submission['status'] ?? null;
+                    $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
+                    
+                    // Проверяем, есть ли оценка (grade !== null и >= 0 означает, что преподаватель проверил)
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
-                        // Есть оценка - задание проверено
+                        // Есть оценка - задание проверено преподавателем
                         $status = 'graded';
                         $statusText = (string)$grade['grade'];
                         $gradeValue = (float)$grade['grade'];
-                    } else {
-                        // Есть сдача, но нет оценки - не проверено
+                        
+                        Log::debug('Задание проверено преподавателем', [
+                            'assignment_id' => $assignmentId,
+                            'assignment_name' => $assignment['name'] ?? 'Без названия',
+                            'grade' => $gradeValue,
+                            'graded_at' => $grade['timecreated'] ?? null
+                        ]);
+                    } elseif ($submissionSubmitted || isset($submission['filesubmissions']) || isset($submission['onlinetext'])) {
+                        // Есть сдача (файл или текст загружен), но нет оценки - не проверено преподавателем
                         $status = 'pending';
                         $statusText = 'Не проверено';
+                        
+                        Log::debug('Задание сдано, но не проверено', [
+                            'assignment_id' => $assignmentId,
+                            'assignment_name' => $assignment['name'] ?? 'Без названия',
+                            'submission_status' => $submissionStatus,
+                            'submitted_at' => $submission['timecreated'] ?? null
+                        ]);
                     }
+                } else {
+                    Log::debug('Задание не сдано', [
+                        'assignment_id' => $assignmentId,
+                        'assignment_name' => $assignment['name'] ?? 'Без названия'
+                    ]);
                 }
 
                 $assignmentsWithStatus[] = [
@@ -633,6 +656,52 @@ class MoodleApiService
         }
         
         return [];
+    }
+
+    /**
+     * Получить преподавателей курса (пользователи с ролью editingteacher или teacher)
+     * 
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив преподавателей или false в случае ошибки
+     */
+    public function getCourseTeachers(int $courseId): array|false
+    {
+        // Получаем всех пользователей курса
+        $enrolledUsers = $this->getCourseEnrolledUsers($courseId);
+        
+        if ($enrolledUsers === false) {
+            return false;
+        }
+        
+        // Фильтруем только преподавателей (роли editingteacher или teacher)
+        $teachers = [];
+        foreach ($enrolledUsers as $user) {
+            if (isset($user['roles']) && is_array($user['roles'])) {
+                foreach ($user['roles'] as $role) {
+                    $roleShortname = $role['shortname'] ?? '';
+                    // В Moodle роли преподавателей: editingteacher (редактор курса) или teacher (преподаватель)
+                    if (in_array($roleShortname, ['editingteacher', 'teacher', 'manager'])) {
+                        $teachers[] = $user;
+                        break; // Не добавляем пользователя дважды
+                    }
+                }
+            }
+        }
+        
+        Log::info('Преподаватели курса из Moodle', [
+            'course_id' => $courseId,
+            'teachers_count' => count($teachers),
+            'teachers' => array_map(function($t) {
+                return [
+                    'id' => $t['id'] ?? null,
+                    'email' => $t['email'] ?? null,
+                    'fullname' => $t['fullname'] ?? null,
+                    'roles' => array_column($t['roles'] ?? [], 'shortname')
+                ];
+            }, $teachers)
+        ]);
+        
+        return $teachers;
     }
 
     /**

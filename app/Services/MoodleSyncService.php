@@ -233,10 +233,79 @@ class MoodleSyncService
             }
         }
 
+        // Получаем преподавателей курса из Moodle
+        $instructorId = null;
+        try {
+            $teachers = $this->moodleApi->getCourseTeachers($moodleCourseId);
+            
+            if ($teachers !== false && !empty($teachers)) {
+                // Берем первого преподавателя (или можно выбрать по приоритету)
+                $moodleTeacher = $teachers[0];
+                $teacherEmail = $moodleTeacher['email'] ?? null;
+                $teacherMoodleId = $moodleTeacher['id'] ?? null;
+                
+                if ($teacherEmail) {
+                    // Ищем преподавателя в локальной БД по email или moodle_user_id
+                    $instructor = \App\Models\User::where('email', $teacherEmail)
+                        ->orWhere('moodle_user_id', $teacherMoodleId)
+                        ->first();
+                    
+                    if ($instructor) {
+                        // Проверяем, есть ли у пользователя роль преподавателя
+                        if (!$instructor->hasRole('instructor')) {
+                            // Если нет роли преподавателя, добавляем её
+                            $instructorRole = \App\Models\Role::where('slug', 'instructor')->first();
+                            if ($instructorRole) {
+                                $instructor->roles()->syncWithoutDetaching([$instructorRole->id]);
+                                Log::info('Добавлена роль преподавателя пользователю', [
+                                    'user_id' => $instructor->id,
+                                    'email' => $instructor->email
+                                ]);
+                            }
+                        }
+                        
+                        $instructorId = $instructor->id;
+                        
+                        // Обновляем moodle_user_id если его не было
+                        if (!$instructor->moodle_user_id && $teacherMoodleId) {
+                            $instructor->update(['moodle_user_id' => $teacherMoodleId]);
+                        }
+                        
+                        Log::info('Найден преподаватель для курса', [
+                            'course_id' => $moodleCourseId,
+                            'instructor_id' => $instructorId,
+                            'instructor_email' => $teacherEmail
+                        ]);
+                    } else {
+                        Log::warning('Преподаватель курса не найден в локальной БД', [
+                            'course_id' => $moodleCourseId,
+                            'teacher_email' => $teacherEmail,
+                            'teacher_moodle_id' => $teacherMoodleId
+                        ]);
+                    }
+                }
+            } else {
+                Log::info('Преподаватели курса не найдены в Moodle', [
+                    'course_id' => $moodleCourseId
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка при получении преподавателей курса', [
+                'course_id' => $moodleCourseId,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        // Добавляем instructor_id в данные курса
+        if ($instructorId) {
+            $courseData['instructor_id'] = $instructorId;
+        }
+
         Log::info('Данные для синхронизации курса', [
             'moodle_course_id' => $moodleCourseId,
             'course_data' => $courseData,
-            'course_exists' => $course ? true : false
+            'course_exists' => $course ? true : false,
+            'instructor_id' => $instructorId
         ]);
 
         if ($course) {
