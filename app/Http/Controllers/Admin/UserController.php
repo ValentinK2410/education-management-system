@@ -256,7 +256,7 @@ class UserController extends Controller
         // Получаем детальную аналитику по всем элементам курса
         $detailedAnalytics = [];
         
-        foreach ($user->courses as $course) {
+        foreach ($coursesToShow as $course) {
             if (!$course->moodle_course_id) {
                 continue;
             }
