@@ -673,25 +673,66 @@ class MoodleApiService
      */
     public function getCourseQuizzes(int $courseId)
     {
-        $result = $this->call('mod_quiz_get_quizzes_by_courses', [
-            'courseids' => [$courseId]
-        ]);
+        try {
+            Log::info('getCourseQuizzes: запрос тестов курса', [
+                'course_id' => $courseId
+            ]);
+            
+            $result = $this->call('mod_quiz_get_quizzes_by_courses', [
+                'courseids' => [$courseId]
+            ]);
 
-        if ($result === false || isset($result['exception'])) {
-            Log::error('Ошибка получения тестов из Moodle', [
+            if ($result === false) {
+                Log::warning('getCourseQuizzes: запрос вернул false', [
+                    'course_id' => $courseId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getCourseQuizzes: Moodle вернул исключение', [
+                    'course_id' => $courseId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка',
+                    'errorcode' => $result['errorcode'] ?? null,
+                    'debuginfo' => $result['debuginfo'] ?? null,
+                    'full_result' => $result
+                ]);
+                return false;
+            }
+
+            // Логируем структуру ответа для отладки
+            Log::info('getCourseQuizzes: структура ответа Moodle', [
                 'course_id' => $courseId,
-                'exception' => $result['exception'] ?? null,
-                'message' => $result['message'] ?? null
+                'has_quizzes' => isset($result['quizzes']),
+                'quizzes_count' => isset($result['quizzes']) ? count($result['quizzes']) : 0,
+                'result_keys' => array_keys($result ?? []),
+                'full_result' => $result
+            ]);
+
+            // Возвращаем тесты
+            if (isset($result['quizzes'])) {
+                Log::info('getCourseQuizzes: успешно получены тесты', [
+                    'course_id' => $courseId,
+                    'quizzes_count' => count($result['quizzes'])
+                ]);
+                return $result['quizzes'];
+            }
+
+            Log::info('getCourseQuizzes: тестов не найдено', [
+                'course_id' => $courseId,
+                'result_structure' => array_keys($result ?? []),
+                'full_result' => $result
+            ]);
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error('getCourseQuizzes: исключение', [
+                'course_id' => $courseId,
+                'error' => $e->getMessage()
             ]);
             return false;
         }
-
-        // Возвращаем тесты из первого курса
-        if (isset($result['quizzes'])) {
-            return $result['quizzes'];
-        }
-
-        return [];
     }
 
     /**
