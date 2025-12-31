@@ -127,19 +127,31 @@
                                         </div>
                                     @endif
                                     
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <span>Курсов в программе:</span>
-                                        <span class="badge bg-info">
-                                            {{ $course->program->courses->count() ?? 0 }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Активных курсов:</span>
-                                        <span class="badge bg-success">
-                                            {{ $course->program->courses->where('is_active', true)->count() ?? 0 }}
-                                        </span>
-                                    </div>
+                                    @if($course->program)
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span>Курсов в программе:</span>
+                                            <span class="badge bg-info">
+                                                {{ $course->program->courses->count() ?? 0 }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Активных курсов:</span>
+                                            <span class="badge bg-success">
+                                                {{ $course->program->courses->where('is_active', true)->count() ?? 0 }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span>Курсов в программе:</span>
+                                            <span class="badge bg-secondary">Не указано</span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Активных курсов:</span>
+                                            <span class="badge bg-secondary">Не указано</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
