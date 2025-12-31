@@ -285,7 +285,10 @@ class UserController extends Controller
             }
         }
         
-        return view('admin.users.show', compact('user', 'coursesWithAssignments', 'detailedAnalytics'));
+        // Проверяем доступ к аналитике (только для администраторов и преподавателей)
+        $hasAnalyticsAccess = $currentUser->hasRole('admin') || $currentUser->hasRole('instructor');
+        
+        return view('admin.users.show', compact('user', 'coursesWithAssignments', 'detailedAnalytics', 'hasAnalyticsAccess'));
     }
 
     /**

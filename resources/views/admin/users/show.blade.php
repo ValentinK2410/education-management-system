@@ -937,6 +937,7 @@
     </div>
 
     <!-- Tab: Детальная аналитика -->
+    @if(isset($hasAnalyticsAccess) && $hasAnalyticsAccess)
     <div id="tab-analytics" class="tab-content {{ request('tab') === 'analytics' ? 'active' : '' }}">
         @if(isset($detailedAnalytics) && count($detailedAnalytics) > 0)
             @foreach($user->courses as $course)
