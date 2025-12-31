@@ -424,36 +424,45 @@
 }
 
 .assignment-status-not-submitted .assignment-status-badge,
+.assignment-mini-badge {
+    border-radius: 0.375rem;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+    padding: 0.4rem 0.7rem;
+}
+
 .assignment-mini-badge.assignment-status-not-submitted {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #dc3545;
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #b91c1c;
 }
 
 /* Желтый - не проверено */
 .assignment-status-pending {
-    border-left-color: #ffc107;
+    border-left-color: #f59e0b;
     background-color: #fffbf0;
 }
 
 .assignment-status-pending .assignment-status-badge,
 .assignment-mini-badge.assignment-status-pending {
-    background-color: #ffc107;
-    color: #000;
-    border: 1px solid #ffc107;
+    background-color: #f59e0b;
+    color: #ffffff;
+    border-color: #d97706;
 }
 
 /* Зеленый - оценка */
 .assignment-status-graded {
-    border-left-color: #28a745;
+    border-left-color: #10b981;
     background-color: #f0fff4;
 }
 
 .assignment-status-graded .assignment-status-badge,
 .assignment-mini-badge.assignment-status-graded {
-    background-color: #28a745;
-    color: white;
-    border: 1px solid #28a745;
+    background-color: #10b981;
+    color: #ffffff;
+    border-color: #059669;
 }
 
 .assignment-status-badge {

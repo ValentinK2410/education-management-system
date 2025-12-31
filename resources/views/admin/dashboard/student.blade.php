@@ -196,30 +196,34 @@
 /* Мини-бейджи для статусов заданий */
 .assignment-mini-badge {
     font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    font-weight: 600;
+    padding: 0.4rem 0.7rem;
+    font-weight: 700;
     white-space: nowrap;
+    border-radius: 0.375rem;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Красный - не сдано */
 .assignment-mini-badge.assignment-status-not-submitted {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #dc3545;
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #b91c1c;
 }
 
 /* Желтый - не проверено */
 .assignment-mini-badge.assignment-status-pending {
-    background-color: #ffc107;
-    color: #000;
-    border: 1px solid #ffc107;
+    background-color: #f59e0b;
+    color: #ffffff;
+    border-color: #d97706;
 }
 
 /* Зеленый - оценка */
 .assignment-mini-badge.assignment-status-graded {
-    background-color: #28a745;
-    color: white;
-    border: 1px solid #28a745;
+    background-color: #10b981;
+    color: #ffffff;
+    border-color: #059669;
 }
 </style>
 
