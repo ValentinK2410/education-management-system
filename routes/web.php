@@ -502,6 +502,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Аналитика курсов (доступна преподавателям и админам)
         Route::get('analytics', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::post('analytics/sync', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'sync'])->name('analytics.sync');
         Route::get('analytics/course/{course}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'course'])->name('analytics.course');
         Route::get('analytics/student/{user}', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'student'])->name('analytics.student');
         Route::get('analytics/export/excel', [\App\Http\Controllers\Admin\CourseAnalyticsController::class, 'exportExcel'])->name('analytics.export.excel');

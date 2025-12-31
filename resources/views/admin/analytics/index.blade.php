@@ -89,6 +89,9 @@
                                 <a href="{{ route('admin.analytics.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-times me-2"></i>Сбросить
                                 </a>
+                                <button type="button" class="btn btn-info ms-2" onclick="syncActivities()" id="sync-btn">
+                                    <i class="fas fa-sync me-2"></i>Синхронизировать данные
+                                </button>
                                 <div class="btn-group ms-2">
                                     <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
                                         <i class="fas fa-download me-2"></i>Экспорт

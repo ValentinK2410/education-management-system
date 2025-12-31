@@ -183,6 +183,138 @@ class CourseAnalyticsController extends Controller
     }
 
     /**
+     * Синхронизация данных из Moodle
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sync(Request $request)
+    {
+        try {
+            $courseId = $request->input('course_id');
+            $userId = $request->input('user_id');
+            
+            if (!$this->syncService) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Сервис синхронизации недоступен. Проверьте настройки Moodle.'
+                ], 500);
+            }
+            
+            $stats = [];
+            
+            if ($courseId && $userId) {
+                // Синхронизация конкретного курса и студента
+                $activityStats = $this->syncService->syncCourseActivities($courseId);
+                $progressStats = $this->syncService->syncStudentProgress($courseId, $userId);
+                
+                $stats = [
+                    'activities' => $activityStats,
+                    'progress' => $progressStats
+                ];
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => sprintf(
+                        'Синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                        $activityStats['created'] ?? 0,
+                        $activityStats['updated'] ?? 0,
+                        $progressStats['created'] ?? 0,
+                        $progressStats['updated'] ?? 0
+                    ),
+                    'stats' => $stats
+                ]);
+            } elseif ($courseId) {
+                // Синхронизация конкретного курса
+                $activityStats = $this->syncService->syncCourseActivities($courseId);
+                
+                // Синхронизация прогресса всех студентов курса
+                $course = Course::find($courseId);
+                $students = $course->users()->whereNotNull('moodle_user_id')->get();
+                
+                $totalProgress = ['created' => 0, 'updated' => 0, 'total' => 0, 'errors' => 0];
+                
+                foreach ($students as $student) {
+                    $progressStats = $this->syncService->syncStudentProgress($courseId, $student->id);
+                    $totalProgress['created'] += $progressStats['created'] ?? 0;
+                    $totalProgress['updated'] += $progressStats['updated'] ?? 0;
+                    $totalProgress['total'] += $progressStats['total'] ?? 0;
+                    $totalProgress['errors'] += $progressStats['errors'] ?? 0;
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => sprintf(
+                        'Синхронизация курса завершена. Элементов: создано %d, обновлено %d. Прогресс студентов: создано %d, обновлено %d.',
+                        $activityStats['created'] ?? 0,
+                        $activityStats['updated'] ?? 0,
+                        $totalProgress['created'],
+                        $totalProgress['updated']
+                    ),
+                    'stats' => ['activities' => $activityStats, 'progress' => $totalProgress]
+                ]);
+            } elseif ($userId) {
+                // Синхронизация конкретного студента по всем курсам
+                $user = User::find($userId);
+                $courses = $user->courses()->whereNotNull('moodle_course_id')->get();
+                
+                $totalActivities = ['created' => 0, 'updated' => 0, 'errors' => 0];
+                $totalProgress = ['created' => 0, 'updated' => 0, 'total' => 0, 'errors' => 0];
+                
+                foreach ($courses as $course) {
+                    $activityStats = $this->syncService->syncCourseActivities($course->id);
+                    $totalActivities['created'] += $activityStats['created'] ?? 0;
+                    $totalActivities['updated'] += $activityStats['updated'] ?? 0;
+                    $totalActivities['errors'] += $activityStats['errors'] ?? 0;
+                    
+                    $progressStats = $this->syncService->syncStudentProgress($course->id, $userId);
+                    $totalProgress['created'] += $progressStats['created'] ?? 0;
+                    $totalProgress['updated'] += $progressStats['updated'] ?? 0;
+                    $totalProgress['total'] += $progressStats['total'] ?? 0;
+                    $totalProgress['errors'] += $progressStats['errors'] ?? 0;
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => sprintf(
+                        'Синхронизация студента завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                        $totalActivities['created'],
+                        $totalActivities['updated'],
+                        $totalProgress['created'],
+                        $totalProgress['updated']
+                    ),
+                    'stats' => ['activities' => $totalActivities, 'progress' => $totalProgress]
+                ]);
+            } else {
+                // Полная синхронизация
+                $stats = $this->syncService->syncAll();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => sprintf(
+                        'Полная синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                        $stats['activities']['created'] ?? 0,
+                        $stats['activities']['updated'] ?? 0,
+                        $stats['progress']['created'] ?? 0,
+                        $stats['progress']['updated'] ?? 0
+                    ),
+                    'stats' => $stats
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации в контроллере аналитики', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка синхронизации: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Экспорт данных в Excel
      *
      * @param Request $request
