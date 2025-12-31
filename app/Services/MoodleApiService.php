@@ -894,8 +894,28 @@ class MoodleApiService
 
         // Получаем задания курса напрямую (без использования getCourseContents)
         $assignments = $this->getCourseAssignments($courseId);
+        
+        Log::info('getAllCourseActivities: получены задания курса', [
+            'course_id' => $courseId,
+            'assignments' => $assignments !== false ? count($assignments) : 'false',
+            'assignments_data' => $assignments !== false ? $assignments : 'false'
+        ]);
+        
         $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
+        
+        Log::info('getAllCourseActivities: получены сдачи студента', [
+            'course_id' => $courseId,
+            'student_moodle_id' => $studentMoodleId,
+            'submissions' => $submissions !== false ? count($submissions) : 'false'
+        ]);
+        
         $grades = $this->getStudentGrades($courseId, $studentMoodleId);
+        
+        Log::info('getAllCourseActivities: получены оценки студента', [
+            'course_id' => $courseId,
+            'student_moodle_id' => $studentMoodleId,
+            'grades' => $grades !== false ? count($grades) : 'false'
+        ]);
         
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
