@@ -159,6 +159,48 @@ class DashboardController extends Controller
             return ($course->pivot->status ?? 'enrolled') === 'completed';
         });
 
+        // Получаем задания из Moodle для каждого активного курса
+        $coursesWithAssignments = [];
+        $moodleApiService = null;
+        
+        if ($user->moodle_user_id) {
+            try {
+                $moodleApiService = new \App\Services\MoodleApiService();
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Ошибка инициализации MoodleApiService в Dashboard', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        foreach ($myCourses as $course) {
+            $assignmentsData = null;
+            
+            // Получаем задания только если есть moodle_user_id и moodle_course_id
+            if ($moodleApiService && $user->moodle_user_id && $course->moodle_course_id) {
+                try {
+                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
+                        $course->moodle_course_id,
+                        $user->moodle_user_id,
+                        'ПОСЛЕ СЕССИИ'
+                    );
+                    
+                    if ($assignments !== false && !empty($assignments)) {
+                        $assignmentsData = $assignments;
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Ошибка при получении заданий из Moodle в Dashboard', [
+                        'course_id' => $course->id,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'moodle_user_id' => $user->moodle_user_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            $coursesWithAssignments[$course->id] = $assignmentsData;
+        }
+
         // Получаем все программы студента
         $allPrograms = $user->programs()
             ->with('institution')
@@ -188,6 +230,7 @@ class DashboardController extends Controller
             'completedCourses' => $completedCourses,
             'myPrograms' => $myPrograms,
             'completedPrograms' => $completedPrograms,
+            'coursesWithAssignments' => $coursesWithAssignments,
             'userRole' => 'student',
         ]);
     }
