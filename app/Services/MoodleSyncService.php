@@ -52,8 +52,18 @@ class MoodleSyncService
             // Получаем все курсы из Moodle
             $moodleCourses = $this->moodleApi->getAllCourses();
 
+            Log::info('Результат getAllCourses', [
+                'result_type' => gettype($moodleCourses),
+                'is_array' => is_array($moodleCourses),
+                'is_false' => $moodleCourses === false,
+                'count' => is_array($moodleCourses) ? count($moodleCourses) : 0,
+                'first_course' => is_array($moodleCourses) && !empty($moodleCourses) ? $moodleCourses[0] : null
+            ]);
+
             if ($moodleCourses === false || empty($moodleCourses)) {
-                Log::warning('Не удалось получить курсы из Moodle или список пуст');
+                Log::warning('Не удалось получить курсы из Moodle или список пуст', [
+                    'result' => $moodleCourses
+                ]);
                 return $stats;
             }
 
@@ -61,23 +71,40 @@ class MoodleSyncService
 
             foreach ($moodleCourses as $moodleCourse) {
                 try {
+                    Log::info('Синхронизация курса', [
+                        'moodle_course_id' => $moodleCourse['id'] ?? null,
+                        'course_name' => $moodleCourse['fullname'] ?? 'Без названия',
+                        'course_data' => $moodleCourse
+                    ]);
+                    
                     $result = $this->syncCourse($moodleCourse);
                     
                     if ($result['created']) {
                         $stats['created']++;
+                        Log::info('Курс создан', [
+                            'local_course_id' => $result['course']->id ?? null,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                        ]);
                     } elseif ($result['updated']) {
                         $stats['updated']++;
+                        Log::info('Курс обновлен', [
+                            'local_course_id' => $result['course']->id ?? null,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                        ]);
                     }
                 } catch (\Exception $e) {
                     $stats['errors']++;
                     $stats['errors_list'][] = [
                         'course_id' => $moodleCourse['id'] ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ];
                     
                     Log::error('Ошибка синхронизации курса', [
                         'moodle_course_id' => $moodleCourse['id'] ?? null,
-                        'error' => $e->getMessage()
+                        'course_name' => $moodleCourse['fullname'] ?? 'Без названия',
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
@@ -120,40 +147,81 @@ class MoodleSyncService
             'description' => $moodleCourse['summary'] ?? null,
             'category_id' => $moodleCourse['categoryid'] ?? null,
             'category_name' => $moodleCourse['categoryname'] ?? null,
+            'program_id' => null, // Курсы из Moodle могут не иметь программы
             'is_active' => true,
         ];
 
         // Конвертируем даты из timestamp
-        if (!empty($moodleCourse['startdate'])) {
-            $courseData['start_date'] = date('Y-m-d', $moodleCourse['startdate']);
+        if (!empty($moodleCourse['startdate']) && $moodleCourse['startdate'] > 0) {
+            try {
+                $courseData['start_date'] = date('Y-m-d', $moodleCourse['startdate']);
+            } catch (\Exception $e) {
+                Log::warning('Ошибка конвертации startdate', [
+                    'startdate' => $moodleCourse['startdate'] ?? null,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
         
-        if (!empty($moodleCourse['enddate'])) {
-            $courseData['end_date'] = date('Y-m-d', $moodleCourse['enddate']);
+        if (!empty($moodleCourse['enddate']) && $moodleCourse['enddate'] > 0) {
+            try {
+                $courseData['end_date'] = date('Y-m-d', $moodleCourse['enddate']);
+            } catch (\Exception $e) {
+                Log::warning('Ошибка конвертации enddate', [
+                    'enddate' => $moodleCourse['enddate'] ?? null,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
+
+        Log::info('Данные для синхронизации курса', [
+            'moodle_course_id' => $moodleCourseId,
+            'course_data' => $courseData,
+            'course_exists' => $course ? true : false
+        ]);
 
         if ($course) {
             // Обновляем существующий курс
-            $course->update($courseData);
-            
-            Log::info('Курс обновлен из Moodle', [
-                'course_id' => $course->id,
-                'moodle_course_id' => $moodleCourseId,
-                'name' => $course->name
-            ]);
-            
-            return ['created' => false, 'updated' => true, 'course' => $course];
+            try {
+                $course->update($courseData);
+                
+                Log::info('Курс обновлен из Moodle', [
+                    'course_id' => $course->id,
+                    'moodle_course_id' => $moodleCourseId,
+                    'name' => $course->name
+                ]);
+                
+                return ['created' => false, 'updated' => true, 'course' => $course];
+            } catch (\Exception $e) {
+                Log::error('Ошибка обновления курса', [
+                    'course_id' => $course->id,
+                    'moodle_course_id' => $moodleCourseId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
         } else {
             // Создаем новый курс
-            $course = Course::create($courseData);
-            
-            Log::info('Курс создан из Moodle', [
-                'course_id' => $course->id,
-                'moodle_course_id' => $moodleCourseId,
-                'name' => $course->name
-            ]);
-            
-            return ['created' => true, 'updated' => false, 'course' => $course];
+            try {
+                $course = Course::create($courseData);
+                
+                Log::info('Курс создан из Moodle', [
+                    'course_id' => $course->id,
+                    'moodle_course_id' => $moodleCourseId,
+                    'name' => $course->name
+                ]);
+                
+                return ['created' => true, 'updated' => false, 'course' => $course];
+            } catch (\Exception $e) {
+                Log::error('Ошибка создания курса', [
+                    'moodle_course_id' => $moodleCourseId,
+                    'course_data' => $courseData,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
         }
     }
 
@@ -193,9 +261,20 @@ class MoodleSyncService
             // Получаем список пользователей, записанных на курс в Moodle
             $moodleUsers = $this->moodleApi->getCourseEnrolledUsers($course->moodle_course_id);
 
+            Log::info('Результат getCourseEnrolledUsers', [
+                'course_id' => $courseId,
+                'moodle_course_id' => $course->moodle_course_id,
+                'result_type' => gettype($moodleUsers),
+                'is_array' => is_array($moodleUsers),
+                'is_false' => $moodleUsers === false,
+                'count' => is_array($moodleUsers) ? count($moodleUsers) : 0,
+                'first_user' => is_array($moodleUsers) && !empty($moodleUsers) ? $moodleUsers[0] : null
+            ]);
+
             if ($moodleUsers === false || empty($moodleUsers)) {
                 Log::warning('Не удалось получить пользователей курса из Moodle или список пуст', [
-                    'moodle_course_id' => $course->moodle_course_id
+                    'moodle_course_id' => $course->moodle_course_id,
+                    'result' => $moodleUsers
                 ]);
                 return $stats;
             }
@@ -262,14 +341,32 @@ class MoodleSyncService
             ->orWhere('email', $moodleUser['email'] ?? '')
             ->first();
 
+        Log::info('Поиск пользователя для синхронизации', [
+            'moodle_user_id' => $moodleUserId,
+            'email' => $moodleUser['email'] ?? null,
+            'user_found' => $user ? true : false,
+            'user_id' => $user->id ?? null,
+            'user_moodle_id' => $user->moodle_user_id ?? null
+        ]);
+
         if (!$user) {
             // Пользователь не найден - пропускаем
             Log::warning('Пользователь не найден в локальной БД, пропускаем запись', [
                 'moodle_user_id' => $moodleUserId,
-                'email' => $moodleUser['email'] ?? null
+                'email' => $moodleUser['email'] ?? null,
+                'moodle_user_data' => $moodleUser
             ]);
             
             return ['created' => false, 'updated' => false, 'skipped' => true];
+        }
+        
+        // Обновляем moodle_user_id если его не было
+        if (!$user->moodle_user_id && $moodleUserId) {
+            $user->update(['moodle_user_id' => $moodleUserId]);
+            Log::info('Обновлен moodle_user_id для пользователя', [
+                'user_id' => $user->id,
+                'moodle_user_id' => $moodleUserId
+            ]);
         }
 
         // Проверяем, существует ли уже запись в user_courses
