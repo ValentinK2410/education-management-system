@@ -53,6 +53,11 @@ class CourseAnalyticsController extends Controller
         try {
             $user = auth()->user();
             
+            // Проверяем доступ: только администраторы и преподаватели могут видеть аналитику
+            if (!$user->hasRole('admin') && !$user->hasRole('instructor')) {
+                abort(403, 'Недостаточно прав доступа. Аналитика доступна только администраторам и преподавателям.');
+            }
+            
             // Получаем курсы преподавателя (если не админ)
             $coursesQuery = Course::with(['instructor', 'program.institution']);
             
