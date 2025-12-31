@@ -479,13 +479,21 @@ class CourseAnalyticsController extends Controller
             $query->where('student_activity_progress.grade', '<=', $filters['max_grade']);
         }
         
-        // Если преподаватель, показываем только его курсы
-        $currentUser = auth()->user();
-        if (!$currentUser->hasRole('admin')) {
-            $query->where('courses.instructor_id', $currentUser->id);
-        }
+        // Логируем запрос для отладки
+        Log::info('Запрос аналитики с фильтрами', [
+            'filters' => $filters,
+            'user_id' => $currentUser->id,
+            'is_admin' => $currentUser->hasRole('admin'),
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
         
         $activities = $query->paginate(50);
+        
+        Log::info('Результаты запроса аналитики', [
+            'total' => $activities->total(),
+            'count' => $activities->count()
+        ]);
         
         // Форматируем данные для отображения
         $formattedActivities = $activities->map(function ($progress) {
