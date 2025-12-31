@@ -37,7 +37,7 @@ return new class extends Migration
             // Индексы для быстрого поиска
             $table->index(['course_id', 'activity_type']);
             $table->index('moodle_activity_id');
-            $table->unique(['course_id', 'moodle_activity_id', 'activity_type']);
+            $table->unique(['course_id', 'moodle_activity_id', 'activity_type'], 'course_activities_unique');
         });
     }
 
