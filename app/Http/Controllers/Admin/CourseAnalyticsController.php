@@ -440,13 +440,19 @@ class CourseAnalyticsController extends Controller
             ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
             ->select('student_activity_progress.*');
         
-        // Применяем фильтры (проверяем на пустоту и null)
-        if (!empty($filters['course_id'])) {
-            $query->where('student_activity_progress.course_id', $filters['course_id']);
+        // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
+        $currentUser = auth()->user();
+        if (!$currentUser->hasRole('admin')) {
+            $query->where('courses.instructor_id', $currentUser->id);
         }
         
-        if (!empty($filters['user_id'])) {
-            $query->where('student_activity_progress.user_id', $filters['user_id']);
+        // Применяем фильтры (проверяем на пустоту и null)
+        if (!empty($filters['course_id']) && $filters['course_id'] !== '0') {
+            $query->where('student_activity_progress.course_id', (int)$filters['course_id']);
+        }
+        
+        if (!empty($filters['user_id']) && $filters['user_id'] !== '0') {
+            $query->where('student_activity_progress.user_id', (int)$filters['user_id']);
         }
         
         if (!empty($filters['activity_type'])) {
