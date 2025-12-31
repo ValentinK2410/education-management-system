@@ -317,5 +317,101 @@
     border-left: 4px solid #f6c23e;
 }
 </style>
+
+<script>
+function syncActivities() {
+    const btn = document.getElementById('sync-btn') || document.querySelector('button[onclick="syncActivities()"]');
+    const originalText = btn ? btn.innerHTML : '';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Синхронизация...';
+    }
+    
+    // Показываем уведомление
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-info alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <strong>Синхронизация запущена!</strong> Это может занять некоторое время. Страница обновится автоматически после завершения.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertBefore(alertDiv, container.firstChild);
+    }
+    
+    // Получаем значения фильтров
+    const courseId = document.getElementById('course_id') ? document.getElementById('course_id').value : '';
+    const userId = document.getElementById('user_id') ? document.getElementById('user_id').value : '';
+    
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        alert('Ошибка: CSRF токен не найден');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        return;
+    }
+    
+    // Отправляем запрос на синхронизацию
+    fetch('{{ route("admin.analytics.sync") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            course_id: courseId || null,
+            user_id: userId || null
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Ошибка сервера');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Синхронизация завершена!</strong> ${data.message || 'Данные успешно синхронизированы.'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            // Обновляем страницу через 2 секунды
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <strong>Ошибка синхронизации!</strong> ${data.message || 'Произошла ошибка при синхронизации.'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <strong>Ошибка!</strong> ${error.message || 'Не удалось выполнить синхронизацию. Проверьте консоль браузера для деталей.'}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+}
+</script>
 @endsection
 
