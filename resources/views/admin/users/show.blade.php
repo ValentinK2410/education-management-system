@@ -606,7 +606,7 @@
     </div>
 
     <!-- Tab: Программы -->
-    <div id="tab-programs" class="tab-content">
+    <div id="tab-programs" class="tab-content {{ request('tab') === 'programs' ? 'active' : '' }}">
         @if($user->programs->count() > 0)
             <div class="row">
                 @foreach($user->programs as $program)
