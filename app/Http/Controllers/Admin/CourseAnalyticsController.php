@@ -547,20 +547,32 @@ class CourseAnalyticsController extends Controller
         }
         
         // Логируем запрос для отладки
-        Log::info('Запрос аналитики с фильтрами', [
-            'filters' => $filters,
-            'user_id' => $currentUser->id,
-            'is_admin' => $currentUser->hasRole('admin'),
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
-        ]);
-        
-        $activities = $query->paginate(50);
-        
-        Log::info('Результаты запроса аналитики', [
-            'total' => $activities->total(),
-            'count' => $activities->count()
-        ]);
+        try {
+            Log::info('Запрос аналитики с фильтрами', [
+                'filters' => $filters,
+                'user_id' => $currentUser->id,
+                'is_admin' => $currentUser->hasRole('admin'),
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+            
+            $activities = $query->paginate(50);
+            
+            Log::info('Результаты запроса аналитики', [
+                'total' => $activities->total(),
+                'count' => $activities->count()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ошибка выполнения запроса аналитики', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Возвращаем пустые данные в случае ошибки
+            $activities = new \Illuminate\Pagination\LengthAwarePaginator(collect(), 0, 50);
+        }
         
         // Форматируем данные для отображения
         $formattedActivities = $activities->map(function ($progress) {
