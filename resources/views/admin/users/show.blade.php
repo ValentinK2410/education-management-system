@@ -447,27 +447,27 @@
 <!-- Tabs Navigation -->
 <div class="tabs-container">
     <div class="tabs-nav">
-        <button class="tab-button active" onclick="switchTab(event, 'info')">
+        <button class="tab-button {{ request('tab', 'info') === 'info' ? 'active' : '' }}" onclick="switchTab(event, 'info')" data-tab="info">
             <i class="fas fa-info-circle"></i>
             <span>Основная информация</span>
         </button>
-        <button class="tab-button" onclick="switchTab(event, 'programs')">
+        <button class="tab-button {{ request('tab') === 'programs' ? 'active' : '' }}" onclick="switchTab(event, 'programs')" data-tab="programs">
             <i class="fas fa-book"></i>
             <span>Программы ({{ $user->programs->count() }})</span>
         </button>
-        <button class="tab-button" onclick="switchTab(event, 'courses')">
+        <button class="tab-button {{ request('tab') === 'courses' ? 'active' : '' }}" onclick="switchTab(event, 'courses')" data-tab="courses">
             <i class="fas fa-chalkboard-teacher"></i>
             <span>Курсы ({{ $user->courses->count() }})</span>
         </button>
-        <button class="tab-button" onclick="switchTab(event, 'institutions')">
+        <button class="tab-button {{ request('tab') === 'institutions' ? 'active' : '' }}" onclick="switchTab(event, 'institutions')" data-tab="institutions">
             <i class="fas fa-university"></i>
             <span>Учебные заведения ({{ $user->institutions->count() }})</span>
         </button>
-        <button class="tab-button" onclick="switchTab(event, 'certificates')">
+        <button class="tab-button {{ request('tab') === 'certificates' ? 'active' : '' }}" onclick="switchTab(event, 'certificates')" data-tab="certificates">
             <i class="fas fa-certificate"></i>
             <span>Сертификаты и дипломы</span>
         </button>
-        <button class="tab-button" onclick="switchTab(event, 'analytics')">
+        <button class="tab-button {{ request('tab') === 'analytics' ? 'active' : '' }}" onclick="switchTab(event, 'analytics')" data-tab="analytics">
             <i class="fas fa-chart-line"></i>
             <span>Детальная аналитика</span>
         </button>
