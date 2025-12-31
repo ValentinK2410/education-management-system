@@ -979,16 +979,13 @@ class MoodleApiService
                     }
                 }
                 
-                // Находим раздел для теста
-                $sectionName = '';
-                foreach ($courseContents as $section) {
-                    if (isset($section['modules'])) {
-                        foreach ($section['modules'] as $module) {
-                            if (($module['modname'] ?? '') === 'quiz' && ($module['instance'] ?? null) == $quizId) {
-                                $sectionName = $section['name'] ?? '';
-                                break 2;
-                            }
-                        }
+                $submittedAt = null;
+                $gradedAt = null;
+                if (!empty($attempts)) {
+                    $latestAttempt = end($attempts);
+                    $submittedAt = $latestAttempt['timefinish'] ?? null;
+                    if ($status === 'completed' || $status === 'graded') {
+                        $gradedAt = $submittedAt;
                     }
                 }
                 
@@ -996,13 +993,14 @@ class MoodleApiService
                     'type' => 'quiz',
                     'moodle_id' => $quizId,
                     'name' => $quiz['name'] ?? 'Без названия',
-                    'section_name' => $sectionName,
+                    'section_name' => '', // Не можем получить без getCourseContents
                     'status' => $status,
                     'status_text' => $statusText,
                     'grade' => $gradeValue,
                     'max_grade' => $quiz['grade'] ?? null,
+                    'submitted_at' => $submittedAt,
+                    'graded_at' => $gradedAt,
                     'attempts_count' => count($attempts),
-                    'last_attempt_at' => !empty($attempts) ? (end($attempts)['timefinish'] ?? null) : null,
                 ];
             }
         }
@@ -1016,31 +1014,21 @@ class MoodleApiService
                 $forumId = $forum['id'];
                 $posts = $forumPosts[$forumId] ?? [];
                 
-                // Находим раздел для форума
-                $sectionName = '';
-                foreach ($courseContents as $section) {
-                    if (isset($section['modules'])) {
-                        foreach ($section['modules'] as $module) {
-                            if (($module['modname'] ?? '') === 'forum' && ($module['instance'] ?? null) == $forumId) {
-                                $sectionName = $section['name'] ?? '';
-                                break 2;
-                            }
-                        }
-                    }
-                }
-                
-                $status = empty($posts) ? 'not_participated' : 'participated';
+                $status = empty($posts) ? 'not_started' : 'completed';
                 $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
+                $submittedAt = !empty($posts) ? max(array_column($posts, 'timecreated')) : null;
                 
                 $activities[] = [
                     'type' => 'forum',
                     'moodle_id' => $forumId,
                     'name' => $forum['name'] ?? 'Без названия',
-                    'section_name' => $sectionName,
+                    'section_name' => '', // Не можем получить без getCourseContents
                     'status' => $status,
                     'status_text' => $statusText,
-                    'posts_count' => count($posts),
-                    'last_post_at' => !empty($posts) ? (max(array_column($posts, 'timecreated')) ?? null) : null,
+                    'grade' => null,
+                    'max_grade' => null,
+                    'submitted_at' => $submittedAt,
+                    'graded_at' => null,
                 ];
             }
         }
