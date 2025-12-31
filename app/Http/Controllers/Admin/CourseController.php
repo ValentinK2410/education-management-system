@@ -39,20 +39,29 @@ class CourseController extends Controller
         }
         
         // Если пользователь - студент, показываем только его курсы
-        // Используем отношение через модель User
-        $coursesQuery = $user->courses()
-            ->with(['program.institution', 'instructor']);
+        // Сначала получаем ID курсов из таблицы user_courses
+        $enrolledCourseIds = DB::table('user_courses')
+            ->where('user_id', $user->id)
+            ->pluck('course_id')
+            ->toArray();
         
         // Логируем для отладки
-        $coursesCount = $coursesQuery->count();
         Log::info('Курсы студента', [
             'user_id' => $user->id,
-            'courses_count' => $coursesCount,
-            'user_email' => $user->email
+            'user_email' => $user->email,
+            'enrolled_course_ids' => $enrolledCourseIds,
+            'courses_count' => count($enrolledCourseIds)
         ]);
         
-        // Получаем курсы с пагинацией
-        $courses = $coursesQuery->paginate(15);
+        // Если нет записей, возвращаем пустую коллекцию с пагинацией
+        if (empty($enrolledCourseIds)) {
+            $courses = Course::whereIn('id', [])->with(['program.institution', 'instructor'])->paginate(15);
+        } else {
+            // Загружаем курсы по ID с пагинацией
+            $courses = Course::whereIn('id', $enrolledCourseIds)
+                ->with(['program.institution', 'instructor'])
+                ->paginate(15);
+        }
         
         // Получаем задания из Moodle для каждого курса
         $coursesWithAssignments = [];
