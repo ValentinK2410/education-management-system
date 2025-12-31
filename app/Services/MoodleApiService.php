@@ -90,7 +90,7 @@ class MoodleApiService
      * @param array $params Дополнительные параметры для запроса
      * @return array|false Массив данных в формате JSON или false в случае ошибки
      */
-    private function call(string $function, array $params = []): array|false
+    private function call(string $function, array $params = [])
     {
         // Формируем URL для запроса к Moodle REST API
         $url = $this->url . '/webservice/rest/server.php';
@@ -177,7 +177,7 @@ class MoodleApiService
      *                       - email (обязательно) - email адрес
      * @return array|false Массив с данными созданного пользователя или false в случае ошибки
      */
-    public function createUser(array $userData): array|false
+    public function createUser(array $userData)
     {
         // Проверяем обязательные поля
         $required = ['username', 'password', 'firstname', 'lastname', 'email'];
@@ -239,7 +239,7 @@ class MoodleApiService
      * @param string $email Email адрес пользователя
      * @return array|false Массив с данными пользователя или false если не найден
      */
-    public function getUserByEmail(string $email): array|false
+    public function getUserByEmail(string $email)
     {
         $result = $this->call('core_user_get_users_by_field', [
             'field' => 'email',
@@ -265,7 +265,7 @@ class MoodleApiService
      * @param array $userData Данные для обновления
      * @return array|false Массив с обновленными данными или false в случае ошибки
      */
-    public function updateUser(int $moodleUserId, array $userData): array|false
+    public function updateUser(int $moodleUserId, array $userData)
     {
         $updateData = [
             'users' => [
@@ -309,7 +309,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с разделами курса или false в случае ошибки
      */
-    public function getCourseContents(int $courseId): array|false
+    public function getCourseContents(int $courseId)
     {
         try {
             Log::info('getCourseContents: запрос содержимого курса', [
@@ -359,7 +359,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с заданиями курса или false в случае ошибки
      */
-    public function getCourseAssignments(int $courseId): array|false
+    public function getCourseAssignments(int $courseId)
     {
         try {
             Log::info('getCourseAssignments: запрос заданий курса', [
@@ -418,7 +418,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с сдачами или false в случае ошибки
      */
-    public function getStudentSubmissions(int $courseId, int $studentMoodleId): array|false
+    public function getStudentSubmissions(int $courseId, int $studentMoodleId)
     {
         // Сначала получаем список заданий курса
         $assignments = $this->getCourseAssignments($courseId);
@@ -465,7 +465,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с оценками или false в случае ошибки
      */
-    public function getStudentGrades(int $courseId, int $studentMoodleId): array|false
+    public function getStudentGrades(int $courseId, int $studentMoodleId)
     {
         // Сначала получаем список заданий курса
         $assignments = $this->getCourseAssignments($courseId);
@@ -510,7 +510,7 @@ class MoodleApiService
      * @param string|null $sectionName Название раздела для фильтрации (например, "ПОСЛЕ СЕССИИ")
      * @return array|false Массив с заданиями и их статусами или false в случае ошибки
      */
-    public function getCourseAssignmentsWithStatus(int $courseId, int $studentMoodleId, ?string $sectionName = null): array|false
+    public function getCourseAssignmentsWithStatus(int $courseId, int $studentMoodleId, ?string $sectionName = null)
     {
         // Получаем содержимое курса для поиска раздела
         $courseContents = $this->getCourseContents($courseId);
@@ -656,7 +656,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с тестами курса или false в случае ошибки
      */
-    public function getCourseQuizzes(int $courseId): array|false
+    public function getCourseQuizzes(int $courseId)
     {
         $result = $this->call('mod_quiz_get_quizzes_by_courses', [
             'courseids' => [$courseId]
@@ -686,7 +686,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с попытками или false в случае ошибки
      */
-    public function getStudentQuizAttempts(int $courseId, int $studentMoodleId): array|false
+    public function getStudentQuizAttempts(int $courseId, int $studentMoodleId)
     {
         // Сначала получаем список тестов курса
         $quizzes = $this->getCourseQuizzes($courseId);
@@ -722,7 +722,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с оценками или false в случае ошибки
      */
-    public function getStudentQuizGrades(int $courseId, int $studentMoodleId): array|false
+    public function getStudentQuizGrades(int $courseId, int $studentMoodleId)
     {
         // Сначала получаем список тестов курса
         $quizzes = $this->getCourseQuizzes($courseId);
@@ -754,7 +754,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с форумами курса или false в случае ошибки
      */
-    public function getCourseForums(int $courseId): array|false
+    public function getCourseForums(int $courseId)
     {
         $result = $this->call('mod_forum_get_forums_by_courses', [
             'courseids' => [$courseId]
@@ -784,7 +784,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с постами или false в случае ошибки
      */
-    public function getStudentForumPosts(int $courseId, int $studentMoodleId): array|false
+    public function getStudentForumPosts(int $courseId, int $studentMoodleId)
     {
         // Сначала получаем список форумов курса
         $forums = $this->getCourseForums($courseId);
@@ -843,7 +843,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с материалами курса или false в случае ошибки
      */
-    public function getCourseResources(int $courseId): array|false
+    public function getCourseResources(int $courseId)
     {
         // Получаем содержимое курса, которое включает все модули
         $courseContents = $this->getCourseContents($courseId);
@@ -888,7 +888,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив с просмотрами или false в случае ошибки
      */
-    public function getStudentResourceViews(int $courseId, int $studentMoodleId): array|false
+    public function getStudentResourceViews(int $courseId, int $studentMoodleId)
     {
         // Получаем материалы курса
         $resources = $this->getCourseResources($courseId);
@@ -917,7 +917,7 @@ class MoodleApiService
      * @param int $studentMoodleId ID студента в Moodle
      * @return array|false Массив со всеми активностями и их статусами или false в случае ошибки
      */
-    public function getAllCourseActivities(int $courseId, int $studentMoodleId): array|false
+    public function getAllCourseActivities(int $courseId, int $studentMoodleId)
     {
         $activities = [];
 
@@ -1119,7 +1119,7 @@ class MoodleApiService
      *                       - 'ids' - массив ID курсов для получения (если пусто - все курсы)
      * @return array|false Массив курсов или false в случае ошибки
      */
-    public function getAllCourses(array $options = []): array|false
+    public function getAllCourses(array $options = [])
     {
         // Для получения всех курсов передаем пустой массив или без параметров
         // Moodle API core_course_get_courses возвращает все курсы, если не указаны фильтры
@@ -1167,7 +1167,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив пользователей или false в случае ошибки
      */
-    public function getCourseEnrolledUsers(int $courseId): array|false
+    public function getCourseEnrolledUsers(int $courseId)
     {
         $result = $this->call('core_enrol_get_enrolled_users', [
             'courseid' => $courseId
@@ -1191,7 +1191,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив преподавателей или false в случае ошибки
      */
-    public function getCourseTeachers(int $courseId): array|false
+    public function getCourseTeachers(int $courseId)
     {
         // Получаем всех пользователей курса
         $enrolledUsers = $this->getCourseEnrolledUsers($courseId);
@@ -1237,7 +1237,7 @@ class MoodleApiService
      * @param int $courseId ID курса в Moodle
      * @return array|false Массив с данными курса или false в случае ошибки
      */
-    public function getCourse(int $courseId): array|false
+    public function getCourse(int $courseId)
     {
         $result = $this->getAllCourses(['ids' => [$courseId]]);
         
