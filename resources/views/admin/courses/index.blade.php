@@ -37,6 +37,22 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @if(!$isAdmin && $courses->count() == 0)
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                                <p class="mb-2">Вы не записаны ни на один курс</p>
+                                                <p class="small">Обратитесь к администратору для записи на курс или запустите синхронизацию с Moodle</p>
+                                                @if(auth()->user()->moodle_user_id)
+                                                    <a href="{{ route('admin.moodle-sync.index') }}" class="btn btn-sm btn-primary mt-2">
+                                                        <i class="fas fa-sync me-1"></i>Синхронизировать с Moodle
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @else
                                 @forelse($courses as $course)
                                     <tr>
                                         <td><span class="badge bg-secondary">{{ $course->id }}</span></td>
@@ -185,6 +201,7 @@
                                         </td>
                                     </tr>
                                 @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>

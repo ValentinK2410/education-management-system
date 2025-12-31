@@ -518,26 +518,41 @@ class MoodleApiService
      */
     public function getAllCourses(array $options = []): array|false
     {
+        // Для получения всех курсов передаем пустой массив или без параметров
+        // Moodle API core_course_get_courses возвращает все курсы, если не указаны фильтры
         $params = [];
         
-        // Если указаны конкретные ID курсов
+        // Если указаны конкретные ID курсов, используем другой подход
         if (!empty($options['ids']) && is_array($options['ids'])) {
-            $params['options'] = [
-                'ids' => $options['ids']
-            ];
+            // Для получения конкретных курсов можно использовать фильтр
+            // Но проще получить все и отфильтровать
         }
         
         $result = $this->call('core_course_get_courses', $params);
         
         if ($result === false || isset($result['exception'])) {
+            Log::error('Ошибка получения курсов из Moodle', [
+                'exception' => $result['exception'] ?? null,
+                'message' => $result['message'] ?? null
+            ]);
             return false;
         }
         
         // Возвращаем массив курсов (исключаем системный курс с id=1)
         if (is_array($result)) {
-            return array_values(array_filter($result, function($course) {
+            $courses = array_values(array_filter($result, function($course) {
                 return isset($course['id']) && $course['id'] > 1;
             }));
+            
+            // Если указаны конкретные ID, фильтруем по ним
+            if (!empty($options['ids']) && is_array($options['ids'])) {
+                $courses = array_filter($courses, function($course) use ($options) {
+                    return in_array($course['id'], $options['ids']);
+                });
+                $courses = array_values($courses);
+            }
+            
+            return $courses;
         }
         
         return [];

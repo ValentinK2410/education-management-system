@@ -141,6 +141,14 @@ class DashboardController extends Controller
             ->with(['program.institution', 'instructor'])
             ->get();
 
+        // Логируем для отладки
+        \Illuminate\Support\Facades\Log::info('Dashboard: Курсы студента', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'total_courses' => $allCourses->count(),
+            'course_ids' => $allCourses->pluck('id')->toArray()
+        ]);
+
         // Разделяем на активные (enrolled или active) и завершенные
         $myCourses = $allCourses->filter(function ($course) {
             $status = $course->pivot->status ?? 'enrolled';
