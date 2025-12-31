@@ -361,20 +361,54 @@ class MoodleApiService
      */
     public function getCourseAssignments(int $courseId): array|false
     {
-        $result = $this->call('mod_assign_get_assignments', [
-            'courseids' => [$courseId]
-        ]);
+        try {
+            Log::info('getCourseAssignments: запрос заданий курса', [
+                'course_id' => $courseId
+            ]);
+            
+            $result = $this->call('mod_assign_get_assignments', [
+                'courseids' => [$courseId]
+            ]);
 
-        if ($result === false || isset($result['exception'])) {
+            if ($result === false) {
+                Log::warning('getCourseAssignments: запрос вернул false', [
+                    'course_id' => $courseId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getCourseAssignments: Moodle вернул исключение', [
+                    'course_id' => $courseId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                ]);
+                return false;
+            }
+
+            // Возвращаем задания из первого курса
+            if (isset($result['courses'][0]['assignments'])) {
+                $assignments = $result['courses'][0]['assignments'];
+                Log::info('getCourseAssignments: успешно получены задания', [
+                    'course_id' => $courseId,
+                    'assignments_count' => count($assignments)
+                ]);
+                return $assignments;
+            }
+
+            Log::info('getCourseAssignments: заданий не найдено', [
+                'course_id' => $courseId,
+                'result_structure' => array_keys($result ?? [])
+            ]);
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error('getCourseAssignments: исключение', [
+                'course_id' => $courseId,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
-
-        // Возвращаем задания из первого курса
-        if (isset($result['courses'][0]['assignments'])) {
-            return $result['courses'][0]['assignments'];
-        }
-
-        return [];
     }
 
     /**
