@@ -269,15 +269,17 @@
                                 @empty
                                     <tr>
                                         <td colspan="10" class="text-center py-4">
-                                            <div class="text-muted">
+                                            <div class="alert {{ isset($hasNoData) && $hasNoData ? 'alert-info' : 'text-muted' }}">
                                                 <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                                <p><strong>Данные не найдены</strong></p>
+                                                <p><strong>{{ isset($noDataMessage) && $noDataMessage ? $noDataMessage : 'Данные не найдены' }}</strong></p>
+                                                @if(!isset($hasNoData) || !$hasNoData)
                                                 <p class="small mb-3">Возможные причины:</p>
                                                 <ul class="list-unstyled small">
                                                     <li>• Данные еще не синхронизированы из Moodle</li>
                                                     <li>• Выбранные фильтры не соответствуют данным</li>
                                                     <li>• Студенты не выполнили задания</li>
                                                 </ul>
+                                                @endif
                                                 <button type="button" class="btn btn-primary mt-3" onclick="syncActivities()">
                                                     <i class="fas fa-sync me-2"></i>Запустить синхронизацию из Moodle
                                                 </button>

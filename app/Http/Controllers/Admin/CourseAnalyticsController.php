@@ -84,12 +84,32 @@ class CourseAnalyticsController extends Controller
             // Применяем фильтры
             $filteredData = $this->applyFilters($request, $courses, null, null, $students);
             
+            // Проверяем, есть ли данные для выбранного студента
+            $hasNoData = false;
+            $noDataMessage = null;
+            if (!empty($request->get('user_id'))) {
+                $selectedUserId = (int)$request->get('user_id');
+                $hasProgress = StudentActivityProgress::where('user_id', $selectedUserId)->exists();
+                if (!$hasProgress) {
+                    $hasNoData = true;
+                    $selectedUser = User::find($selectedUserId);
+                    $noDataMessage = $selectedUser 
+                        ? "Для студента \"{$selectedUser->name}\" нет данных о прогрессе. Запустите синхронизацию данных из Moodle."
+                        : "Для выбранного студента нет данных о прогрессе. Запустите синхронизацию данных из Moodle.";
+                }
+            } elseif ($totalProgressCount == 0) {
+                $hasNoData = true;
+                $noDataMessage = "В системе нет данных о прогрессе студентов. Запустите синхронизацию данных из Moodle.";
+            }
+            
             return view('admin.analytics.index', [
                 'courses' => $courses,
                 'activities' => $filteredData['activities'],
                 'students' => $filteredData['students'],
                 'filters' => $filteredData['filters'],
                 'stats' => $filteredData['stats'],
+                'hasNoData' => $hasNoData,
+                'noDataMessage' => $noDataMessage,
             ]);
         } catch (\Exception $e) {
             Log::error('Ошибка в методе index контроллера аналитики', [
