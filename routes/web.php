@@ -417,6 +417,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Главная панель администратора - доступна всем авторизованным пользователям
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::post('/admin/dashboard/sync', [DashboardController::class, 'sync'])->name('admin.dashboard.sync');
 
     // Маршруты для переключения пользователей и ролей (только для админов)
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {

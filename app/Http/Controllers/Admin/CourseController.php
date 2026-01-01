@@ -33,7 +33,7 @@ class CourseController extends Controller
         
         // Если пользователь - админ, показываем все курсы
         if ($isAdmin) {
-            $courses = Course::with(['program.institution', 'instructor'])->paginate(15);
+        $courses = Course::with(['program.institution', 'instructor'])->paginate(15);
             $coursesWithAssignments = [];
             return view('admin.courses.index', compact('courses', 'isAdmin', 'coursesWithAssignments'));
         }

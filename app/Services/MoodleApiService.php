@@ -1308,7 +1308,7 @@ class MoodleApiService
 
     /**
      * Получить URL для задания в Moodle
-     * 
+     *
      * @param int|null $cmid Course Module ID (если есть)
      * @param int|null $assignmentId Assignment ID (если cmid нет)
      * @param int|null $courseId Course ID (если нужен альтернативный способ)
@@ -1320,7 +1320,7 @@ class MoodleApiService
             // Используем cmid для прямого доступа к заданию
             return $this->url . '/mod/assign/view.php?id=' . $cmid;
         }
-        
+
         // Если cmid нет, можно попробовать использовать assignment ID
         // Но это менее надежно, так как нужен cmid
         if ($assignmentId && $courseId) {
@@ -1328,7 +1328,7 @@ class MoodleApiService
             // Но лучше использовать cmid
             return $this->url . '/mod/assign/view.php?id=' . $assignmentId;
         }
-        
+
         return null;
     }
 }

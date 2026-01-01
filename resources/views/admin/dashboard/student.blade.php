@@ -1,4 +1,21 @@
 {{-- Dashboard для студента --}}
+
+<!-- Индикатор синхронизации -->
+<div id="sync-indicator" class="alert alert-info d-none mb-4" role="alert">
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-3" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+        <div class="flex-grow-1">
+            <strong>Синхронизация данных с Moodle...</strong>
+            <div class="progress mt-2" style="height: 6px;">
+                <div id="sync-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small id="sync-message" class="d-block mt-1">Подготовка к синхронизации...</small>
+        </div>
+    </div>
+</div>
+
 <!-- Статистические карточки -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">

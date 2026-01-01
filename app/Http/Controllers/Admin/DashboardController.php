@@ -32,8 +32,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Синхронизируем данные пользователя из Moodle
-        $this->syncUserDataFromMoodle($user);
+        // Синхронизация теперь происходит асинхронно через AJAX
+        // чтобы не блокировать загрузку страницы
 
         // Проверяем, переключен ли пользователь
         $isSwitched = session('is_switched', false);
@@ -404,6 +404,46 @@ class DashboardController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+        }
+    }
+
+    /**
+     * Асинхронная синхронизация данных пользователя из Moodle (AJAX)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sync()
+    {
+        $user = Auth::user();
+
+        if (!$user->moodle_user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Пользователь не имеет moodle_user_id',
+                'progress' => 100
+            ]);
+        }
+
+        try {
+            // Запускаем синхронизацию в фоне
+            $this->syncUserDataFromMoodle($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Синхронизация завершена успешно',
+                'progress' => 100
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ошибка при асинхронной синхронизации данных пользователя', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка синхронизации: ' . $e->getMessage(),
+                'progress' => 100
+            ], 500);
         }
     }
 }
