@@ -15,17 +15,27 @@
                             <small class="text-muted ms-2">(Мои курсы)</small>
                         @endif
                     </h3>
-                    @if($isAdmin)
-                        <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Добавить курс
-                        </a>
-                    @endif
+                    <div class="d-flex gap-2">
+                        @if($isAdmin)
+                            <button type="button" class="btn btn-danger" id="bulkDeleteBtn" style="display: none;">
+                                <i class="fas fa-trash me-2"></i>Удалить выбранные
+                            </button>
+                            <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Добавить курс
+                            </a>
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
+                                    @if($isAdmin)
+                                        <th style="width: 40px;">
+                                            <input type="checkbox" id="selectAll" title="Выбрать все">
+                                        </th>
+                                    @endif
                                     <th>ID</th>
                                     <th>Название</th>
                                     <th>Программа</th>
@@ -55,6 +65,11 @@
                                 @else
                                 @forelse($courses as $course)
                                     <tr>
+                                        @if($isAdmin)
+                                            <td>
+                                                <input type="checkbox" class="course-checkbox" value="{{ $course->id }}" data-course-name="{{ $course->name }}">
+                                            </td>
+                                        @endif
                                         <td><span class="badge bg-secondary">{{ $course->id }}</span></td>
                                         <td>
                                             <div>

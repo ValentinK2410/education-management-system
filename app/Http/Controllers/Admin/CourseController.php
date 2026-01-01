@@ -301,6 +301,41 @@ class CourseController extends Controller
     }
 
     /**
+     * Массовое удаление курсов
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|integer|exists:courses,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $deletedCount = 0;
+
+        foreach ($ids as $id) {
+            try {
+                $course = Course::findOrFail($id);
+                $course->delete();
+                $deletedCount++;
+            } catch (\Exception $e) {
+                Log::error('Ошибка при удалении курса', [
+                    'course_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Успешно удалено курсов: {$deletedCount} из " . count($ids)
+        ]);
+    }
+
+    /**
      * Создать дубликат курса
      */
     public function duplicate(Course $course)

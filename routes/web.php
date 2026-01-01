@@ -487,6 +487,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление курсами
         Route::post('courses/{course}/duplicate', [CourseController::class, 'duplicate'])->name('courses.duplicate');
+        Route::post('courses/bulk-destroy', [CourseController::class, 'bulkDestroy'])->name('courses.bulk-destroy');
         Route::resource('courses', CourseController::class);
 
         // События
