@@ -433,12 +433,40 @@ class DashboardController extends Controller
             $syncService = new MoodleSyncService();
             
             // Получаем курсы пользователя из Moodle напрямую (быстрее чем синхронизировать все курсы)
-            $userMoodleCourses = $moodleApi->getUsersCourses($user->moodle_user_id);
+            $userMoodleCourses = $moodleApi->call('core_enrol_get_users_courses', [
+                'userid' => $user->moodle_user_id
+            ]);
             
-            if ($userMoodleCourses === false || empty($userMoodleCourses)) {
+            // Проверяем результат
+            if ($userMoodleCourses === false || isset($userMoodleCourses['exception'])) {
+                $errorMessage = isset($userMoodleCourses['message']) 
+                    ? $userMoodleCourses['message'] 
+                    : 'Не удалось получить курсы пользователя из Moodle';
+                    
+                Log::error('Ошибка получения курсов пользователя из Moodle', [
+                    'user_id' => $user->id,
+                    'moodle_user_id' => $user->moodle_user_id,
+                    'error' => $errorMessage
+                ]);
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Не удалось получить курсы пользователя из Moodle',
+                    'message' => $errorMessage,
+                    'progress' => 100
+                ]);
+            }
+            
+            // Фильтруем системный курс с id=1
+            if (is_array($userMoodleCourses)) {
+                $userMoodleCourses = array_values(array_filter($userMoodleCourses, function($course) {
+                    return isset($course['id']) && $course['id'] > 1;
+                }));
+            }
+            
+            if (empty($userMoodleCourses)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'У пользователя нет курсов в Moodle',
                     'progress' => 100
                 ]);
             }
