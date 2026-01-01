@@ -423,7 +423,7 @@ class UserController extends Controller
 
         $message = "Успешно удалено пользователей: {$deletedCount} из " . count($ids);
         if (!empty($errors)) {
-            $message += "\nОшибки: " . implode(', ', $errors);
+            $message .= "\nОшибки: " . implode(', ', $errors);
         }
 
         return response()->json([
