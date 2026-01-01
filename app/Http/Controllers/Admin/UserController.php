@@ -385,6 +385,54 @@ class UserController extends Controller
     }
 
     /**
+     * Массовое удаление пользователей
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|integer|exists:users,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            try {
+                // Нельзя удалить самого себя
+                if ($id == auth()->id()) {
+                    $errors[] = "Нельзя удалить самого себя";
+                    continue;
+                }
+
+                $user = User::findOrFail($id);
+                $user->delete();
+                $deletedCount++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Ошибка при удалении пользователя', [
+                    'user_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+                $errors[] = "Ошибка при удалении пользователя ID: {$id}";
+            }
+        }
+
+        $message = "Успешно удалено пользователей: {$deletedCount} из " . count($ids);
+        if (!empty($errors)) {
+            $message += "\nОшибки: " . implode(', ', $errors);
+        }
+
+        return response()->json([
+            'success' => $deletedCount > 0,
+            'message' => $message
+        ]);
+    }
+
+    /**
      * Получить статистику для панели управления
      *
      * @return array

@@ -12,9 +12,14 @@
                     <h3 class="card-title mb-0">
                         <i class="fas fa-users me-2"></i>Пользователи
                     </h3>
-                    <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Добавить пользователя
-                    </a>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-danger" id="bulkDeleteBtn" style="display: none;">
+                            <i class="fas fa-trash me-2"></i>Удалить выбранные
+                        </button>
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Добавить пользователя
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     {{-- Форма поиска и фильтров --}}
@@ -79,6 +84,9 @@
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" id="selectAll" title="Выбрать все">
+                                    </th>
                                     <th>ID</th>
                                     <th>Имя</th>
                                     <th>Email</th>
@@ -91,6 +99,9 @@
                             <tbody>
                                 @forelse($users as $user)
                                     <tr>
+                                        <td>
+                                            <input type="checkbox" class="user-checkbox" value="{{ $user->id }}" data-user-name="{{ $user->name }}" data-user-email="{{ $user->email }}">
+                                        </td>
                                         <td><span class="badge bg-secondary">{{ $user->id }}</span></td>
                                         <td>
                                             <div class="d-flex align-items-center">
