@@ -260,8 +260,9 @@ class DashboardController extends Controller
 
         try {
             $syncService = new MoodleSyncService();
+            $moodleApi = new \App\Services\MoodleApiService();
             
-            // Синхронизируем все курсы из Moodle
+            // Синхронизируем все курсы из Moodle (чтобы убедиться, что все курсы есть в локальной БД)
             Log::info('Начало синхронизации курсов из Moodle для пользователя', [
                 'user_id' => $user->id,
                 'moodle_user_id' => $user->moodle_user_id
@@ -274,34 +275,39 @@ class DashboardController extends Controller
                 'stats' => $coursesStats
             ]);
 
-            // Получаем все курсы, на которые записан пользователь в Moodle
-            // Для этого нужно получить все курсы и проверить записи пользователя
-            $moodleApi = new \App\Services\MoodleApiService();
-            $allMoodleCourses = $moodleApi->getAllCourses();
+            // Получаем курсы пользователя из Moodle через API
+            // Используем core_enrol_get_users_courses для получения курсов конкретного пользователя
+            $userMoodleCourses = $moodleApi->call('core_enrol_get_users_courses', [
+                'userid' => $user->moodle_user_id
+            ]);
             
-            if ($allMoodleCourses && is_array($allMoodleCourses)) {
-                foreach ($allMoodleCourses as $moodleCourse) {
+            if ($userMoodleCourses && is_array($userMoodleCourses) && !isset($userMoodleCourses['exception'])) {
+                Log::info('Получены курсы пользователя из Moodle', [
+                    'user_id' => $user->id,
+                    'moodle_user_id' => $user->moodle_user_id,
+                    'courses_count' => count($userMoodleCourses)
+                ]);
+                
+                // Синхронизируем записи пользователя на каждый курс
+                foreach ($userMoodleCourses as $moodleCourse) {
                     try {
-                        // Получаем список пользователей курса
-                        $enrolledUsers = $moodleApi->getCourseEnrolledUsers($moodleCourse['id']);
-                        
-                        // Проверяем, записан ли текущий пользователь на этот курс
-                        $isEnrolled = false;
-                        if ($enrolledUsers && is_array($enrolledUsers)) {
-                            foreach ($enrolledUsers as $enrolledUser) {
-                                if (isset($enrolledUser['id']) && $enrolledUser['id'] == $user->moodle_user_id) {
-                                    $isEnrolled = true;
-                                    break;
-                                }
-                            }
+                        $moodleCourseId = $moodleCourse['id'] ?? null;
+                        if (!$moodleCourseId) {
+                            continue;
                         }
                         
-                        // Если пользователь записан, синхронизируем запись
-                        if ($isEnrolled) {
-                            $localCourse = Course::where('moodle_course_id', $moodleCourse['id'])->first();
-                            if ($localCourse) {
-                                $syncService->syncCourseEnrollments($localCourse->id);
-                            }
+                        // Находим локальный курс
+                        $localCourse = Course::where('moodle_course_id', $moodleCourseId)->first();
+                        
+                        if ($localCourse) {
+                            // Синхронизируем запись пользователя на курс
+                            $syncService->syncCourseEnrollments($localCourse->id);
+                        } else {
+                            Log::warning('Локальный курс не найден для синхронизации записи', [
+                                'user_id' => $user->id,
+                                'moodle_course_id' => $moodleCourseId,
+                                'course_name' => $moodleCourse['fullname'] ?? 'Неизвестно'
+                            ]);
                         }
                     } catch (\Exception $e) {
                         Log::error('Ошибка при синхронизации записи на курс', [
@@ -309,6 +315,54 @@ class DashboardController extends Controller
                             'moodle_course_id' => $moodleCourse['id'] ?? null,
                             'error' => $e->getMessage()
                         ]);
+                    }
+                }
+            } else {
+                // Если метод не работает, используем альтернативный способ
+                Log::info('Используем альтернативный способ синхронизации записей пользователя', [
+                    'user_id' => $user->id,
+                    'moodle_user_id' => $user->moodle_user_id
+                ]);
+                
+                // Получаем все курсы и синхронизируем записи для тех, где есть пользователь
+                $allMoodleCourses = $moodleApi->getAllCourses();
+                
+                if ($allMoodleCourses && is_array($allMoodleCourses)) {
+                    foreach ($allMoodleCourses as $moodleCourse) {
+                        try {
+                            $moodleCourseId = $moodleCourse['id'] ?? null;
+                            if (!$moodleCourseId) {
+                                continue;
+                            }
+                            
+                            // Получаем список пользователей курса
+                            $enrolledUsers = $moodleApi->getCourseEnrolledUsers($moodleCourseId);
+                            
+                            // Проверяем, записан ли текущий пользователь на этот курс
+                            $isEnrolled = false;
+                            if ($enrolledUsers && is_array($enrolledUsers)) {
+                                foreach ($enrolledUsers as $enrolledUser) {
+                                    if (isset($enrolledUser['id']) && $enrolledUser['id'] == $user->moodle_user_id) {
+                                        $isEnrolled = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Если пользователь записан, синхронизируем запись
+                            if ($isEnrolled) {
+                                $localCourse = Course::where('moodle_course_id', $moodleCourseId)->first();
+                                if ($localCourse) {
+                                    $syncService->syncCourseEnrollments($localCourse->id);
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Ошибка при синхронизации записи на курс (альтернативный способ)', [
+                                'user_id' => $user->id,
+                                'moodle_course_id' => $moodleCourse['id'] ?? null,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
                     }
                 }
             }
