@@ -105,16 +105,22 @@ class PublicController extends Controller
     public function courses()
     {
         try {
-            // Показываем активные курсы, но если их нет, показываем все курсы
+            // Показываем активные курсы с программой
             $courses = Course::active()
                 ->with(['program.institution', 'instructor'])
-                ->whereHas('program') // Только курсы с программой
+                ->whereHas('program')
                 ->paginate(12);
             
-            // Если активных курсов нет, показываем все курсы (включая неактивные)
+            // Если активных курсов с программой нет, показываем все активные курсы
+            if ($courses->isEmpty()) {
+                $courses = Course::active()
+                    ->with(['program.institution', 'instructor'])
+                    ->paginate(12);
+            }
+            
+            // Если и активных курсов нет, показываем все курсы (включая неактивные)
             if ($courses->isEmpty()) {
                 $courses = Course::with(['program.institution', 'instructor'])
-                    ->whereHas('program')
                     ->paginate(12);
             }
         } catch (\Exception $e) {
