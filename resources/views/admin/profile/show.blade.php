@@ -34,7 +34,7 @@
                         <p><i class="fas fa-map-marker-alt me-2"></i>{{ $user->city }}</p>
                     @endif
                     
-                    <a href="{{ route('admin.test-profile-edit') }}" class="btn btn-primary">
+                    <a href="{{ route('admin.profile.edit') }}" class="btn btn-primary">
                         <i class="fas fa-edit me-2"></i>Редактировать профиль
                     </a>
                 </div>

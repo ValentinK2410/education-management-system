@@ -199,7 +199,7 @@
                         </div>
 
                         <div class="d-flex justify-content-between">
-                            <a href="{{ route('admin.test-profile') }}" class="btn btn-secondary">
+                            <a href="{{ route('admin.profile.show') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Назад к профилю
                             </a>
                             <button type="submit" class="btn btn-primary">
