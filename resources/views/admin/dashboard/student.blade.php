@@ -379,3 +379,87 @@
     </div>
 </div>
 @endif
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const syncIndicator = document.getElementById('sync-indicator');
+    const syncProgress = document.getElementById('sync-progress');
+    const syncMessage = document.getElementById('sync-message');
+    
+    // Проверяем, есть ли у пользователя moodle_user_id
+    @if(auth()->user()->moodle_user_id)
+        // Показываем индикатор синхронизации
+        syncIndicator.classList.remove('d-none');
+        
+        // Обновляем сообщение
+        syncMessage.textContent = 'Запуск синхронизации...';
+        syncProgress.style.width = '10%';
+        
+        // Запускаем синхронизацию через AJAX
+        fetch('{{ route("admin.dashboard.sync") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Обновляем прогресс
+            syncProgress.style.width = '100%';
+            
+            if (data.success) {
+                syncMessage.textContent = 'Синхронизация завершена успешно!';
+                syncIndicator.classList.remove('alert-info');
+                syncIndicator.classList.add('alert-success');
+                
+                // Скрываем индикатор через 3 секунды
+                setTimeout(() => {
+                    syncIndicator.classList.add('d-none');
+                    // Перезагружаем страницу для отображения обновленных данных
+                    window.location.reload();
+                }, 2000);
+            } else {
+                syncMessage.textContent = 'Ошибка: ' + (data.message || 'Неизвестная ошибка');
+                syncIndicator.classList.remove('alert-info');
+                syncIndicator.classList.add('alert-warning');
+                
+                // Скрываем индикатор через 5 секунд при ошибке
+                setTimeout(() => {
+                    syncIndicator.classList.add('d-none');
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка синхронизации:', error);
+            syncProgress.style.width = '100%';
+            syncMessage.textContent = 'Ошибка соединения с сервером';
+            syncIndicator.classList.remove('alert-info');
+            syncIndicator.classList.add('alert-danger');
+            
+            // Скрываем индикатор через 5 секунд при ошибке
+            setTimeout(() => {
+                syncIndicator.classList.add('d-none');
+            }, 5000);
+        });
+        
+        // Симуляция прогресса во время синхронизации
+        let progress = 10;
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += 10;
+                syncProgress.style.width = progress + '%';
+            }
+        }, 500);
+        
+        // Останавливаем симуляцию прогресса после завершения запроса
+        setTimeout(() => {
+            clearInterval(progressInterval);
+        }, 10000);
+    @else
+        // Если нет moodle_user_id, скрываем индикатор
+        syncIndicator.classList.add('d-none');
+    @endif
+});
+</script>
