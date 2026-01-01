@@ -547,4 +547,111 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endif
+
+@if($isAdmin)
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const courseCheckboxes = document.querySelectorAll('.course-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    
+    // Обработчик для "Выбрать все"
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            courseCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkDeleteButton();
+        });
+    }
+    
+    // Обработчики для отдельных чекбоксов
+    courseCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllCheckbox();
+            updateBulkDeleteButton();
+        });
+    });
+    
+    // Обновление состояния "Выбрать все"
+    function updateSelectAllCheckbox() {
+        if (selectAllCheckbox) {
+            const allChecked = Array.from(courseCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(courseCheckboxes).some(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    }
+    
+    // Обновление видимости кнопки массового удаления
+    function updateBulkDeleteButton() {
+        if (bulkDeleteBtn) {
+            const checkedCount = Array.from(courseCheckboxes).filter(cb => cb.checked).length;
+            if (checkedCount > 0) {
+                bulkDeleteBtn.style.display = 'inline-block';
+                bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Удалить выбранные (${checkedCount})`;
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+    }
+    
+    // Обработчик массового удаления
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', function() {
+            const selectedIds = Array.from(courseCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            if (selectedIds.length === 0) {
+                alert('Выберите хотя бы один курс для удаления');
+                return;
+            }
+            
+            const courseNames = Array.from(courseCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.dataset.courseName)
+                .join(', ');
+            
+            if (!confirm(`Вы уверены, что хотите удалить следующие курсы?\n\n${courseNames}\n\nЭто действие нельзя отменить!`)) {
+                return;
+            }
+            
+            // Отправка запроса на удаление
+            fetch('{{ route("admin.courses.bulk-destroy") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    ids: selectedIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показываем сообщение об успехе
+                    if (data.message) {
+                        alert(data.message);
+                    }
+                    
+                    // Перезагружаем страницу
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Произошла ошибка при удалении курсов');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при удалении курсов');
+            });
+        });
+    }
+});
+</script>
+@endpush
+@endif
 @endsection
