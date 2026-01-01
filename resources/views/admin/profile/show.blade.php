@@ -173,7 +173,7 @@
                                     <div class="card border-primary">
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $program->name }}</h6>
-                                            <p class="card-text">{{ $program->description ?? 'Без описания' }}</p>
+                                            <p class="card-text">{!! strip_tags($program->description ?? 'Без описания') !!}</p>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <small class="text-muted">
                                                     {{ $program->institution->name ?? 'Без заведения' }}
@@ -210,7 +210,7 @@
                                     <div class="card border-success">
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $course->name }}</h6>
-                                            <p class="card-text">{{ $course->description ?? 'Без описания' }}</p>
+                                            <p class="card-text">{!! strip_tags($course->description ?? 'Без описания') !!}</p>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <small class="text-muted">
                                                     {{ $course->program->name ?? 'Без программы' }}
