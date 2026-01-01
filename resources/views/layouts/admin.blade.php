@@ -977,10 +977,10 @@
                             <small class="text-muted d-block">{{ auth()->user()->email }}</small>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{{ route('admin.test-profile') }}">
+                        <a class="dropdown-item" href="{{ route('admin.profile.show') }}">
                             <i class="fas fa-user me-2"></i>{{ __('messages.profile') }}
                         </a>
-                        <a class="dropdown-item" href="{{ route('admin.test-profile-edit') }}">
+                        <a class="dropdown-item" href="{{ route('admin.profile.edit') }}">
                             <i class="fas fa-user-edit me-2"></i>{{ __('messages.edit_profile') }}
                         </a>
                         <a class="dropdown-item" href="#">
