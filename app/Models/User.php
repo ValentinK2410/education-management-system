@@ -208,22 +208,24 @@ class User extends Authenticatable
 
     /**
      * Получить активные программы пользователя
+     * Включает программы со статусом 'active' и 'enrolled'
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function activePrograms()
     {
-        return $this->programs()->wherePivot('status', 'active');
+        return $this->programs()->whereIn('user_programs.status', ['active', 'enrolled']);
     }
 
     /**
      * Получить активные курсы пользователя
+     * Включает курсы со статусом 'active' и 'enrolled'
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function activeCourses()
     {
-        return $this->courses()->wherePivot('status', 'active');
+        return $this->courses()->whereIn('user_courses.status', ['active', 'enrolled']);
     }
 
     /**
