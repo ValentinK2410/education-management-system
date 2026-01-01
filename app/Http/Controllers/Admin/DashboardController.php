@@ -8,7 +8,10 @@ use App\Models\Institution;
 use App\Models\Program;
 use App\Models\Course;
 use App\Models\Role;
+use App\Services\MoodleSyncService;
+use App\Services\CourseActivitySyncService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Контроллер для панели управления
@@ -28,6 +31,9 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+
+        // Синхронизируем данные пользователя из Moodle
+        $this->syncUserDataFromMoodle($user);
 
         // Проверяем, переключен ли пользователь
         $isSwitched = session('is_switched', false);
@@ -233,5 +239,117 @@ class DashboardController extends Controller
             'coursesWithAssignments' => $coursesWithAssignments,
             'userRole' => 'student',
         ]);
+    }
+
+    /**
+     * Синхронизировать данные пользователя из Moodle
+     *
+     * @param User $user
+     * @return void
+     */
+    private function syncUserDataFromMoodle(User $user): void
+    {
+        // Проверяем, есть ли у пользователя moodle_user_id
+        if (!$user->moodle_user_id) {
+            Log::info('Пользователь не имеет moodle_user_id, пропускаем синхронизацию', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+            return;
+        }
+
+        try {
+            $syncService = new MoodleSyncService();
+            
+            // Синхронизируем все курсы из Moodle
+            Log::info('Начало синхронизации курсов из Moodle для пользователя', [
+                'user_id' => $user->id,
+                'moodle_user_id' => $user->moodle_user_id
+            ]);
+            
+            $coursesStats = $syncService->syncCourses();
+            
+            Log::info('Синхронизация курсов завершена', [
+                'user_id' => $user->id,
+                'stats' => $coursesStats
+            ]);
+
+            // Получаем все курсы, на которые записан пользователь в Moodle
+            // Для этого нужно получить все курсы и проверить записи пользователя
+            $moodleApi = new \App\Services\MoodleApiService();
+            $allMoodleCourses = $moodleApi->getAllCourses();
+            
+            if ($allMoodleCourses && is_array($allMoodleCourses)) {
+                foreach ($allMoodleCourses as $moodleCourse) {
+                    try {
+                        // Получаем список пользователей курса
+                        $enrolledUsers = $moodleApi->getCourseEnrolledUsers($moodleCourse['id']);
+                        
+                        // Проверяем, записан ли текущий пользователь на этот курс
+                        $isEnrolled = false;
+                        if ($enrolledUsers && is_array($enrolledUsers)) {
+                            foreach ($enrolledUsers as $enrolledUser) {
+                                if (isset($enrolledUser['id']) && $enrolledUser['id'] == $user->moodle_user_id) {
+                                    $isEnrolled = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Если пользователь записан, синхронизируем запись
+                        if ($isEnrolled) {
+                            $localCourse = Course::where('moodle_course_id', $moodleCourse['id'])->first();
+                            if ($localCourse) {
+                                $syncService->syncCourseEnrollments($localCourse->id);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Ошибка при синхронизации записи на курс', [
+                            'user_id' => $user->id,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
+            // Синхронизируем прогресс по элементам курса для студента
+            if ($user->hasRole('student')) {
+                try {
+                    $activitySyncService = new CourseActivitySyncService();
+                    $userCourses = $user->courses()->whereNotNull('moodle_course_id')->get();
+                    
+                    foreach ($userCourses as $course) {
+                        try {
+                            $activitySyncService->syncStudentProgress($course->id, $user->id);
+                        } catch (\Exception $e) {
+                            Log::error('Ошибка синхронизации прогресса студента', [
+                                'user_id' => $user->id,
+                                'course_id' => $course->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка инициализации CourseActivitySyncService', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+        } catch (\InvalidArgumentException $e) {
+            // Конфигурация Moodle не настроена - это нормально, просто пропускаем синхронизацию
+            Log::info('Moodle не настроен, пропускаем синхронизацию', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации данных пользователя из Moodle', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 }
