@@ -93,8 +93,7 @@
                                 <th style="width: 30%;">Название курса</th>
                                 <th style="width: 20%;">Программа</th>
                                 <th style="width: 15%;">Преподаватель</th>
-                                <th style="width: 25%;">Статус заданий (ПОСЛЕ СЕССИИ)</th>
-                                <th style="width: 5%;">Действия</th>
+                                <th style="width: 30%;">Статус заданий (ПОСЛЕ СЕССИИ)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -183,11 +182,6 @@
                                         @else
                                             <small class="text-muted">—</small>
                                         @endif
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.courses.show', $course) }}" class="btn btn-sm btn-primary" title="Просмотр">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
