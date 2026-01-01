@@ -421,11 +421,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Скрываем индикатор через несколько секунд
             setTimeout(() => {
                 syncIndicator.classList.add('d-none');
-                if (!isError) {
-                    // Перезагружаем страницу только при успехе
-                    window.location.reload();
-                }
-            }, isError ? 5000 : 2000);
+                // Не перезагружаем страницу автоматически
+                // Пользователь может обновить страницу вручную при необходимости
+            }, isError ? 5000 : 3000);
         }
         
         // Создаем AbortController для возможности отмены запроса
