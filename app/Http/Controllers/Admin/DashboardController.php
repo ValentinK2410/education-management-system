@@ -414,6 +414,9 @@ class DashboardController extends Controller
      */
     public function sync()
     {
+        // Увеличиваем лимит времени выполнения для синхронизации
+        set_time_limit(120); // 2 минуты
+        
         $user = Auth::user();
 
         if (!$user->moodle_user_id) {
@@ -425,8 +428,79 @@ class DashboardController extends Controller
         }
 
         try {
-            // Запускаем синхронизацию в фоне
-            $this->syncUserDataFromMoodle($user);
+            // Оптимизированная синхронизация - только для курсов пользователя
+            $moodleApi = new \App\Services\MoodleApiService();
+            $syncService = new MoodleSyncService();
+            
+            // Получаем курсы пользователя из Moodle напрямую (быстрее чем синхронизировать все курсы)
+            $userMoodleCourses = $moodleApi->getUsersCourses($user->moodle_user_id);
+            
+            if ($userMoodleCourses === false || empty($userMoodleCourses)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не удалось получить курсы пользователя из Moodle',
+                    'progress' => 100
+                ]);
+            }
+            
+            // Синхронизируем только курсы пользователя
+            foreach ($userMoodleCourses as $moodleCourse) {
+                try {
+                    $syncService->syncCourse($moodleCourse);
+                } catch (\Exception $e) {
+                    Log::error('Ошибка синхронизации курса', [
+                        'user_id' => $user->id,
+                        'moodle_course_id' => $moodleCourse['id'] ?? null,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Синхронизируем записи пользователя на курсы
+            foreach ($userMoodleCourses as $moodleCourse) {
+                try {
+                    $localCourse = Course::where('moodle_course_id', $moodleCourse['id'])->first();
+                    if ($localCourse) {
+                        $syncService->syncUserEnrollment($localCourse, [
+                            'id' => $user->moodle_user_id,
+                            'email' => $user->email
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка синхронизации записи на курс', [
+                        'user_id' => $user->id,
+                        'moodle_course_id' => $moodleCourse['id'] ?? null,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Синхронизируем прогресс студента только по его курсам
+            if ($user->hasRole('student')) {
+                try {
+                    $activitySyncService = new CourseActivitySyncService();
+                    $user->load('courses');
+                    
+                    foreach ($user->courses as $course) {
+                        if ($course->moodle_course_id) {
+                            try {
+                                $activitySyncService->syncStudentProgress($course->id, $user->id);
+                            } catch (\Exception $e) {
+                                Log::error('Ошибка синхронизации прогресса студента', [
+                                    'user_id' => $user->id,
+                                    'course_id' => $course->id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка инициализации CourseActivitySyncService', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -436,7 +510,8 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             Log::error('Ошибка при асинхронной синхронизации данных пользователя', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([

@@ -395,6 +395,43 @@ document.addEventListener('DOMContentLoaded', function() {
         syncMessage.textContent = 'Запуск синхронизации...';
         syncProgress.style.width = '10%';
         
+        // Симуляция прогресса во время синхронизации
+        let progress = 10;
+        let progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += 5;
+                syncProgress.style.width = progress + '%';
+            }
+        }, 1000);
+        
+        // Функция для остановки синхронизации и скрытия индикатора
+        function stopSync(message, isError = false) {
+            clearInterval(progressInterval);
+            syncProgress.style.width = '100%';
+            syncMessage.textContent = message;
+            
+            if (isError) {
+                syncIndicator.classList.remove('alert-info');
+                syncIndicator.classList.add('alert-danger');
+            } else {
+                syncIndicator.classList.remove('alert-info');
+                syncIndicator.classList.add('alert-success');
+            }
+            
+            // Скрываем индикатор через несколько секунд
+            setTimeout(() => {
+                syncIndicator.classList.add('d-none');
+                if (!isError) {
+                    // Перезагружаем страницу только при успехе
+                    window.location.reload();
+                }
+            }, isError ? 5000 : 2000);
+        }
+        
+        // Создаем AbortController для возможности отмены запроса
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 секунд таймаут
+        
         // Запускаем синхронизацию через AJAX
         fetch('{{ route("admin.dashboard.sync") }}', {
             method: 'POST',
@@ -402,61 +439,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
-            }
+            },
+            signal: controller.signal
         })
-        .then(response => response.json())
+        .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
-            // Обновляем прогресс
-            syncProgress.style.width = '100%';
+            clearInterval(progressInterval);
             
             if (data.success) {
-                syncMessage.textContent = 'Синхронизация завершена успешно!';
-                syncIndicator.classList.remove('alert-info');
-                syncIndicator.classList.add('alert-success');
-                
-                // Скрываем индикатор через 3 секунды
-                setTimeout(() => {
-                    syncIndicator.classList.add('d-none');
-                    // Перезагружаем страницу для отображения обновленных данных
-                    window.location.reload();
-                }, 2000);
+                stopSync('Синхронизация завершена успешно!', false);
             } else {
-                syncMessage.textContent = 'Ошибка: ' + (data.message || 'Неизвестная ошибка');
-                syncIndicator.classList.remove('alert-info');
-                syncIndicator.classList.add('alert-warning');
-                
-                // Скрываем индикатор через 5 секунд при ошибке
-                setTimeout(() => {
-                    syncIndicator.classList.add('d-none');
-                }, 5000);
+                stopSync('Ошибка: ' + (data.message || 'Неизвестная ошибка'), true);
             }
         })
         .catch(error => {
-            console.error('Ошибка синхронизации:', error);
-            syncProgress.style.width = '100%';
-            syncMessage.textContent = 'Ошибка соединения с сервером';
-            syncIndicator.classList.remove('alert-info');
-            syncIndicator.classList.add('alert-danger');
-            
-            // Скрываем индикатор через 5 секунд при ошибке
-            setTimeout(() => {
-                syncIndicator.classList.add('d-none');
-            }, 5000);
-        });
-        
-        // Симуляция прогресса во время синхронизации
-        let progress = 10;
-        const progressInterval = setInterval(() => {
-            if (progress < 90) {
-                progress += 10;
-                syncProgress.style.width = progress + '%';
-            }
-        }, 500);
-        
-        // Останавливаем симуляцию прогресса после завершения запроса
-        setTimeout(() => {
+            clearTimeout(timeoutId);
             clearInterval(progressInterval);
-        }, 10000);
+            
+            if (error.name === 'AbortError') {
+                stopSync('Синхронизация превысила время ожидания. Попробуйте обновить страницу.', true);
+            } else {
+                console.error('Ошибка синхронизации:', error);
+                stopSync('Ошибка соединения с сервером: ' + error.message, true);
+            }
+        });
     @else
         // Если нет moodle_user_id, скрываем индикатор
         syncIndicator.classList.add('d-none');
