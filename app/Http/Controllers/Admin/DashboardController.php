@@ -432,74 +432,103 @@ class DashboardController extends Controller
             $moodleApi = new \App\Services\MoodleApiService();
             $syncService = new MoodleSyncService();
             
-            // Получаем курсы пользователя из Moodle напрямую (быстрее чем синхронизировать все курсы)
+            // Пытаемся получить курсы пользователя из Moodle напрямую
             $userMoodleCourses = $moodleApi->call('core_enrol_get_users_courses', [
                 'userid' => $user->moodle_user_id
             ]);
             
-            // Проверяем результат
+            // Проверяем результат - если ошибка доступа, используем альтернативный способ
             if ($userMoodleCourses === false || isset($userMoodleCourses['exception'])) {
-                $errorMessage = isset($userMoodleCourses['message']) 
-                    ? $userMoodleCourses['message'] 
-                    : 'Не удалось получить курсы пользователя из Moodle';
-                    
-                Log::error('Ошибка получения курсов пользователя из Moodle', [
+                $errorCode = $userMoodleCourses['errorcode'] ?? '';
+                $errorMessage = $userMoodleCourses['message'] ?? 'Не удалось получить курсы пользователя из Moodle';
+                
+                Log::warning('Не удалось получить курсы пользователя напрямую, используем альтернативный способ', [
                     'user_id' => $user->id,
                     'moodle_user_id' => $user->moodle_user_id,
-                    'error' => $errorMessage
+                    'error' => $errorMessage,
+                    'errorcode' => $errorCode
                 ]);
                 
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage,
-                    'progress' => 100
-                ]);
-            }
-            
-            // Фильтруем системный курс с id=1
-            if (is_array($userMoodleCourses)) {
-                $userMoodleCourses = array_values(array_filter($userMoodleCourses, function($course) {
-                    return isset($course['id']) && $course['id'] > 1;
-                }));
-            }
-            
-            if (empty($userMoodleCourses)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'У пользователя нет курсов в Moodle',
-                    'progress' => 100
-                ]);
-            }
-            
-            // Синхронизируем только курсы пользователя
-            foreach ($userMoodleCourses as $moodleCourse) {
-                try {
-                    $syncService->syncCourse($moodleCourse);
-                } catch (\Exception $e) {
-                    Log::error('Ошибка синхронизации курса', [
-                        'user_id' => $user->id,
-                        'moodle_course_id' => $moodleCourse['id'] ?? null,
-                        'error' => $e->getMessage()
+                // Альтернативный способ: синхронизируем все курсы и затем фильтруем по пользователю
+                // Сначала синхронизируем все курсы
+                $syncService->syncCourses();
+                
+                // Затем синхронизируем записи для всех курсов
+                // Это обновит записи пользователя на курсы, на которые он записан
+                $allCourses = Course::whereNotNull('moodle_course_id')->get();
+                foreach ($allCourses as $course) {
+                    try {
+                        $syncService->syncCourseEnrollments($course->id);
+                    } catch (\Exception $e) {
+                        Log::error('Ошибка синхронизации записей на курс', [
+                            'course_id' => $course->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
+                // Получаем курсы пользователя из локальной БД
+                $user->load('courses');
+                $userCourses = $user->courses()->whereNotNull('moodle_course_id')->get();
+                
+                if ($userCourses->isEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'У пользователя нет курсов в Moodle. Возможно, требуется настроить права доступа для токена Moodle API.',
+                        'progress' => 100
+                    ]);
+                }
+                
+                // Продолжаем синхронизацию прогресса для найденных курсов
+                $userMoodleCourses = []; // Пустой массив, так как используем локальные курсы
+            } else {
+                // Фильтруем системный курс с id=1
+                if (is_array($userMoodleCourses)) {
+                    $userMoodleCourses = array_values(array_filter($userMoodleCourses, function($course) {
+                        return isset($course['id']) && $course['id'] > 1;
+                    }));
+                }
+                
+                if (empty($userMoodleCourses)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'У пользователя нет курсов в Moodle',
+                        'progress' => 100
                     ]);
                 }
             }
             
-            // Синхронизируем записи пользователя на курсы
-            foreach ($userMoodleCourses as $moodleCourse) {
-                try {
-                    $localCourse = Course::where('moodle_course_id', $moodleCourse['id'])->first();
-                    if ($localCourse) {
-                        $syncService->syncUserEnrollment($localCourse, [
-                            'id' => $user->moodle_user_id,
-                            'email' => $user->email
+            // Синхронизируем только курсы пользователя (если они были получены напрямую)
+            if (!empty($userMoodleCourses)) {
+                foreach ($userMoodleCourses as $moodleCourse) {
+                    try {
+                        $syncService->syncCourse($moodleCourse);
+                    } catch (\Exception $e) {
+                        Log::error('Ошибка синхронизации курса', [
+                            'user_id' => $user->id,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'error' => $e->getMessage()
                         ]);
                     }
-                } catch (\Exception $e) {
-                    Log::error('Ошибка синхронизации записи на курс', [
-                        'user_id' => $user->id,
-                        'moodle_course_id' => $moodleCourse['id'] ?? null,
-                        'error' => $e->getMessage()
-                    ]);
+                }
+                
+                // Синхронизируем записи пользователя на курсы
+                foreach ($userMoodleCourses as $moodleCourse) {
+                    try {
+                        $localCourse = Course::where('moodle_course_id', $moodleCourse['id'])->first();
+                        if ($localCourse) {
+                            $syncService->syncUserEnrollment($localCourse, [
+                                'id' => $user->moodle_user_id,
+                                'email' => $user->email
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Ошибка синхронизации записи на курс', [
+                            'user_id' => $user->id,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
                 }
             }
             
