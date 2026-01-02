@@ -43,13 +43,15 @@
                     <td>
                         <span class="badge bg-info">
                             @if($activity->activity_type == 'assign')
-                                Задание
+                                <i class="fas fa-file-alt me-1"></i>Задание
                             @elseif($activity->activity_type == 'quiz')
-                                Тест
+                                <i class="fas fa-clipboard-check me-1"></i>Тест
                             @elseif($activity->activity_type == 'forum')
-                                Форум
+                                <i class="fas fa-comments me-1"></i>Форум
                             @elseif($activity->activity_type == 'resource')
-                                Материал
+                                <i class="fas fa-book me-1"></i>Материал
+                            @elseif($activity->activity_type == 'exam')
+                                <i class="fas fa-graduation-cap me-1"></i>Экзамен
                             @else
                                 {{ $activity->activity_type }}
                             @endif

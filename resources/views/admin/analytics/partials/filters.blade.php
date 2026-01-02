@@ -30,10 +30,11 @@
             <label for="activity_type" class="form-label">Тип элемента</label>
             <select class="form-select" id="activity_type" name="activity_type">
                 <option value="">Все типы</option>
-                <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>Задания</option>
-                <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>Тесты</option>
-                <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>Форумы</option>
-                <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>Материалы</option>
+                <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>📄 Задания</option>
+                <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>✅ Тесты</option>
+                <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>💬 Форумы</option>
+                <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>📚 Материалы</option>
+                <option value="exam" {{ (request('activity_type') == 'exam') ? 'selected' : '' }}>🎓 Экзамены</option>
             </select>
         </div>
         

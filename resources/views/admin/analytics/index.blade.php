@@ -44,10 +44,11 @@
                                 <label for="activity_type" class="form-label">Тип элемента</label>
                                 <select class="form-select" id="activity_type" name="activity_type">
                                     <option value="">Все типы</option>
-                                    <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>Задания</option>
-                                    <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>Тесты</option>
-                                    <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>Форумы</option>
-                                    <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>Материалы</option>
+                                    <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>📄 Задания</option>
+                                    <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>✅ Тесты</option>
+                                    <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>💬 Форумы</option>
+                                    <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>📚 Материалы</option>
+                                    <option value="exam" {{ (request('activity_type') == 'exam') ? 'selected' : '' }}>🎓 Экзамены</option>
                                 </select>
                             </div>
                             
@@ -222,13 +223,15 @@
                                         <td>
                                             <span class="badge bg-info">
                                                 @if($activity['activity_type'] == 'assign')
-                                                    Задание
+                                                    <i class="fas fa-file-alt me-1"></i>Задание
                                                 @elseif($activity['activity_type'] == 'quiz')
-                                                    Тест
+                                                    <i class="fas fa-clipboard-check me-1"></i>Тест
                                                 @elseif($activity['activity_type'] == 'forum')
-                                                    Форум
+                                                    <i class="fas fa-comments me-1"></i>Форум
                                                 @elseif($activity['activity_type'] == 'resource')
-                                                    Материал
+                                                    <i class="fas fa-book me-1"></i>Материал
+                                                @elseif($activity['activity_type'] == 'exam')
+                                                    <i class="fas fa-graduation-cap me-1"></i>Экзамен
                                                 @else
                                                     {{ $activity['activity_type'] }}
                                                 @endif
