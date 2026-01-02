@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserSwitchController;
+use App\Http\Controllers\Admin\InstructorStatsController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
@@ -495,6 +496,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('user-archive', [UserArchiveController::class, 'index'])->name('user-archive.index');
         Route::get('user-archive/{user}', [UserArchiveController::class, 'show'])->name('user-archive.show');
         Route::get('user-archive/{user}/certificates/{certificate}/download', [UserArchiveController::class, 'downloadCertificate'])->name('user-archive.download-certificate');
+
+        // Статистика преподавателей (только для администраторов)
+        Route::get('instructor-stats', [InstructorStatsController::class, 'index'])->name('instructor-stats.index');
+        Route::get('instructor-stats/{instructor}', [InstructorStatsController::class, 'show'])->name('instructor-stats.show');
 
         // Синхронизация с Moodle (требует право sync_moodle)
         Route::middleware(['check.permission:sync_moodle'])->group(function () {

@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\Course;
+use App\Models\StudentActivityProgress;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class InstructorStatsController extends Controller
+{
+    /**
+     * Показать список всех преподавателей со статистикой
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index()
+    {
+        // Получаем всех пользователей с ролью преподавателя
+        $instructors = User::whereHas('roles', function ($query) {
+            $query->where('slug', 'instructor');
+        })
+        ->with(['taughtCourses' => function ($query) {
+            $query->withCount(['users' => function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('slug', 'student');
+                });
+            }]);
+        }])
+        ->get()
+        ->map(function ($instructor) {
+            // Подсчитываем статистику для каждого преподавателя
+            $courses = $instructor->taughtCourses;
+            $totalCourses = $courses->count();
+            $totalStudents = $courses->sum('users_count');
+            
+            // Подсчитываем проверенные работы
+            $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+                $query->where('instructor_id', $instructor->id);
+            })
+            ->where('status', 'graded')
+            ->where('graded_by_user_id', $instructor->id)
+            ->count();
+            
+            // Подсчитываем непроверенные работы
+            $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+                $query->where('instructor_id', $instructor->id);
+            })
+            ->where('status', 'submitted')
+            ->count();
+            
+            return [
+                'id' => $instructor->id,
+                'name' => $instructor->name,
+                'email' => $instructor->email,
+                'photo' => $instructor->photo,
+                'total_courses' => $totalCourses,
+                'total_students' => $totalStudents,
+                'graded_activities' => $gradedActivities,
+                'pending_activities' => $pendingActivities,
+            ];
+        });
+        
+        return view('admin.instructor-stats.index', compact('instructors'));
+    }
+    
+    /**
+     * Показать детальную статистику конкретного преподавателя
+     *
+     * @param User $instructor
+     * @return \Illuminate\View\View
+     */
+    public function show(User $instructor)
+    {
+        // Проверяем, что пользователь является преподавателем
+        if (!$instructor->hasRole('instructor')) {
+            abort(404, 'Пользователь не является преподавателем');
+        }
+        
+        // Получаем все курсы преподавателя с количеством студентов
+        $courses = Course::where('instructor_id', $instructor->id)
+            ->with(['program', 'instructor'])
+            ->withCount(['users' => function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('slug', 'student');
+                });
+            }])
+            ->get();
+        
+        // Получаем все проверенные работы преподавателя
+        $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->where('status', 'graded')
+        ->where('graded_by_user_id', $instructor->id)
+        ->with(['user', 'course', 'activity', 'gradedBy'])
+        ->orderBy('graded_at', 'desc')
+        ->get();
+        
+        // Получаем непроверенные работы
+        $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->where('status', 'submitted')
+        ->with(['user', 'course', 'activity'])
+        ->orderBy('submitted_at', 'desc')
+        ->get();
+        
+        // Статистика по типам активностей
+        $activityStats = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->where('status', 'graded')
+        ->where('graded_by_user_id', $instructor->id)
+        ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
+        ->select('course_activities.activity_type', DB::raw('COUNT(*) as count'))
+        ->groupBy('course_activities.activity_type')
+        ->get()
+        ->pluck('count', 'activity_type');
+        
+        // Общая статистика
+        $stats = [
+            'total_courses' => $courses->count(),
+            'total_students' => $courses->sum('users_count'),
+            'total_graded' => $gradedActivities->count(),
+            'total_pending' => $pendingActivities->count(),
+            'assignments_graded' => $activityStats->get('assign', 0),
+            'quizzes_graded' => $activityStats->get('quiz', 0),
+            'forums_graded' => $activityStats->get('forum', 0),
+        ];
+        
+        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'gradedActivities', 'pendingActivities', 'stats'));
+    }
+}
+

@@ -774,6 +774,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasRole('admin'))
+            <div class="nav-item">
+                <a href="{{ route('admin.instructor-stats.index') }}" class="nav-link {{ request()->routeIs('admin.instructor-stats.*') ? 'active' : '' }}">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Статистика преподавателей</span>
+                </a>
+            </div>
+            @endif
+
             @if(auth()->user()->hasPermission('view_sidebar_roles'))
             <div class="nav-item">
                 <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
