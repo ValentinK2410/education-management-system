@@ -828,6 +828,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasRole('admin'))
+            <div class="nav-item">
+                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <i class="fas fa-cog"></i>
+                    <span>Системные настройки</span>
+                </a>
+            </div>
+            @endif
+
             <div class="nav-item mt-4">
                 <a href="{{ route('home') }}" class="nav-link">
                     <i class="fas fa-external-link-alt"></i>
