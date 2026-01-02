@@ -93,11 +93,11 @@
                                 <button type="button" class="btn btn-info ms-2" onclick="syncActivities()" id="sync-btn">
                                     <i class="fas fa-sync me-2"></i>Синхронизировать данные
                                 </button>
-                                <div class="btn-group ms-2">
-                                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <div class="btn-group ms-2 dropdown">
+                                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-download me-2"></i>Экспорт
                                     </button>
-                                    <ul class="dropdown-menu">
+                                    <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu">
                                         <li><a class="dropdown-item" href="{{ route('admin.analytics.export.csv', request()->all()) }}">
                                             <i class="fas fa-file-csv me-2"></i>CSV
                                         </a></li>
@@ -530,6 +530,26 @@
 .submitted-date-old {
     background-color: #d32f2f; /* Темно-красный - более 14 дней */
     color: #ffffff;
+}
+
+/* Исправление z-index для выпадающего меню экспорта */
+.export-dropdown-menu {
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+.btn-group.dropdown {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Убеждаемся, что родительские элементы не обрезают меню */
+.card-body {
+    overflow: visible !important;
+}
+
+.card {
+    overflow: visible !important;
 }
 </style>
 
