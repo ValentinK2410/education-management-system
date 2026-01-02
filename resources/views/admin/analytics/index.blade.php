@@ -80,6 +80,99 @@
         background-color: var(--dark-bg) !important;
         color: var(--text-color) !important;
     }
+
+    /* Таблица результатов аналитики */
+    [data-theme="dark"] .container-fluid .table {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table thead th {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table tbody td {
+        border-color: var(--border-color) !important;
+        background-color: transparent !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(odd) {
+        background-color: var(--card-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(even) {
+        background-color: var(--dark-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover {
+        background-color: var(--dark-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover td {
+        background-color: var(--dark-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Текст в таблице */
+    [data-theme="dark"] .container-fluid .table .text-muted {
+        color: #94a3b8 !important;
+        opacity: 0.8;
+    }
+
+    [data-theme="dark"] .container-fluid .table strong {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table h6 {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table small {
+        color: #94a3b8 !important;
+    }
+
+    /* Бейджи в таблице */
+    [data-theme="dark"] .container-fluid .table .badge {
+        color: white !important;
+    }
+
+    /* Кнопки в таблице */
+    [data-theme="dark"] .container-fluid .table .btn-outline-primary {
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table .btn-outline-primary:hover {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table .btn-warning {
+        background-color: var(--warning-color) !important;
+        border-color: var(--warning-color) !important;
+        color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table .btn-warning:hover {
+        background-color: #f59e0b !important;
+        border-color: #f59e0b !important;
+        color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table .btn-success {
+        background-color: rgba(16, 185, 129, 0.8) !important;
+        border-color: rgba(16, 185, 129, 0.8) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table .btn-success:hover {
+        background-color: rgba(16, 185, 129, 1) !important;
+        border-color: rgba(16, 185, 129, 1) !important;
+        color: white !important;
+    }
 </style>
 @endpush
 
