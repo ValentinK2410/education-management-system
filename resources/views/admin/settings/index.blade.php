@@ -118,18 +118,49 @@
     }
 
     [data-theme="dark"] .card {
-        background-color: var(--card-bg, #334155);
-        border-color: var(--border-color, #475569);
+        background-color: var(--card-bg, #334155) !important;
+        border-color: var(--border-color, #475569) !important;
+        color: var(--text-color, #e2e8f0) !important;
     }
 
     [data-theme="dark"] .card-header {
-        background-color: var(--card-bg, #334155);
-        border-color: var(--border-color, #475569);
-        color: var(--text-color, #e2e8f0);
+        background-color: var(--card-bg, #334155) !important;
+        border-color: var(--border-color, #475569) !important;
+        color: var(--text-color, #e2e8f0) !important;
+    }
+
+    [data-theme="dark"] .card-body {
+        background-color: var(--card-bg, #334155) !important;
+        color: var(--text-color, #e2e8f0) !important;
+    }
+
+    [data-theme="dark"] .card.border-0 {
+        background-color: var(--card-bg, #334155) !important;
+    }
+
+    [data-theme="dark"] .card.border-0 .card-header.bg-white {
+        background-color: var(--card-bg, #334155) !important;
+        color: var(--text-color, #e2e8f0) !important;
+    }
+
+    [data-theme="dark"] .card.border-0 .card-header.border-bottom {
+        border-color: var(--border-color, #475569) !important;
+    }
+
+    [data-theme="dark"] .text-muted {
+        color: var(--text-color, #94a3b8) !important;
+        opacity: 0.8;
     }
 
     [data-theme="dark"] .text-danger {
         color: #f87171 !important;
+    }
+
+    [data-theme="dark"] h4, 
+    [data-theme="dark"] h5, 
+    [data-theme="dark"] .h4, 
+    [data-theme="dark"] .h5 {
+        color: var(--text-color, #e2e8f0) !important;
     }
 </style>
 @endpush
