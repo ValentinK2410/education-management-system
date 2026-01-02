@@ -348,7 +348,7 @@
         <div class="card">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-certificate me-2"></i>Завершенные программы
+                    <i class="fas fa-certificate me-2"></i>{{ __('messages.completed_programs') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -358,10 +358,10 @@
                             <div class="card border-success">
                                 <div class="card-body">
                                     <h6 class="card-title">{{ $program->name }}</h6>
-                                    <p class="card-text text-muted small">{{ $program->institution->name ?? 'Без заведения' }}</p>
+                                    <p class="card-text text-muted small">{{ $program->institution->name ?? __('messages.no_institution') }}</p>
                                     @if($program->pivot->completed_at)
                                         <small class="text-muted">
-                                            Завершена: {{ \Carbon\Carbon::parse($program->pivot->completed_at)->format('d.m.Y') }}
+                                            {{ __('messages.completed') }}: {{ \Carbon\Carbon::parse($program->pivot->completed_at)->format('d.m.Y') }}
                                         </small>
                                     @endif
                                     <div class="mt-2">
@@ -382,6 +382,15 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Translations for JavaScript
+    const syncTranslations = {
+        completed: '{{ __('messages.synchronization_completed_successfully') }}',
+        error: '{{ __('messages.error') }}',
+        unknown_error: '{{ __('messages.unknown_error') }}',
+        connection_error: '{{ __('messages.connection_error') }}',
+        timeout: '{{ __('messages.synchronization_timeout') }}'
+    };
+    
     const syncIndicator = document.getElementById('sync-indicator');
     const syncProgress = document.getElementById('sync-progress');
     const syncMessage = document.getElementById('sync-message');
@@ -392,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         syncIndicator.classList.remove('d-none');
         
         // Обновляем сообщение
-        syncMessage.textContent = 'Запуск синхронизации...';
+        syncMessage.textContent = '{{ __('messages.synchronization_in_progress') }}';
         syncProgress.style.width = '10%';
         
         // Симуляция прогресса во время синхронизации
