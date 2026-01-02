@@ -22,19 +22,23 @@ class InstructorStatsController extends Controller
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('slug', 'instructor');
         })
-        ->with(['taughtCourses' => function ($query) {
-            $query->withCount(['users' => function ($query) {
-                $query->whereHas('roles', function ($q) {
-                    $q->where('slug', 'student');
-                });
-            }]);
-        }])
+        ->with(['taughtCourses'])
         ->get()
         ->map(function ($instructor) {
             // Подсчитываем статистику для каждого преподавателя
             $courses = $instructor->taughtCourses;
             $totalCourses = $courses->count();
-            $totalStudents = $courses->sum('users_count');
+            
+            // Получаем уникальных студентов по всем курсам преподавателя
+            $courseIds = $courses->pluck('id');
+            $totalStudents = \DB::table('user_courses')
+                ->whereIn('course_id', $courseIds)
+                ->join('users', 'user_courses.user_id', '=', 'users.id')
+                ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+                ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                ->where('roles.slug', 'student')
+                ->distinct('user_courses.user_id')
+                ->count('user_courses.user_id');
             
             // Подсчитываем проверенные работы
             $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
@@ -120,10 +124,21 @@ class InstructorStatsController extends Controller
         ->get()
         ->pluck('count', 'activity_type');
         
+        // Получаем уникальных студентов по всем курсам преподавателя
+        $courseIds = $courses->pluck('id');
+        $uniqueStudentsCount = \DB::table('user_courses')
+            ->whereIn('course_id', $courseIds)
+            ->join('users', 'user_courses.user_id', '=', 'users.id')
+            ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+            ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+            ->where('roles.slug', 'student')
+            ->distinct('user_courses.user_id')
+            ->count('user_courses.user_id');
+        
         // Общая статистика
         $stats = [
             'total_courses' => $courses->count(),
-            'total_students' => $courses->sum('users_count'),
+            'total_students' => $uniqueStudentsCount,
             'total_graded' => $gradedActivities->count(),
             'total_pending' => $pendingActivities->count(),
             'assignments_graded' => $activityStats->get('assign', 0),
