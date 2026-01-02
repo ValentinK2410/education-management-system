@@ -1331,5 +1331,39 @@ class MoodleApiService
 
         return null;
     }
+
+    /**
+     * Получить URL для проверки работы конкретного студента в Moodle
+     *
+     * @param string $activityType Тип элемента курса (assign, quiz, forum и т.д.)
+     * @param int|null $cmid Course Module ID в Moodle
+     * @param int $moodleUserId ID студента в Moodle
+     * @param int|null $moodleCourseId ID курса в Moodle (опционально)
+     * @return string|null URL для проверки или null если данные недостаточны
+     */
+    public function getGradingUrl(string $activityType, ?int $cmid, int $moodleUserId, ?int $moodleCourseId = null): ?string
+    {
+        if (!$cmid) {
+            return null;
+        }
+
+        switch ($activityType) {
+            case 'assign':
+                // Для заданий - прямая ссылка на проверку конкретного студента
+                return $this->url . "/mod/assign/view.php?id={$cmid}&action=grade&userid={$moodleUserId}";
+            
+            case 'quiz':
+                // Для тестов - ссылка на просмотр теста (проверка через отчеты)
+                return $this->url . "/mod/quiz/view.php?id={$cmid}";
+            
+            case 'forum':
+                // Для форумов - ссылка на просмотр форума (проверка постов)
+                return $this->url . "/mod/forum/view.php?id={$cmid}";
+            
+            default:
+                // Для других типов - общая ссылка на просмотр элемента
+                return $this->url . "/mod/{$activityType}/view.php?id={$cmid}";
+        }
+    }
 }
 

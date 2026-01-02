@@ -5,6 +5,18 @@
 
 @section('content')
 <div class="container-fluid">
+    <!-- Индикатор автоматической синхронизации -->
+    <div id="auto-sync-indicator" class="alert alert-info alert-dismissible fade d-none" role="alert" style="position: fixed; top: 80px; right: 20px; z-index: 10000; min-width: 300px;">
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <div>
+                <strong>Синхронизация данных...</strong>
+                <div class="small">Обновление информации о проверенных работах</div>
+            </div>
+        </div>
+    </div>
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -431,9 +443,28 @@
                                         <td>{{ $activity['graded_at'] ?? '—' }}</td>
                                         <td>{{ $activity['graded_by'] ?: '—' }}</td>
                                         <td>
-                                            <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
-                                                <i class="fas fa-user"></i>
-                                            </a>
+                                            <div class="btn-group" role="group">
+                                                @if(isset($moodleApiService) && $moodleApiService && 
+                                                    ($activity['status'] == 'submitted' || $activity['status'] == 'in_progress') &&
+                                                    $activity['cmid'] && $activity['moodle_user_id'])
+                                                    @php
+                                                        $gradingUrl = $moodleApiService->getGradingUrl(
+                                                            $activity['activity_type'],
+                                                            $activity['cmid'],
+                                                            $activity['moodle_user_id'],
+                                                            $activity['moodle_course_id']
+                                                        );
+                                                    @endphp
+                                                    @if($gradingUrl)
+                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-warning" title="Проверить задание в Moodle">
+                                                            <i class="fas fa-check-circle"></i>
+                                                        </a>
+                                                    @endif
+                                                @endif
+                                                <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
+                                                    <i class="fas fa-user"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -616,6 +647,25 @@ form#analytics-filter-form {
 </style>
 
 <script>
+// Показываем индикатор автоматической синхронизации при загрузке страницы
+@if(isset($hasAutoSynced) && $hasAutoSynced)
+document.addEventListener('DOMContentLoaded', function() {
+    const syncIndicator = document.getElementById('auto-sync-indicator');
+    if (syncIndicator) {
+        syncIndicator.classList.remove('d-none');
+        syncIndicator.classList.add('show');
+        
+        // Скрываем индикатор через 3 секунды
+        setTimeout(function() {
+            syncIndicator.classList.remove('show');
+            setTimeout(function() {
+                syncIndicator.classList.add('d-none');
+            }, 300);
+        }, 3000);
+    }
+});
+@endif
+
 // Анимация иконки chevron в блоке помощи
 document.addEventListener('DOMContentLoaded', function() {
     const helpBlock = document.getElementById('helpBlock');

@@ -9,6 +9,7 @@ use App\Models\CourseActivity;
 use App\Models\StudentActivityProgress;
 use App\Models\StudentActivityHistory;
 use App\Services\CourseActivitySyncService;
+use App\Services\MoodleApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -87,8 +88,57 @@ class CourseAnalyticsController extends Controller
                 'request_params' => $request->all()
             ]);
             
+            // Автоматическая синхронизация для записей со статусом "submitted"
+            // Ограничиваем количество синхронизаций для предотвращения замедления загрузки
+            if ($this->syncService) {
+                try {
+                    $submittedProgress = StudentActivityProgress::where('status', 'submitted')
+                        ->with(['user', 'course'])
+                        ->whereHas('user', function($q) {
+                            $q->whereNotNull('moodle_user_id');
+                        })
+                        ->whereHas('course', function($q) {
+                            $q->whereNotNull('moodle_course_id');
+                        })
+                        ->limit(10) // Ограничиваем до 10 синхронизаций за раз
+                        ->get();
+                    
+                    if ($submittedProgress->count() > 0) {
+                        Log::info('Автоматическая синхронизация прогресса для submitted записей', [
+                            'count' => $submittedProgress->count()
+                        ]);
+                        
+                        foreach ($submittedProgress as $progress) {
+                            try {
+                                $this->syncService->syncStudentProgress($progress->course_id, $progress->user_id);
+                            } catch (\Exception $e) {
+                                Log::warning('Ошибка синхронизации прогресса студента', [
+                                    'course_id' => $progress->course_id,
+                                    'user_id' => $progress->user_id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Ошибка автоматической синхронизации', [
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
             // Применяем фильтры
             $filteredData = $this->applyFilters($request, $courses, null, null, $students);
+            
+            // Инициализируем MoodleApiService для генерации URL
+            $moodleApiService = null;
+            try {
+                $moodleApiService = new MoodleApiService();
+            } catch (\Exception $e) {
+                Log::warning('Не удалось инициализировать MoodleApiService', [
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             // Проверяем, есть ли данные для выбранного студента
             $hasNoData = false;
@@ -116,6 +166,7 @@ class CourseAnalyticsController extends Controller
                 'stats' => $filteredData['stats'],
                 'hasNoData' => $hasNoData,
                 'noDataMessage' => $noDataMessage,
+                'moodleApiService' => $moodleApiService,
             ]);
         } catch (\Exception $e) {
             Log::error('Ошибка в методе index контроллера аналитики', [
@@ -809,14 +860,31 @@ class CourseAnalyticsController extends Controller
         
         // Форматируем данные для отображения
         $formattedActivities = $activities->map(function ($progress) {
+            // Извлекаем cmid из meta поля активности
+            $cmid = null;
+            if ($progress->activity && $progress->activity->meta) {
+                $meta = is_array($progress->activity->meta) ? $progress->activity->meta : json_decode($progress->activity->meta, true);
+                $cmid = $meta['cmid'] ?? $meta['id'] ?? null;
+            }
+            
+            // Если cmid не найден в meta, пытаемся использовать moodle_activity_id как fallback
+            if (!$cmid && $progress->activity && $progress->activity->moodle_activity_id) {
+                $cmid = $progress->activity->moodle_activity_id;
+            }
+            
             return [
                 'id' => $progress->id,
                 'user_id' => $progress->user_id,
+                'activity_id' => $progress->activity_id,
                 'student_name' => $progress->user->name ?? '',
                 'student_email' => $progress->user->email ?? '',
                 'course_name' => $progress->course->name ?? '',
                 'activity_name' => $progress->activity->name ?? '',
                 'activity_type' => $progress->activity->activity_type ?? '',
+                'moodle_activity_id' => $progress->activity->moodle_activity_id ?? null,
+                'cmid' => $cmid,
+                'moodle_user_id' => $progress->user->moodle_user_id ?? null,
+                'moodle_course_id' => $progress->course->moodle_course_id ?? null,
                 'status' => $progress->status,
                 'status_text' => $this->getStatusText($progress->status),
                 'grade' => $progress->grade,
