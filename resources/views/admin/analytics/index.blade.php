@@ -609,17 +609,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Исправление z-index для выпадающего меню экспорта
     const exportDropdownBtn = document.getElementById('exportDropdownBtn');
     const exportDropdownMenu = document.querySelector('.export-dropdown-menu');
+    const exportDropdownContainer = exportDropdownBtn?.closest('.dropdown');
     
-    if (exportDropdownBtn && exportDropdownMenu) {
-        exportDropdownBtn.addEventListener('click', function() {
-            // Устанавливаем максимальный z-index при открытии
-            exportDropdownMenu.style.zIndex = '99999';
-            exportDropdownMenu.style.position = 'absolute';
+    if (exportDropdownBtn && exportDropdownMenu && exportDropdownContainer) {
+        // Устанавливаем максимальный z-index при открытии меню
+        exportDropdownContainer.addEventListener('show.bs.dropdown', function() {
+            setTimeout(function() {
+                exportDropdownMenu.style.zIndex = '99999';
+                exportDropdownMenu.style.position = 'absolute';
+            }, 10);
         });
         
-        // Обработка событий Bootstrap dropdown
-        exportDropdownMenu.addEventListener('show.bs.dropdown', function() {
+        exportDropdownContainer.addEventListener('shown.bs.dropdown', function() {
             exportDropdownMenu.style.zIndex = '99999';
+            exportDropdownMenu.style.position = 'absolute';
         });
         
         // Используем MutationObserver для отслеживания изменений класса show
@@ -637,6 +640,14 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(exportDropdownMenu, {
             attributes: true,
             attributeFilter: ['class']
+        });
+        
+        // Также устанавливаем при клике на кнопку
+        exportDropdownBtn.addEventListener('click', function(e) {
+            setTimeout(function() {
+                exportDropdownMenu.style.zIndex = '99999';
+                exportDropdownMenu.style.position = 'absolute';
+            }, 50);
         });
     }
 });
