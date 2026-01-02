@@ -579,6 +579,22 @@
     position: relative !important;
 }
 
+/* Блок помощи также должен быть ниже выпадающего меню */
+.card.border-info {
+    z-index: 0 !important;
+    position: relative !important;
+}
+
+.card.border-info .card-body {
+    z-index: 0 !important;
+    position: relative !important;
+}
+
+.card.border-info .card-header {
+    z-index: 0 !important;
+    position: relative !important;
+}
+
 /* Убеждаемся, что выпадающее меню отображается поверх всего */
 .dropdown-menu.show,
 .dropdown-menu,
