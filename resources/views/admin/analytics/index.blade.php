@@ -444,51 +444,93 @@
                                         <td>{{ $activity['graded_by'] ?: '—' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                @if(isset($moodleApiService) && $moodleApiService && 
-                                                    $activity['cmid'] && 
-                                                    $activity['moodle_user_id'])
-                                                    @php
-                                                        $gradingUrl = $moodleApiService->getGradingUrl(
-                                                            $activity['activity_type'],
-                                                            $activity['cmid'],
-                                                            $activity['moodle_user_id'],
-                                                            $activity['moodle_course_id']
-                                                        );
-                                                        
-                                                        // Определяем текст и иконку в зависимости от типа элемента
-                                                        $activityTypeLabels = [
-                                                            'assign' => 'Проверить задание',
-                                                            'quiz' => 'Просмотреть тест',
-                                                            'forum' => 'Просмотреть форум',
-                                                            'resource' => 'Просмотреть материал',
-                                                            'exam' => 'Просмотреть экзамен',
-                                                        ];
-                                                        
-                                                        $activityTypeIcons = [
-                                                            'assign' => 'fa-check-circle',
-                                                            'quiz' => 'fa-clipboard-check',
-                                                            'forum' => 'fa-comments',
-                                                            'resource' => 'fa-file-alt',
-                                                            'exam' => 'fa-file-signature',
-                                                        ];
-                                                        
+                                                @php
+                                                    $gradingUrl = null;
+                                                    $buttonLabel = 'Просмотреть в Moodle';
+                                                    $buttonIcon = 'fa-external-link-alt';
+                                                    $buttonClass = 'btn-primary';
+                                                    
+                                                    // Определяем текст и иконку в зависимости от типа элемента
+                                                    $activityTypeLabels = [
+                                                        'assign' => 'Проверить задание',
+                                                        'quiz' => 'Просмотреть тест',
+                                                        'forum' => 'Просмотреть форум',
+                                                        'resource' => 'Просмотреть материал',
+                                                        'exam' => 'Просмотреть экзамен',
+                                                    ];
+                                                    
+                                                    $activityTypeIcons = [
+                                                        'assign' => 'fa-check-circle',
+                                                        'quiz' => 'fa-clipboard-check',
+                                                        'forum' => 'fa-comments',
+                                                        'resource' => 'fa-file-alt',
+                                                        'exam' => 'fa-file-signature',
+                                                    ];
+                                                    
+                                                    if (isset($activity['activity_type'])) {
                                                         $buttonLabel = $activityTypeLabels[$activity['activity_type']] ?? 'Просмотреть в Moodle';
                                                         $buttonIcon = $activityTypeIcons[$activity['activity_type']] ?? 'fa-external-link-alt';
-                                                        
-                                                        // Определяем цвет кнопки в зависимости от статуса
-                                                        $buttonClass = 'btn-primary';
+                                                    }
+                                                    
+                                                    // Определяем цвет кнопки в зависимости от статуса
+                                                    if (isset($activity['status'])) {
                                                         if ($activity['status'] == 'submitted' || $activity['status'] == 'pending') {
                                                             $buttonClass = 'btn-warning';
                                                         } elseif ($activity['status'] == 'graded') {
                                                             $buttonClass = 'btn-success';
                                                         }
-                                                    @endphp
-                                                    @if($gradingUrl)
-                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm {{ $buttonClass }}" title="{{ $buttonLabel }} в Moodle">
-                                                            <i class="fas {{ $buttonIcon }}"></i>
-                                                        </a>
-                                                    @endif
+                                                    }
+                                                    
+                                                    // Пытаемся получить URL для перехода в Moodle
+                                                    if (isset($moodleApiService) && $moodleApiService) {
+                                                        // Если есть cmid и moodle_user_id - используем прямой метод
+                                                        if (!empty($activity['cmid']) && !empty($activity['moodle_user_id'])) {
+                                                            $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                $activity['activity_type'] ?? 'assign',
+                                                                $activity['cmid'],
+                                                                $activity['moodle_user_id'],
+                                                                $activity['moodle_course_id'] ?? null
+                                                            );
+                                                        }
+                                                        // Если нет cmid, но есть moodle_activity_id и moodle_course_id - пытаемся получить cmid
+                                                        elseif (!empty($activity['moodle_activity_id']) && !empty($activity['moodle_course_id']) && !empty($activity['moodle_user_id'])) {
+                                                            try {
+                                                                $moduleName = $activity['activity_type'] ?? 'assign';
+                                                                $moduleMap = [
+                                                                    'assign' => 'assign',
+                                                                    'quiz' => 'quiz',
+                                                                    'forum' => 'forum',
+                                                                ];
+                                                                
+                                                                if (isset($moduleMap[$moduleName])) {
+                                                                    $cmResult = $moodleApiService->call('core_course_get_course_module_by_instance', [
+                                                                        'module' => $moduleMap[$moduleName],
+                                                                        'instance' => $activity['moodle_activity_id']
+                                                                    ]);
+                                                                    
+                                                                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                                                                        $cmid = $cmResult['cm']['id'];
+                                                                        $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                            $moduleName,
+                                                                            $cmid,
+                                                                            $activity['moodle_user_id'],
+                                                                            $activity['moodle_course_id']
+                                                                        );
+                                                                    }
+                                                                }
+                                                            } catch (\Exception $e) {
+                                                                // Игнорируем ошибки
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                
+                                                @if($gradingUrl)
+                                                    <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm {{ $buttonClass }}" title="{{ $buttonLabel }} в Moodle">
+                                                        <i class="fas {{ $buttonIcon }}"></i>
+                                                    </a>
                                                 @endif
+                                                
                                                 <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
                                                     <i class="fas fa-user"></i>
                                                 </a>
