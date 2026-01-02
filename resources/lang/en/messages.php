@@ -499,4 +499,10 @@ return [
     'start_typing_name_or_email' => 'Start typing name or email',
     'users_not_found' => 'Users not found',
     'enter_minimum_2_characters' => 'Enter at least 2 characters',
+    'synchronization_not_configured' => 'Synchronization not configured',
+    'synchronization_completed_successfully' => 'Synchronization completed successfully!',
+    'synchronization_timeout' => 'Synchronization exceeded timeout. Please refresh the page.',
+    'unknown_error' => 'Unknown error',
+    'no_institution' => 'Not specified',
+    'completed_programs' => 'Completed Programs',
 ];

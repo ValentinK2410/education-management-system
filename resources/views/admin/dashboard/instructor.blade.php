@@ -7,7 +7,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Мои курсы
+                            {{ __('messages.my_courses') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['my_courses'] ?? 0 }}</div>
                     </div>
@@ -25,7 +25,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Всего студентов
+                            {{ __('messages.total_students') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_students'] ?? 0 }}</div>
                     </div>
@@ -43,7 +43,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Активные курсы
+                            {{ __('messages.active_courses') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['active_courses'] ?? 0 }}</div>
                     </div>
@@ -62,7 +62,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-chalkboard-teacher me-2"></i>Мои курсы
+                    <i class="fas fa-chalkboard-teacher me-2"></i>{{ __('messages.my_courses') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -71,12 +71,12 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Название курса</th>
-                                    <th>Программа</th>
-                                    <th>Учебное заведение</th>
-                                    <th>Студентов</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
+                                    <th>{{ __('messages.course_name') }}</th>
+                                    <th>{{ __('messages.program') }}</th>
+                                    <th>{{ __('messages.institution') }}</th>
+                                    <th>{{ __('messages.students') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th>{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -88,8 +88,8 @@
                                                 <br><small class="text-muted">{{ $course->code }}</small>
                                             @endif
                                         </td>
-                                        <td>{{ $course->program->name ?? 'Не указана' }}</td>
-                                        <td>{{ $course->program->institution->name ?? 'Не указано' }}</td>
+                                        <td>{{ $course->program->name ?? __('messages.no_program') }}</td>
+                                        <td>{{ $course->program->institution->name ?? __('messages.no_institution') }}</td>
                                         <td>
                                             <span class="badge bg-primary">
                                                 {{ $course->users()
@@ -104,9 +104,9 @@
                                         </td>
                                         <td>
                                             @if($course->is_active)
-                                                <span class="badge bg-success">Активен</span>
+                                                <span class="badge bg-success">{{ __('messages.active') }}</span>
                                             @else
-                                                <span class="badge bg-secondary">Неактивен</span>
+                                                <span class="badge bg-secondary">{{ __('messages.inactive') }}</span>
                                             @endif
                                         </td>
                                         <td>
@@ -122,7 +122,7 @@
                 @else
                     <div class="text-center text-muted py-4">
                         <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
-                        <p>У вас пока нет курсов</p>
+                        <p>{{ __('messages.no_courses') }}</p>
                     </div>
                 @endif
             </div>
@@ -137,7 +137,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-users me-2"></i>Мои студенты
+                    <i class="fas fa-users me-2"></i>{{ __('messages.my_students') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -145,9 +145,9 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Студент</th>
-                                <th>Email</th>
-                                <th>Роль</th>
+                                <th>{{ __('messages.students') }}</th>
+                                <th>{{ __('messages.email') }}</th>
+                                <th>{{ __('messages.role') }}</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -499,4 +499,10 @@ return [
     'start_typing_name_or_email' => 'Начните вводить имя или email',
     'users_not_found' => 'Пользователи не найдены',
     'enter_minimum_2_characters' => 'Введите минимум 2 символа',
+    'synchronization_not_configured' => 'Не настроена синхронизация',
+    'synchronization_completed_successfully' => 'Синхронизация завершена успешно!',
+    'synchronization_timeout' => 'Синхронизация превысила время ожидания. Попробуйте обновить страницу.',
+    'unknown_error' => 'Неизвестная ошибка',
+    'no_institution' => 'Не указано',
+    'completed_programs' => 'Завершенные программы',
 ];

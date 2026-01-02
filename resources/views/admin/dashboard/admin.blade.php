@@ -4,9 +4,9 @@
     <div class="col-12">
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <i class="fas fa-user-secret me-2"></i>
-            <strong>Внимание!</strong> Вы работаете под пользователем: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->email }})
+            <strong>{{ __('messages.attention') }}!</strong> {{ __('messages.switched_user') }}: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->email }})
             <a href="{{ route('admin.user-switch.back') }}" class="btn btn-sm btn-outline-danger ms-3">
-                <i class="fas fa-undo me-1"></i>Вернуться к своему аккаунту
+                <i class="fas fa-undo me-1"></i>{{ __('messages.switch_back') }}
             </a>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -19,9 +19,9 @@
     <div class="col-12">
         <div class="alert alert-info alert-dismissible fade show" role="alert">
             <i class="fas fa-user-tag me-2"></i>
-            <strong>Информация:</strong> Вы переключились на роль: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? 'Неизвестная роль' }}</strong>
+            <strong>{{ __('messages.information_note') }}:</strong> {{ __('messages.switched_role') }}: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? __('messages.unknown_role') }}</strong>
             <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-outline-primary ms-3">
-                <i class="fas fa-undo me-1"></i>Вернуться к своим ролям
+                <i class="fas fa-undo me-1"></i>{{ __('messages.switch_back_role') }}
             </a>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -37,7 +37,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Всего пользователей
+                            {{ __('messages.total_users') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['users'] ?? 0 }}</div>
                     </div>
@@ -55,7 +55,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Учебные заведения
+                            {{ __('messages.total_institutions') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['institutions'] ?? 0 }}</div>
                     </div>
@@ -73,7 +73,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Образовательные программы
+                            {{ __('messages.total_programs') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['programs'] ?? 0 }}</div>
                     </div>
@@ -91,7 +91,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Курсы
+                            {{ __('messages.total_courses') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['courses'] ?? 0 }}</div>
                     </div>
@@ -110,29 +110,29 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>Быстрые действия
+                    <i class="fas fa-bolt me-2"></i>{{ __('messages.quick_actions') }}
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <a href="{{ route('admin.users.create') }}" class="btn btn-primary w-100">
-                            <i class="fas fa-user-plus me-2"></i>Добавить пользователя
+                            <i class="fas fa-user-plus me-2"></i>{{ __('messages.add_user') }}
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
                         <a href="{{ route('admin.institutions.create') }}" class="btn btn-success w-100">
-                            <i class="fas fa-university me-2"></i>Добавить учебное заведение
+                            <i class="fas fa-university me-2"></i>{{ __('messages.add_institution') }}
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
                         <a href="{{ route('admin.programs.create') }}" class="btn btn-info w-100">
-                            <i class="fas fa-book me-2"></i>Добавить программу
+                            <i class="fas fa-book me-2"></i>{{ __('messages.add_program') }}
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
                         <a href="{{ route('admin.courses.create') }}" class="btn btn-warning w-100">
-                            <i class="fas fa-chalkboard-teacher me-2"></i>Добавить курс
+                            <i class="fas fa-chalkboard-teacher me-2"></i>{{ __('messages.add_course') }}
                         </a>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
                 <div class="row mt-3">
                     <div class="col-md-3 mb-3">
                         <a href="{{ route('admin.moodle-sync.index') }}" class="btn btn-primary w-100">
-                            <i class="fas fa-sync-alt me-2"></i>Синхронизация Moodle
+                            <i class="fas fa-sync-alt me-2"></i>{{ __('messages.moodle_sync') }}
                         </a>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>Последние пользователи
+                    <i class="fas fa-history me-2"></i>{{ __('messages.recent_users') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -165,10 +165,10 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Пользователь</th>
-                                    <th>Email</th>
-                                    <th>Роль</th>
-                                    <th>Дата регистрации</th>
+                                    <th>{{ __('messages.user') }}</th>
+                                    <th>{{ __('messages.email') }}</th>
+                                    <th>{{ __('messages.role') }}</th>
+                                    <th>{{ __('messages.registration_date') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -210,7 +210,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>Статистика по ролям
+                    <i class="fas fa-chart-pie me-2"></i>{{ __('messages.role_statistics') }}
                 </h5>
             </div>
             <div class="card-body">

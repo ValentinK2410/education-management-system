@@ -4,14 +4,14 @@
 <div id="sync-indicator" class="alert alert-info d-none mb-4" role="alert">
     <div class="d-flex align-items-center">
         <div class="spinner-border spinner-border-sm me-3" role="status">
-            <span class="visually-hidden">Загрузка...</span>
+            <span class="visually-hidden">{{ __('messages.loading') }}</span>
         </div>
         <div class="flex-grow-1">
-            <strong>Синхронизация данных с Moodle...</strong>
+            <strong>{{ __('messages.synchronization_in_progress') }}</strong>
             <div class="progress mt-2" style="height: 6px;">
                 <div id="sync-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
             </div>
-            <small id="sync-message" class="d-block mt-1">Подготовка к синхронизации...</small>
+            <small id="sync-message" class="d-block mt-1">{{ __('messages.synchronization_in_progress') }}</small>
         </div>
     </div>
 </div>
@@ -24,7 +24,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Активные курсы
+                            {{ __('messages.active_courses') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['active_courses'] ?? 0 }}</div>
                     </div>
@@ -42,7 +42,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Завершенные курсы
+                            {{ __('messages.completed_courses') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['completed_courses'] ?? 0 }}</div>
                     </div>
@@ -60,7 +60,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Активные программы
+                            {{ __('messages.active_programs') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['active_programs'] ?? 0 }}</div>
                     </div>
@@ -78,7 +78,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Завершенные программы
+                            {{ __('messages.completed_programs') }}
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['completed_programs'] ?? 0 }}</div>
                     </div>
@@ -98,7 +98,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-book-open me-2"></i>Мои активные курсы
+                    <i class="fas fa-book-open me-2"></i>{{ __('messages.my_courses') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -107,10 +107,10 @@
                         <thead>
                             <tr>
                                 <th style="width: 5%;">ID</th>
-                                <th style="width: 30%;">Название курса</th>
-                                <th style="width: 20%;">Программа</th>
-                                <th style="width: 15%;">Преподаватель</th>
-                                <th style="width: 30%;">Статус заданий (ПОСЛЕ СЕССИИ)</th>
+                                <th style="width: 30%;">{{ __('messages.course_name') }}</th>
+                                <th style="width: 20%;">{{ __('messages.program') }}</th>
+                                <th style="width: 15%;">{{ __('messages.instructor') }}</th>
+                                <th style="width: 30%;">{{ __('messages.assignments_after_session') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -130,7 +130,7 @@
                                                 <br><small class="text-muted">{{ $course->program->institution->name }}</small>
                                             @endif
                                         @else
-                                            <span class="text-muted">Без программы</span>
+                                            <span class="text-muted">{{ __('messages.no_program') }}</span>
                                         @endif
                                     </td>
                                     <td>
@@ -146,7 +146,7 @@
                                                 </div>
                                             </div>
                                         @else
-                                            <span class="text-muted">Не назначен</span>
+                                            <span class="text-muted">{{ __('messages.no_instructor') }}</span>
                                         @endif
                                     </td>
                                     <td>
@@ -164,11 +164,11 @@
                                                     @if($assignmentUrl && ($assignment['status'] === 'not_submitted' || $assignment['status'] === 'pending'))
                                                         <a href="{{ $assignmentUrl }}" target="_blank" class="text-decoration-none">
                                                             <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
-                                                                  title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }} - Нажмите для сдачи">
+                                                                  title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }}">
                                                                 @if($assignment['status'] === 'not_submitted')
-                                                                    <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                    <i class="fas fa-times-circle me-1"></i>{{ __('messages.not_submitted') }}
                                                                 @elseif($assignment['status'] === 'pending')
-                                                                    <i class="fas fa-clock me-1"></i>Не проверено
+                                                                    <i class="fas fa-clock me-1"></i>{{ __('messages.not_graded') }}
                                                                 @else
                                                                     <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
                                                                 @endif
@@ -190,11 +190,11 @@
                                             </div>
                                         @elseif($course->moodle_course_id && auth()->user()->moodle_user_id)
                                             <small class="text-muted">
-                                                <i class="fas fa-info-circle me-1"></i>Задания не найдены
+                                                <i class="fas fa-info-circle me-1"></i>{{ __('messages.no_activities') }}
                                             </small>
                                         @elseif(!auth()->user()->moodle_user_id)
                                             <small class="text-warning">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>Не настроена синхронизация
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ __('messages.synchronization_not_configured') }}
                                             </small>
                                         @else
                                             <small class="text-muted">—</small>
@@ -451,9 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(progressInterval);
             
             if (data.success) {
-                stopSync('Синхронизация завершена успешно!', false);
+                stopSync(syncTranslations.completed, false);
             } else {
-                stopSync('Ошибка: ' + (data.message || 'Неизвестная ошибка'), true);
+                stopSync(syncTranslations.error + ': ' + (data.message || syncTranslations.unknown_error), true);
             }
         })
         .catch(error => {
@@ -461,10 +461,10 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(progressInterval);
             
             if (error.name === 'AbortError') {
-                stopSync('Синхронизация превысила время ожидания. Попробуйте обновить страницу.', true);
+                stopSync(syncTranslations.timeout, true);
             } else {
                 console.error('Ошибка синхронизации:', error);
-                stopSync('Ошибка соединения с сервером: ' + error.message, true);
+                stopSync(syncTranslations.connection_error + ': ' + error.message, true);
             }
         });
     @else
