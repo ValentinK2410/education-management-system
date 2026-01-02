@@ -884,6 +884,66 @@
     .timeline-marker {
         margin-left: -1.5rem;
     }
+
+    /* Стили для бейджей типов элементов курса */
+    .activity-type-badge {
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        border: 2px solid transparent;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-type-assign {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #1e40af !important;
+    }
+
+    .activity-type-assign i {
+        color: #ffffff;
+    }
+
+    .activity-type-quiz {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+        border-color: #047857 !important;
+    }
+
+    .activity-type-quiz i {
+        color: #ffffff;
+    }
+
+    .activity-type-forum {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #b91c1c !important;
+    }
+
+    .activity-type-forum i {
+        color: #ffffff;
+    }
+
+    .activity-type-resource {
+        background-color: #7c3aed !important;
+        color: #ffffff !important;
+        border-color: #6d28d9 !important;
+    }
+
+    .activity-type-resource i {
+        color: #ffffff;
+    }
+
+    .activity-type-exam {
+        background-color: #ea580c !important;
+        color: #ffffff !important;
+        border-color: #c2410c !important;
+    }
+
+    .activity-type-exam i {
+        color: #ffffff;
+    }
     </style>
 
     <!-- Tab: Учебные заведения -->
@@ -1000,21 +1060,29 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-info">
-                                                        @if($activity->activity_type == 'assign')
+                                                    @if($activity->activity_type == 'assign')
+                                                        <span class="badge activity-type-badge activity-type-assign">
                                                             <i class="fas fa-file-alt me-1"></i>Задание
-                                                        @elseif($activity->activity_type == 'quiz')
+                                                        </span>
+                                                    @elseif($activity->activity_type == 'quiz')
+                                                        <span class="badge activity-type-badge activity-type-quiz">
                                                             <i class="fas fa-clipboard-check me-1"></i>Тест
-                                                        @elseif($activity->activity_type == 'forum')
+                                                        </span>
+                                                    @elseif($activity->activity_type == 'forum')
+                                                        <span class="badge activity-type-badge activity-type-forum">
                                                             <i class="fas fa-comments me-1"></i>Форум
-                                                        @elseif($activity->activity_type == 'resource')
+                                                        </span>
+                                                    @elseif($activity->activity_type == 'resource')
+                                                        <span class="badge activity-type-badge activity-type-resource">
                                                             <i class="fas fa-book me-1"></i>Материал
-                                                        @elseif($activity->activity_type == 'exam')
+                                                        </span>
+                                                    @elseif($activity->activity_type == 'exam')
+                                                        <span class="badge activity-type-badge activity-type-exam">
                                                             <i class="fas fa-graduation-cap me-1"></i>Экзамен
-                                                        @else
-                                                            {{ $activity->activity_type }}
-                                                        @endif
-                                                    </span>
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-secondary">{{ $activity->activity_type }}</span>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     @if($progress)

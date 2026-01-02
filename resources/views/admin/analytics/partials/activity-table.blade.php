@@ -41,21 +41,29 @@
                         @endif
                     </td>
                     <td>
-                        <span class="badge bg-info">
-                            @if($activity->activity_type == 'assign')
+                        @if($activity->activity_type == 'assign')
+                            <span class="badge activity-type-badge activity-type-assign">
                                 <i class="fas fa-file-alt me-1"></i>Задание
-                            @elseif($activity->activity_type == 'quiz')
+                            </span>
+                        @elseif($activity->activity_type == 'quiz')
+                            <span class="badge activity-type-badge activity-type-quiz">
                                 <i class="fas fa-clipboard-check me-1"></i>Тест
-                            @elseif($activity->activity_type == 'forum')
+                            </span>
+                        @elseif($activity->activity_type == 'forum')
+                            <span class="badge activity-type-badge activity-type-forum">
                                 <i class="fas fa-comments me-1"></i>Форум
-                            @elseif($activity->activity_type == 'resource')
+                            </span>
+                        @elseif($activity->activity_type == 'resource')
+                            <span class="badge activity-type-badge activity-type-resource">
                                 <i class="fas fa-book me-1"></i>Материал
-                            @elseif($activity->activity_type == 'exam')
+                            </span>
+                        @elseif($activity->activity_type == 'exam')
+                            <span class="badge activity-type-badge activity-type-exam">
                                 <i class="fas fa-graduation-cap me-1"></i>Экзамен
-                            @else
-                                {{ $activity->activity_type }}
-                            @endif
-                        </span>
+                            </span>
+                        @else
+                            <span class="badge bg-secondary">{{ $activity->activity_type }}</span>
+                        @endif
                     </td>
                     <td>
                         @if($progress)
