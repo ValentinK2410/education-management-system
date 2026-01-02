@@ -885,63 +885,46 @@
         margin-left: -1.5rem;
     }
 
-    /* Стили для бейджей типов элементов курса */
+    /* Стили для бейджей типов элементов курса - нейтральные цвета */
     .activity-type-badge {
-        font-weight: 600;
+        font-weight: 500;
         font-size: 0.875rem;
+        padding: 0.4rem 0.65rem;
+        border: 1px solid #dee2e6;
+        background-color: #6c757d !important;
+        color: #ffffff !important;
+    }
+
+    .activity-type-badge i {
+        color: #ffffff;
+        opacity: 0.9;
+    }
+
+    /* Подсветка даты сдачи в зависимости от давности */
+    .submitted-date-cell {
         padding: 0.5rem 0.75rem;
-        border: 2px solid transparent;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        font-weight: 500;
     }
 
-    .activity-type-assign {
-        background-color: #2563eb !important;
-        color: #ffffff !important;
-        border-color: #1e40af !important;
+    .submitted-date-recent {
+        background-color: #fff9c4; /* Светло-желтый - менее 1 дня */
     }
 
-    .activity-type-assign i {
-        color: #ffffff;
+    .submitted-date-1-3days {
+        background-color: #ffe082; /* Желтый - 1-3 дня */
     }
 
-    .activity-type-quiz {
-        background-color: #059669 !important;
-        color: #ffffff !important;
-        border-color: #047857 !important;
+    .submitted-date-3-7days {
+        background-color: #ffb74d; /* Оранжевый - 3-7 дней */
     }
 
-    .activity-type-quiz i {
-        color: #ffffff;
+    .submitted-date-7-14days {
+        background-color: #ff8a65; /* Красно-оранжевый - 7-14 дней */
     }
 
-    .activity-type-forum {
-        background-color: #dc2626 !important;
-        color: #ffffff !important;
-        border-color: #b91c1c !important;
-    }
-
-    .activity-type-forum i {
-        color: #ffffff;
-    }
-
-    .activity-type-resource {
-        background-color: #7c3aed !important;
-        color: #ffffff !important;
-        border-color: #6d28d9 !important;
-    }
-
-    .activity-type-resource i {
-        color: #ffffff;
-    }
-
-    .activity-type-exam {
-        background-color: #ea580c !important;
-        color: #ffffff !important;
-        border-color: #c2410c !important;
-    }
-
-    .activity-type-exam i {
+    .submitted-date-old {
+        background-color: #d32f2f; /* Темно-красный - более 14 дней */
         color: #ffffff;
     }
     </style>
@@ -1121,8 +1104,23 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($progress && $progress->submitted_at)
-                                                        <span class="text-primary">{{ $progress->submitted_at->format('d.m.Y H:i') }}</span>
+                                                    @if($progress && $progress->submitted_at && $progress->status == 'submitted')
+                                                        @php
+                                                            $daysAgo = now()->diffInDays($progress->submitted_at);
+                                                            $dateClass = 'submitted-date-cell ';
+                                                            if ($daysAgo < 1) {
+                                                                $dateClass .= 'submitted-date-recent';
+                                                            } elseif ($daysAgo < 3) {
+                                                                $dateClass .= 'submitted-date-1-3days';
+                                                            } elseif ($daysAgo < 7) {
+                                                                $dateClass .= 'submitted-date-3-7days';
+                                                            } elseif ($daysAgo < 14) {
+                                                                $dateClass .= 'submitted-date-7-14days';
+                                                            } else {
+                                                                $dateClass .= 'submitted-date-old';
+                                                            }
+                                                        @endphp
+                                                        <span class="{{ $dateClass }}">{{ $progress->submitted_at->format('d.m.Y H:i') }}</span>
                                                     @else
                                                         <span class="text-muted">—</span>
                                                     @endif
