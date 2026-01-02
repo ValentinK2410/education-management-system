@@ -315,6 +315,12 @@ class CourseActivitySyncService
                     ];
 
                     if ($progress) {
+                        // Сохраняем существующую дату сдачи, если новая дата не передана
+                        // Это важно, так как для проверенных заданий Moodle может не возвращать дату сдачи
+                        if (!$submittedAt && $progress->submitted_at) {
+                            $progressData['submitted_at'] = $progress->submitted_at;
+                        }
+                        
                         // Обновляем существующий прогресс
                         $progress->update($progressData);
                         $stats['updated']++;

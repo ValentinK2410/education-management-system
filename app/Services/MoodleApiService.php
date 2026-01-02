@@ -621,7 +621,7 @@ class MoodleApiService
                     } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
                         $submittedAt = $submission['timecreated'];
                     }
-                    
+
                     // Проверяем статус сдачи
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
@@ -1051,11 +1051,8 @@ class MoodleApiService
                 $gradedAt = null;
 
                 if ($submission) {
-                    $submissionStatus = $submission['status'] ?? null;
-                    $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
-
                     // Определяем дату сдачи: приоритет timesubmitted, затем timemodified, затем timecreated
-                    $submittedAt = null;
+                    // Важно: извлекаем дату сдачи ДО проверки статуса, чтобы она была доступна даже для проверенных заданий
                     if (isset($submission['timesubmitted']) && $submission['timesubmitted'] > 0) {
                         $submittedAt = $submission['timesubmitted'];
                     } elseif (isset($submission['timemodified']) && $submission['timemodified'] > 0) {
@@ -1063,6 +1060,9 @@ class MoodleApiService
                     } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
                         $submittedAt = $submission['timecreated'];
                     }
+                    
+                    $submissionStatus = $submission['status'] ?? null;
+                    $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
 
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
                         $status = 'graded';
