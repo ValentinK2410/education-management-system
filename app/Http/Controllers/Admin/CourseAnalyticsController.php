@@ -73,7 +73,8 @@ class CourseAnalyticsController extends Controller
             if (!$user->hasRole('admin')) {
                 $studentsQuery->whereHas('courses', function ($q) use ($user) {
                     $q->where('instructor_id', $user->id);
-                });
+                })
+                ->where('id', '!=', $user->id); // Исключаем самого преподавателя
             }
             $students = $studentsQuery->get();
             
@@ -541,12 +542,17 @@ class CourseAnalyticsController extends Controller
                 ->join('users', 'student_activity_progress.user_id', '=', 'users.id')
                 ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
                 ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
+                ->join('user_courses', function($join) {
+                    $join->on('student_activity_progress.user_id', '=', 'user_courses.user_id')
+                         ->on('student_activity_progress.course_id', '=', 'user_courses.course_id');
+                })
                 ->select('student_activity_progress.*');
             
-            // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
+            // Если преподаватель, показываем только его курсы и исключаем самого преподавателя (применяем ДО фильтров)
             $currentUser = auth()->user();
             if (!$currentUser->hasRole('admin')) {
-                $query->where('courses.instructor_id', $currentUser->id);
+                $query->where('courses.instructor_id', $currentUser->id)
+                      ->where('student_activity_progress.user_id', '!=', $currentUser->id); // Исключаем самого преподавателя
             }
         } catch (\Exception $e) {
             Log::error('Ошибка при построении запроса аналитики', [
@@ -662,7 +668,8 @@ class CourseAnalyticsController extends Controller
         if (!$currentUser->hasRole('admin')) {
             $studentsQuery->whereHas('courses', function ($q) use ($currentUser) {
                 $q->where('instructor_id', $currentUser->id);
-            });
+            })
+            ->where('id', '!=', $currentUser->id); // Исключаем самого преподавателя
         }
         $students = $studentsQuery->get();
         
@@ -670,11 +677,16 @@ class CourseAnalyticsController extends Controller
         $statsQuery = StudentActivityProgress::query()
             ->join('users', 'student_activity_progress.user_id', '=', 'users.id')
             ->join('courses', 'student_activity_progress.course_id', '=', 'courses.id')
-            ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id');
+            ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
+            ->join('user_courses', function($join) {
+                $join->on('student_activity_progress.user_id', '=', 'user_courses.user_id')
+                     ->on('student_activity_progress.course_id', '=', 'user_courses.course_id');
+            });
         
-        // Если преподаватель, показываем только его курсы (применяем ДО фильтров)
+        // Если преподаватель, показываем только его курсы и исключаем самого преподавателя (применяем ДО фильтров)
         if (!$currentUser->hasRole('admin')) {
-            $statsQuery->where('courses.instructor_id', $currentUser->id);
+            $statsQuery->where('courses.instructor_id', $currentUser->id)
+                       ->where('student_activity_progress.user_id', '!=', $currentUser->id); // Исключаем преподавателя
         }
         
         // Применяем те же фильтры к запросу статистики (проверяем на пустоту и null)
