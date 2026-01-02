@@ -69,6 +69,86 @@
         background-color: #fee2e2;
         color: #dc2626;
     }
+
+    /* Темная тема */
+    [data-theme="dark"] .container-fluid .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.border-0 {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-header {
+        background: var(--card-bg) !important;
+        border-bottom-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-header.bg-white {
+        background: var(--card-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid h4,
+    [data-theme="dark"] .container-fluid h5 {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .text-muted {
+        color: #94a3b8 !important;
+        opacity: 0.8;
+    }
+
+    [data-theme="dark"] .container-fluid .instructor-card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .instructor-card:hover {
+        border-color: #6366f1 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .instructor-card .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .instructor-card a.text-dark {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .instructor-card a.text-dark:hover {
+        color: #6366f1 !important;
+    }
+
+    [data-theme="dark"] .container-fluid .stat-badge-primary {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        color: #a5b4fc !important;
+    }
+
+    [data-theme="dark"] .container-fluid .stat-badge-success {
+        background-color: rgba(16, 185, 129, 0.2) !important;
+        color: #6ee7b7 !important;
+    }
+
+    [data-theme="dark"] .container-fluid .stat-badge-warning {
+        background-color: rgba(245, 158, 11, 0.2) !important;
+        color: #fbbf24 !important;
+    }
+
+    [data-theme="dark"] .container-fluid .stat-badge-danger {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #fca5a5 !important;
+    }
 </style>
 @endpush
 
