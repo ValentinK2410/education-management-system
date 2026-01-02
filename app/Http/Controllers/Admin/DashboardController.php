@@ -121,10 +121,17 @@ class DashboardController extends Controller
             'active_courses' => $myCourses->where('is_active', true)->count(),
         ];
 
-        // Студенты на курсах преподавателя
+        // Студенты на курсах преподавателя (только студенты, исключаем преподавателей и администраторов)
         $myStudents = User::whereHas('courses', function ($query) use ($user) {
             $query->where('instructor_id', $user->id);
-        })->with('roles')->distinct()->take(10)->get();
+        })
+        ->whereHas('roles', function ($query) {
+            $query->where('name', 'student');
+        })
+        ->with('roles')
+        ->distinct()
+        ->take(10)
+        ->get();
 
         return view('admin.dashboard', [
             'stats' => $stats,
