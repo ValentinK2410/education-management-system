@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Управление курсами')
-@section('page-title', 'Курсы')
+@section('title', __('messages.courses_list'))
+@section('page-title', __('messages.courses'))
 
 @push('styles')
 <style>
@@ -210,18 +210,18 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-chalkboard-teacher me-2"></i>Курсы
+                        <i class="fas fa-chalkboard-teacher me-2"></i>{{ __('messages.courses') }}
                         @if(!$isAdmin)
-                            <small class="text-muted ms-2">(Мои курсы)</small>
+                            <small class="text-muted ms-2">({{ __('messages.my_courses') }})</small>
                         @endif
                     </h3>
                     <div class="d-flex gap-2">
                         @if($isAdmin)
                             <button type="button" class="btn btn-danger" id="bulkDeleteBtn" style="display: none;">
-                                <i class="fas fa-trash me-2"></i>Удалить выбранные
+                                <i class="fas fa-trash me-2"></i>{{ __('messages.delete_selected') }}
                             </button>
                             <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Добавить курс
+                                <i class="fas fa-plus me-2"></i>{{ __('messages.add_course') }}
                             </a>
                         @endif
                     </div>
@@ -233,17 +233,17 @@
                                 <tr>
                                     @if($isAdmin)
                                         <th style="width: 40px;">
-                                            <input type="checkbox" id="selectAll" title="Выбрать все">
+                                            <input type="checkbox" id="selectAll" title="{{ __('messages.select_all') }}">
                                         </th>
                                     @endif
                                     <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Программа</th>
-                                    <th>Преподаватель</th>
-                                    <th>Тип оплаты</th>
-                                    <th>Цена</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
+                                    <th>{{ __('messages.course_name') }}</th>
+                                    <th>{{ __('messages.program') }}</th>
+                                    <th>{{ __('messages.instructor') }}</th>
+                                    <th>{{ __('messages.payment_type') }}</th>
+                                    <th>{{ __('messages.price') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th>{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -252,11 +252,11 @@
                                         <td colspan="8" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                                <p class="mb-2">Вы не записаны ни на один курс</p>
-                                                <p class="small">Обратитесь к администратору для записи на курс или запустите синхронизацию с Moodle</p>
+                                                <p class="mb-2">{{ __('messages.not_enrolled_in_courses') }}</p>
+                                                <p class="small">{{ __('messages.contact_admin_or_sync') }}</p>
                                                 @if(auth()->user()->moodle_user_id)
                                                     <a href="{{ route('admin.moodle-sync.index') }}" class="btn btn-sm btn-primary mt-2">
-                                                        <i class="fas fa-sync me-1"></i>Синхронизировать с Moodle
+                                                        <i class="fas fa-sync me-1"></i>{{ __('messages.sync_with_moodle') }}
                                                     </a>
                                                 @endif
                                             </div>
@@ -274,12 +274,12 @@
                                         <td>
                                             <div>
                                                 <h6 class="mb-0">{{ $course->name }}</h6>
-                                                <small class="text-muted">{{ $course->code ?? 'Без кода' }}</small>
+                                                <small class="text-muted">{{ $course->code ?? __('messages.no_code') }}</small>
                                                 @if(!$isAdmin)
                                                     @if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
                                                         <div class="mt-2">
                                                             <small class="text-muted d-block mb-1">
-                                                                <i class="fas fa-tasks me-1"></i>ПОСЛЕ СЕССИИ:
+                                                                <i class="fas fa-tasks me-1"></i>{{ __('messages.after_session') }}:
                                                             </small>
                                                             <div class="d-flex flex-wrap gap-1">
                                                                 @foreach($coursesWithAssignments[$course->id] as $assignment)
@@ -296,9 +296,9 @@
                                                                             <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
                                                                                   title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }} - Нажмите для сдачи">
                                                                                 @if($assignment['status'] === 'not_submitted')
-                                                                                    <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                                    <i class="fas fa-times-circle me-1"></i>{{ __('messages.not_submitted') }}
                                                                                 @elseif($assignment['status'] === 'pending')
-                                                                                    <i class="fas fa-clock me-1"></i>Не проверено
+                                                                                    <i class="fas fa-clock me-1"></i>{{ __('messages.not_graded') }}
                                                                                 @else
                                                                                     <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
                                                                                 @endif
@@ -308,9 +308,9 @@
                                                                         <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
                                                                               title="{{ $assignment['name'] }}: {{ $assignment['status_text'] }}">
                                                                             @if($assignment['status'] === 'not_submitted')
-                                                                                <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                                        <i class="fas fa-times-circle me-1"></i>{{ __('messages.not_submitted') }}
                                                                             @elseif($assignment['status'] === 'pending')
-                                                                                <i class="fas fa-clock me-1"></i>Не проверено
+                                                                                        <i class="fas fa-clock me-1"></i>{{ __('messages.not_graded') }}
                                                                             @else
                                                                                 <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
                                                                             @endif
@@ -322,13 +322,13 @@
                                                     @elseif($course->moodle_course_id && auth()->user()->moodle_user_id)
                                                         <div class="mt-2">
                                                             <small class="text-muted">
-                                                                <i class="fas fa-info-circle me-1"></i>Задания не найдены
+                                                                <i class="fas fa-info-circle me-1"></i>{{ __('messages.no_activities') }}
                                                             </small>
                                                         </div>
                                                     @elseif(!auth()->user()->moodle_user_id)
                                                         <div class="mt-2">
                                                             <small class="text-warning">
-                                                                <i class="fas fa-exclamation-triangle me-1"></i>Не настроена синхронизация с Moodle
+                                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ __('messages.synchronization_not_configured') }}
                                                             </small>
                                                         </div>
                                                     @endif
@@ -339,7 +339,7 @@
                                             @if($course->program)
                                                 <span class="badge bg-info">{{ $course->program->name }}</span>
                                             @else
-                                                <span class="text-muted">Не указана</span>
+                                                <span class="text-muted">{{ __('messages.not_specified') }}</span>
                                             @endif
                                         </td>
                                         <td>
@@ -356,17 +356,17 @@
                                                     </div>
                                                 </div>
                                             @else
-                                                <span class="text-muted">Не назначен</span>
+                                                <span class="text-muted">{{ __('messages.not_assigned') }}</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if($course->is_paid)
                                                 <span class="badge bg-warning">
-                                                    <i class="fas fa-dollar-sign me-1"></i>Платный
+                                                    <i class="fas fa-dollar-sign me-1"></i>{{ __('messages.paid_course') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-gift me-1"></i>Бесплатный
+                                                    <i class="fas fa-gift me-1"></i>{{ __('messages.free_course') }}
                                                 </span>
                                             @endif
                                         </td>
@@ -380,31 +380,31 @@
                                         <td>
                                             @if($course->is_active)
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-check me-1"></i>Активен
+                                                    <i class="fas fa-check me-1"></i>{{ __('messages.active') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger">
-                                                    <i class="fas fa-times me-1"></i>Неактивен
+                                                    <i class="fas fa-times me-1"></i>{{ __('messages.inactive') }}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{{ route('admin.courses.show', $course) }}"
-                                                   class="btn btn-sm btn-info" title="Просмотр">
+                                                   class="btn btn-sm btn-info" title="{{ __('messages.view') }}">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 @if($isAdmin)
                                                     <a href="{{ route('admin.courses.edit', $course) }}"
-                                                       class="btn btn-sm btn-warning" title="Редактировать">
+                                                       class="btn btn-sm btn-warning" title="{{ __('messages.edit') }}">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <form action="{{ route('admin.courses.duplicate', $course) }}"
                                                           method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-secondary"
-                                                                title="Дублировать курс"
-                                                                onclick="return confirm('Создать копию этого курса?')">
+                                                                title="{{ __('messages.duplicate_course') }}"
+                                                                onclick="return confirm('{{ __('messages.create_course_copy') }}')">
                                                             <i class="fas fa-copy"></i>
                                                         </button>
                                                     </form>
@@ -413,8 +413,8 @@
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-sm btn-danger"
-                                                                title="Удалить"
-                                                                onclick="return confirm('Вы уверены, что хотите удалить этот курс?')">
+                                                                title="{{ __('messages.delete') }}"
+                                                                onclick="return confirm('{{ __('messages.confirm_delete_course') }}')">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </form>
@@ -423,7 +423,7 @@
                                                     <button type="button" 
                                                             class="btn btn-sm btn-outline-primary assignment-toggle"
                                                             data-course-id="{{ $course->id }}"
-                                                            title="@if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))Показать задания@elseПоказать информацию о заданиях@endif">
+                                                            title="@if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id])){{ __('messages.show_assignments') }}@else{{ __('messages.show_assignment_info') }}@endif">
                                                         <i class="fas fa-tasks"></i>
                                                     </button>
                                                 @endif
@@ -435,7 +435,7 @@
                                             <td colspan="8">
                                                 <div class="p-4 bg-light border-top">
                                                     <h6 class="mb-3 fw-bold">
-                                                        <i class="fas fa-tasks me-2 text-primary"></i>ПОСЛЕ СЕССИИ
+                                                        <i class="fas fa-tasks me-2 text-primary"></i>{{ __('messages.after_session') }}
                                                     </h6>
                                                     <div class="row g-3">
                                                         @foreach($coursesWithAssignments[$course->id] as $assignment)
@@ -448,22 +448,22 @@
                                                                                 @if($assignment['submitted_at'])
                                                                                     <small class="text-muted d-block mb-1">
                                                                                         <i class="fas fa-calendar-check me-1"></i>
-                                                                                        Сдано: {{ \Carbon\Carbon::createFromTimestamp($assignment['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                        {{ __('messages.submitted') }}: {{ \Carbon\Carbon::createFromTimestamp($assignment['submitted_at'])->format('d.m.Y H:i') }}
                                                                                     </small>
                                                                                 @endif
                                                                                 @if($assignment['graded_at'])
                                                                                     <small class="text-muted d-block">
                                                                                         <i class="fas fa-check-double me-1"></i>
-                                                                                        Проверено: {{ \Carbon\Carbon::createFromTimestamp($assignment['graded_at'])->format('d.m.Y H:i') }}
+                                                                                        {{ __('messages.graded') }}: {{ \Carbon\Carbon::createFromTimestamp($assignment['graded_at'])->format('d.m.Y H:i') }}
                                                                                     </small>
                                                                                 @endif
                                                                             </div>
                                                                             <div class="ms-3">
                                                                                 <div class="assignment-status-badge assignment-status-{{ $assignment['status'] }}">
                                                                                     @if($assignment['status'] === 'not_submitted')
-                                                                                        <i class="fas fa-times-circle me-1"></i>Не сдано
+                                                                                        <i class="fas fa-times-circle me-1"></i>{{ __('messages.not_submitted') }}
                                                                                     @elseif($assignment['status'] === 'pending')
-                                                                                        <i class="fas fa-clock me-1"></i>Не проверено
+                                                                                        <i class="fas fa-clock me-1"></i>{{ __('messages.not_graded') }}
                                                                                     @else
                                                                                         <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
                                                                                     @endif
@@ -484,7 +484,7 @@
                                                 <div class="p-4 bg-light border-top">
                                                     <div class="alert alert-info mb-0">
                                                         <i class="fas fa-info-circle me-2"></i>
-                                                        Задания из раздела "ПОСЛЕ СЕССИИ" не найдены для этого курса.
+                                                        {{ __('messages.assignments_not_found_after_session') }}
                                                     </div>
                                                 </div>
                                             </td>
@@ -495,7 +495,7 @@
                                         <td colspan="8" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
-                                                <p>Курсы не найдены</p>
+                                                <p>{{ __('messages.courses_not_found') }}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const checkedCount = Array.from(courseCheckboxes).filter(cb => cb.checked).length;
             if (checkedCount > 0) {
                 bulkDeleteBtn.style.display = 'inline-block';
-                bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Удалить выбранные (${checkedCount})`;
+                bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>${courseTranslations.delete_selected} (${checkedCount})`;
             } else {
                 bulkDeleteBtn.style.display = 'none';
             }
@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(cb => cb.value);
             
             if (selectedIds.length === 0) {
-                alert('Выберите хотя бы один курс для удаления');
+                alert(courseTranslations.select_at_least_one);
                 return;
             }
             
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(cb => cb.dataset.courseName)
                 .join(', ');
             
-            if (!confirm(`Вы уверены, что хотите удалить следующие курсы?\n\n${courseNames}\n\nЭто действие нельзя отменить!`)) {
+            if (!confirm(`${courseTranslations.confirm_delete_courses}\n\n${courseNames}\n\n${courseTranslations.action_cannot_be_undone}`)) {
                 return;
             }
             
