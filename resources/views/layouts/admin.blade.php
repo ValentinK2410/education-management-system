@@ -213,6 +213,17 @@
             flex-wrap: wrap;
         }
 
+        [data-theme="dark"] .header-left .text-muted,
+        [data-theme="dark"] .admin-header .text-muted {
+            color: #94a3b8 !important;
+            opacity: 0.9;
+        }
+
+        [data-theme="dark"] .header-left .text-muted i,
+        [data-theme="dark"] .admin-header .text-muted i {
+            color: #94a3b8 !important;
+        }
+
         .sidebar-toggle {
             background: none;
             border: none;
