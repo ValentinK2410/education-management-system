@@ -883,7 +883,7 @@ class CourseAnalyticsController extends Controller
             }
             
             // Если cmid не найден в meta, пытаемся получить его через Moodle API
-            if (!$cmid && $moodleApiService && $progress->activity && $progress->activity->moodle_activity_id && $progress->activity->activity_type) {
+            if (!$cmid && $moodleApiService && $progress->activity && $progress->activity->moodle_activity_id && $progress->activity->activity_type && $progress->course && $progress->course->moodle_course_id) {
                 try {
                     $moduleName = $progress->activity->activity_type;
                     // Преобразуем тип активности в название модуля Moodle
@@ -894,6 +894,7 @@ class CourseAnalyticsController extends Controller
                     ];
                     
                     if (isset($moduleMap[$moduleName])) {
+                        // Пытаемся получить cmid через core_course_get_course_module_by_instance
                         $cmResult = $moodleApiService->call('core_course_get_course_module_by_instance', [
                             'module' => $moduleMap[$moduleName],
                             'instance' => $progress->activity->moodle_activity_id
@@ -911,6 +912,41 @@ class CourseAnalyticsController extends Controller
                                 $meta['cmid'] = $cmid;
                                 $progress->activity->meta = $meta;
                                 $progress->activity->save();
+                            }
+                        } else {
+                            // Альтернативный способ: используем getCourseAssignmentsWithStatus для заданий
+                            if ($moduleName === 'assign' && $progress->user && $progress->user->moodle_user_id) {
+                                try {
+                                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
+                                        $progress->course->moodle_course_id,
+                                        $progress->user->moodle_user_id,
+                                        'ПОСЛЕ СЕССИИ'
+                                    );
+                                    
+                                    if ($assignments !== false && is_array($assignments)) {
+                                        foreach ($assignments as $assignment) {
+                                            if (isset($assignment['id']) && $assignment['id'] == $progress->activity->moodle_activity_id) {
+                                                if (isset($assignment['cmid']) && $assignment['cmid']) {
+                                                    $cmid = $assignment['cmid'];
+                                                    
+                                                    // Сохраняем cmid в meta
+                                                    if ($progress->activity) {
+                                                        $meta = is_array($progress->activity->meta) ? $progress->activity->meta : json_decode($progress->activity->meta, true);
+                                                        if (!is_array($meta)) {
+                                                            $meta = [];
+                                                        }
+                                                        $meta['cmid'] = $cmid;
+                                                        $progress->activity->meta = $meta;
+                                                        $progress->activity->save();
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    // Игнорируем ошибки
+                                }
                             }
                         }
                     }
