@@ -2,6 +2,252 @@
 
 @section('title', 'Отзывы')
 
+@push('styles')
+<style>
+    /* Заголовки */
+    [data-theme="dark"] .main-content h1,
+    [data-theme="dark"] .main-content h3,
+    [data-theme="dark"] .main-content h4,
+    [data-theme="dark"] .main-content h5,
+    [data-theme="dark"] .main-content h6 {
+        color: var(--text-color) !important;
+    }
+
+    /* Текст */
+    [data-theme="dark"] .main-content .text-muted {
+        color: #94a3b8 !important;
+        opacity: 0.8;
+    }
+
+    [data-theme="dark"] .main-content p {
+        color: var(--text-color) !important;
+    }
+
+    /* Карточки */
+    [data-theme="dark"] .main-content .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Статистические карточки */
+    [data-theme="dark"] .main-content .card.bg-primary {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        border-color: rgba(99, 102, 241, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-primary.text-white,
+    [data-theme="dark"] .main-content .card.bg-primary .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-primary h4,
+    [data-theme="dark"] .main-content .card.bg-primary small {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-warning {
+        background-color: rgba(245, 158, 11, 0.2) !important;
+        border-color: rgba(245, 158, 11, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-warning.text-white,
+    [data-theme="dark"] .main-content .card.bg-warning .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-warning h4,
+    [data-theme="dark"] .main-content .card.bg-warning small {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-success {
+        background-color: rgba(16, 185, 129, 0.2) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-success.text-white,
+    [data-theme="dark"] .main-content .card.bg-success .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-success h4,
+    [data-theme="dark"] .main-content .card.bg-success small {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-info {
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-info.text-white,
+    [data-theme="dark"] .main-content .card.bg-info .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .card.bg-info h4,
+    [data-theme="dark"] .main-content .card.bg-info small {
+        color: var(--text-color) !important;
+    }
+
+    /* Формы */
+    [data-theme="dark"] .main-content .form-select,
+    [data-theme="dark"] .main-content .form-control {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .form-select:focus,
+    [data-theme="dark"] .main-content .form-control:focus {
+        background-color: var(--card-bg) !important;
+        border-color: #6366f1 !important;
+        color: var(--text-color) !important;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+    }
+
+    [data-theme="dark"] .main-content .form-control::placeholder {
+        color: #94a3b8 !important;
+        opacity: 0.6;
+    }
+
+    /* Кнопки */
+    [data-theme="dark"] .main-content .btn-warning {
+        background-color: var(--warning-color) !important;
+        border-color: var(--warning-color) !important;
+        color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-success {
+        background-color: rgba(16, 185, 129, 0.8) !important;
+        border-color: rgba(16, 185, 129, 0.8) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-secondary {
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-secondary:hover {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-primary {
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-primary:hover {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-success {
+        border-color: rgba(16, 185, 129, 0.8) !important;
+        color: rgba(16, 185, 129, 0.8) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-success:hover {
+        background-color: rgba(16, 185, 129, 0.8) !important;
+        border-color: rgba(16, 185, 129, 0.8) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-warning {
+        border-color: var(--warning-color) !important;
+        color: var(--warning-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-warning:hover {
+        background-color: var(--warning-color) !important;
+        border-color: var(--warning-color) !important;
+        color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-danger {
+        border-color: var(--danger-color) !important;
+        color: var(--danger-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .btn-outline-danger:hover {
+        background-color: var(--danger-color) !important;
+        border-color: var(--danger-color) !important;
+        color: white !important;
+    }
+
+    /* Таблица */
+    [data-theme="dark"] .main-content .table {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .table thead th {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .table tbody td {
+        border-color: var(--border-color) !important;
+        background-color: transparent !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .table-hover tbody tr:hover {
+        background-color: var(--dark-bg) !important;
+    }
+
+    [data-theme="dark"] .main-content .table-hover tbody tr:hover td {
+        background-color: var(--dark-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Бейджи */
+    [data-theme="dark"] .main-content .badge.bg-success {
+        background-color: rgba(16, 185, 129, 0.8) !important;
+        color: white !important;
+    }
+
+    [data-theme="dark"] .main-content .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.8) !important;
+        color: #1e293b !important;
+    }
+
+    /* Рейтинг звезды */
+    [data-theme="dark"] .main-content .rating-display .text-warning {
+        color: var(--warning-color) !important;
+    }
+
+    [data-theme="dark"] .main-content .rating-display .text-muted {
+        color: #475569 !important;
+    }
+
+    /* Аватар */
+    [data-theme="dark"] .main-content .avatar-sm {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+    }
+
+    /* Пустое состояние */
+    [data-theme="dark"] .main-content .text-center .text-muted {
+        color: #94a3b8 !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="main-content">
     <div class="admin-header">
