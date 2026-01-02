@@ -93,11 +93,11 @@
                                 <button type="button" class="btn btn-info ms-2" onclick="syncActivities()" id="sync-btn">
                                     <i class="fas fa-sync me-2"></i>Синхронизировать данные
                                 </button>
-                                <div class="btn-group ms-2 dropdown">
-                                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="btn-group ms-2 dropdown" style="z-index: 1051;">
+                                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="exportDropdownBtn">
                                         <i class="fas fa-download me-2"></i>Экспорт
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu">
+                                    <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu" style="z-index: 1050 !important;">
                                         <li><a class="dropdown-item" href="{{ route('admin.analytics.export.csv', request()->all()) }}">
                                             <i class="fas fa-file-csv me-2"></i>CSV
                                         </a></li>
@@ -534,13 +534,13 @@
 
 /* Исправление z-index для выпадающего меню экспорта */
 .export-dropdown-menu {
-    z-index: 9999 !important;
+    z-index: 1050 !important;
     position: absolute !important;
 }
 
 .btn-group.dropdown {
     position: relative;
-    z-index: 1000;
+    z-index: 1051;
 }
 
 /* Убеждаемся, что родительские элементы не обрезают меню */
@@ -550,6 +550,20 @@
 
 .card {
     overflow: visible !important;
+}
+
+/* Карточки статистики должны быть ниже выпадающего меню */
+.card.border-left-primary,
+.card.border-left-success,
+.card.border-left-info,
+.card.border-left-warning {
+    position: relative;
+    z-index: 1;
+}
+
+/* Убеждаемся, что выпадающее меню отображается поверх всего */
+.dropdown-menu.show {
+    z-index: 1050 !important;
 }
 </style>
 
