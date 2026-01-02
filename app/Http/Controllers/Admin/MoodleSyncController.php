@@ -201,25 +201,97 @@ class MoodleSyncController extends Controller
         // Читаем последние строки из лог-файла
         $logFile = storage_path('logs/laravel.log');
         
-        if (!file_exists($logFile)) {
+        if (!file_exists($logFile) || !is_readable($logFile)) {
             return [];
         }
         
-        $lines = file($logFile);
-        $recentLogs = [];
+        // Увеличиваем лимит памяти для чтения логов
+        $memoryLimit = ini_get('memory_limit');
+        ini_set('memory_limit', '256M');
         
-        // Берем последние 50 строк и фильтруем по ключевым словам
-        $relevantLines = array_slice($lines, -50);
+        try {
+            // Используем более эффективный способ чтения последних строк файла
+            $lines = $this->readLastLines($logFile, 100);
+            $recentLogs = [];
+            
+            // Фильтруем по ключевым словам
+            foreach ($lines as $line) {
+                if (stripos($line, 'Moodle') !== false || 
+                    stripos($line, 'синхронизац') !== false ||
+                    stripos($line, 'sync') !== false) {
+                    $recentLogs[] = trim($line);
+                }
+            }
+            
+            // Возвращаем последние 10 релевантных строк
+            return array_slice($recentLogs, -10);
+        } catch (\Exception $e) {
+            Log::error('Ошибка чтения логов синхронизации', [
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        } finally {
+            // Восстанавливаем лимит памяти
+            ini_set('memory_limit', $memoryLimit);
+        }
+    }
+    
+    /**
+     * Читает последние N строк из файла без загрузки всего файла в память
+     *
+     * @param string $filename Путь к файлу
+     * @param int $lines Количество строк для чтения
+     * @return array Массив строк
+     */
+    protected function readLastLines(string $filename, int $lines = 50): array
+    {
+        $file = @fopen($filename, 'r');
+        if (!$file) {
+            return [];
+        }
         
-        foreach ($relevantLines as $line) {
-            if (stripos($line, 'Moodle') !== false || 
-                stripos($line, 'синхронизац') !== false ||
-                stripos($line, 'sync') !== false) {
-                $recentLogs[] = trim($line);
+        // Перемещаемся в конец файла
+        fseek($file, 0, SEEK_END);
+        $fileSize = ftell($file);
+        
+        // Если файл маленький, читаем его полностью
+        if ($fileSize < 1024 * 1024) { // Меньше 1 МБ
+            fseek($file, 0);
+            $content = fread($file, $fileSize);
+            fclose($file);
+            $allLines = explode("\n", $content);
+            return array_slice($allLines, -$lines);
+        }
+        
+        // Для больших файлов читаем с конца
+        $buffer = '';
+        $lineCount = 0;
+        $chunkSize = 8192; // 8 КБ
+        
+        // Читаем файл с конца по частям
+        for ($pos = $fileSize - $chunkSize; $pos >= 0; $pos -= $chunkSize) {
+            if ($pos < 0) {
+                $chunkSize += $pos;
+                $pos = 0;
+            }
+            
+            fseek($file, $pos);
+            $chunk = fread($file, $chunkSize);
+            $buffer = $chunk . $buffer;
+            
+            // Подсчитываем количество строк
+            $lineCount = substr_count($buffer, "\n");
+            
+            if ($lineCount >= $lines) {
+                break;
             }
         }
         
-        return array_slice($recentLogs, -10); // Возвращаем последние 10 релевантных строк
+        fclose($file);
+        
+        // Разбиваем на строки и берем последние N
+        $allLines = explode("\n", $buffer);
+        return array_slice($allLines, -$lines);
     }
 }
 
