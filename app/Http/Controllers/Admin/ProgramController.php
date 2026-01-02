@@ -102,7 +102,11 @@ class ProgramController extends Controller
      */
     public function show(Program $program)
     {
-        $program->load(['institution', 'courses.instructor']);
+        $program->load(['institution', 'courses' => function ($query) {
+            $query->orderBy('order')->orderBy('id');
+        }]);
+        
+        $program->load(['courses.instructor']);
         
         // Загружаем количество студентов для каждого курса
         $program->courses->loadCount(['users' => function ($query) {
@@ -112,6 +116,74 @@ class ProgramController extends Controller
         }]);
         
         return view('admin.programs.show', compact('program'));
+    }
+    
+    /**
+     * Переместить курс вверх в списке программы
+     *
+     * @param Program $program
+     * @param Course $course
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function moveCourseUp(Program $program, Course $course)
+    {
+        // Проверяем, что курс принадлежит программе
+        if ($course->program_id !== $program->id) {
+            abort(404, 'Курс не принадлежит данной программе');
+        }
+        
+        // Находим предыдущий курс по порядку
+        $previousCourse = Course::where('program_id', $program->id)
+            ->where('order', '<', $course->order)
+            ->orderBy('order', 'desc')
+            ->first();
+        
+        if ($previousCourse) {
+            // Меняем местами порядок
+            $tempOrder = $course->order;
+            $course->order = $previousCourse->order;
+            $previousCourse->order = $tempOrder;
+            
+            $course->save();
+            $previousCourse->save();
+        }
+        
+        return redirect()->route('admin.programs.show', $program)
+            ->with('success', 'Порядок курса изменен');
+    }
+    
+    /**
+     * Переместить курс вниз в списке программы
+     *
+     * @param Program $program
+     * @param Course $course
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function moveCourseDown(Program $program, Course $course)
+    {
+        // Проверяем, что курс принадлежит программе
+        if ($course->program_id !== $program->id) {
+            abort(404, 'Курс не принадлежит данной программе');
+        }
+        
+        // Находим следующий курс по порядку
+        $nextCourse = Course::where('program_id', $program->id)
+            ->where('order', '>', $course->order)
+            ->orderBy('order', 'asc')
+            ->first();
+        
+        if ($nextCourse) {
+            // Меняем местами порядок
+            $tempOrder = $course->order;
+            $course->order = $nextCourse->order;
+            $nextCourse->order = $tempOrder;
+            
+            $course->save();
+            $nextCourse->save();
+        }
+        
+        return redirect()->route('admin.programs.show', $program)
+            ->with('success', 'Порядок курса изменен');
     }
 
     /**

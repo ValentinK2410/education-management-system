@@ -25,6 +25,7 @@ class Course extends Model
         'short_description', // Краткое описание
         'image',             // Изображение обложки курса
         'program_id',        // ID образовательной программы
+        'order',             // Порядок курса в программе
         'instructor_id',     // ID преподавателя
         'code',              // Код курса
         'credits',           // Количество кредитов

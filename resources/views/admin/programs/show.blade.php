@@ -167,6 +167,7 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th style="width: 50px;">Порядок</th>
                                     <th>ID</th>
                                     <th>Название курса</th>
                                     <th>Код</th>
@@ -177,8 +178,30 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($program->courses as $course)
+                                @foreach($program->courses as $index => $course)
                                 <tr>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm" role="group">
+                                            <form method="POST" action="{{ route('admin.programs.courses.move-up', [$program->id, $course->id]) }}" class="d-inline">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="btn btn-outline-secondary btn-sm" 
+                                                        title="Переместить вверх"
+                                                        {{ $index === 0 ? 'disabled' : '' }}>
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.programs.courses.move-down', [$program->id, $course->id]) }}" class="d-inline">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="btn btn-outline-secondary btn-sm" 
+                                                        title="Переместить вниз"
+                                                        {{ $index === $program->courses->count() - 1 ? 'disabled' : '' }}>
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                     <td>{{ $course->id }}</td>
                                     <td>
                                         <strong>{{ $course->name }}</strong>
