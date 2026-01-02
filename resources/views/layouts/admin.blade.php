@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Административная панель') - EduManage</title>
+    <title>@yield('title', __('messages.administrative_panel')) - EduManage</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -780,7 +780,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.analytics.index') }}" class="nav-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-line"></i>
-                    <span>Аналитика курсов</span>
+                    <span>{{ __('messages.analytics') }}</span>
                 </a>
             </div>
             @endif
@@ -789,7 +789,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.instructor-stats.index') }}" class="nav-link {{ request()->routeIs('admin.instructor-stats.*') ? 'active' : '' }}">
                     <i class="fas fa-user-tie"></i>
-                    <span>Статистика преподавателей</span>
+                    <span>{{ __('messages.instructor_stats') }}</span>
                 </a>
             </div>
             @endif
@@ -798,7 +798,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
                     <i class="fas fa-shield-alt"></i>
-                    <span>Роли</span>
+                    <span>{{ __('messages.roles') }}</span>
                 </a>
             </div>
             @endif
@@ -807,7 +807,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
                     <i class="fas fa-star"></i>
-                    <span>Отзывы</span>
+                    <span>{{ __('messages.reviews') }}</span>
                 </a>
             </div>
             @endif
@@ -816,7 +816,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.certificate-templates.index') }}" class="nav-link {{ request()->routeIs('admin.certificate-templates.*') ? 'active' : '' }}">
                     <i class="fas fa-certificate"></i>
-                    <span>Шаблоны сертификатов</span>
+                    <span>{{ __('messages.certificate_templates') }}</span>
                 </a>
             </div>
             @endif
@@ -825,7 +825,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.user-archive.index') }}" class="nav-link {{ request()->routeIs('admin.user-archive.*') ? 'active' : '' }}">
                     <i class="fas fa-archive"></i>
-                    <span>Архив пользователей</span>
+                    <span>{{ __('messages.user_archive') }}</span>
                 </a>
             </div>
             @endif
@@ -834,7 +834,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.moodle-sync.index') }}" class="nav-link {{ request()->routeIs('admin.moodle-sync.*') ? 'active' : '' }}">
                     <i class="fas fa-sync-alt"></i>
-                    <span>Синхронизация Moodle</span>
+                    <span>{{ __('messages.moodle_sync') }}</span>
                 </a>
             </div>
             @endif
@@ -843,7 +843,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
-                    <span>Системные настройки</span>
+                    <span>{{ __('messages.system_settings') }}</span>
                 </a>
             </div>
             @endif
@@ -901,13 +901,13 @@
                             <li>
                                 <a class="dropdown-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}"
                                    href="{{ request()->fullUrlWithQuery(['lang' => 'ru']) }}">
-                                    <i class="fas fa-flag me-2"></i>Русский
+                                    <i class="fas fa-flag me-2"></i>{{ __('messages.russian') }}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}"
                                    href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}">
-                                    <i class="fas fa-flag me-2"></i>English
+                                    <i class="fas fa-flag me-2"></i>{{ __('messages.english') }}
                                 </a>
                             </li>
                         </ul>
@@ -943,7 +943,7 @@
                 @if(session('role_switched'))
                 <div class="me-3">
                     <a href="{{ route('admin.role-switch.back') }}" class="btn btn-sm btn-warning" title="Вернуться к ролям админа">
-                        <i class="fas fa-undo me-1"></i>Вернуться к ролям админа
+                        <i class="fas fa-undo me-1"></i>{{ __('messages.switch_back_role') }}
                     </a>
                 </div>
                 @endif
@@ -954,40 +954,40 @@
                     @if(session('is_switched'))
                         <div class="alert alert-warning alert-dismissible fade show mb-0 py-1 px-2" role="alert" style="font-size: 0.75rem;">
                             <i class="fas fa-user-secret me-1"></i>
-                            Вы работаете под пользователем: <strong>{{ auth()->user()->name }}</strong>
+                            {{ __('messages.switched_user') }}: <strong>{{ auth()->user()->name }}</strong>
                             <a href="{{ route('admin.user-switch.back') }}" class="btn btn-sm btn-outline-danger ms-2">
-                                <i class="fas fa-undo me-1"></i>Вернуться
+                                <i class="fas fa-undo me-1"></i>{{ __('messages.switch_back') }}
                             </a>
                         </div>
                     @elseif(session('role_switched'))
                         <div class="alert alert-info alert-dismissible fade show mb-0 py-1 px-2" role="alert" style="font-size: 0.75rem;">
                             <i class="fas fa-user-tag me-1"></i>
-                            Вы переключены на роль: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? 'Неизвестная роль' }}</strong>
+                            {{ __('messages.switched_role') }}: <strong>{{ \App\Models\Role::find(session('switched_role_id'))->name ?? __('messages.unknown_role') }}</strong>
                         </div>
                     @elseif($isRealAdmin)
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                     id="userSwitchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-friends me-1"></i>Переключиться
+                                <i class="fas fa-user-friends me-1"></i>{{ __('messages.switch_user') }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userSwitchDropdown" style="min-width: 300px;">
-                                <li><h6 class="dropdown-header">Переключиться на пользователя</h6></li>
+                                <li><h6 class="dropdown-header">{{ __('messages.switch_to_user') }}</h6></li>
                                 <li>
                                     <div class="px-3 py-2">
                                         <input type="text" id="userSearchInput" class="form-control form-control-sm"
-                                               placeholder="Поиск пользователя..." autocomplete="off">
+                                               placeholder="{{ __('messages.search_user') }}" autocomplete="off">
                                     </div>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <div id="userSwitchList" style="max-height: 300px; overflow-y: auto;">
                                         <div class="text-center py-3 text-muted">
-                                            <small>Начните вводить имя или email</small>
+                                            <small>{{ __('messages.start_typing_name_or_email') }}</small>
                                         </div>
                                     </div>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><h6 class="dropdown-header">Переключиться на роль</h6></li>
+                                <li><h6 class="dropdown-header">{{ __('messages.switch_to_role') }}</h6></li>
                                 @foreach(\App\Models\Role::all() as $role)
                                     @php
                                         // Проверяем текущую роль с учетом переключения
@@ -1010,7 +1010,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" href="{{ route('admin.role-switch.back') }}">
-                                        <i class="fas fa-undo me-2"></i>Вернуться к своим ролям
+                                        <i class="fas fa-undo me-2"></i>{{ __('messages.switch_back_role') }}
                                     </a>
                                 </li>
                                 @endif
@@ -1084,6 +1084,13 @@
 
     <!-- Custom Admin JS -->
     <script>
+        // Translations
+        const translations = {
+            users_not_found: '{{ __('messages.users_not_found') }}',
+            start_typing: '{{ __('messages.start_typing_name_or_email') }}',
+            enter_minimum_2_characters: '{{ __('messages.enter_minimum_2_characters') }}'
+        };
+
         // Sidebar Toggle
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
@@ -1246,7 +1253,7 @@
                 clearTimeout(searchTimeout);
 
                 if (searchTerm.length < 2) {
-                    userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>Введите минимум 2 символа</small></div>';
+                    userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>' + translations.enter_minimum_2_characters + '</small></div>';
                     return;
                 }
 
@@ -1255,7 +1262,7 @@
                         .then(response => response.json())
                         .then(users => {
                             if (users.length === 0) {
-                                userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>Пользователи не найдены</small></div>';
+                                userSwitchList.innerHTML = '<div class="text-center py-3 text-muted"><small>' + translations.users_not_found + '</small></div>';
                                 return;
                             }
 
