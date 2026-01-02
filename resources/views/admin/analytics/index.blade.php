@@ -183,6 +183,139 @@
     </div>
     @endif
 
+    <!-- Блок помощи -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="card-title mb-0">
+                        <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlock" aria-expanded="false" aria-controls="helpBlock">
+                            <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы аналитики
+                            <i class="fas fa-chevron-down float-end"></i>
+                        </button>
+                    </h5>
+                </div>
+                <div class="collapse" id="helpBlock">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-primary"><i class="fas fa-palette me-2"></i>Цветовая индикация даты сдачи</h6>
+                                <p class="small mb-2">Цвет фона в колонке "Дата сдачи" показывает, как давно студент ждет проверки:</p>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2">
+                                        <span class="badge submitted-date-cell submitted-date-recent me-2">Пример</span>
+                                        <strong>Светло-желтый</strong> - сдано менее 1 дня назад (требует внимания)
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge submitted-date-cell submitted-date-1-3days me-2">Пример</span>
+                                        <strong>Желтый</strong> - сдано 1-3 дня назад (рекомендуется проверить)
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge submitted-date-cell submitted-date-3-7days me-2">Пример</span>
+                                        <strong>Оранжевый</strong> - сдано 3-7 дней назад (требует срочной проверки)
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge submitted-date-cell submitted-date-7-14days me-2">Пример</span>
+                                        <strong>Красно-оранжевый</strong> - сдано 7-14 дней назад (критично, проверьте немедленно)
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge submitted-date-cell submitted-date-old me-2">Пример</span>
+                                        <strong>Темно-красный</strong> - сдано более 14 дней назад (очень критично!)
+                                    </li>
+                                </ul>
+                                <p class="small text-muted mb-0"><i class="fas fa-info-circle me-1"></i>Цветовая индикация отображается только для работ со статусом "Сдано" (еще не проверено).</p>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-primary"><i class="fas fa-tags me-2"></i>Статусы выполнения</h6>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2">
+                                        <span class="badge bg-secondary me-2">Не начато</span>
+                                        Студент еще не начал выполнение элемента курса
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-warning me-2">В процессе</span>
+                                        Студент начал выполнение, но еще не завершил
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-info me-2">Сдано</span>
+                                        Студент сдал работу, ожидает проверки преподавателем
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-success me-2">Проверено</span>
+                                        Преподаватель проверил работу и поставил оценку
+                                    </li>
+                                    <li class="mb-2">
+                                        <span class="badge bg-primary me-2">Завершено</span>
+                                        Элемент курса полностью завершен
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-primary"><i class="fas fa-filter me-2"></i>Фильтры</h6>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2"><strong>Курс</strong> - выберите конкретный курс для просмотра аналитики</li>
+                                    <li class="mb-2"><strong>Студент</strong> - фильтрация по конкретному студенту</li>
+                                    <li class="mb-2"><strong>Тип элемента</strong> - фильтр по типу (Задания, Тесты, Форумы, Материалы, Экзамены)</li>
+                                    <li class="mb-2"><strong>Статус</strong> - фильтр по статусу выполнения</li>
+                                    <li class="mb-2"><strong>Дата от/до</strong> - фильтр по дате сдачи в указанном диапазоне</li>
+                                    <li class="mb-2"><strong>Мин./Макс. оценка</strong> - фильтр по диапазону оценок</li>
+                                </ul>
+                                <p class="small text-muted mb-0"><i class="fas fa-lightbulb me-1"></i>Используйте кнопку "Применить фильтры" для применения выбранных параметров.</p>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-primary"><i class="fas fa-cogs me-2"></i>Кнопки и действия</h6>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2">
+                                        <button class="btn btn-sm btn-info disabled me-2"><i class="fas fa-sync"></i></button>
+                                        <strong>Синхронизировать данные</strong> - обновляет данные из Moodle. Используйте при необходимости актуализировать информацию о выполненных работах.
+                                    </li>
+                                    <li class="mb-2">
+                                        <button class="btn btn-sm btn-success disabled me-2"><i class="fas fa-download"></i></button>
+                                        <strong>Экспорт</strong> - позволяет экспортировать данные в Excel, CSV или PDF форматы для дальнейшего анализа.
+                                    </li>
+                                    <li class="mb-2">
+                                        <button class="btn btn-sm btn-secondary disabled me-2"><i class="fas fa-times"></i></button>
+                                        <strong>Сбросить</strong> - очищает все примененные фильтры и показывает все данные.
+                                    </li>
+                                    <li class="mb-2">
+                                        <button class="btn btn-sm btn-primary disabled me-2"><i class="fas fa-filter"></i></button>
+                                        <strong>Применить фильтры</strong> - применяет выбранные параметры фильтрации к таблице.
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <h6 class="text-primary"><i class="fas fa-chart-bar me-2"></i>Блок статистики</h6>
+                                <p class="small mb-2">В верхней части страницы отображается статистика по выбранным фильтрам:</p>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-1"><strong>Всего записей</strong> - общее количество элементов курса в выборке</li>
+                                    <li class="mb-1"><strong>Не начато</strong> - количество элементов, которые студенты еще не начали выполнять</li>
+                                    <li class="mb-1"><strong>Сдано</strong> - количество работ, ожидающих проверки (обратите внимание на цвет даты сдачи!)</li>
+                                    <li class="mb-1"><strong>Проверено</strong> - количество проверенных работ</li>
+                                    <li class="mb-1"><strong>Завершено</strong> - количество полностью завершенных элементов</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Рекомендации по использованию</h6>
+                                <ol class="small">
+                                    <li class="mb-2">Начните с фильтрации по вашему курсу для фокусировки на нужных данных</li>
+                                    <li class="mb-2">Обращайте внимание на <strong>красные и оранжевые</strong> даты сдачи - это работы, требующие срочной проверки</li>
+                                    <li class="mb-2">Используйте фильтр "Статус: Сдано" для просмотра всех работ, ожидающих проверки</li>
+                                    <li class="mb-2">Регулярно синхронизируйте данные, особенно перед началом проверки работ</li>
+                                    <li class="mb-2">Используйте экспорт для создания отчетов и анализа прогресса студентов</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Таблица данных -->
     <div class="row">
         <div class="col-12">
@@ -401,6 +534,24 @@
 </style>
 
 <script>
+// Анимация иконки chevron в блоке помощи
+document.addEventListener('DOMContentLoaded', function() {
+    const helpBlock = document.getElementById('helpBlock');
+    const chevronIcon = helpBlock?.previousElementSibling?.querySelector('.fa-chevron-down');
+    
+    if (helpBlock && chevronIcon) {
+        helpBlock.addEventListener('show.bs.collapse', function() {
+            chevronIcon.classList.remove('fa-chevron-down');
+            chevronIcon.classList.add('fa-chevron-up');
+        });
+        
+        helpBlock.addEventListener('hide.bs.collapse', function() {
+            chevronIcon.classList.remove('fa-chevron-up');
+            chevronIcon.classList.add('fa-chevron-down');
+        });
+    }
+});
+
 function syncActivities() {
     const btn = document.getElementById('sync-btn') || document.querySelector('button[onclick="syncActivities()"]');
     const originalText = btn ? btn.innerHTML : '';
