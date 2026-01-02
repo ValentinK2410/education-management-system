@@ -532,12 +532,15 @@
                                                 @elseif(isset($moodleApiService) && $moodleApiService && !empty($activity['moodle_course_id']) && !empty($activity['moodle_user_id']))
                                                     {{-- Показываем кнопку даже если нет cmid, но есть базовые данные для генерации URL --}}
                                                     @php
-                                                        // Пытаемся создать базовый URL курса в Moodle
-                                                        $moodleCourseUrl = $moodleApiService->url . '/course/view.php?id=' . $activity['moodle_course_id'];
+                                                        // Получаем URL Moodle из конфигурации
+                                                        $moodleUrl = config('services.moodle.url', '');
+                                                        $moodleCourseUrl = $moodleUrl ? rtrim($moodleUrl, '/') . '/course/view.php?id=' . $activity['moodle_course_id'] : null;
                                                     @endphp
-                                                    <a href="{{ $moodleCourseUrl }}" target="_blank" class="btn btn-sm btn-secondary" title="Перейти в курс Moodle">
-                                                        <i class="fas fa-external-link-alt"></i>
-                                                    </a>
+                                                    @if($moodleCourseUrl)
+                                                        <a href="{{ $moodleCourseUrl }}" target="_blank" class="btn btn-sm btn-secondary" title="Перейти в курс Moodle">
+                                                            <i class="fas fa-external-link-alt"></i>
+                                                        </a>
+                                                    @endif
                                                 @endif
                                                 
                                                 <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
