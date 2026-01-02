@@ -3,6 +3,86 @@
 @section('title', 'Аналитика курсов')
 @section('page-title', 'Аналитика курсов')
 
+@push('styles')
+<style>
+    /* Темная тема для секции фильтров */
+    [data-theme="dark"] .container-fluid .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-header {
+        background: var(--card-bg) !important;
+        border-bottom-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid h5,
+    [data-theme="dark"] .container-fluid .card-title {
+        color: var(--text-color) !important;
+    }
+
+    /* Формы в фильтрах */
+    [data-theme="dark"] .container-fluid .form-label {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .form-select,
+    [data-theme="dark"] .container-fluid .form-control {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .form-select:focus,
+    [data-theme="dark"] .container-fluid .form-control:focus {
+        background-color: var(--card-bg) !important;
+        border-color: #6366f1 !important;
+        color: var(--text-color) !important;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .form-select option {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Кнопки в фильтрах */
+    [data-theme="dark"] .container-fluid .btn-secondary {
+        background-color: var(--secondary-color) !important;
+        border-color: var(--secondary-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .btn-secondary:hover {
+        background-color: #475569 !important;
+        border-color: #475569 !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Dropdown меню экспорта */
+    [data-theme="dark"] .container-fluid .dropdown-menu {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .dropdown-item {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .dropdown-item:hover {
+        background-color: var(--dark-bg) !important;
+        color: var(--text-color) !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <!-- Индикатор автоматической синхронизации -->
