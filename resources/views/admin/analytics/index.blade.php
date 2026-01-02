@@ -445,9 +445,6 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 @if(isset($moodleApiService) && $moodleApiService && 
-                                                    ($activity['status'] == 'submitted' || 
-                                                     $activity['status'] == 'pending' || 
-                                                     $activity['status'] == 'in_progress') &&
                                                     $activity['cmid'] && 
                                                     $activity['moodle_user_id'])
                                                     @php
@@ -457,10 +454,38 @@
                                                             $activity['moodle_user_id'],
                                                             $activity['moodle_course_id']
                                                         );
+                                                        
+                                                        // Определяем текст и иконку в зависимости от типа элемента
+                                                        $activityTypeLabels = [
+                                                            'assign' => 'Проверить задание',
+                                                            'quiz' => 'Просмотреть тест',
+                                                            'forum' => 'Просмотреть форум',
+                                                            'resource' => 'Просмотреть материал',
+                                                            'exam' => 'Просмотреть экзамен',
+                                                        ];
+                                                        
+                                                        $activityTypeIcons = [
+                                                            'assign' => 'fa-check-circle',
+                                                            'quiz' => 'fa-clipboard-check',
+                                                            'forum' => 'fa-comments',
+                                                            'resource' => 'fa-file-alt',
+                                                            'exam' => 'fa-file-signature',
+                                                        ];
+                                                        
+                                                        $buttonLabel = $activityTypeLabels[$activity['activity_type']] ?? 'Просмотреть в Moodle';
+                                                        $buttonIcon = $activityTypeIcons[$activity['activity_type']] ?? 'fa-external-link-alt';
+                                                        
+                                                        // Определяем цвет кнопки в зависимости от статуса
+                                                        $buttonClass = 'btn-primary';
+                                                        if ($activity['status'] == 'submitted' || $activity['status'] == 'pending') {
+                                                            $buttonClass = 'btn-warning';
+                                                        } elseif ($activity['status'] == 'graded') {
+                                                            $buttonClass = 'btn-success';
+                                                        }
                                                     @endphp
                                                     @if($gradingUrl)
-                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-warning" title="Проверить задание в Moodle">
-                                                            <i class="fas fa-check-circle"></i>
+                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm {{ $buttonClass }}" title="{{ $buttonLabel }} в Moodle">
+                                                            <i class="fas {{ $buttonIcon }}"></i>
                                                         </a>
                                                     @endif
                                                 @endif
