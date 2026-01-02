@@ -752,6 +752,16 @@ document.addEventListener('DOMContentLoaded', function() {
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Translations for JavaScript
+    const courseTranslations = {
+        delete_selected: '{{ __('messages.delete_selected') }}',
+        select_at_least_one: '{{ __('messages.select_at_least_one_course') }}',
+        confirm_delete_courses: '{{ __('messages.confirm_delete_courses') }}',
+        action_cannot_be_undone: '{{ __('messages.action_cannot_be_undone') }}',
+        courses_deleted_successfully: '{{ __('messages.courses_deleted_successfully') }}',
+        error_deleting_courses: '{{ __('messages.error_deleting_courses') }}'
+    };
+    
     const selectAllCheckbox = document.getElementById('selectAll');
     const courseCheckboxes = document.querySelectorAll('.course-checkbox');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
