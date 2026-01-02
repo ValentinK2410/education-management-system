@@ -127,10 +127,7 @@ class CourseAnalyticsController extends Controller
                 }
             }
             
-            // Применяем фильтры
-            $filteredData = $this->applyFilters($request, $courses, null, null, $students);
-            
-            // Инициализируем MoodleApiService для генерации URL
+            // Инициализируем MoodleApiService для генерации URL и получения cmid
             $moodleApiService = null;
             try {
                 $moodleApiService = new MoodleApiService();
@@ -139,6 +136,9 @@ class CourseAnalyticsController extends Controller
                     'error' => $e->getMessage()
                 ]);
             }
+            
+            // Применяем фильтры (передаем moodleApiService для получения cmid)
+            $filteredData = $this->applyFilters($request, $courses, null, null, $students, $moodleApiService);
             
             // Проверяем, есть ли данные для выбранного студента
             $hasNoData = false;
