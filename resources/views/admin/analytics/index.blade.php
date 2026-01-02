@@ -271,19 +271,23 @@
                                         <td>
                                             @if($activity['submitted_at'] && $activity['status'] == 'submitted')
                                                 @php
-                                                    $submittedDate = \Carbon\Carbon::parse($activity['submitted_at']);
-                                                    $daysAgo = now()->diffInDays($submittedDate);
-                                                    $dateClass = 'submitted-date-cell ';
-                                                    if ($daysAgo < 1) {
-                                                        $dateClass .= 'submitted-date-recent';
-                                                    } elseif ($daysAgo < 3) {
-                                                        $dateClass .= 'submitted-date-1-3days';
-                                                    } elseif ($daysAgo < 7) {
-                                                        $dateClass .= 'submitted-date-3-7days';
-                                                    } elseif ($daysAgo < 14) {
-                                                        $dateClass .= 'submitted-date-7-14days';
-                                                    } else {
-                                                        $dateClass .= 'submitted-date-old';
+                                                    try {
+                                                        $submittedDate = \Carbon\Carbon::createFromFormat('d.m.Y H:i', $activity['submitted_at']);
+                                                        $daysAgo = now()->diffInDays($submittedDate);
+                                                        $dateClass = 'submitted-date-cell ';
+                                                        if ($daysAgo < 1) {
+                                                            $dateClass .= 'submitted-date-recent';
+                                                        } elseif ($daysAgo < 3) {
+                                                            $dateClass .= 'submitted-date-1-3days';
+                                                        } elseif ($daysAgo < 7) {
+                                                            $dateClass .= 'submitted-date-3-7days';
+                                                        } elseif ($daysAgo < 14) {
+                                                            $dateClass .= 'submitted-date-7-14days';
+                                                        } else {
+                                                            $dateClass .= 'submitted-date-old';
+                                                        }
+                                                    } catch (\Exception $e) {
+                                                        $dateClass = '';
                                                     }
                                                 @endphp
                                                 <span class="{{ $dateClass }}">{{ $activity['submitted_at'] }}</span>
