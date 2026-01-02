@@ -26,10 +26,20 @@
         padding: 1.5rem;
     }
 
+    [data-theme="dark"] .settings-group-body {
+        background: var(--card-bg, #334155);
+        border-color: var(--border-color, #475569);
+        color: var(--text-color, #e2e8f0);
+    }
+
     .setting-item {
         margin-bottom: 1.5rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid #f1f5f9;
+    }
+
+    [data-theme="dark"] .setting-item {
+        border-bottom-color: var(--border-color, #475569);
     }
 
     .setting-item:last-child {
@@ -44,15 +54,52 @@
         margin-bottom: 0.5rem;
     }
 
+    [data-theme="dark"] .setting-label {
+        color: var(--text-color, #e2e8f0);
+    }
+
     .setting-description {
         font-size: 0.875rem;
         color: #64748b;
         margin-bottom: 0.75rem;
     }
 
+    [data-theme="dark"] .setting-description {
+        color: var(--text-color, #94a3b8);
+        opacity: 0.8;
+    }
+
+    .form-control {
+        background-color: white;
+        border-color: #e2e8f0;
+        color: #1e293b;
+    }
+
+    [data-theme="dark"] .form-control {
+        background-color: var(--card-bg, #334155);
+        border-color: var(--border-color, #475569);
+        color: var(--text-color, #e2e8f0);
+    }
+
+    [data-theme="dark"] .form-control:focus {
+        background-color: var(--card-bg, #334155);
+        border-color: #6366f1;
+        color: var(--text-color, #e2e8f0);
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+
     .form-control:focus {
         border-color: #6366f1;
         box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+
+    [data-theme="dark"] .form-control::placeholder {
+        color: var(--text-color, #94a3b8);
+        opacity: 0.6;
+    }
+
+    [data-theme="dark"] .form-check-label {
+        color: var(--text-color, #e2e8f0);
     }
 
     .btn-save {
@@ -68,6 +115,21 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         color: white;
+    }
+
+    [data-theme="dark"] .card {
+        background-color: var(--card-bg, #334155);
+        border-color: var(--border-color, #475569);
+    }
+
+    [data-theme="dark"] .card-header {
+        background-color: var(--card-bg, #334155);
+        border-color: var(--border-color, #475569);
+        color: var(--text-color, #e2e8f0);
+    }
+
+    [data-theme="dark"] .text-danger {
+        color: #f87171 !important;
     }
 </style>
 @endpush
