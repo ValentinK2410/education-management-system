@@ -103,18 +103,25 @@ class ProgramController extends Controller
      */
     public function show(Program $program)
     {
-        $program->load(['institution', 'courses' => function ($query) {
-            $query->orderBy('order')->orderBy('id');
-        }]);
+        // Загружаем курсы с сортировкой по order, затем по id
+        $program->load(['institution']);
         
-        $program->load(['courses.instructor']);
+        // Загружаем курсы с сортировкой
+        $courses = Course::where('program_id', $program->id)
+            ->with('instructor')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
         
         // Загружаем количество студентов для каждого курса
-        $program->courses->loadCount(['users' => function ($query) {
+        $courses->loadCount(['users' => function ($query) {
             $query->whereHas('roles', function ($q) {
                 $q->where('slug', 'student');
             });
         }]);
+        
+        // Устанавливаем коллекцию курсов
+        $program->setRelation('courses', $courses);
         
         return view('admin.programs.show', compact('program'));
     }
@@ -123,23 +130,32 @@ class ProgramController extends Controller
      * Переместить курс вверх в списке программы
      *
      * @param Program $program
-     * @param Course $course
+     * @param int $courseId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function moveCourseUp(Program $program, Course $course)
+    public function moveCourseUp(Program $program, $courseId)
     {
+        $course = Course::findOrFail($courseId);
+        
         // Проверяем, что курс принадлежит программе
         if ($course->program_id !== $program->id) {
             abort(404, 'Курс не принадлежит данной программе');
         }
         
-        // Находим предыдущий курс по порядку
-        $previousCourse = Course::where('program_id', $program->id)
-            ->where('order', '<', $course->order)
-            ->orderBy('order', 'desc')
-            ->first();
+        // Получаем все курсы программы, отсортированные по order
+        $courses = Course::where('program_id', $program->id)
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
         
-        if ($previousCourse) {
+        $currentIndex = $courses->search(function ($item) use ($course) {
+            return $item->id === $course->id;
+        });
+        
+        // Если курс не первый, меняем местами с предыдущим
+        if ($currentIndex > 0) {
+            $previousCourse = $courses[$currentIndex - 1];
+            
             // Меняем местами порядок
             $tempOrder = $course->order;
             $course->order = $previousCourse->order;
@@ -157,23 +173,32 @@ class ProgramController extends Controller
      * Переместить курс вниз в списке программы
      *
      * @param Program $program
-     * @param Course $course
+     * @param int $courseId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function moveCourseDown(Program $program, Course $course)
+    public function moveCourseDown(Program $program, $courseId)
     {
+        $course = Course::findOrFail($courseId);
+        
         // Проверяем, что курс принадлежит программе
         if ($course->program_id !== $program->id) {
             abort(404, 'Курс не принадлежит данной программе');
         }
         
-        // Находим следующий курс по порядку
-        $nextCourse = Course::where('program_id', $program->id)
-            ->where('order', '>', $course->order)
+        // Получаем все курсы программы, отсортированные по order
+        $courses = Course::where('program_id', $program->id)
             ->orderBy('order', 'asc')
-            ->first();
+            ->orderBy('id', 'asc')
+            ->get();
         
-        if ($nextCourse) {
+        $currentIndex = $courses->search(function ($item) use ($course) {
+            return $item->id === $course->id;
+        });
+        
+        // Если курс не последний, меняем местами со следующим
+        if ($currentIndex !== false && $currentIndex < $courses->count() - 1) {
+            $nextCourse = $courses[$currentIndex + 1];
+            
             // Меняем местами порядок
             $tempOrder = $course->order;
             $course->order = $nextCourse->order;
