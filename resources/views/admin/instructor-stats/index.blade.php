@@ -130,9 +130,19 @@
                                             <div class="col-6">
                                                 <div class="stat-badge stat-badge-success">
                                                     <i class="fas fa-users"></i>
-                                                    <span>{{ $instructor['total_students'] }}</span>
+                                                    <span>{{ $instructor['unique_students'] }}</span>
                                                 </div>
-                                                <small class="text-muted d-block mt-1">Студентов</small>
+                                                <small class="text-muted d-block mt-1">Уникальных студентов</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-12">
+                                                <div class="stat-badge stat-badge-primary">
+                                                    <i class="fas fa-user-graduate"></i>
+                                                    <span>{{ $instructor['total_students_all'] }}</span>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">Всего студентов со всех курсов</small>
                                             </div>
                                         </div>
 

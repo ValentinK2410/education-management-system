@@ -137,7 +137,7 @@
 
     <!-- Статистика -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card stat-card stat-card-primary">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -157,8 +157,8 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small mb-1">Всего студентов</div>
-                            <div class="h4 mb-0">{{ $stats['total_students'] }}</div>
+                            <div class="text-muted small mb-1">Уникальных студентов</div>
+                            <div class="h4 mb-0">{{ $stats['unique_students'] }}</div>
                         </div>
                         <div class="text-success">
                             <i class="fas fa-users fa-2x"></i>
@@ -168,6 +168,21 @@
             </div>
         </div>
         <div class="col-md-3">
+            <div class="card stat-card stat-card-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small mb-1">Всего студентов со всех курсов</div>
+                            <div class="h4 mb-0">{{ $stats['total_students_all'] }}</div>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-user-graduate fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
             <div class="card stat-card stat-card-success">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -182,7 +197,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card stat-card stat-card-warning">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
