@@ -53,11 +53,16 @@ class InstructorStatsController extends Controller
             }
             
             // Подсчитываем проверенные работы
+            // Если graded_by_user_id заполнен, проверяем его
+            // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
             $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
                 $query->where('instructor_id', $instructor->id);
             })
             ->where('status', 'graded')
-            ->where('graded_by_user_id', $instructor->id)
+            ->where(function ($query) use ($instructor) {
+                $query->where('graded_by_user_id', $instructor->id)
+                      ->orWhereNull('graded_by_user_id');
+            })
             ->count();
             
             // Подсчитываем непроверенные работы
@@ -107,11 +112,16 @@ class InstructorStatsController extends Controller
             ->get();
         
         // Получаем все проверенные работы преподавателя
+        // Если graded_by_user_id заполнен, проверяем его
+        // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
         $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
         })
         ->where('status', 'graded')
-        ->where('graded_by_user_id', $instructor->id)
+        ->where(function ($query) use ($instructor) {
+            $query->where('graded_by_user_id', $instructor->id)
+                  ->orWhereNull('graded_by_user_id');
+        })
         ->with(['user', 'course', 'activity', 'gradedBy'])
         ->orderBy('graded_at', 'desc')
         ->get();
@@ -126,11 +136,16 @@ class InstructorStatsController extends Controller
         ->get();
         
         // Статистика по типам активностей
+        // Если graded_by_user_id заполнен, проверяем его
+        // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
         $activityStats = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
         })
         ->where('status', 'graded')
-        ->where('graded_by_user_id', $instructor->id)
+        ->where(function ($query) use ($instructor) {
+            $query->where('graded_by_user_id', $instructor->id)
+                  ->orWhereNull('graded_by_user_id');
+        })
         ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
         ->select('course_activities.activity_type', DB::raw('COUNT(*) as count'))
         ->groupBy('course_activities.activity_type')
