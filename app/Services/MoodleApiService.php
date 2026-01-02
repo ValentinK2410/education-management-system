@@ -1433,12 +1433,26 @@ class MoodleApiService
                 return $this->url . "/mod/assign/view.php?id={$cmid}&action=grade&userid={$moodleUserId}";
 
             case 'quiz':
-                // Для тестов - ссылка на просмотр теста (проверка через отчеты)
+                // Для тестов - ссылка на отчеты теста, где можно увидеть попытки студента
+                // Если есть courseId, можно добавить фильтр по студенту
+                if ($moodleCourseId) {
+                    return $this->url . "/mod/quiz/report.php?id={$cmid}&mode=overview&course={$moodleCourseId}";
+                }
                 return $this->url . "/mod/quiz/view.php?id={$cmid}";
 
             case 'forum':
-                // Для форумов - ссылка на просмотр форума (проверка постов)
+                // Для форумов - ссылка на просмотр форума (можно фильтровать по студенту)
                 return $this->url . "/mod/forum/view.php?id={$cmid}";
+
+            case 'resource':
+            case 'file':
+            case 'url':
+                // Для материалов - ссылка на просмотр материала
+                return $this->url . "/mod/{$activityType}/view.php?id={$cmid}";
+
+            case 'exam':
+                // Для экзаменов - аналогично тестам
+                return $this->url . "/mod/quiz/view.php?id={$cmid}";
 
             default:
                 // Для других типов - общая ссылка на просмотр элемента
