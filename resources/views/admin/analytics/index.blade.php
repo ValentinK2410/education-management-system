@@ -564,8 +564,19 @@
 .card.border-left-success,
 .card.border-left-info,
 .card.border-left-warning {
-    position: relative;
-    z-index: 1 !important;
+    position: relative !important;
+    z-index: 0 !important;
+}
+
+/* Специфично для карточки "Не начато" */
+.card.border-left-warning {
+    z-index: 0 !important;
+    position: relative !important;
+}
+
+.card.border-left-warning .card-body {
+    z-index: 0 !important;
+    position: relative !important;
 }
 
 /* Убеждаемся, что выпадающее меню отображается поверх всего */
