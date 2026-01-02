@@ -3,98 +3,89 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
-/**
- * Контроллер для управления пользовательскими настройками
- *
- * Обрабатывает сохранение и загрузку персональных настроек пользователей,
- * таких как тема оформления, настройки интерфейса и другие предпочтения.
- */
 class SettingsController extends Controller
 {
     /**
-     * Сохранить предпочтения темы пользователя
+     * Показать страницу системных настроек
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\View\View
      */
-    public function saveThemePreference(Request $request)
+    public function index()
     {
-        $request->validate([
-            'theme' => 'required|in:light,dark'
-        ]);
-
-        $user = Auth::user();
-
-        // Сохраняем настройку темы в профиле пользователя
-        $user->update([
-            'theme_preference' => $request->theme
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Настройки темы сохранены'
-        ]);
+        $groups = [
+            'general' => 'Общие настройки',
+            'moodle' => 'Настройки Moodle',
+            'sso' => 'Настройки SSO',
+        ];
+        
+        $settings = Setting::orderBy('group')->orderBy('key')->get()->groupBy('group');
+        
+        return view('admin.settings.index', compact('settings', 'groups'));
     }
 
     /**
-     * Получить пользовательские настройки
+     * Сохранить настройки
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function getUserSettings()
+    public function store(Request $request)
     {
-        try {
-            $user = Auth::user();
+        $validated = $request->validate([
+            'settings' => 'required|array',
+            'settings.*' => 'nullable',
+        ]);
 
-            if (!$user) {
-                return response()->json([
-                    'theme' => 'light',
-                    'sidebar_collapsed' => false,
-                    'notifications_enabled' => true,
-                ], 200);
+        foreach ($validated['settings'] as $key => $value) {
+            $setting = Setting::where('key', $key)->first();
+            
+            if ($setting) {
+                // Приводим значение к нужному типу
+                $castedValue = $this->castValue($value, $setting->type);
+                
+                // Если тип json, кодируем в JSON
+                if ($setting->type === 'json') {
+                    $castedValue = json_encode($castedValue);
+                }
+                
+                $setting->value = $castedValue;
+                $setting->save();
             }
-
-            return response()->json([
-                'theme' => $user->theme_preference ?? 'light',
-                'sidebar_collapsed' => $user->sidebar_collapsed ?? false,
-                'notifications_enabled' => $user->notifications_enabled ?? true,
-            ]);
-        } catch (\Exception $e) {
-            // В случае ошибки возвращаем настройки по умолчанию
-            return response()->json([
-                'theme' => 'light',
-                'sidebar_collapsed' => false,
-                'notifications_enabled' => true,
-            ], 200);
         }
+
+        // Очищаем кэш настроек
+        Cache::forget('settings');
+
+        return redirect()->route('admin.settings.index')
+            ->with('success', 'Настройки успешно сохранены');
     }
 
     /**
-     * Сохранить настройки интерфейса
+     * Привести значение к нужному типу
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param mixed $value
+     * @param string $type
+     * @return mixed
      */
-    public function saveInterfaceSettings(Request $request)
+    protected function castValue($value, string $type)
     {
-        $request->validate([
-            'sidebar_collapsed' => 'boolean',
-            'notifications_enabled' => 'boolean'
-        ]);
+        if ($value === null || $value === '') {
+            return null;
+        }
 
-        $user = Auth::user();
-
-        $user->update([
-            'sidebar_collapsed' => $request->boolean('sidebar_collapsed'),
-            'notifications_enabled' => $request->boolean('notifications_enabled')
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Настройки интерфейса сохранены'
-        ]);
+        switch ($type) {
+            case 'integer':
+                return (int) $value;
+            case 'boolean':
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            case 'json':
+                return is_string($value) ? json_decode($value, true) : $value;
+            default:
+                return $value;
+        }
     }
 }

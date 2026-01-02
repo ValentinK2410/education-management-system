@@ -511,6 +511,10 @@ Route::middleware(['auth'])->group(function () {
             Route::post('moodle-sync/all', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncAll'])->name('moodle-sync.sync-all');
         });
 
+        // Системные настройки (только для администраторов)
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'store'])->name('settings.store');
+
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
