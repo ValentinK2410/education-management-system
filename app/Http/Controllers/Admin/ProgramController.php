@@ -103,6 +103,14 @@ class ProgramController extends Controller
     public function show(Program $program)
     {
         $program->load(['institution', 'courses.instructor']);
+        
+        // Загружаем количество студентов для каждого курса
+        $program->courses->loadCount(['users' => function ($query) {
+            $query->whereHas('roles', function ($q) {
+                $q->where('slug', 'student');
+            });
+        }]);
+        
         return view('admin.programs.show', compact('program'));
     }
 

@@ -150,5 +150,122 @@
             </div>
         </div>
     </div>
+
+    <!-- Список всех курсов программы -->
+    @if($program->courses->count() > 0)
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                        Все курсы программы ({{ $program->courses->count() }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Название курса</th>
+                                    <th>Код</th>
+                                    <th>Преподаватель</th>
+                                    <th>Студентов</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($program->courses as $course)
+                                <tr>
+                                    <td>{{ $course->id }}</td>
+                                    <td>
+                                        <strong>{{ $course->name }}</strong>
+                                        @if($course->short_description)
+                                            <br><small class="text-muted">{{ Str::limit($course->short_description, 50) }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($course->code)
+                                            <span class="badge bg-secondary">{{ $course->code }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($course->instructor)
+                                            <div class="d-flex align-items-center">
+                                                @if($course->instructor->photo)
+                                                    <img src="{{ asset('storage/' . $course->instructor->photo) }}" 
+                                                         alt="{{ $course->instructor->name }}" 
+                                                         class="rounded-circle me-2" 
+                                                         style="width: 30px; height: 30px; object-fit: cover;">
+                                                @else
+                                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 30px; height: 30px; font-size: 0.75rem;">
+                                                        {{ strtoupper(mb_substr($course->instructor->name, 0, 1)) }}
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <div>{{ $course->instructor->name }}</div>
+                                                    <small class="text-muted">{{ $course->instructor->email }}</small>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">Не назначен</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ $course->users_count ?? 0 }}</span>
+                                    </td>
+                                    <td>
+                                        @if($course->is_active)
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Активен
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-times me-1"></i>Неактивен
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('admin.courses.show', $course->id) }}" 
+                                           class="btn btn-sm btn-primary" 
+                                           title="Просмотр курса">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.courses.edit', $course->id) }}" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Редактировать курс">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">В программе пока нет курсов</p>
+                    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Добавить курс
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
