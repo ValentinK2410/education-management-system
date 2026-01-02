@@ -611,7 +611,17 @@ class MoodleApiService
                 $gradeValue = null;
 
                 // Если есть сдача (файл загружен)
+                $submittedAt = null;
                 if ($submission) {
+                    // Определяем дату сдачи: приоритет timesubmitted, затем timemodified, затем timecreated
+                    if (isset($submission['timesubmitted']) && $submission['timesubmitted'] > 0) {
+                        $submittedAt = $submission['timesubmitted'];
+                    } elseif (isset($submission['timemodified']) && $submission['timemodified'] > 0) {
+                        $submittedAt = $submission['timemodified'];
+                    } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
+                        $submittedAt = $submission['timecreated'];
+                    }
+                    
                     // Проверяем статус сдачи
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
@@ -627,7 +637,8 @@ class MoodleApiService
                             'assignment_id' => $assignmentId,
                             'assignment_name' => $assignment['name'] ?? 'Без названия',
                             'grade' => $gradeValue,
-                            'graded_at' => $grade['timecreated'] ?? null
+                            'graded_at' => $grade['timecreated'] ?? null,
+                            'submitted_at' => $submittedAt
                         ]);
                     } elseif ($submissionSubmitted || isset($submission['filesubmissions']) || isset($submission['onlinetext'])) {
                         // Есть сдача (файл или текст загружен), но нет оценки - не проверено преподавателем
@@ -638,7 +649,7 @@ class MoodleApiService
                             'assignment_id' => $assignmentId,
                             'assignment_name' => $assignment['name'] ?? 'Без названия',
                             'submission_status' => $submissionStatus,
-                            'submitted_at' => $submission['timecreated'] ?? null
+                            'submitted_at' => $submittedAt
                         ]);
                     }
                 } else {
@@ -657,7 +668,7 @@ class MoodleApiService
                     'status_text' => $statusText,
                     'grade' => $gradeValue,
                     'submission' => $submission,
-                    'submitted_at' => $submission['timecreated'] ?? null,
+                    'submitted_at' => $submittedAt,
                     'graded_at' => $grade['timecreated'] ?? null,
                 ];
             }
@@ -1011,7 +1022,7 @@ class MoodleApiService
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
                 $assignmentId = $assignment['id'];
-                
+
                 // Получаем cmid через Moodle API
                 $cmid = null;
                 try {
@@ -1019,7 +1030,7 @@ class MoodleApiService
                         'module' => 'assign',
                         'instance' => $assignmentId
                     ]);
-                    
+
                     if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
                         $cmid = $cmResult['cm']['id'];
                     }
@@ -1029,7 +1040,7 @@ class MoodleApiService
                         'error' => $e->getMessage()
                     ]);
                 }
-                
+
                 $submission = $submissions[$assignmentId] ?? null;
                 $grade = $grades[$assignmentId] ?? null;
 
@@ -1043,6 +1054,16 @@ class MoodleApiService
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
 
+                    // Определяем дату сдачи: приоритет timesubmitted, затем timemodified, затем timecreated
+                    $submittedAt = null;
+                    if (isset($submission['timesubmitted']) && $submission['timesubmitted'] > 0) {
+                        $submittedAt = $submission['timesubmitted'];
+                    } elseif (isset($submission['timemodified']) && $submission['timemodified'] > 0) {
+                        $submittedAt = $submission['timemodified'];
+                    } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
+                        $submittedAt = $submission['timecreated'];
+                    }
+
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
                         $status = 'graded';
                         $statusText = (string)$grade['grade'];
@@ -1052,7 +1073,6 @@ class MoodleApiService
                         $status = 'pending';
                         $statusText = 'Не проверено';
                     }
-                    $submittedAt = isset($submission['timecreated']) ? $submission['timecreated'] : null;
                 }
 
                 $activities[] = [
@@ -1084,7 +1104,7 @@ class MoodleApiService
         if ($quizzes !== false) {
             foreach ($quizzes as $quiz) {
                 $quizId = $quiz['id'];
-                
+
                 // Получаем cmid через Moodle API
                 $cmid = null;
                 try {
@@ -1092,7 +1112,7 @@ class MoodleApiService
                         'module' => 'quiz',
                         'instance' => $quizId
                     ]);
-                    
+
                     if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
                         $cmid = $cmResult['cm']['id'];
                     }
@@ -1102,7 +1122,7 @@ class MoodleApiService
                         'error' => $e->getMessage()
                     ]);
                 }
-                
+
                 $attempts = $quizAttempts[$quizId] ?? [];
                 $grade = $quizGrades[$quizId] ?? null;
 
@@ -1176,7 +1196,7 @@ class MoodleApiService
         if ($forums !== false) {
             foreach ($forums as $forum) {
                 $forumId = $forum['id'];
-                
+
                 // Получаем cmid через Moodle API
                 $cmid = null;
                 try {
@@ -1184,7 +1204,7 @@ class MoodleApiService
                         'module' => 'forum',
                         'instance' => $forumId
                     ]);
-                    
+
                     if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
                         $cmid = $cmResult['cm']['id'];
                     }
@@ -1194,7 +1214,7 @@ class MoodleApiService
                         'error' => $e->getMessage()
                     ]);
                 }
-                
+
                 $posts = $forumPosts[$forumId] ?? [];
 
                 $status = empty($posts) ? 'not_started' : 'completed';
