@@ -5,124 +5,110 @@
 
 @push('styles')
 <style>
-    html[data-theme="dark"] .card,
-    [data-theme="dark"] .card {
-        background-color: var(--card-bg, #334155) !important;
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    /* Карточка */
+    [data-theme="dark"] .container-fluid .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .card-header,
-    [data-theme="dark"] .card-header {
-        background-color: var(--card-bg, #334155) !important;
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    [data-theme="dark"] .container-fluid .card-header {
+        background: var(--card-bg) !important;
+        border-bottom-color: var(--border-color) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .card-body,
-    [data-theme="dark"] .card-body {
-        background-color: var(--card-bg, #334155) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    [data-theme="dark"] .container-fluid .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .form-control,
-    [data-theme="dark"] .form-control {
-        background-color: var(--card-bg, #334155) !important;
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    /* Заголовки */
+    [data-theme="dark"] .container-fluid h3,
+    [data-theme="dark"] .container-fluid .card-title {
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .form-control:focus,
-    [data-theme="dark"] .form-control:focus {
-        background-color: var(--card-bg, #334155) !important;
+    [data-theme="dark"] .container-fluid strong {
+        color: var(--text-color) !important;
+    }
+
+    /* Форма поиска */
+    [data-theme="dark"] .container-fluid .form-control {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .form-control:focus {
+        background-color: var(--card-bg) !important;
         border-color: #6366f1 !important;
-        color: var(--text-color, #e2e8f0) !important;
+        color: var(--text-color) !important;
         box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
     }
 
-    html[data-theme="dark"] .form-control::placeholder,
-    [data-theme="dark"] .form-control::placeholder {
-        color: var(--text-color, #94a3b8) !important;
+    [data-theme="dark"] .container-fluid .form-control::placeholder {
+        color: #94a3b8 !important;
         opacity: 0.6;
     }
 
-    html[data-theme="dark"] .table,
-    [data-theme="dark"] .table {
-        color: var(--text-color, #e2e8f0) !important;
+    /* Кнопки */
+    [data-theme="dark"] .container-fluid .btn-outline-secondary {
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .table thead th,
-    [data-theme="dark"] .table thead th {
-        background-color: var(--dark-bg, #1e293b) !important;
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    [data-theme="dark"] .container-fluid .btn-outline-secondary:hover {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .table tbody td,
-    [data-theme="dark"] .table tbody td {
-        border-color: var(--border-color, #475569) !important;
+    /* Таблица */
+    [data-theme="dark"] .container-fluid .table {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table thead th {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table tbody td {
+        border-color: var(--border-color) !important;
         background-color: transparent !important;
-        color: var(--text-color, #e2e8f0) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd),
-    [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
-        background-color: var(--card-bg, #334155) !important;
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(odd) {
+        background-color: var(--card-bg) !important;
     }
 
-    html[data-theme="dark"] .table-striped tbody tr:nth-of-type(even),
-    [data-theme="dark"] .table-striped tbody tr:nth-of-type(even) {
-        background-color: var(--dark-bg, #1e293b) !important;
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(even) {
+        background-color: var(--dark-bg) !important;
     }
 
-    html[data-theme="dark"] .table-hover tbody tr:hover,
-    [data-theme="dark"] .table-hover tbody tr:hover {
-        background-color: var(--dark-bg, #1e293b) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover {
+        background-color: var(--dark-bg) !important;
     }
 
-    html[data-theme="dark"] .table-hover tbody tr:hover td,
-    [data-theme="dark"] .table-hover tbody tr:hover td {
-        background-color: var(--dark-bg, #1e293b) !important;
-        color: var(--text-color, #e2e8f0) !important;
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover td {
+        background-color: var(--dark-bg) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .alert-info,
-    [data-theme="dark"] .alert-info {
+    /* Алерт */
+    [data-theme="dark"] .container-fluid .alert-info {
         background-color: rgba(59, 130, 246, 0.1) !important;
         border-color: rgba(59, 130, 246, 0.3) !important;
-        color: var(--text-color, #e2e8f0) !important;
+        color: var(--text-color) !important;
     }
 
-    html[data-theme="dark"] .text-muted,
-    [data-theme="dark"] .text-muted {
-        color: var(--text-color, #94a3b8) !important;
+    /* Текст */
+    [data-theme="dark"] .container-fluid .text-muted {
+        color: #94a3b8 !important;
         opacity: 0.8;
-    }
-
-    html[data-theme="dark"] h3,
-    html[data-theme="dark"] .card-title,
-    [data-theme="dark"] h3,
-    [data-theme="dark"] .card-title {
-        color: var(--text-color, #e2e8f0) !important;
-    }
-
-    html[data-theme="dark"] strong,
-    [data-theme="dark"] strong {
-        color: var(--text-color, #e2e8f0) !important;
-    }
-
-    html[data-theme="dark"] .btn-outline-secondary,
-    [data-theme="dark"] .btn-outline-secondary {
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
-    }
-
-    html[data-theme="dark"] .btn-outline-secondary:hover,
-    [data-theme="dark"] .btn-outline-secondary:hover {
-        background-color: var(--dark-bg, #1e293b) !important;
-        border-color: var(--border-color, #475569) !important;
-        color: var(--text-color, #e2e8f0) !important;
     }
 </style>
 @endpush
