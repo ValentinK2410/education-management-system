@@ -92,14 +92,19 @@ class InstructorStatsController extends Controller
      * Показать детальную статистику конкретного преподавателя
      *
      * @param User $instructor
+     * @param Request $request
      * @return \Illuminate\View\View
      */
-    public function show(User $instructor)
+    public function show(User $instructor, Request $request)
     {
         // Проверяем, что пользователь является преподавателем
         if (!$instructor->hasRole('instructor')) {
             abort(404, 'Пользователь не является преподавателем');
         }
+        
+        // Получаем фильтры по дате
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
         
         // Получаем все курсы преподавателя с количеством студентов
         $courses = Course::where('instructor_id', $instructor->id)
@@ -114,17 +119,27 @@ class InstructorStatsController extends Controller
         // Получаем все проверенные работы преподавателя
         // Если graded_by_user_id заполнен, проверяем его
         // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
-        $gradedActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+        $gradedActivitiesQuery = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
         })
         ->where('status', 'graded')
         ->where(function ($query) use ($instructor) {
             $query->where('graded_by_user_id', $instructor->id)
                   ->orWhereNull('graded_by_user_id');
-        })
-        ->with(['user', 'course', 'activity', 'gradedBy'])
-        ->orderBy('graded_at', 'desc')
-        ->get();
+        });
+        
+        // Применяем фильтр по дате проверки
+        if ($dateFrom) {
+            $gradedActivitiesQuery->whereDate('graded_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $gradedActivitiesQuery->whereDate('graded_at', '<=', $dateTo);
+        }
+        
+        $gradedActivities = $gradedActivitiesQuery
+            ->with(['user', 'course', 'activity', 'gradedBy'])
+            ->orderBy('graded_at', 'desc')
+            ->get();
         
         // Получаем непроверенные работы
         $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
@@ -138,19 +153,29 @@ class InstructorStatsController extends Controller
         // Статистика по типам активностей
         // Если graded_by_user_id заполнен, проверяем его
         // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
-        $activityStats = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+        $activityStatsQuery = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
         })
         ->where('status', 'graded')
         ->where(function ($query) use ($instructor) {
             $query->where('graded_by_user_id', $instructor->id)
                   ->orWhereNull('graded_by_user_id');
-        })
-        ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
-        ->select('course_activities.activity_type', DB::raw('COUNT(*) as count'))
-        ->groupBy('course_activities.activity_type')
-        ->get()
-        ->pluck('count', 'activity_type');
+        });
+        
+        // Применяем фильтр по дате проверки
+        if ($dateFrom) {
+            $activityStatsQuery->whereDate('graded_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $activityStatsQuery->whereDate('graded_at', '<=', $dateTo);
+        }
+        
+        $activityStats = $activityStatsQuery
+            ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
+            ->select('course_activities.activity_type', DB::raw('COUNT(*) as count'))
+            ->groupBy('course_activities.activity_type')
+            ->get()
+            ->pluck('count', 'activity_type');
         
         // Общее количество студентов (сумма по всем курсам)
         $totalStudentsAll = $courses->sum('users_count');
@@ -181,7 +206,7 @@ class InstructorStatsController extends Controller
             'forums_graded' => $activityStats->get('forum', 0),
         ];
         
-        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'gradedActivities', 'pendingActivities', 'stats'));
+        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'gradedActivities', 'pendingActivities', 'stats', 'dateFrom', 'dateTo'));
     }
 }
 

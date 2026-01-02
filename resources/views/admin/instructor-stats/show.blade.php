@@ -135,6 +135,63 @@
         </div>
     </div>
 
+    <!-- Фильтры по дате -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Фильтр по дате проверки
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ route('admin.instructor-stats.show', $instructor->id) }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date_from" class="form-label">Дата начала</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date_from" 
+                                   name="date_from" 
+                                   value="{{ $dateFrom ?? '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date_to" class="form-label">Дата окончания</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date_to" 
+                                   name="date_to" 
+                                   value="{{ $dateTo ?? '' }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>
+                                Применить фильтр
+                            </button>
+                            @if($dateFrom || $dateTo)
+                            <a href="{{ route('admin.instructor-stats.show', $instructor->id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Сбросить
+                            </a>
+                            @endif
+                        </div>
+                    </form>
+                    @if($dateFrom || $dateTo)
+                    <div class="mt-3">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Период:</strong> 
+                            {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d.m.Y') : 'с начала' }} 
+                            - 
+                            {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d.m.Y') : 'до конца' }}
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Статистика -->
     <div class="row mb-4">
         <div class="col-md-2">
