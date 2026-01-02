@@ -1230,11 +1230,11 @@
             });
         }
 
-        // Add fade-in animation to content
-        document.addEventListener('DOMContentLoaded', () => {
-            const content = document.querySelector('main');
-            content.classList.add('fade-in-up');
-        });
+        // Fade-in animation disabled to remove floating effect
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     const content = document.querySelector('main');
+        //     content.classList.add('fade-in-up');
+        // });
     </script>
 
     @stack('scripts')

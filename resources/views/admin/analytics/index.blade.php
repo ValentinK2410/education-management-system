@@ -4,7 +4,7 @@
 @section('page-title', 'Аналитика курсов')
 
 @section('content')
-<div class="container-fluid fade-in-up">
+<div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
