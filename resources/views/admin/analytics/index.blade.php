@@ -93,11 +93,11 @@
                                 <button type="button" class="btn btn-info ms-2" onclick="syncActivities()" id="sync-btn">
                                     <i class="fas fa-sync me-2"></i>Синхронизировать данные
                                 </button>
-                                <div class="btn-group ms-2 dropdown" style="z-index: 1051;">
+                                <div class="btn-group ms-2 dropdown" style="z-index: 10000 !important; position: relative;">
                                     <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="exportDropdownBtn">
                                         <i class="fas fa-download me-2"></i>Экспорт
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu" style="z-index: 1050 !important;">
+                                    <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu" style="z-index: 9999 !important; position: absolute !important;">
                                         <li><a class="dropdown-item" href="{{ route('admin.analytics.export.csv', request()->all()) }}">
                                             <i class="fas fa-file-csv me-2"></i>CSV
                                         </a></li>
@@ -534,22 +534,29 @@
 
 /* Исправление z-index для выпадающего меню экспорта */
 .export-dropdown-menu {
-    z-index: 1050 !important;
+    z-index: 9999 !important;
     position: absolute !important;
 }
 
 .btn-group.dropdown {
     position: relative;
-    z-index: 1051;
+    z-index: 10000 !important;
 }
 
 /* Убеждаемся, что родительские элементы не обрезают меню */
 .card-body {
     overflow: visible !important;
+    position: relative;
 }
 
 .card {
     overflow: visible !important;
+    position: relative;
+}
+
+/* Все карточки должны быть ниже выпадающего меню */
+.card {
+    z-index: 1 !important;
 }
 
 /* Карточки статистики должны быть ниже выпадающего меню */
@@ -558,12 +565,26 @@
 .card.border-left-info,
 .card.border-left-warning {
     position: relative;
-    z-index: 1;
+    z-index: 1 !important;
 }
 
 /* Убеждаемся, что выпадающее меню отображается поверх всего */
-.dropdown-menu.show {
-    z-index: 1050 !important;
+.dropdown-menu.show,
+.dropdown-menu,
+#exportDropdownBtn + .dropdown-menu {
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+/* Контейнер формы фильтров */
+form#analytics-filter-form {
+    position: relative;
+    z-index: 10000 !important;
+}
+
+/* Родительские контейнеры */
+.row {
+    position: relative;
 }
 </style>
 
