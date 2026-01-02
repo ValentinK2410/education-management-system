@@ -529,6 +529,15 @@
                                                     <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm {{ $buttonClass }}" title="{{ $buttonLabel }} в Moodle">
                                                         <i class="fas {{ $buttonIcon }}"></i>
                                                     </a>
+                                                @elseif(isset($moodleApiService) && $moodleApiService && !empty($activity['moodle_course_id']) && !empty($activity['moodle_user_id']))
+                                                    {{-- Показываем кнопку даже если нет cmid, но есть базовые данные для генерации URL --}}
+                                                    @php
+                                                        // Пытаемся создать базовый URL курса в Moodle
+                                                        $moodleCourseUrl = $moodleApiService->url . '/course/view.php?id=' . $activity['moodle_course_id'];
+                                                    @endphp
+                                                    <a href="{{ $moodleCourseUrl }}" target="_blank" class="btn btn-sm btn-secondary" title="Перейти в курс Moodle">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
                                                 @endif
                                                 
                                                 <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
