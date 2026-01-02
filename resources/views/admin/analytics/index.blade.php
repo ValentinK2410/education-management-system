@@ -445,8 +445,11 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 @if(isset($moodleApiService) && $moodleApiService && 
-                                                    ($activity['status'] == 'submitted' || $activity['status'] == 'in_progress') &&
-                                                    $activity['cmid'] && $activity['moodle_user_id'])
+                                                    ($activity['status'] == 'submitted' || 
+                                                     $activity['status'] == 'pending' || 
+                                                     $activity['status'] == 'in_progress') &&
+                                                    $activity['cmid'] && 
+                                                    $activity['moodle_user_id'])
                                                     @php
                                                         $gradingUrl = $moodleApiService->getGradingUrl(
                                                             $activity['activity_type'],
