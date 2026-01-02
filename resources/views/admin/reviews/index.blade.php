@@ -13,6 +13,22 @@
         color: var(--text-color) !important;
     }
 
+    /* Заголовок в admin-header */
+    [data-theme="dark"] .admin-header h1,
+    [data-theme="dark"] .admin-header .h3 {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .admin-header .text-muted {
+        color: #94a3b8 !important;
+        opacity: 0.9;
+    }
+
+    [data-theme="dark"] .admin-header {
+        background: var(--card-bg) !important;
+        border-bottom-color: var(--border-color) !important;
+    }
+
     /* Текст */
     [data-theme="dark"] .main-content .text-muted {
         color: #94a3b8 !important;
@@ -259,7 +275,7 @@
                 </h1>
                 <p class="text-muted mb-0">Модерация отзывов пользователей</p>
             </div>
-            <div>
+            <div class="ms-4">
                 <a href="{{ route('admin.reviews.pending') }}" class="btn btn-warning me-2">
                     <i class="fas fa-clock me-1"></i>
                     На модерации
