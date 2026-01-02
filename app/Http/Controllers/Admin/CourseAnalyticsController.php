@@ -158,6 +158,20 @@ class CourseAnalyticsController extends Controller
                 $noDataMessage = "В системе нет данных о прогрессе студентов. Запустите синхронизацию данных из Moodle.";
             }
             
+            // Проверяем, была ли выполнена автоматическая синхронизация
+            $hasAutoSynced = false;
+            if ($this->syncService) {
+                $submittedCount = StudentActivityProgress::where('status', 'submitted')
+                    ->whereHas('user', function($q) {
+                        $q->whereNotNull('moodle_user_id');
+                    })
+                    ->whereHas('course', function($q) {
+                        $q->whereNotNull('moodle_course_id');
+                    })
+                    ->count();
+                $hasAutoSynced = $submittedCount > 0;
+            }
+            
             return view('admin.analytics.index', [
                 'courses' => $courses,
                 'activities' => $filteredData['activities'],
@@ -167,6 +181,7 @@ class CourseAnalyticsController extends Controller
                 'hasNoData' => $hasNoData,
                 'noDataMessage' => $noDataMessage,
                 'moodleApiService' => $moodleApiService,
+                'hasAutoSynced' => $hasAutoSynced,
             ]);
         } catch (\Exception $e) {
             Log::error('Ошибка в методе index контроллера аналитики', [
