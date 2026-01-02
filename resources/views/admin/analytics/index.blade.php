@@ -605,6 +605,40 @@ document.addEventListener('DOMContentLoaded', function() {
             chevronIcon.classList.add('fa-chevron-down');
         });
     }
+    
+    // Исправление z-index для выпадающего меню экспорта
+    const exportDropdownBtn = document.getElementById('exportDropdownBtn');
+    const exportDropdownMenu = document.querySelector('.export-dropdown-menu');
+    
+    if (exportDropdownBtn && exportDropdownMenu) {
+        exportDropdownBtn.addEventListener('click', function() {
+            // Устанавливаем максимальный z-index при открытии
+            exportDropdownMenu.style.zIndex = '99999';
+            exportDropdownMenu.style.position = 'absolute';
+        });
+        
+        // Обработка событий Bootstrap dropdown
+        exportDropdownMenu.addEventListener('show.bs.dropdown', function() {
+            exportDropdownMenu.style.zIndex = '99999';
+        });
+        
+        // Используем MutationObserver для отслеживания изменений класса show
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (exportDropdownMenu.classList.contains('show')) {
+                        exportDropdownMenu.style.zIndex = '99999';
+                        exportDropdownMenu.style.position = 'absolute';
+                    }
+                }
+            });
+        });
+        
+        observer.observe(exportDropdownMenu, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
 });
 
 function syncActivities() {
