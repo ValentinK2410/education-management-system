@@ -826,7 +826,27 @@
                 <button class="sidebar-toggle" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h4 class="mb-0">@yield('page-title', __('messages.dashboard'))</h4>
+                <div class="d-flex flex-column">
+                    <h4 class="mb-0">@yield('page-title', __('messages.dashboard'))</h4>
+                    <small class="text-muted" style="font-size: 0.75rem; line-height: 1.2;">
+                        <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
+                        @php
+                            $currentRoles = auth()->user()->roles;
+                            $roleNames = $currentRoles->pluck('name')->toArray();
+                            if (session('role_switched')) {
+                                $switchedRole = \App\Models\Role::find(session('switched_role_id'));
+                                if ($switchedRole) {
+                                    $roleNames = [$switchedRole->name];
+                                }
+                            }
+                        @endphp
+                        @if(!empty($roleNames))
+                            <span class="ms-2">
+                                <i class="fas fa-user-tag me-1"></i>{{ implode(', ', $roleNames) }}
+                            </span>
+                        @endif
+                    </small>
+                </div>
             </div>
 
             <div class="header-right">
