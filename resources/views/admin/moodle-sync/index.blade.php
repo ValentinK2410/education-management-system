@@ -3,6 +3,129 @@
 @section('title', 'Синхронизация с Moodle')
 @section('page-title', 'Синхронизация с Moodle')
 
+@push('styles')
+<style>
+    /* Основная карточка */
+    [data-theme="dark"] .container-fluid .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-header {
+        background: var(--card-bg) !important;
+        border-bottom-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Заголовки */
+    [data-theme="dark"] .container-fluid h3,
+    [data-theme="dark"] .container-fluid h5,
+    [data-theme="dark"] .container-fluid .card-title {
+        color: var(--text-color) !important;
+    }
+
+    /* Статистические карточки */
+    [data-theme="dark"] .container-fluid .card.bg-info {
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.bg-success {
+        background-color: rgba(16, 185, 129, 0.2) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.bg-light {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Таблица */
+    [data-theme="dark"] .container-fluid .table {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table thead th {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table tbody td {
+        border-color: var(--border-color) !important;
+        background-color: transparent !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(odd) {
+        background-color: var(--card-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-striped tbody tr:nth-of-type(even) {
+        background-color: var(--dark-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover {
+        background-color: var(--dark-bg) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .table-hover tbody tr:hover td {
+        background-color: var(--dark-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Бейджи */
+    [data-theme="dark"] .container-fluid .badge.bg-secondary {
+        background-color: var(--secondary-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Pre элемент для логов */
+    [data-theme="dark"] .container-fluid pre {
+        background-color: var(--dark-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Кнопки */
+    [data-theme="dark"] .container-fluid .btn-primary {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .btn-info {
+        background-color: rgba(59, 130, 246, 0.8) !important;
+        border-color: rgba(59, 130, 246, 0.8) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .btn-info:hover {
+        background-color: rgba(59, 130, 246, 1) !important;
+        border-color: rgba(59, 130, 246, 1) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .btn-warning {
+        background-color: var(--warning-color) !important;
+        border-color: var(--warning-color) !important;
+        color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .container-fluid .btn-warning:hover {
+        background-color: #f59e0b !important;
+        border-color: #f59e0b !important;
+        color: #1e293b !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid fade-in-up">
     <div class="row">
