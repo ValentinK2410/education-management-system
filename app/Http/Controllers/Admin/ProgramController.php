@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\Program;
+use App\Models\Course;
 use Illuminate\Http\Request;
 
 /**

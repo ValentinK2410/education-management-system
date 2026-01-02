@@ -468,8 +468,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Управление образовательными программами
         Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
-        Route::post('programs/{program}/courses/{course}/move-up', [ProgramController::class, 'moveCourseUp'])->name('programs.courses.move-up');
-        Route::post('programs/{program}/courses/{course}/move-down', [ProgramController::class, 'moveCourseDown'])->name('programs.courses.move-down');
+        Route::post('programs/{program}/courses/{course}/move-up', [ProgramController::class, 'moveCourseUp'])->name('programs.courses.move-up')->where(['course' => '[0-9]+']);
+        Route::post('programs/{program}/courses/{course}/move-down', [ProgramController::class, 'moveCourseDown'])->name('programs.courses.move-down')->where(['course' => '[0-9]+']);
         Route::resource('programs', ProgramController::class);
 
         // Управление курсами
