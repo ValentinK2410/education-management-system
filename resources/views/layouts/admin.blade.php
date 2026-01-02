@@ -203,6 +203,16 @@
             gap: 1rem;
         }
 
+        .header-left .d-flex.flex-column {
+            gap: 0.25rem;
+        }
+
+        .header-left small {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
         .sidebar-toggle {
             background: none;
             border: none;
