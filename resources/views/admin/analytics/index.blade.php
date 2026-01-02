@@ -184,10 +184,10 @@
     @endif
 
     <!-- Блок помощи -->
-    <div class="row mb-4">
+    <div class="row mb-4" style="z-index: 0 !important; position: relative;">
         <div class="col-12">
-            <div class="card border-info">
-                <div class="card-header bg-info bg-opacity-10">
+            <div class="card border-info" style="z-index: 0 !important; position: relative;">
+                <div class="card-header bg-info bg-opacity-10" style="z-index: 0 !important;">
                     <h5 class="card-title mb-0">
                         <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlock" aria-expanded="false" aria-controls="helpBlock">
                             <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы аналитики
