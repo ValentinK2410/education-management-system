@@ -1085,6 +1085,7 @@ class CourseAnalyticsController extends Controller
         $statusMap = [
             'not_started' => 'Не начато',
             'in_progress' => 'В процессе',
+            'pending' => 'Не проверено',
             'submitted' => 'Сдано',
             'graded' => 'Проверено',
             'completed' => 'Завершено',
