@@ -126,7 +126,12 @@ class DashboardController extends Controller
             $query->where('instructor_id', $user->id);
         })
         ->whereHas('roles', function ($query) {
-            $query->where('name', 'student');
+            // Используем slug, так как в hasRole используется slug
+            $query->where('slug', 'student');
+        })
+        ->whereDoesntHave('roles', function ($query) {
+            // Исключаем пользователей с ролями преподавателя или администратора
+            $query->whereIn('slug', ['instructor', 'admin']);
         })
         ->with('roles')
         ->distinct()
