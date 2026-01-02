@@ -124,3 +124,64 @@
     </table>
 </div>
 
+<style>
+/* Стили для бейджей типов элементов курса */
+.activity-type-badge {
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.activity-type-assign {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #1e40af !important;
+}
+
+.activity-type-assign i {
+    color: #ffffff;
+}
+
+.activity-type-quiz {
+    background-color: #059669 !important;
+    color: #ffffff !important;
+    border-color: #047857 !important;
+}
+
+.activity-type-quiz i {
+    color: #ffffff;
+}
+
+.activity-type-forum {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #b91c1c !important;
+}
+
+.activity-type-forum i {
+    color: #ffffff;
+}
+
+.activity-type-resource {
+    background-color: #7c3aed !important;
+    color: #ffffff !important;
+    border-color: #6d28d9 !important;
+}
+
+.activity-type-resource i {
+    color: #ffffff;
+}
+
+.activity-type-exam {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+    border-color: #c2410c !important;
+}
+
+.activity-type-exam i {
+    color: #ffffff;
+}
+</style>
