@@ -91,7 +91,16 @@
                                         <td>{{ $course->program->name ?? 'Не указана' }}</td>
                                         <td>{{ $course->program->institution->name ?? 'Не указано' }}</td>
                                         <td>
-                                            <span class="badge bg-primary">{{ $course->users()->count() }}</span>
+                                            <span class="badge bg-primary">
+                                                {{ $course->users()
+                                                    ->whereHas('roles', function ($query) {
+                                                        $query->where('slug', 'student');
+                                                    })
+                                                    ->whereDoesntHave('roles', function ($query) {
+                                                        $query->whereIn('slug', ['instructor', 'admin']);
+                                                    })
+                                                    ->count() }}
+                                            </span>
                                         </td>
                                         <td>
                                             @if($course->is_active)

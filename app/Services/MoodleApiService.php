@@ -1060,7 +1060,7 @@ class MoodleApiService
                     } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
                         $submittedAt = $submission['timecreated'];
                     }
-                    
+
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
 

@@ -116,7 +116,15 @@ class DashboardController extends Controller
         $stats = [
             'my_courses' => $myCourses->count(),
             'total_students' => $myCourses->sum(function ($course) {
-                return $course->users()->count();
+                // Считаем только студентов, исключаем преподавателей и администраторов
+                return $course->users()
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'student');
+                    })
+                    ->whereDoesntHave('roles', function ($query) {
+                        $query->whereIn('slug', ['instructor', 'admin']);
+                    })
+                    ->count();
             }),
             'active_courses' => $myCourses->where('is_active', true)->count(),
         ];
