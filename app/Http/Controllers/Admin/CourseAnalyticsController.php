@@ -724,7 +724,7 @@ class CourseAnalyticsController extends Controller
      * @param int|null $userId
      * @return array
      */
-    protected function applyFilters(Request $request, $courses = null, ?int $courseId = null, ?int $userId = null, $students = null): array
+    protected function applyFilters(Request $request, $courses = null, ?int $courseId = null, ?int $userId = null, $students = null, $moodleApiService = null): array
     {
         // Получаем фильтры из запроса, преобразуя строки в числа где нужно
         $courseIdParam = $request->get('course_id', $courseId);
@@ -874,17 +874,49 @@ class CourseAnalyticsController extends Controller
         }
         
         // Форматируем данные для отображения
-        $formattedActivities = $activities->map(function ($progress) {
+        $formattedActivities = $activities->map(function ($progress) use ($moodleApiService) {
             // Извлекаем cmid из meta поля активности
             $cmid = null;
             if ($progress->activity && $progress->activity->meta) {
                 $meta = is_array($progress->activity->meta) ? $progress->activity->meta : json_decode($progress->activity->meta, true);
-                $cmid = $meta['cmid'] ?? $meta['id'] ?? null;
+                $cmid = $meta['cmid'] ?? null;
             }
             
-            // Если cmid не найден в meta, пытаемся использовать moodle_activity_id как fallback
-            if (!$cmid && $progress->activity && $progress->activity->moodle_activity_id) {
-                $cmid = $progress->activity->moodle_activity_id;
+            // Если cmid не найден в meta, пытаемся получить его через Moodle API
+            if (!$cmid && $moodleApiService && $progress->activity && $progress->activity->moodle_activity_id && $progress->activity->activity_type) {
+                try {
+                    $moduleName = $progress->activity->activity_type;
+                    // Преобразуем тип активности в название модуля Moodle
+                    $moduleMap = [
+                        'assign' => 'assign',
+                        'quiz' => 'quiz',
+                        'forum' => 'forum',
+                    ];
+                    
+                    if (isset($moduleMap[$moduleName])) {
+                        $cmResult = $moodleApiService->call('core_course_get_course_module_by_instance', [
+                            'module' => $moduleMap[$moduleName],
+                            'instance' => $progress->activity->moodle_activity_id
+                        ]);
+                        
+                        if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                            $cmid = $cmResult['cm']['id'];
+                            
+                            // Сохраняем cmid в meta для будущего использования
+                            if ($progress->activity) {
+                                $meta = is_array($progress->activity->meta) ? $progress->activity->meta : json_decode($progress->activity->meta, true);
+                                if (!is_array($meta)) {
+                                    $meta = [];
+                                }
+                                $meta['cmid'] = $cmid;
+                                $progress->activity->meta = $meta;
+                                $progress->activity->save();
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Игнорируем ошибки получения cmid
+                }
             }
             
             return [

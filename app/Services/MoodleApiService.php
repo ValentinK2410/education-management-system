@@ -1011,6 +1011,25 @@ class MoodleApiService
         if ($assignments !== false) {
             foreach ($assignments as $assignment) {
                 $assignmentId = $assignment['id'];
+                
+                // Получаем cmid через Moodle API
+                $cmid = null;
+                try {
+                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                        'module' => 'assign',
+                        'instance' => $assignmentId
+                    ]);
+                    
+                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                        $cmid = $cmResult['cm']['id'];
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Не удалось получить cmid для задания', [
+                        'assignment_id' => $assignmentId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
                 $submission = $submissions[$assignmentId] ?? null;
                 $grade = $grades[$assignmentId] ?? null;
 
@@ -1039,6 +1058,7 @@ class MoodleApiService
                 $activities[] = [
                     'type' => 'assign',
                     'moodle_id' => $assignmentId,
+                    'cmid' => $cmid, // Course Module ID для ссылок
                     'name' => $assignment['name'] ?? 'Без названия',
                     'section_name' => '', // Не можем получить без getCourseContents
                     'status' => $status,
@@ -1064,6 +1084,25 @@ class MoodleApiService
         if ($quizzes !== false) {
             foreach ($quizzes as $quiz) {
                 $quizId = $quiz['id'];
+                
+                // Получаем cmid через Moodle API
+                $cmid = null;
+                try {
+                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                        'module' => 'quiz',
+                        'instance' => $quizId
+                    ]);
+                    
+                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                        $cmid = $cmResult['cm']['id'];
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Не удалось получить cmid для теста', [
+                        'quiz_id' => $quizId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
                 $attempts = $quizAttempts[$quizId] ?? [];
                 $grade = $quizGrades[$quizId] ?? null;
 
@@ -1103,6 +1142,7 @@ class MoodleApiService
                 $activities[] = [
                     'type' => 'quiz',
                     'moodle_id' => $quizId,
+                    'cmid' => $cmid, // Course Module ID для ссылок
                     'name' => $quiz['name'] ?? 'Без названия',
                     'section_name' => '', // Не можем получить без getCourseContents
                     'status' => $status,
@@ -1136,6 +1176,25 @@ class MoodleApiService
         if ($forums !== false) {
             foreach ($forums as $forum) {
                 $forumId = $forum['id'];
+                
+                // Получаем cmid через Moodle API
+                $cmid = null;
+                try {
+                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                        'module' => 'forum',
+                        'instance' => $forumId
+                    ]);
+                    
+                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                        $cmid = $cmResult['cm']['id'];
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Не удалось получить cmid для форума', [
+                        'forum_id' => $forumId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                
                 $posts = $forumPosts[$forumId] ?? [];
 
                 $status = empty($posts) ? 'not_started' : 'completed';
@@ -1145,6 +1204,7 @@ class MoodleApiService
                 $activities[] = [
                     'type' => 'forum',
                     'moodle_id' => $forumId,
+                    'cmid' => $cmid, // Course Module ID для ссылок
                     'name' => $forum['name'] ?? 'Без названия',
                     'section_name' => '', // Не можем получить без getCourseContents
                     'status' => $status,
@@ -1351,15 +1411,15 @@ class MoodleApiService
             case 'assign':
                 // Для заданий - прямая ссылка на проверку конкретного студента
                 return $this->url . "/mod/assign/view.php?id={$cmid}&action=grade&userid={$moodleUserId}";
-            
+
             case 'quiz':
                 // Для тестов - ссылка на просмотр теста (проверка через отчеты)
                 return $this->url . "/mod/quiz/view.php?id={$cmid}";
-            
+
             case 'forum':
                 // Для форумов - ссылка на просмотр форума (проверка постов)
                 return $this->url . "/mod/forum/view.php?id={$cmid}";
-            
+
             default:
                 // Для других типов - общая ссылка на просмотр элемента
                 return $this->url . "/mod/{$activityType}/view.php?id={$cmid}";
