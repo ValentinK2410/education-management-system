@@ -37,9 +37,33 @@
         color: var(--text-color) !important;
     }
 
+    [data-theme="dark"] .container-fluid .card.bg-info.text-white,
+    [data-theme="dark"] .container-fluid .card.bg-info .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.bg-info .card-body,
+    [data-theme="dark"] .container-fluid .card.bg-info .card-title,
+    [data-theme="dark"] .container-fluid .card.bg-info h2,
+    [data-theme="dark"] .container-fluid .card.bg-info h5 {
+        color: var(--text-color) !important;
+    }
+
     [data-theme="dark"] .container-fluid .card.bg-success {
         background-color: rgba(16, 185, 129, 0.2) !important;
         border-color: rgba(16, 185, 129, 0.3) !important;
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.bg-success.text-white,
+    [data-theme="dark"] .container-fluid .card.bg-success .text-white {
+        color: var(--text-color) !important;
+    }
+
+    [data-theme="dark"] .container-fluid .card.bg-success .card-body,
+    [data-theme="dark"] .container-fluid .card.bg-success .card-title,
+    [data-theme="dark"] .container-fluid .card.bg-success h2,
+    [data-theme="dark"] .container-fluid .card.bg-success h5 {
         color: var(--text-color) !important;
     }
 
