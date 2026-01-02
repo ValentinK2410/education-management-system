@@ -119,7 +119,7 @@
 
     <!-- Статистика -->
     @if(isset($stats))
-    <div class="row mb-4">
+    <div class="row mb-4" style="z-index: 0 !important; position: relative;">
         <div class="col-md-3">
             <div class="card border-left-primary">
                 <div class="card-body">
@@ -554,8 +554,8 @@
     position: relative;
 }
 
-/* Все карточки должны быть ниже выпадающего меню */
-.card {
+/* Все карточки должны быть ниже выпадающего меню, кроме выпадающего меню */
+.card:not(.export-dropdown-menu):not(.dropdown-menu) {
     z-index: 1 !important;
 }
 
