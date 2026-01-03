@@ -532,4 +532,7 @@ return [
     'select_at_least_one_course' => 'Выберите хотя бы один курс для удаления',
     'courses_deleted_successfully' => 'Курсы успешно удалены',
     'error_deleting_courses' => 'Ошибка при удалении курсов',
+    'synchronization_in_progress' => 'Синхронизация запущена!',
+    'synchronization_completed' => 'Синхронизация завершена!',
+    'synchronization_failed' => 'Ошибка синхронизации!',
 ];
