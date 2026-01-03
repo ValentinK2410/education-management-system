@@ -1119,12 +1119,12 @@ class CourseAnalyticsController extends Controller
     protected function getStatusText(string $status): string
     {
         $statusMap = [
-            'not_started' => 'Не начато',
-            'in_progress' => 'В процессе',
-            'pending' => 'Не проверено',
-            'submitted' => 'Сдано',
-            'graded' => 'Проверено',
-            'completed' => 'Завершено',
+            'not_started' => __('messages.not_started'),
+            'in_progress' => __('messages.in_progress'),
+            'pending' => __('messages.not_graded'),
+            'submitted' => __('messages.submitted'),
+            'graded' => __('messages.graded'),
+            'completed' => __('messages.completed'),
         ];
         
         return $statusMap[$status] ?? $status;
