@@ -595,4 +595,13 @@ return [
     'no_institution' => 'No Institution',
     'no_program' => 'No Program',
     'progress' => 'Progress',
+    'institutions' => 'Educational Institutions',
+    'add_institution' => 'Add Institution',
+    'type' => 'Type',
+    'address' => 'Address',
+    'contacts' => 'Contacts',
+    'logo' => 'Logo',
+    'no_short_name' => 'No Short Name',
+    'confirm_delete_institution' => 'Are you sure you want to delete this institution?',
+    'institutions_not_found' => 'Educational Institutions Not Found',
 ];

@@ -557,4 +557,13 @@ return [
     'no_institution' => 'Без заведения',
     'no_program' => 'Без программы',
     'progress' => 'Прогресс',
+    'institutions' => 'Учебные заведения',
+    'add_institution' => 'Добавить учебное заведение',
+    'type' => 'Тип',
+    'address' => 'Адрес',
+    'contacts' => 'Контакты',
+    'logo' => 'Логотип',
+    'no_short_name' => 'Без сокращения',
+    'confirm_delete_institution' => 'Вы уверены, что хотите удалить это учебное заведение?',
+    'institutions_not_found' => 'Учебные заведения не найдены',
 ];
