@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Аналитика курсов')
-@section('page-title', 'Аналитика курсов')
+@section('title', __('messages.analytics'))
+@section('page-title', __('messages.analytics'))
 
 @push('styles')
 <style>
@@ -195,16 +195,16 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Фильтры аналитики
+                        <i class="fas fa-chart-line me-2"></i>{{ __('messages.filter') }} {{ __('messages.analytics') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('admin.analytics.index') }}" id="analytics-filter-form">
                         <div class="row g-3">
                             <div class="col-md-3">
-                                <label for="course_id" class="form-label">Курс</label>
+                                <label for="course_id" class="form-label">{{ __('messages.course') }}</label>
                                 <select class="form-select" id="course_id" name="course_id">
-                                    <option value="">Все курсы</option>
+                                    <option value="">{{ __('messages.all_courses') }}</option>
                                     @foreach($courses as $course)
                                         <option value="{{ $course->id }}" {{ (request('course_id') == $course->id || request('course_id') == (string)$course->id) ? 'selected' : '' }}>
                                             {{ $course->name }}
@@ -214,9 +214,9 @@
                             </div>
                             
                             <div class="col-md-3">
-                                <label for="user_id" class="form-label">Студент</label>
+                                <label for="user_id" class="form-label">{{ __('messages.students') }}</label>
                                 <select class="form-select" id="user_id" name="user_id">
-                                    <option value="">Все студенты</option>
+                                    <option value="">{{ __('messages.all_students') }}</option>
                                     @foreach($students as $student)
                                         <option value="{{ $student->id }}" {{ (request('user_id') == $student->id || request('user_id') == (string)$student->id) ? 'selected' : '' }}>
                                             {{ $student->name }} ({{ $student->email }})
@@ -226,61 +226,61 @@
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="activity_type" class="form-label">Тип элемента</label>
+                                <label for="activity_type" class="form-label">{{ __('messages.activity_type') }}</label>
                                 <select class="form-select" id="activity_type" name="activity_type">
-                                    <option value="">Все типы</option>
-                                    <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>📄 Задания</option>
-                                    <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>✅ Тесты</option>
-                                    <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>💬 Форумы</option>
-                                    <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>📚 Материалы</option>
-                                    <option value="exam" {{ (request('activity_type') == 'exam') ? 'selected' : '' }}>🎓 Экзамены</option>
+                                    <option value="">{{ __('messages.all_types') }}</option>
+                                    <option value="assign" {{ (request('activity_type') == 'assign') ? 'selected' : '' }}>📄 {{ __('messages.assignments') }}</option>
+                                    <option value="quiz" {{ (request('activity_type') == 'quiz') ? 'selected' : '' }}>✅ {{ __('messages.quizzes') }}</option>
+                                    <option value="forum" {{ (request('activity_type') == 'forum') ? 'selected' : '' }}>💬 {{ __('messages.forums') }}</option>
+                                    <option value="resource" {{ (request('activity_type') == 'resource') ? 'selected' : '' }}>📚 {{ __('messages.resources') }}</option>
+                                    <option value="exam" {{ (request('activity_type') == 'exam') ? 'selected' : '' }}>🎓 {{ __('messages.exams') }}</option>
                                 </select>
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="status" class="form-label">Статус</label>
+                                <label for="status" class="form-label">{{ __('messages.status') }}</label>
                                 <select class="form-select" id="status" name="status">
-                                    <option value="">Все статусы</option>
-                                    <option value="not_started" {{ (request('status') == 'not_started') ? 'selected' : '' }}>Не начато</option>
-                                    <option value="submitted" {{ (request('status') == 'submitted') ? 'selected' : '' }}>Сдано</option>
-                                    <option value="graded" {{ (request('status') == 'graded') ? 'selected' : '' }}>Проверено</option>
-                                    <option value="completed" {{ (request('status') == 'completed') ? 'selected' : '' }}>Завершено</option>
+                                    <option value="">{{ __('messages.all_statuses') }}</option>
+                                    <option value="not_started" {{ (request('status') == 'not_started') ? 'selected' : '' }}>{{ __('messages.not_started') }}</option>
+                                    <option value="submitted" {{ (request('status') == 'submitted') ? 'selected' : '' }}>{{ __('messages.submitted') }}</option>
+                                    <option value="graded" {{ (request('status') == 'graded') ? 'selected' : '' }}>{{ __('messages.graded') }}</option>
+                                    <option value="completed" {{ (request('status') == 'completed') ? 'selected' : '' }}>{{ __('messages.completed') }}</option>
                                 </select>
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="date_from" class="form-label">Дата от</label>
+                                <label for="date_from" class="form-label">{{ __('messages.date_from') }}</label>
                                 <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request('date_from') }}">
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="date_to" class="form-label">Дата до</label>
+                                <label for="date_to" class="form-label">{{ __('messages.date_to') }}</label>
                                 <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}">
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="min_grade" class="form-label">Мин. оценка</label>
+                                <label for="min_grade" class="form-label">{{ __('messages.min_grade') }}</label>
                                 <input type="number" class="form-control" id="min_grade" name="min_grade" value="{{ request('min_grade') }}" step="0.01">
                             </div>
                             
                             <div class="col-md-2">
-                                <label for="max_grade" class="form-label">Макс. оценка</label>
+                                <label for="max_grade" class="form-label">{{ __('messages.max_grade_filter') }}</label>
                                 <input type="number" class="form-control" id="max_grade" name="max_grade" value="{{ request('max_grade') }}" step="0.01">
                             </div>
                             
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-filter me-2"></i>Применить фильтры
+                                    <i class="fas fa-filter me-2"></i>{{ __('messages.apply_filters') }}
                                 </button>
                                 <a href="{{ route('admin.analytics.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-times me-2"></i>Сбросить
+                                    <i class="fas fa-times me-2"></i>{{ __('messages.reset') }}
                                 </a>
                                 <button type="button" class="btn btn-info ms-2" onclick="syncActivities()" id="sync-btn">
-                                    <i class="fas fa-sync me-2"></i>Синхронизировать данные
+                                    <i class="fas fa-sync me-2"></i>{{ __('messages.synchronize_data') }}
                                 </button>
                                 <div class="btn-group ms-2 dropdown" style="z-index: 10000 !important; position: relative;">
                                     <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="exportDropdownBtn">
-                                        <i class="fas fa-download me-2"></i>Экспорт
+                                        <i class="fas fa-download me-2"></i>{{ __('messages.export') }}
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end export-dropdown-menu" style="z-index: 9999 !important; position: absolute !important;">
                                         <li><a class="dropdown-item" href="{{ route('admin.analytics.export.csv', request()->all()) }}">
@@ -310,7 +310,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Всего записей</div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{{ __('messages.total_records') }}</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
@@ -325,7 +325,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Не начато</div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{{ __('messages.not_started') }}</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['not_started'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
@@ -340,7 +340,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Сдано</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{{ __('messages.submitted') }}</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['submitted'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
@@ -355,7 +355,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Проверено</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{{ __('messages.graded') }}</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['graded'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
@@ -375,7 +375,7 @@
                 <div class="card-header bg-info bg-opacity-10" style="z-index: 0 !important;">
                     <h5 class="card-title mb-0">
                         <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlock" aria-expanded="false" aria-controls="helpBlock">
-                            <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы аналитики
+                            <i class="fas fa-question-circle me-2"></i>{{ __('messages.help_block_title') }}
                             <i class="fas fa-chevron-down float-end"></i>
                         </button>
                     </h5>

@@ -540,4 +540,11 @@ return [
     'users_deleted_successfully' => 'Users deleted successfully',
     'error_deleting_users' => 'Error deleting users',
     'cannot_delete_yourself' => 'You cannot delete yourself',
+    'all_courses' => 'All Courses',
+    'all_students' => 'All Students',
+    'all_types' => 'All Types',
+    'all_statuses' => 'All Statuses',
+    'apply_filters' => 'Apply Filters',
+    'min_grade' => 'Min Grade',
+    'max_grade_filter' => 'Max Grade',
 ];
