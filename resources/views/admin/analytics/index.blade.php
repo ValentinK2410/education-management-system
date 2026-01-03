@@ -515,16 +515,16 @@
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Студент</th>
-                                    <th>Курс</th>
-                                    <th>Элемент курса</th>
-                                    <th>Тип</th>
-                                    <th>Статус</th>
-                                    <th>Оценка</th>
-                                    <th>Дата сдачи</th>
-                                    <th>Дата проверки</th>
-                                    <th>Проверил</th>
-                                    <th>Действия</th>
+                                    <th>{{ __('messages.students') }}</th>
+                                    <th>{{ __('messages.course') }}</th>
+                                    <th>{{ __('messages.course_element') }}</th>
+                                    <th>{{ __('messages.activity_type') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th>{{ __('messages.grade_value') }}</th>
+                                    <th>{{ __('messages.submission_date') }}</th>
+                                    <th>{{ __('messages.grading_date') }}</th>
+                                    <th>{{ __('messages.graded_by') }}</th>
+                                    <th>{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -541,23 +541,23 @@
                                         <td>
                                             @if($activity['activity_type'] == 'assign')
                                                 <span class="badge activity-type-badge activity-type-assign">
-                                                    <i class="fas fa-file-alt me-1"></i>Задание
+                                                    <i class="fas fa-file-alt me-1"></i>{{ __('messages.assignment') }}
                                                 </span>
                                             @elseif($activity['activity_type'] == 'quiz')
                                                 <span class="badge activity-type-badge activity-type-quiz">
-                                                    <i class="fas fa-clipboard-check me-1"></i>Тест
+                                                    <i class="fas fa-clipboard-check me-1"></i>{{ __('messages.quiz') }}
                                                 </span>
                                             @elseif($activity['activity_type'] == 'forum')
                                                 <span class="badge activity-type-badge activity-type-forum">
-                                                    <i class="fas fa-comments me-1"></i>Форум
+                                                    <i class="fas fa-comments me-1"></i>{{ __('messages.forum') }}
                                                 </span>
                                             @elseif($activity['activity_type'] == 'resource')
                                                 <span class="badge activity-type-badge activity-type-resource">
-                                                    <i class="fas fa-book me-1"></i>Материал
+                                                    <i class="fas fa-book me-1"></i>{{ __('messages.resource') }}
                                                 </span>
                                             @elseif($activity['activity_type'] == 'exam')
                                                 <span class="badge activity-type-badge activity-type-exam">
-                                                    <i class="fas fa-graduation-cap me-1"></i>Экзамен
+                                                    <i class="fas fa-graduation-cap me-1"></i>{{ __('messages.exam') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-secondary">{{ $activity['activity_type'] }}</span>

@@ -604,4 +604,5 @@ return [
     'no_short_name' => 'No Short Name',
     'confirm_delete_institution' => 'Are you sure you want to delete this institution?',
     'institutions_not_found' => 'Educational Institutions Not Found',
+    'pending' => 'Pending Review',
 ];

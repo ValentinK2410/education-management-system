@@ -566,4 +566,5 @@ return [
     'no_short_name' => 'Без сокращения',
     'confirm_delete_institution' => 'Вы уверены, что хотите удалить это учебное заведение?',
     'institutions_not_found' => 'Учебные заведения не найдены',
+    'pending' => 'Ожидает проверки',
 ];
