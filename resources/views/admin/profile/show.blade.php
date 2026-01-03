@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Мой профиль')
-@section('page-title', 'Мой профиль')
+@section('title', __('messages.my_profile'))
+@section('page-title', __('messages.my_profile'))
 
 @section('content')
 <div class="container-fluid fade-in-up">
@@ -35,7 +35,7 @@
                     @endif
                     
                     <a href="{{ route('admin.profile.edit') }}" class="btn btn-primary">
-                        <i class="fas fa-edit me-2"></i>Редактировать профиль
+                        <i class="fas fa-edit me-2"></i>{{ __('messages.edit_profile') }}
                     </a>
                 </div>
             </div>
@@ -44,24 +44,24 @@
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Статистика обучения
+                        <i class="fas fa-chart-bar me-2"></i>{{ __('messages.learning_statistics') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span>Активные программы:</span>
+                        <span>{{ __('messages.active_programs') }}:</span>
                         <span class="badge bg-primary">{{ $user->activePrograms()->count() }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span>Активные курсы:</span>
+                        <span>{{ __('messages.active_courses') }}:</span>
                         <span class="badge bg-success">{{ $user->activeCourses()->count() }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span>Завершенные программы:</span>
+                        <span>{{ __('messages.completed_programs') }}:</span>
                         <span class="badge bg-info">{{ $user->completedPrograms()->count() }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span>Завершенные курсы:</span>
+                        <span>{{ __('messages.completed_courses') }}:</span>
                         <span class="badge bg-warning">{{ $user->completedCourses()->count() }}</span>
                     </div>
                 </div>
@@ -73,7 +73,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-user me-2"></i>Информация о профиле
+                        <i class="fas fa-user me-2"></i>{{ __('messages.profile_information') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -81,24 +81,24 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="150"><strong>Имя:</strong></td>
+                                    <td width="150"><strong>{{ __('messages.name') }}:</strong></td>
                                     <td>{{ $user->name }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Email:</strong></td>
+                                    <td><strong>{{ __('messages.email') }}:</strong></td>
                                     <td>{{ $user->email }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Телефон:</strong></td>
-                                    <td>{{ $user->phone ?? 'Не указан' }}</td>
+                                    <td><strong>{{ __('messages.phone') }}:</strong></td>
+                                    <td>{{ $user->phone ?? __('messages.not_specified') }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Город:</strong></td>
-                                    <td>{{ $user->city ?? 'Не указан' }}</td>
+                                    <td><strong>{{ __('messages.city') }}:</strong></td>
+                                    <td>{{ $user->city ?? __('messages.not_specified') }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Вероисповедание:</strong></td>
-                                    <td>{{ $user->religion ?? 'Не указано' }}</td>
+                                    <td><strong>{{ __('messages.religion') }}:</strong></td>
+                                    <td>{{ $user->religion ?? __('messages.not_specified') }}</td>
                                 </tr>
                             </table>
                         </div>

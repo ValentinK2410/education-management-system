@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', __('messages.programs_list'))
-@section('page-title', __('messages.educational_programs'))
+@section('title', __('messages.programs'))
+@section('page-title', __('messages.programs'))
 
 @push('styles')
 <style>
@@ -142,7 +142,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-book me-2"></i>{{ __('messages.educational_programs') }}
+                        <i class="fas fa-book me-2"></i>{{ __('messages.programs') }}
                     </h3>
                     <a href="{{ route('admin.programs.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>{{ __('messages.add_program') }}
@@ -182,11 +182,11 @@
                                         <td>
                                             @if($program->is_paid)
                                                 <span class="badge bg-warning">
-                                                    <i class="fas fa-dollar-sign me-1"></i>{{ __('messages.paid') }}
+                                                    <i class="fas fa-dollar-sign me-1"></i>{{ __('messages.paid_course') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-gift me-1"></i>{{ __('messages.free') }}
+                                                    <i class="fas fa-gift me-1"></i>{{ __('messages.free_course') }}
                                                 </span>
                                             @endif
                                         </td>
