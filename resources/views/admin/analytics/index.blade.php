@@ -507,7 +507,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-table me-2"></i>Результаты аналитики
+                        <i class="fas fa-table me-2"></i>{{ __('messages.analytics_results') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -625,11 +625,11 @@
                                                     
                                                     // Определяем текст и иконку в зависимости от типа элемента
                                                     $activityTypeLabels = [
-                                                        'assign' => 'Проверить задание',
-                                                        'quiz' => 'Просмотреть тест',
-                                                        'forum' => 'Просмотреть форум',
-                                                        'resource' => 'Просмотреть материал',
-                                                        'exam' => 'Просмотреть экзамен',
+                                                        'assign' => __('messages.check_assignment'),
+                                                        'quiz' => __('messages.check_quiz'),
+                                                        'forum' => __('messages.check_forum'),
+                                                        'resource' => __('messages.check_resource'),
+                                                        'exam' => __('messages.check_exam'),
                                                     ];
                                                     
                                                     $activityTypeIcons = [
@@ -641,7 +641,7 @@
                                                     ];
                                                     
                                                     if (isset($activity['activity_type'])) {
-                                                        $buttonLabel = $activityTypeLabels[$activity['activity_type']] ?? 'Просмотреть в Moodle';
+                                                        $buttonLabel = $activityTypeLabels[$activity['activity_type']] ?? __('messages.open_in_moodle');
                                                         $buttonIcon = $activityTypeIcons[$activity['activity_type']] ?? 'fa-external-link-alt';
                                                     }
                                                     
@@ -710,13 +710,13 @@
                                                         $moodleCourseUrl = $moodleUrl ? rtrim($moodleUrl, '/') . '/course/view.php?id=' . $activity['moodle_course_id'] : null;
                                                     @endphp
                                                     @if($moodleCourseUrl)
-                                                        <a href="{{ $moodleCourseUrl }}" target="_blank" class="btn btn-sm btn-secondary" title="Перейти в курс Moodle">
+                                                        <a href="{{ $moodleCourseUrl }}" target="_blank" class="btn btn-sm btn-secondary" title="{{ __('messages.go_to_moodle') }}">
                                                             <i class="fas fa-external-link-alt"></i>
                                                         </a>
                                                     @endif
                                                 @endif
                                                 
-                                                <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="Просмотр студента">
+                                                <a href="{{ route('admin.users.show', $activity['user_id'] ?? '#') }}" class="btn btn-sm btn-info" title="{{ __('messages.view_student') }}">
                                                     <i class="fas fa-user"></i>
                                                 </a>
                                             </div>
@@ -727,17 +727,17 @@
                                         <td colspan="10" class="text-center py-4">
                                             <div class="alert {{ isset($hasNoData) && $hasNoData ? 'alert-info' : 'text-muted' }}">
                                                 <i class="fas fa-info-circle fa-3x mb-3"></i>
-                                                <p><strong>{{ isset($noDataMessage) && $noDataMessage ? $noDataMessage : 'Данные не найдены' }}</strong></p>
+                                                <p><strong>{{ isset($noDataMessage) && $noDataMessage ? $noDataMessage : __('messages.no_data_found') }}</strong></p>
                                                 @if(!isset($hasNoData) || !$hasNoData)
-                                                <p class="small mb-3">Возможные причины:</p>
+                                                <p class="small mb-3">{{ __('messages.possible_reasons') }}:</p>
                                                 <ul class="list-unstyled small">
-                                                    <li>• Данные еще не синхронизированы из Moodle</li>
-                                                    <li>• Выбранные фильтры не соответствуют данным</li>
-                                                    <li>• Студенты не выполнили задания</li>
+                                                    <li>• {{ __('messages.data_not_synced_from_moodle') }}</li>
+                                                    <li>• {{ __('messages.filters_not_match_data') }}</li>
+                                                    <li>• {{ __('messages.students_not_completed_assignments') }}</li>
                                                 </ul>
                                                 @endif
                                                 <button type="button" class="btn btn-primary mt-3" onclick="syncActivities()">
-                                                    <i class="fas fa-sync me-2"></i>Запустить синхронизацию из Moodle
+                                                    <i class="fas fa-sync me-2"></i>{{ __('messages.launch_moodle_sync') }}
                                                 </button>
                                             </div>
                                         </td>
@@ -985,19 +985,33 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function syncActivities() {
+    // Translations for JavaScript
+    const analyticsTranslations = {
+        sync_started: '{{ __('messages.synchronization_in_progress') }}',
+        sync_started_message: '{{ __('messages.sync_may_take_time') }}',
+        sync_completed: '{{ __('messages.synchronization_completed') }}',
+        sync_completed_message: '{{ __('messages.data_synced_successfully') }}',
+        sync_error: '{{ __('messages.synchronization_failed') }}',
+        sync_error_message: '{{ __('messages.error_occurred_during_sync') }}',
+        error: '{{ __('messages.error') }}',
+        sync_failed: '{{ __('messages.sync_failed_check_console') }}',
+        csrf_token_not_found: '{{ __('messages.csrf_token_not_found') }}',
+        server_error: '{{ __('messages.server_error') }}'
+    };
+    
     const btn = document.getElementById('sync-btn') || document.querySelector('button[onclick="syncActivities()"]');
     const originalText = btn ? btn.innerHTML : '';
     
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Синхронизация...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ __('messages.synchronization') }}...';
     }
     
     // Показываем уведомление
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-info alert-dismissible fade show';
     alertDiv.innerHTML = `
-        <strong>Синхронизация запущена!</strong> Это может занять некоторое время. Страница обновится автоматически после завершения.
+        <strong>${analyticsTranslations.sync_started}</strong> ${analyticsTranslations.sync_started_message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     const container = document.querySelector('.container-fluid');
@@ -1014,7 +1028,7 @@ function syncActivities() {
     // Получаем CSRF токен
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (!csrfToken) {
-        alert('Ошибка: CSRF токен не найден');
+        alert(analyticsTranslations.csrf_token_not_found);
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = originalText;
@@ -1043,7 +1057,7 @@ function syncActivities() {
     .then(response => {
         if (!response.ok) {
             return response.json().then(data => {
-                throw new Error(data.message || 'Ошибка сервера');
+                throw new Error(data.message || analyticsTranslations.server_error);
             });
         }
         return response.json();
@@ -1052,7 +1066,7 @@ function syncActivities() {
         if (data.success) {
             alertDiv.className = 'alert alert-success alert-dismissible fade show';
             alertDiv.innerHTML = `
-                <strong>Синхронизация завершена!</strong> ${data.message || 'Данные успешно синхронизированы.'}
+                <strong>${analyticsTranslations.sync_completed}</strong> ${data.message || analyticsTranslations.sync_completed_message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             // Обновляем страницу через 2 секунды
@@ -1062,7 +1076,7 @@ function syncActivities() {
         } else {
             alertDiv.className = 'alert alert-danger alert-dismissible fade show';
             alertDiv.innerHTML = `
-                <strong>Ошибка синхронизации!</strong> ${data.message || 'Произошла ошибка при синхронизации.'}
+                <strong>${analyticsTranslations.sync_error}</strong> ${data.message || analyticsTranslations.sync_error_message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             if (btn) {
@@ -1075,7 +1089,7 @@ function syncActivities() {
         console.error('Error:', error);
         alertDiv.className = 'alert alert-danger alert-dismissible fade show';
         alertDiv.innerHTML = `
-            <strong>Ошибка!</strong> ${error.message || 'Не удалось выполнить синхронизацию. Проверьте консоль браузера для деталей.'}
+            <strong>${analyticsTranslations.error}</strong> ${error.message || analyticsTranslations.sync_failed}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         if (btn) {
