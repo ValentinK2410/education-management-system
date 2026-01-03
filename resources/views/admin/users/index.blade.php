@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Управление пользователями')
-@section('page-title', 'Пользователи')
+@section('title', __('messages.users_list'))
+@section('page-title', __('messages.users'))
 
 @push('styles')
 <style>
@@ -206,14 +206,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-users me-2"></i>Пользователи
+                        <i class="fas fa-users me-2"></i>{{ __('messages.users') }}
                     </h3>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-danger" id="bulkDeleteBtn" style="display: none;">
-                            <i class="fas fa-trash me-2"></i>Удалить выбранные
+                            <i class="fas fa-trash me-2"></i>{{ __('messages.delete_selected') }}
                         </button>
                         <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Добавить пользователя
+                            <i class="fas fa-plus me-2"></i>{{ __('messages.add_user') }}
                         </a>
                     </div>
                 </div>
@@ -222,21 +222,21 @@
                     <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label small text-muted">Поиск</label>
+                                <label class="form-label small text-muted">{{ __('messages.search') }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                                     <input type="text"
                                            name="search"
                                            class="form-control"
-                                           placeholder="Имя, email или телефон..."
+                                           placeholder="{{ __('messages.name') }}, {{ __('messages.email') }} {{ __('messages.or') }} {{ __('messages.phone') }}..."
                                            value="{{ $search ?? '' }}"
                                            autocomplete="off">
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted">Роль</label>
+                                <label class="form-label small text-muted">{{ __('messages.role') }}</label>
                                 <select name="role" class="form-select">
-                                    <option value="">Все роли</option>
+                                    <option value="">{{ __('messages.all_roles') }}</option>
                                     @foreach($roles ?? [] as $role)
                                         <option value="{{ $role->slug }}" {{ ($roleFilter ?? '') === $role->slug ? 'selected' : '' }}>
                                             {{ $role->name }}
@@ -245,16 +245,16 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted">Статус</label>
+                                <label class="form-label small text-muted">{{ __('messages.status') }}</label>
                                 <select name="status" class="form-select">
-                                    <option value="">Все</option>
-                                    <option value="active" {{ ($statusFilter ?? '') === 'active' ? 'selected' : '' }}>Активные</option>
-                                    <option value="inactive" {{ ($statusFilter ?? '') === 'inactive' ? 'selected' : '' }}>Неактивные</option>
+                                    <option value="">{{ __('messages.all') }}</option>
+                                    <option value="active" {{ ($statusFilter ?? '') === 'active' ? 'selected' : '' }}>{{ __('messages.active') }}</option>
+                                    <option value="inactive" {{ ($statusFilter ?? '') === 'inactive' ? 'selected' : '' }}>{{ __('messages.inactive') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
                                 <button class="btn btn-primary w-100" type="submit">
-                                    <i class="fas fa-filter me-1"></i>Применить
+                                    <i class="fas fa-filter me-1"></i>{{ __('messages.apply') }}
                                 </button>
                             </div>
                         </div>
@@ -262,7 +262,7 @@
                         <div class="row mt-2">
                             <div class="col-12">
                                 <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-times me-1"></i>Сбросить фильтры
+                                    <i class="fas fa-times me-1"></i>{{ __('messages.reset_filters') }}
                                 </a>
                             </div>
                         </div>
@@ -272,8 +272,8 @@
                     @if($search ?? '')
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle me-2"></i>
-                        Результаты поиска по запросу: <strong>"{{ $search }}"</strong>
-                        <span class="badge bg-primary ms-2">Найдено: {{ $users->total() }}</span>
+                        {{ __('messages.search_results_for') }}: <strong>"{{ $search }}"</strong>
+                        <span class="badge bg-primary ms-2">{{ __('messages.found') }}: {{ $users->total() }}</span>
                     </div>
                     @endif
                     <div class="table-responsive">
@@ -281,15 +281,15 @@
                             <thead>
                                 <tr>
                                     <th style="width: 40px;">
-                                        <input type="checkbox" id="selectAll" title="Выбрать все">
+                                        <input type="checkbox" id="selectAll" title="{{ __('messages.select_all') }}">
                                     </th>
                                     <th>ID</th>
-                                    <th>Имя</th>
-                                    <th>Email</th>
-                                    <th>Телефон</th>
-                                    <th>Роли</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
+                                    <th>{{ __('messages.name') }}</th>
+                                    <th>{{ __('messages.email') }}</th>
+                                    <th>{{ __('messages.phone') }}</th>
+                                    <th>{{ __('messages.roles') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th>{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -313,7 +313,7 @@
                                             </div>
                                         </td>
                                         <td>{{ $user->email }}</td>
-                                        <td>{{ $user->phone ?? 'Не указан' }}</td>
+                                                    <td>{{ $user->phone ?? __('messages.not_specified') }}</td>
                                         <td>
                                             @foreach($user->roles as $role)
                                                 <span class="badge bg-info me-1">{{ $role->name }}</span>
@@ -322,22 +322,22 @@
                                         <td>
                                             @if($user->is_active)
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-check me-1"></i>Активен
+                                                    <i class="fas fa-check me-1"></i>{{ __('messages.active') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger">
-                                                    <i class="fas fa-times me-1"></i>Неактивен
+                                                    <i class="fas fa-times me-1"></i>{{ __('messages.inactive') }}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{{ route('admin.users.show', $user) }}"
-                                                   class="btn btn-sm btn-info" title="Просмотр">
+                                                   class="btn btn-sm btn-info" title="{{ __('messages.view') }}">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 <a href="{{ route('admin.users.edit', $user) }}"
-                                                   class="btn btn-sm btn-warning" title="Редактировать">
+                                                   class="btn btn-sm btn-warning" title="{{ __('messages.edit') }}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('admin.users.destroy', $user) }}"
@@ -345,8 +345,8 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger"
-                                                            title="Удалить"
-                                                            onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?')">
+                                                            title="{{ __('messages.delete') }}"
+                                                            onclick="return confirm('{{ __('messages.confirm_delete_user') }}')">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -358,7 +358,7 @@
                                         <td colspan="7" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-users fa-3x mb-3"></i>
-                                                <p>Пользователи не найдены</p>
+                                                <p>{{ __('messages.users_not_found') }}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -397,6 +397,17 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Translations for JavaScript
+    const userTranslations = {
+        delete_selected: '{{ __('messages.delete_selected') }}',
+        select_at_least_one: '{{ __('messages.select_at_least_one_user') }}',
+        confirm_delete_users: '{{ __('messages.confirm_delete_users') }}',
+        action_cannot_be_undone: '{{ __('messages.action_cannot_be_undone') }}',
+        users_deleted_successfully: '{{ __('messages.users_deleted_successfully') }}',
+        error_deleting_users: '{{ __('messages.error_deleting_users') }}',
+        cannot_delete_yourself: '{{ __('messages.cannot_delete_yourself') }}'
+    };
+    
     const selectAllCheckbox = document.getElementById('selectAll');
     const userCheckboxes = document.querySelectorAll('.user-checkbox');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
@@ -435,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const checkedCount = Array.from(userCheckboxes).filter(cb => cb.checked).length;
             if (checkedCount > 0) {
                 bulkDeleteBtn.style.display = 'inline-block';
-                bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Удалить выбранных (${checkedCount})`;
+                bulkDeleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>${userTranslations.delete_selected} (${checkedCount})`;
             } else {
                 bulkDeleteBtn.style.display = 'none';
             }
@@ -450,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(cb => cb.value);
             
             if (selectedIds.length === 0) {
-                alert('Выберите хотя бы одного пользователя для удаления');
+                alert(userTranslations.select_at_least_one);
                 return;
             }
             
@@ -459,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(cb => `${cb.dataset.userName} (${cb.dataset.userEmail})`)
                 .join('\n');
             
-            if (!confirm(`Вы уверены, что хотите удалить следующих пользователей?\n\n${userNames}\n\nЭто действие нельзя отменить!`)) {
+            if (!confirm(`${userTranslations.confirm_delete_users}\n\n${userNames}\n\n${userTranslations.action_cannot_be_undone}`)) {
                 return;
             }
             
@@ -486,12 +497,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Перезагружаем страницу
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Произошла ошибка при удалении пользователей');
+                    alert(data.message || userTranslations.error_deleting_users);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Произошла ошибка при удалении пользователей');
+                alert(userTranslations.error_deleting_users);
             });
         });
     }
