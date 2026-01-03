@@ -105,41 +105,41 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="150"><strong>Церковь:</strong></td>
-                                    <td>{{ $user->church ?? 'Не указана' }}</td>
+                                    <td width="150"><strong>{{ __('messages.church') }}:</strong></td>
+                                    <td>{{ $user->church ?? __('messages.not_specified') }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Семейное положение:</strong></td>
+                                    <td><strong>{{ __('messages.marital_status') }}:</strong></td>
                                     <td>
                                         @switch($user->marital_status)
                                             @case('single')
-                                                Холост/Не замужем
+                                                {{ __('messages.single') }}
                                                 @break
                                             @case('married')
-                                                Женат/Замужем
+                                                {{ __('messages.married') }}
                                                 @break
                                             @case('divorced')
-                                                Разведен/Разведена
+                                                {{ __('messages.divorced') }}
                                                 @break
                                             @case('widowed')
-                                                Вдовец/Вдова
+                                                {{ __('messages.widowed') }}
                                                 @break
                                             @default
-                                                Не указано
+                                                {{ __('messages.not_specified') }}
                                         @endswitch
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Образование:</strong></td>
-                                    <td>{{ $user->education ?? 'Не указано' }}</td>
+                                    <td><strong>{{ __('messages.education') }}:</strong></td>
+                                    <td>{{ $user->education ?? __('messages.not_specified') }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Статус:</strong></td>
+                                    <td><strong>{{ __('messages.status') }}:</strong></td>
                                     <td>
                                         @if($user->is_active)
-                                            <span class="badge bg-success">Активен</span>
+                                            <span class="badge bg-success">{{ __('messages.active') }}</span>
                                         @else
-                                            <span class="badge bg-danger">Неактивен</span>
+                                            <span class="badge bg-danger">{{ __('messages.inactive') }}</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -148,7 +148,7 @@
                     </div>
 
                     @if($user->about_me)
-                        <h6 class="mt-4">О себе</h6>
+                        <h6 class="mt-4">{{ __('messages.about_me') }}</h6>
                         <div class="card">
                             <div class="card-body">
                                 {{ $user->about_me }}
@@ -163,7 +163,7 @@
                 <div class="card mt-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-book me-2"></i>Активные программы
+                            <i class="fas fa-book me-2"></i>{{ __('messages.active_programs') }}
                         </h5>
                     </div>
                     <div class="card-body">
@@ -173,16 +173,16 @@
                                     <div class="card border-primary">
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $program->name }}</h6>
-                                            <p class="card-text">{!! strip_tags($program->description ?? 'Без описания') !!}</p>
+                                            <p class="card-text">{!! strip_tags($program->description ?? __('messages.no_description')) !!}</p>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <small class="text-muted">
-                                                    {{ $program->institution->name ?? 'Без заведения' }}
+                                                    {{ $program->institution->name ?? __('messages.no_institution') }}
                                                 </small>
                                                 <span class="badge bg-primary">
                                                     @if($program->is_paid)
-                                                        Платная
+                                                        {{ __('messages.paid_course') }}
                                                     @else
-                                                        Бесплатная
+                                                        {{ __('messages.free_course') }}
                                                     @endif
                                                 </span>
                                             </div>
@@ -200,7 +200,7 @@
                 <div class="card mt-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-chalkboard-teacher me-2"></i>Активные курсы
+                            <i class="fas fa-chalkboard-teacher me-2"></i>{{ __('messages.active_courses') }}
                         </h5>
                     </div>
                     <div class="card-body">
@@ -210,22 +210,22 @@
                                     <div class="card border-success">
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $course->name }}</h6>
-                                            <p class="card-text">{!! strip_tags($course->description ?? 'Без описания') !!}</p>
+                                            <p class="card-text">{!! strip_tags($course->description ?? __('messages.no_description')) !!}</p>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <small class="text-muted">
-                                                    {{ $course->program->name ?? 'Без программы' }}
+                                                    {{ $course->program->name ?? __('messages.no_program') }}
                                                 </small>
                                                 <span class="badge bg-success">
                                                     @if($course->is_paid)
-                                                        Платный
+                                                        {{ __('messages.paid_course') }}
                                                     @else
-                                                        Бесплатный
+                                                        {{ __('messages.free_course') }}
                                                     @endif
                                                 </span>
                                             </div>
                                             @if($course->pivot->progress)
                                                 <div class="mt-2">
-                                                    <small class="text-muted">Прогресс: {{ $course->pivot->progress }}%</small>
+                                                    <small class="text-muted">{{ __('messages.progress') }}: {{ $course->pivot->progress }}%</small>
                                                     <div class="progress" style="height: 5px;">
                                                         <div class="progress-bar" style="width: {{ $course->pivot->progress }}%"></div>
                                                     </div>
