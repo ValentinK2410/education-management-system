@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Управление программами')
-@section('page-title', 'Образовательные программы')
+@section('title', __('messages.programs_list'))
+@section('page-title', __('messages.educational_programs'))
 
 @push('styles')
 <style>
@@ -142,10 +142,10 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
-                        <i class="fas fa-book me-2"></i>Образовательные программы
+                        <i class="fas fa-book me-2"></i>{{ __('messages.educational_programs') }}
                     </h3>
                     <a href="{{ route('admin.programs.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Добавить программу
+                        <i class="fas fa-plus me-2"></i>{{ __('messages.add_program') }}
                     </a>
                 </div>
                 <div class="card-body">
@@ -154,12 +154,12 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Учебное заведение</th>
-                                    <th>Тип оплаты</th>
-                                    <th>Цена</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
+                                    <th>{{ __('messages.course_name') }}</th>
+                                    <th>{{ __('messages.institution') }}</th>
+                                    <th>{{ __('messages.payment_type') }}</th>
+                                    <th>{{ __('messages.price') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th>{{ __('messages.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -169,24 +169,24 @@
                                         <td>
                                             <div>
                                                 <h6 class="mb-0">{{ $program->name }}</h6>
-                                                <small class="text-muted">{{ $program->code ?? 'Без кода' }}</small>
+                                                <small class="text-muted">{{ $program->code ?? __('messages.no_code') }}</small>
                                             </div>
                                         </td>
                                         <td>
                                             @if($program->institution)
                                                 <span class="badge bg-info">{{ $program->institution->name }}</span>
                                             @else
-                                                <span class="text-muted">Не указано</span>
+                                                <span class="text-muted">{{ __('messages.not_specified') }}</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if($program->is_paid)
                                                 <span class="badge bg-warning">
-                                                    <i class="fas fa-dollar-sign me-1"></i>Платная
+                                                    <i class="fas fa-dollar-sign me-1"></i>{{ __('messages.paid') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-gift me-1"></i>Бесплатная
+                                                    <i class="fas fa-gift me-1"></i>{{ __('messages.free') }}
                                                 </span>
                                             @endif
                                         </td>
@@ -200,22 +200,22 @@
                                         <td>
                                             @if($program->is_active)
                                                 <span class="badge bg-success">
-                                                    <i class="fas fa-check me-1"></i>Активна
+                                                    <i class="fas fa-check me-1"></i>{{ __('messages.active') }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger">
-                                                    <i class="fas fa-times me-1"></i>Неактивна
+                                                    <i class="fas fa-times me-1"></i>{{ __('messages.inactive') }}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{{ route('admin.programs.show', $program) }}"
-                                                   class="btn btn-sm btn-info" title="Просмотр">
+                                                   class="btn btn-sm btn-info" title="{{ __('messages.view') }}">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 <a href="{{ route('admin.programs.edit', $program) }}"
-                                                   class="btn btn-sm btn-warning" title="Редактировать">
+                                                   class="btn btn-sm btn-warning" title="{{ __('messages.edit') }}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('admin.programs.destroy', $program) }}"
@@ -223,8 +223,8 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger"
-                                                            title="Удалить"
-                                                            onclick="return confirm('Вы уверены, что хотите удалить эту программу?')">
+                                                            title="{{ __('messages.delete') }}"
+                                                            onclick="return confirm('{{ __('messages.confirm_delete_program') }}')">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -236,7 +236,7 @@
                                         <td colspan="7" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-book fa-3x mb-3"></i>
-                                                <p>Программы не найдены</p>
+                                                <p>{{ __('messages.programs_not_found') }}</p>
                                             </div>
                                         </td>
                                     </tr>

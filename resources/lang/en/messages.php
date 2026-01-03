@@ -573,4 +573,13 @@ return [
     'synchronization_in_progress' => 'Synchronization Started!',
     'synchronization_completed' => 'Synchronization Completed!',
     'synchronization_failed' => 'Synchronization Error!',
+    'programs_list' => 'Programs Management',
+    'educational_programs' => 'Educational Programs',
+    'add_program' => 'Add Program',
+    'view_program' => 'View Program',
+    'view_educational_program' => 'View Educational Program',
+    'programs_not_found' => 'Programs Not Found',
+    'confirm_delete_program' => 'Are you sure you want to delete this program?',
+    'paid' => 'Paid',
+    'free' => 'Free',
 ];

@@ -535,4 +535,13 @@ return [
     'synchronization_in_progress' => 'Синхронизация запущена!',
     'synchronization_completed' => 'Синхронизация завершена!',
     'synchronization_failed' => 'Ошибка синхронизации!',
+    'programs_list' => 'Управление программами',
+    'educational_programs' => 'Образовательные программы',
+    'add_program' => 'Добавить программу',
+    'view_program' => 'Просмотр программы',
+    'view_educational_program' => 'Просмотр образовательной программы',
+    'programs_not_found' => 'Программы не найдены',
+    'confirm_delete_program' => 'Вы уверены, что хотите удалить эту программу?',
+    'paid' => 'Платная',
+    'free' => 'Бесплатная',
 ];
