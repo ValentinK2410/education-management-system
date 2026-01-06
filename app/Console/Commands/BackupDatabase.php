@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -17,7 +18,8 @@ class BackupDatabase extends Command
      */
     protected $signature = 'db:backup 
                             {--keep=30 : Количество дней хранения резервных копий}
-                            {--path= : Путь для сохранения резервной копии}';
+                            {--path= : Путь для сохранения резервной копии}
+                            {--table= : Имя таблицы для резервного копирования (если не указано, создается полная копия)}';
 
     /**
      * The console command description.
@@ -41,7 +43,20 @@ class BackupDatabase extends Command
             $this->info("🔗 Соединение: {$connection}");
 
             $backupPath = $this->option('path') ?: $this->getDefaultBackupPath();
-            $filename = $this->generateFilename($driver);
+            $tableName = $this->option('table');
+            
+            // Проверяем существование таблицы, если указана
+            if ($tableName) {
+                if (!\Illuminate\Support\Facades\Schema::hasTable($tableName)) {
+                    $this->error("❌ Таблица '{$tableName}' не существует");
+                    return 1;
+                }
+                $this->info("📋 Резервное копирование таблицы: {$tableName}");
+            } else {
+                $this->info("📋 Создание полной резервной копии БД...");
+            }
+
+            $filename = $this->generateFilename($driver, $tableName);
 
             // Создаем директорию для резервных копий, если её нет
             if (!Storage::exists($backupPath)) {
@@ -50,19 +65,38 @@ class BackupDatabase extends Command
 
             $fullPath = storage_path("app/{$backupPath}/{$filename}");
 
-            switch ($driver) {
-                case 'sqlite':
-                    $this->backupSqlite($fullPath);
-                    break;
-                case 'mysql':
-                    $this->backupMysql($fullPath, $connection);
-                    break;
-                case 'pgsql':
-                    $this->backupPostgresql($fullPath, $connection);
-                    break;
-                default:
-                    $this->error("❌ Неподдерживаемый тип БД: {$driver}");
-                    return 1;
+            if ($tableName) {
+                // Резервное копирование отдельной таблицы
+                switch ($driver) {
+                    case 'sqlite':
+                        $this->backupSqliteTable($fullPath, $tableName);
+                        break;
+                    case 'mysql':
+                        $this->backupMysqlTable($fullPath, $connection, $tableName);
+                        break;
+                    case 'pgsql':
+                        $this->backupPostgresqlTable($fullPath, $connection, $tableName);
+                        break;
+                    default:
+                        $this->error("❌ Неподдерживаемый тип БД: {$driver}");
+                        return 1;
+                }
+            } else {
+                // Полное резервное копирование
+                switch ($driver) {
+                    case 'sqlite':
+                        $this->backupSqlite($fullPath);
+                        break;
+                    case 'mysql':
+                        $this->backupMysql($fullPath, $connection);
+                        break;
+                    case 'pgsql':
+                        $this->backupPostgresql($fullPath, $connection);
+                        break;
+                    default:
+                        $this->error("❌ Неподдерживаемый тип БД: {$driver}");
+                        return 1;
+                }
             }
 
             if (file_exists($fullPath) && filesize($fullPath) > 0) {
@@ -202,11 +236,16 @@ class BackupDatabase extends Command
     /**
      * Генерация имени файла резервной копии
      */
-    protected function generateFilename(string $driver): string
+    protected function generateFilename(string $driver, ?string $tableName = null): string
     {
         $timestamp = Carbon::now()->format('Y-m-d_His');
         $extension = $driver === 'sqlite' ? 'sqlite' : 'sql';
-        return "backup_{$driver}_{$timestamp}.{$extension}";
+        
+        if ($tableName) {
+            return "backup_table_{$tableName}_{$timestamp}.{$extension}";
+        }
+        
+        return "backup_full_{$timestamp}.{$extension}";
     }
 
     /**
@@ -267,6 +306,118 @@ class BackupDatabase extends Command
         }
 
         return null;
+    }
+
+    /**
+     * Создание резервной копии таблицы SQLite
+     */
+    protected function backupSqliteTable(string $backupPath, string $tableName): void
+    {
+        $databasePath = config("database.connections.sqlite.database");
+        
+        if (!file_exists($databasePath)) {
+            throw new \Exception("Файл базы данных SQLite не найден: {$databasePath}");
+        }
+
+        $this->info("📋 Экспорт таблицы {$tableName}...");
+
+        // Экспортируем данные таблицы в SQL
+        $data = DB::table($tableName)->get()->toArray();
+        $sql = "-- Backup table {$tableName}\n";
+        $sql .= "BEGIN TRANSACTION;\n";
+        $sql .= "DELETE FROM {$tableName};\n";
+
+        foreach ($data as $row) {
+            $values = array_map(function ($value) {
+                return $value === null ? 'NULL' : "'" . addslashes($value) . "'";
+            }, (array)$row);
+            $sql .= "INSERT INTO {$tableName} VALUES (" . implode(', ', $values) . ");\n";
+        }
+
+        $sql .= "COMMIT;\n";
+
+        file_put_contents($backupPath, $sql);
+    }
+
+    /**
+     * Создание резервной копии таблицы MySQL
+     */
+    protected function backupMysqlTable(string $backupPath, string $connection, string $tableName): void
+    {
+        $config = config("database.connections.{$connection}");
+        $host = $config['host'];
+        $port = $config['port'] ?? 3306;
+        $database = $config['database'];
+        $username = $config['username'];
+        $password = $config['password'];
+
+        $this->info("📋 Экспорт таблицы {$tableName}...");
+
+        $mysqldumpPath = $this->findCommand('mysqldump');
+        
+        if (!$mysqldumpPath) {
+            throw new \Exception("Команда mysqldump не найдена. Установите MySQL client tools.");
+        }
+
+        $command = sprintf(
+            '%s --host=%s --port=%s --user=%s --password=%s %s %s > %s 2>&1',
+            escapeshellarg($mysqldumpPath),
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($password),
+            escapeshellarg($database),
+            escapeshellarg($tableName),
+            escapeshellarg($backupPath)
+        );
+
+        exec($command, $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            throw new \Exception("Ошибка выполнения mysqldump: " . implode("\n", $output));
+        }
+    }
+
+    /**
+     * Создание резервной копии таблицы PostgreSQL
+     */
+    protected function backupPostgresqlTable(string $backupPath, string $connection, string $tableName): void
+    {
+        $config = config("database.connections.{$connection}");
+        $host = $config['host'];
+        $port = $config['port'] ?? 5432;
+        $database = $config['database'];
+        $username = $config['username'];
+        $password = $config['password'];
+
+        $this->info("📋 Экспорт таблицы {$tableName}...");
+
+        $pgDumpPath = $this->findCommand('pg_dump');
+        
+        if (!$pgDumpPath) {
+            throw new \Exception("Команда pg_dump не найдена. Установите PostgreSQL client tools.");
+        }
+
+        putenv("PGPASSWORD={$password}");
+
+        $command = sprintf(
+            '%s --host=%s --port=%s --username=%s --dbname=%s --table=%s --file=%s --no-password 2>&1',
+            escapeshellarg($pgDumpPath),
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($database),
+            escapeshellarg($tableName),
+            escapeshellarg($backupPath)
+        );
+
+        exec($command, $output, $returnCode);
+
+        putenv("PGPASSWORD");
+
+        if ($returnCode !== 0) {
+            throw new \Exception("Ошибка выполнения pg_dump: " . implode("\n", $output));
+        }
     }
 
     /**

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserSwitchController;
 use App\Http\Controllers\Admin\InstructorStatsController;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
@@ -515,6 +516,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'store'])->name('settings.store');
 
+        // Управление резервными копиями
+        Route::resource('backups', BackupController::class);
+        Route::post('backups/{filename}/restore', [BackupController::class, 'restore'])->name('backups.restore');
+        Route::post('backups/{filename}/restore-table/{table}', [BackupController::class, 'restoreTable'])->name('backups.restore-table');
+        Route::get('backups/{filename}/download', [BackupController::class, 'download'])->name('backups.download');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

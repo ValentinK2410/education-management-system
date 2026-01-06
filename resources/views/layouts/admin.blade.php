@@ -841,6 +841,15 @@
 
             @if(auth()->user()->hasRole('admin'))
             <div class="nav-item">
+                <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">
+                    <i class="fas fa-database"></i>
+                    <span>Резервные копии</span>
+                </a>
+            </div>
+            @endif
+
+            @if(auth()->user()->hasRole('admin'))
+            <div class="nav-item">
                 <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     <span>{{ __('messages.system_settings') }}</span>
