@@ -881,7 +881,7 @@
                         @endphp
                         @if(!empty($roleNames))
                             <span class="ms-2">
-                                <i class="fas fa-user-tag me-1"></i>{{ implode(', ', $roleNames) }}
+                                <i class="fas fa-user-tag me-1"></i>Ваша роль: {{ implode(', ', $roleNames) }}
                             </span>
                         @endif
                     </small>
