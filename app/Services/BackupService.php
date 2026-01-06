@@ -420,24 +420,62 @@ class BackupService
         $mysqldumpPath = $this->findCommand('mysqldump');
 
         if (!$mysqldumpPath) {
-            throw new Exception("Команда mysqldump не найдена");
+            throw new Exception("Команда mysqldump не найдена. Установите MySQL client tools.");
         }
 
+        // Используем переменную окружения для пароля (более безопасно)
+        $env = [];
+        if ($password) {
+            $env['MYSQL_PWD'] = $password;
+        }
+
+        // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+            '%s --host=%s --port=%s --user=%s --single-transaction --routines --triggers %s',
             escapeshellarg($mysqldumpPath),
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
-            escapeshellarg($password),
-            escapeshellarg($database),
-            escapeshellarg($backupPath)
+            escapeshellarg($database)
         );
 
-        exec($command, $output, $returnCode);
+        // Выполняем команду с перенаправлением вывода
+        $descriptorspec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ];
+
+        $process = proc_open($command, $descriptorspec, $pipes, null, $env);
+
+        if (!is_resource($process)) {
+            throw new Exception("Не удалось запустить процесс mysqldump");
+        }
+
+        // Закрываем stdin
+        fclose($pipes[0]);
+
+        // Читаем stdout и stderr
+        $output = stream_get_contents($pipes[1]);
+        $errors = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnCode = proc_close($process);
+
+        // Записываем вывод в файл
+        if ($output) {
+            file_put_contents($backupPath, $output);
+        }
 
         if ($returnCode !== 0) {
-            throw new Exception("Ошибка выполнения mysqldump: " . implode("\n", $output));
+            $errorMessage = $errors ?: $output ?: "Неизвестная ошибка (код: {$returnCode})";
+            throw new Exception("Ошибка выполнения mysqldump: " . trim($errorMessage));
+        }
+
+        // Проверяем, что файл создан и не пуст
+        if (!file_exists($backupPath) || filesize($backupPath) === 0) {
+            throw new Exception("Резервная копия не создана или пуста. Проверьте права доступа и наличие данных в БД.");
         }
     }
 
@@ -453,25 +491,63 @@ class BackupService
         $mysqldumpPath = $this->findCommand('mysqldump');
 
         if (!$mysqldumpPath) {
-            throw new Exception("Команда mysqldump не найдена");
+            throw new Exception("Команда mysqldump не найдена. Установите MySQL client tools.");
         }
 
+        // Используем переменную окружения для пароля (более безопасно)
+        $env = [];
+        if ($password) {
+            $env['MYSQL_PWD'] = $password;
+        }
+
+        // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s --password=%s %s %s > %s 2>&1',
+            '%s --host=%s --port=%s --user=%s --single-transaction --routines --triggers %s %s',
             escapeshellarg($mysqldumpPath),
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
-            escapeshellarg($password),
             escapeshellarg($database),
-            escapeshellarg($tableName),
-            escapeshellarg($backupPath)
+            escapeshellarg($tableName)
         );
 
-        exec($command, $output, $returnCode);
+        // Выполняем команду с перенаправлением вывода
+        $descriptorspec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ];
+
+        $process = proc_open($command, $descriptorspec, $pipes, null, $env);
+
+        if (!is_resource($process)) {
+            throw new Exception("Не удалось запустить процесс mysqldump");
+        }
+
+        // Закрываем stdin
+        fclose($pipes[0]);
+
+        // Читаем stdout и stderr
+        $output = stream_get_contents($pipes[1]);
+        $errors = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnCode = proc_close($process);
+
+        // Записываем вывод в файл
+        if ($output) {
+            file_put_contents($backupPath, $output);
+        }
 
         if ($returnCode !== 0) {
-            throw new Exception("Ошибка выполнения mysqldump: " . implode("\n", $output));
+            $errorMessage = $errors ?: $output ?: "Неизвестная ошибка (код: {$returnCode})";
+            throw new Exception("Ошибка выполнения mysqldump для таблицы {$tableName}: " . trim($errorMessage));
+        }
+
+        // Проверяем, что файл создан и не пуст
+        if (!file_exists($backupPath) || filesize($backupPath) === 0) {
+            throw new Exception("Резервная копия таблицы {$tableName} не создана или пуста.");
         }
     }
 
@@ -585,27 +661,71 @@ class BackupService
         $mysqlPath = $this->findCommand('mysql');
 
         if (!$mysqlPath) {
-            throw new Exception("Команда mysql не найдена");
+            throw new Exception("Команда mysql не найдена. Установите MySQL client tools.");
         }
 
+        if (!file_exists($filePath)) {
+            throw new Exception("Файл резервной копии не найден: {$filePath}");
+        }
+
+        // Используем переменную окружения для пароля
+        $env = [];
+        if ($password) {
+            $env['MYSQL_PWD'] = $password;
+        }
+
+        // Читаем содержимое файла
+        $sqlContent = file_get_contents($filePath);
+        if ($sqlContent === false) {
+            throw new Exception("Не удалось прочитать файл резервной копии");
+        }
+
+        // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s --password=%s %s < %s 2>&1',
+            '%s --host=%s --port=%s --user=%s %s',
             escapeshellarg($mysqlPath),
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
-            escapeshellarg($password),
-            escapeshellarg($database),
-            escapeshellarg($filePath)
+            escapeshellarg($database)
         );
 
-        exec($command, $output, $returnCode);
+        // Выполняем команду с передачей SQL через stdin
+        $descriptorspec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ];
 
-        return $returnCode === 0;
+        $process = proc_open($command, $descriptorspec, $pipes, null, $env);
+
+        if (!is_resource($process)) {
+            throw new Exception("Не удалось запустить процесс mysql");
+        }
+
+        // Записываем SQL в stdin
+        fwrite($pipes[0], $sqlContent);
+        fclose($pipes[0]);
+
+        // Читаем stderr для проверки ошибок
+        $errors = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnCode = proc_close($process);
+
+        if ($returnCode !== 0) {
+            $errorMessage = $errors ?: "Неизвестная ошибка (код: {$returnCode})";
+            throw new Exception("Ошибка восстановления из резервной копии: " . trim($errorMessage));
+        }
+
+        return true;
     }
 
     protected function restoreMysqlTable(string $filePath, string $connection, string $tableName): bool
     {
+        // Для восстановления таблицы используем тот же метод, что и для полного восстановления
+        // MySQL автоматически обработает только команды для указанной таблицы из SQL файла
         return $this->restoreMysql($filePath, $connection, [$tableName]);
     }
 
