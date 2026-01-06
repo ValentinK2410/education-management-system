@@ -143,13 +143,31 @@ class BackupService
     public function getBackupsList(): array
     {
         $backups = [];
-        $files = Storage::files($this->backupPath);
+        $backupDir = storage_path("app/{$this->backupPath}");
 
-        foreach ($files as $file) {
-            $filePath = storage_path("app/{$file}");
-            if (file_exists($filePath)) {
-                $filename = basename($file);
-                $backups[] = $this->getBackupInfo($filename);
+        // Проверяем существование директории
+        if (!is_dir($backupDir)) {
+            return [];
+        }
+
+        // Получаем все файлы резервных копий из директории (.sql и .sqlite)
+        $files = array_merge(
+            glob($backupDir . '/*.sql'),
+            glob($backupDir . '/*.sqlite')
+        );
+
+        foreach ($files as $filePath) {
+            if (is_file($filePath)) {
+                try {
+                    $filename = basename($filePath);
+                    $backups[] = $this->getBackupInfo($filename);
+                } catch (Exception $e) {
+                    // Пропускаем файлы, которые не удалось обработать
+                    Log::warning('Не удалось обработать файл резервной копии', [
+                        'file' => $filePath,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
         }
 
