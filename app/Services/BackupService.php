@@ -417,6 +417,17 @@ class BackupService
         $username = $config['username'];
         $password = $config['password'];
 
+        // Проверяем, не содержит ли хост порт (формат host:port)
+        if (strpos($host, ':') !== false) {
+            list($host, $portFromHost) = explode(':', $host, 2);
+            if (is_numeric($portFromHost)) {
+                $port = (int)$portFromHost;
+            }
+        }
+
+        // Убеждаемся, что порт - число
+        $port = (int)$port;
+
         $mysqldumpPath = $this->findCommand('mysqldump');
 
         if (!$mysqldumpPath) {
@@ -431,10 +442,10 @@ class BackupService
 
         // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s --single-transaction --routines --triggers %s',
+            '%s --host=%s --port=%d --user=%s --single-transaction --routines --triggers %s',
             escapeshellarg($mysqldumpPath),
             escapeshellarg($host),
-            escapeshellarg($port),
+            $port,
             escapeshellarg($username),
             escapeshellarg($database)
         );
@@ -488,6 +499,17 @@ class BackupService
         $username = $config['username'];
         $password = $config['password'];
 
+        // Проверяем, не содержит ли хост порт (формат host:port)
+        if (strpos($host, ':') !== false) {
+            list($host, $portFromHost) = explode(':', $host, 2);
+            if (is_numeric($portFromHost)) {
+                $port = (int)$portFromHost;
+            }
+        }
+
+        // Убеждаемся, что порт - число
+        $port = (int)$port;
+
         $mysqldumpPath = $this->findCommand('mysqldump');
 
         if (!$mysqldumpPath) {
@@ -502,10 +524,10 @@ class BackupService
 
         // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s --single-transaction --routines --triggers %s %s',
+            '%s --host=%s --port=%d --user=%s --single-transaction --routines --triggers %s %s',
             escapeshellarg($mysqldumpPath),
             escapeshellarg($host),
-            escapeshellarg($port),
+            $port,
             escapeshellarg($username),
             escapeshellarg($database),
             escapeshellarg($tableName)
@@ -658,6 +680,17 @@ class BackupService
         $username = $config['username'];
         $password = $config['password'];
 
+        // Проверяем, не содержит ли хост порт (формат host:port)
+        if (strpos($host, ':') !== false) {
+            list($host, $portFromHost) = explode(':', $host, 2);
+            if (is_numeric($portFromHost)) {
+                $port = (int)$portFromHost;
+            }
+        }
+
+        // Убеждаемся, что порт - число
+        $port = (int)$port;
+
         $mysqlPath = $this->findCommand('mysql');
 
         if (!$mysqlPath) {
@@ -682,10 +715,10 @@ class BackupService
 
         // Формируем команду без пароля в командной строке
         $command = sprintf(
-            '%s --host=%s --port=%s --user=%s %s',
+            '%s --host=%s --port=%d --user=%s %s',
             escapeshellarg($mysqlPath),
             escapeshellarg($host),
-            escapeshellarg($port),
+            $port,
             escapeshellarg($username),
             escapeshellarg($database)
         );
