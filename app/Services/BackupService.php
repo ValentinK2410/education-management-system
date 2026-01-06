@@ -22,13 +22,11 @@ class BackupService
             $connection = DB::getDefaultConnection();
             $driver = config("database.connections.{$connection}.driver");
 
-            // Создаем директорию для резервных копий, если её нет
-            if (!Storage::exists($this->backupPath)) {
-                Storage::makeDirectory($this->backupPath);
-            }
-
             $filename = $this->generateFilename('full', $driver);
             $fullPath = storage_path("app/{$this->backupPath}/{$filename}");
+
+            // Гарантируем создание директории перед записью файла
+            $this->ensureDirectoryExists(dirname($fullPath));
 
             switch ($driver) {
                 case 'sqlite':
@@ -87,13 +85,11 @@ class BackupService
                 throw new Exception("Таблица {$tableName} не существует");
             }
 
-            // Создаем директорию для резервных копий, если её нет
-            if (!Storage::exists($this->backupPath)) {
-                Storage::makeDirectory($this->backupPath);
-            }
-
             $filename = $this->generateFilename('table', $driver, $tableName);
             $fullPath = storage_path("app/{$this->backupPath}/{$filename}");
+
+            // Гарантируем создание директории перед записью файла
+            $this->ensureDirectoryExists(dirname($fullPath));
 
             switch ($driver) {
                 case 'sqlite':
@@ -365,6 +361,18 @@ class BackupService
         return round($bytes, $precision) . ' ' . $units[$i];
     }
 
+    /**
+     * Гарантировать существование директории
+     */
+    protected function ensureDirectoryExists(string $directory): void
+    {
+        if (!is_dir($directory)) {
+            if (!mkdir($directory, 0755, true)) {
+                throw new Exception("Не удалось создать директорию: {$directory}");
+            }
+        }
+    }
+
     // Методы резервного копирования для разных типов БД
 
     protected function backupSqlite(string $backupPath): void
@@ -374,6 +382,9 @@ class BackupService
         if (!file_exists($databasePath)) {
             throw new Exception("Файл базы данных SQLite не найден: {$databasePath}");
         }
+
+        // Гарантируем создание директории перед копированием файла
+        $this->ensureDirectoryExists(dirname($backupPath));
 
         if (!copy($databasePath, $backupPath)) {
             throw new Exception("Не удалось скопировать файл БД");
@@ -404,6 +415,9 @@ class BackupService
         }
 
         $sql .= "COMMIT;\n";
+
+        // Гарантируем создание директории перед записью файла
+        $this->ensureDirectoryExists(dirname($backupPath));
 
         file_put_contents($backupPath, $sql);
     }
@@ -473,6 +487,9 @@ class BackupService
         fclose($pipes[2]);
 
         $returnCode = proc_close($process);
+
+        // Гарантируем создание директории перед записью файла
+        $this->ensureDirectoryExists(dirname($backupPath));
 
         // Записываем вывод в файл
         if ($output) {
@@ -557,6 +574,9 @@ class BackupService
 
         $returnCode = proc_close($process);
 
+        // Гарантируем создание директории перед записью файла
+        $this->ensureDirectoryExists(dirname($backupPath));
+
         // Записываем вывод в файл
         if ($output) {
             file_put_contents($backupPath, $output);
@@ -587,6 +607,9 @@ class BackupService
         if (!$pgDumpPath) {
             throw new Exception("Команда pg_dump не найдена");
         }
+
+        // Гарантируем создание директории перед записью файла
+        $this->ensureDirectoryExists(dirname($backupPath));
 
         putenv("PGPASSWORD={$password}");
 
@@ -623,6 +646,9 @@ class BackupService
         if (!$pgDumpPath) {
             throw new Exception("Команда pg_dump не найдена");
         }
+
+        // Гарантируем создание директории перед записью файла
+        $this->ensureDirectoryExists(dirname($backupPath));
 
         putenv("PGPASSWORD={$password}");
 
