@@ -378,7 +378,19 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        $user->delete();
+        // Проверяем зависимости перед удалением
+        $canDelete = $user->canBeDeleted();
+        
+        if (!$canDelete['can_delete']) {
+            return redirect()->back()
+                ->with('error', $canDelete['message'])
+                ->with('dependencies', $canDelete['dependencies']);
+        }
+
+        // Используем транзакцию для безопасности
+        \DB::transaction(function () use ($user) {
+            $user->delete();
+        });
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Пользователь успешно удален.');

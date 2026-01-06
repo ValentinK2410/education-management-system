@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ChecksDependencies;
+use App\Traits\LogsActivity;
+use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Модель учебного заведения
@@ -14,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Institution extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Versionable, ChecksDependencies, LogsActivity;
 
     /**
      * Поля, доступные для массового заполнения
@@ -56,5 +60,25 @@ class Institution extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Проверить зависимости перед удалением
+     */
+    public function checkDependencies(): array
+    {
+        $dependencies = [];
+
+        // Проверяем программы учебного заведения
+        $programsCount = $this->programs()->count();
+        if ($programsCount > 0) {
+            $dependencies[] = [
+                'name' => 'Образовательные программы',
+                'count' => $programsCount,
+                'type' => 'programs'
+            ];
+        }
+
+        return $dependencies;
     }
 }

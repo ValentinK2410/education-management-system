@@ -291,7 +291,19 @@ class ProgramController extends Controller
      */
     public function destroy(Program $program)
     {
-        $program->delete();
+        // Проверяем зависимости перед удалением
+        $canDelete = $program->canBeDeleted();
+        
+        if (!$canDelete['can_delete']) {
+            return redirect()->back()
+                ->with('error', $canDelete['message'])
+                ->with('dependencies', $canDelete['dependencies']);
+        }
+
+        // Используем транзакцию для безопасности
+        \DB::transaction(function () use ($program) {
+            $program->delete();
+        });
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно удалена.');

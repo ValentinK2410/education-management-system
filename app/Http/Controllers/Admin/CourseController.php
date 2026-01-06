@@ -294,7 +294,19 @@ class CourseController extends Controller
      */
     public function destroy(Course $course)
     {
-        $course->delete();
+        // Проверяем зависимости перед удалением
+        $canDelete = $course->canBeDeleted();
+        
+        if (!$canDelete['can_delete']) {
+            return redirect()->back()
+                ->with('error', $canDelete['message'])
+                ->with('dependencies', $canDelete['dependencies']);
+        }
+
+        // Используем транзакцию для безопасности
+        \DB::transaction(function () use ($course) {
+            $course->delete();
+        });
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Курс успешно удален.');

@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Модель платежей
@@ -13,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Versionable, LogsActivity;
 
     protected $fillable = [
         'user_id',

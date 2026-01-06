@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\ChecksDependencies;
+use App\Traits\LogsActivity;
+use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Модель образовательной программы
@@ -15,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Program extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Versionable, ChecksDependencies, LogsActivity;
 
     public const DEGREE_LEVELS = [
         'начальный' => 'Начальный',
@@ -170,5 +174,45 @@ class Program extends Model
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * Проверить зависимости перед удалением
+     */
+    public function checkDependencies(): array
+    {
+        $dependencies = [];
+
+        // Проверяем курсы в программе
+        $coursesCount = $this->courses()->count();
+        if ($coursesCount > 0) {
+            $dependencies[] = [
+                'name' => 'Курсы',
+                'count' => $coursesCount,
+                'type' => 'courses'
+            ];
+        }
+
+        // Проверяем записанных пользователей
+        $enrolledUsersCount = $this->users()->count();
+        if ($enrolledUsersCount > 0) {
+            $dependencies[] = [
+                'name' => 'Записанные пользователи',
+                'count' => $enrolledUsersCount,
+                'type' => 'users'
+            ];
+        }
+
+        // Проверяем платежи
+        $paymentsCount = $this->payments()->count();
+        if ($paymentsCount > 0) {
+            $dependencies[] = [
+                'name' => 'Платежи',
+                'count' => $paymentsCount,
+                'type' => 'payments'
+            ];
+        }
+
+        return $dependencies;
     }
 }

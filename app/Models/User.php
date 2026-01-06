@@ -3,9 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\ChecksDependencies;
+use App\Traits\LogsActivity;
+use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -18,7 +22,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes, Versionable, ChecksDependencies, LogsActivity;
 
     /**
      * Поля, доступные для массового заполнения
@@ -278,5 +282,45 @@ class User extends Authenticatable
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * Проверить зависимости перед удалением
+     */
+    public function checkDependencies(): array
+    {
+        $dependencies = [];
+
+        // Проверяем курсы, которые преподает пользователь
+        $taughtCoursesCount = $this->taughtCourses()->count();
+        if ($taughtCoursesCount > 0) {
+            $dependencies[] = [
+                'name' => 'Курсы (преподаватель)',
+                'count' => $taughtCoursesCount,
+                'type' => 'courses'
+            ];
+        }
+
+        // Проверяем платежи
+        $paymentsCount = $this->payments()->count();
+        if ($paymentsCount > 0) {
+            $dependencies[] = [
+                'name' => 'Платежи',
+                'count' => $paymentsCount,
+                'type' => 'payments'
+            ];
+        }
+
+        // Проверяем сертификаты
+        $certificatesCount = $this->certificates()->count();
+        if ($certificatesCount > 0) {
+            $dependencies[] = [
+                'name' => 'Сертификаты',
+                'count' => $certificatesCount,
+                'type' => 'certificates'
+            ];
+        }
+
+        return $dependencies;
     }
 }

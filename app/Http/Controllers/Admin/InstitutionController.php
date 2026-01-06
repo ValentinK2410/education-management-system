@@ -137,12 +137,24 @@ class InstitutionController extends Controller
      */
     public function destroy(Institution $institution)
     {
-        // Удаление файла логотипа
-        if ($institution->logo) {
-            Storage::disk('public')->delete($institution->logo);
+        // Проверяем зависимости перед удалением
+        $canDelete = $institution->canBeDeleted();
+        
+        if (!$canDelete['can_delete']) {
+            return redirect()->back()
+                ->with('error', $canDelete['message'])
+                ->with('dependencies', $canDelete['dependencies']);
         }
 
-        $institution->delete();
+        // Используем транзакцию для безопасности
+        \DB::transaction(function () use ($institution) {
+            // Удаление файла логотипа
+            if ($institution->logo) {
+                Storage::disk('public')->delete($institution->logo);
+            }
+
+            $institution->delete();
+        });
 
         return redirect()->route('admin.institutions.index')
             ->with('success', 'Учебное заведение успешно удалено.');

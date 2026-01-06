@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ChecksDependencies;
+use App\Traits\LogsActivity;
+use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Модель курса
@@ -14,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Course extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Versionable, ChecksDependencies, LogsActivity;
 
     /**
      * Поля, доступные для массового заполнения
@@ -263,5 +267,55 @@ class Course extends Model
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * Проверить зависимости перед удалением
+     */
+    public function checkDependencies(): array
+    {
+        $dependencies = [];
+
+        // Проверяем записанных пользователей
+        $enrolledUsersCount = $this->users()->count();
+        if ($enrolledUsersCount > 0) {
+            $dependencies[] = [
+                'name' => 'Записанные пользователи',
+                'count' => $enrolledUsersCount,
+                'type' => 'users'
+            ];
+        }
+
+        // Проверяем платежи
+        $paymentsCount = $this->payments()->count();
+        if ($paymentsCount > 0) {
+            $dependencies[] = [
+                'name' => 'Платежи',
+                'count' => $paymentsCount,
+                'type' => 'payments'
+            ];
+        }
+
+        // Проверяем отзывы
+        $reviewsCount = $this->reviews()->count();
+        if ($reviewsCount > 0) {
+            $dependencies[] = [
+                'name' => 'Отзывы',
+                'count' => $reviewsCount,
+                'type' => 'reviews'
+            ];
+        }
+
+        // Проверяем сертификаты
+        $certificatesCount = $this->certificates()->count();
+        if ($certificatesCount > 0) {
+            $dependencies[] = [
+                'name' => 'Сертификаты',
+                'count' => $certificatesCount,
+                'type' => 'certificates'
+            ];
+        }
+
+        return $dependencies;
     }
 }

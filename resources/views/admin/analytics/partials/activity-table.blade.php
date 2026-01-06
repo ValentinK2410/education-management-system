@@ -2,15 +2,15 @@
     <table class="table table-striped table-hover">
         <thead>
             <tr>
-                <th>Студент</th>
-                <th>Элемент курса</th>
-                <th>Тип</th>
-                <th>Статус</th>
-                <th>Оценка</th>
-                <th>Дата сдачи</th>
-                <th>Дата проверки</th>
-                <th>Проверил</th>
-                <th>Действия</th>
+                <th>{{ __('messages.students') }}</th>
+                <th>{{ __('messages.course_element') }}</th>
+                <th>{{ __('messages.activity_type') }}</th>
+                <th>{{ __('messages.status') }}</th>
+                <th>{{ __('messages.grade_value') }}</th>
+                <th>{{ __('messages.submission_date') }}</th>
+                <th>{{ __('messages.grading_date') }}</th>
+                <th>{{ __('messages.graded_by') }}</th>
+                <th>{{ __('messages.actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -28,10 +28,10 @@
                                 </div>
                             @endforeach
                             @if($activity->studentProgress->count() > 5)
-                                <small class="text-muted">и еще {{ $activity->studentProgress->count() - 5 }} студентов</small>
+                                <small class="text-muted">{{ __('messages.and_more_students', ['count' => $activity->studentProgress->count() - 5]) }}</small>
                             @endif
                         @else
-                            <span class="text-muted">Нет студентов</span>
+                            <span class="text-muted">{{ __('messages.no_students') }}</span>
                         @endif
                     </td>
                     <td>
@@ -43,23 +43,23 @@
                     <td>
                         @if($activity->activity_type == 'assign')
                             <span class="badge activity-type-badge activity-type-assign">
-                                <i class="fas fa-file-alt me-1"></i>Задание
+                                <i class="fas fa-file-alt me-1"></i>{{ __('messages.assignment') }}
                             </span>
                         @elseif($activity->activity_type == 'quiz')
                             <span class="badge activity-type-badge activity-type-quiz">
-                                <i class="fas fa-clipboard-check me-1"></i>Тест
+                                <i class="fas fa-clipboard-check me-1"></i>{{ __('messages.quiz') }}
                             </span>
                         @elseif($activity->activity_type == 'forum')
                             <span class="badge activity-type-badge activity-type-forum">
-                                <i class="fas fa-comments me-1"></i>Форум
+                                <i class="fas fa-comments me-1"></i>{{ __('messages.forum') }}
                             </span>
                         @elseif($activity->activity_type == 'resource')
                             <span class="badge activity-type-badge activity-type-resource">
-                                <i class="fas fa-book me-1"></i>Материал
+                                <i class="fas fa-book me-1"></i>{{ __('messages.resource') }}
                             </span>
                         @elseif($activity->activity_type == 'exam')
                             <span class="badge activity-type-badge activity-type-exam">
-                                <i class="fas fa-graduation-cap me-1"></i>Экзамен
+                                <i class="fas fa-graduation-cap me-1"></i>{{ __('messages.exam') }}
                             </span>
                         @else
                             <span class="badge bg-secondary">{{ $activity->activity_type }}</span>
@@ -77,18 +77,18 @@
                                 ];
                                 $class = $statusClass[$progress->status] ?? 'bg-secondary';
                                 $statusText = [
-                                    'not_started' => 'Не начато',
-                                    'in_progress' => 'В процессе',
-                                    'submitted' => 'Сдано',
-                                    'graded' => 'Проверено',
-                                    'completed' => 'Завершено',
+                                    'not_started' => __('messages.not_started'),
+                                    'in_progress' => __('messages.in_progress'),
+                                    'submitted' => __('messages.submitted'),
+                                    'graded' => __('messages.graded'),
+                                    'completed' => __('messages.completed'),
                                 ];
                             @endphp
                             <span class="badge {{ $class }}">
                                 {{ $statusText[$progress->status] ?? $progress->status }}
                             </span>
                         @else
-                            <span class="badge bg-secondary">Не начато</span>
+                            <span class="badge bg-secondary">{{ __('messages.not_started') }}</span>
                         @endif
                     </td>
                     <td>
@@ -136,7 +136,7 @@
                     <td colspan="9" class="text-center py-4">
                         <div class="text-muted">
                             <i class="fas fa-info-circle fa-3x mb-3"></i>
-                            <p>Элементы курса не найдены</p>
+                            <p>{{ __('messages.course_elements_not_found') }}</p>
                         </div>
                     </td>
                 </tr>
