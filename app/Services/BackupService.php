@@ -351,6 +351,81 @@ class BackupService
     }
 
     /**
+     * Очистить все таблицы кроме ролей и прав
+     */
+    public function clearTablesExceptRoles(): array
+    {
+        try {
+            // Создаем резервную копию перед очисткой
+            $backup = $this->createFullBackup();
+
+            $connection = DB::getDefaultConnection();
+            $driver = config("database.connections.{$connection}.driver");
+
+            // Таблицы, которые нужно сохранить
+            $protectedTables = ['roles', 'permissions', 'role_permissions', 'user_roles'];
+
+            // Получаем список всех таблиц
+            $allTables = $this->getTablesList();
+
+            // Фильтруем таблицы, исключая защищенные
+            $tablesToClear = array_filter($allTables, function ($table) use ($protectedTables) {
+                return !in_array($table, $protectedTables);
+            });
+
+            $clearedTables = [];
+            $errors = [];
+
+            // Отключаем проверку внешних ключей для безопасной очистки
+            if ($driver === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            } elseif ($driver === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = OFF;');
+            }
+
+            foreach ($tablesToClear as $table) {
+                try {
+                    DB::table($table)->truncate();
+                    $clearedTables[] = $table;
+                } catch (Exception $e) {
+                    $errors[] = "Ошибка очистки таблицы {$table}: " . $e->getMessage();
+                    Log::error('Ошибка очистки таблицы', [
+                        'table' => $table,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Включаем проверку внешних ключей обратно
+            if ($driver === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } elseif ($driver === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = ON;');
+            }
+
+            Log::info('Очистка таблиц выполнена', [
+                'cleared_tables' => count($clearedTables),
+                'protected_tables' => $protectedTables,
+                'backup_filename' => $backup['filename']
+            ]);
+
+            return [
+                'success' => true,
+                'cleared_tables' => $clearedTables,
+                'cleared_count' => count($clearedTables),
+                'protected_tables' => $protectedTables,
+                'errors' => $errors,
+                'backup_filename' => $backup['filename']
+            ];
+        } catch (Exception $e) {
+            Log::error('Ошибка очистки таблиц', [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
      * Генерация имени файла резервной копии
      */
     protected function generateFilename(string $type, string $driver, ?string $tableName = null): string

@@ -235,5 +235,42 @@ class BackupController extends Controller
                 ->with('error', 'Ошибка при удалении: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Очистить все таблицы кроме ролей и прав
+     */
+    public function clearTables(Request $request)
+    {
+        $request->validate([
+            'confirm' => 'required|accepted'
+        ]);
+
+        try {
+            $result = $this->backupService->clearTablesExceptRoles();
+
+            Log::info('Очистка таблиц выполнена через интерфейс', [
+                'cleared_count' => $result['cleared_count'],
+                'user_id' => auth()->id()
+            ]);
+
+            $message = "Очищено таблиц: {$result['cleared_count']}. ";
+            $message .= "Резервная копия создана: {$result['backup_filename']}";
+
+            if (!empty($result['errors'])) {
+                $message .= ". Ошибки: " . implode(', ', $result['errors']);
+            }
+
+            return redirect()->route('admin.backups.index')
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            Log::error('Ошибка очистки таблиц через интерфейс', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Ошибка при очистке таблиц: ' . $e->getMessage());
+        }
+    }
 }
 

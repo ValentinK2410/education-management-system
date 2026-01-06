@@ -521,6 +521,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('backups/{filename}/restore', [BackupController::class, 'restore'])->name('backups.restore');
         Route::post('backups/{filename}/restore-table/{table}', [BackupController::class, 'restoreTable'])->name('backups.restore-table');
         Route::get('backups/{filename}/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::post('backups/clear-tables', [BackupController::class, 'clearTables'])->name('backups.clear-tables');
 
         // Настройки пользователя
         Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');

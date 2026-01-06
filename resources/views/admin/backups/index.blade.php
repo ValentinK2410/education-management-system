@@ -36,9 +36,17 @@
                     <h3 class="card-title mb-0">
                         <i class="fas fa-database me-2"></i>Резервные копии базы данных
                     </h3>
-                    <a href="{{ route('admin.backups.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Создать резервную копию
-                    </a>
+                    <div class="btn-group">
+                        <button type="button" 
+                                class="btn btn-danger" 
+                                onclick="showClearTablesModal()"
+                                title="Очистить все таблицы кроме ролей и прав">
+                            <i class="fas fa-broom me-2"></i>Очистить таблицы
+                        </button>
+                        <a href="{{ route('admin.backups.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Создать резервную копию
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if(count($backups) > 0)
@@ -185,6 +193,51 @@
     </div>
 </div>
 
+<!-- Модальное окно очистки таблиц -->
+<div class="modal fade" id="clearTablesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Очистка таблиц базы данных</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="clearTablesForm" method="POST" action="{{ route('admin.backups.clear-tables') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Это действие удалит все данные из всех таблиц базы данных, 
+                        кроме таблиц ролей и прав доступа.
+                    </div>
+                    <p>Будут очищены все таблицы, кроме:</p>
+                    <ul>
+                        <li><code>roles</code> - Роли пользователей</li>
+                        <li><code>permissions</code> - Права доступа</li>
+                        <li><code>role_permissions</code> - Связь ролей и прав</li>
+                        <li><code>user_roles</code> - Связь пользователей и ролей</li>
+                    </ul>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Перед очисткой будет автоматически создана полная резервная копия базы данных.
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="confirm" id="confirmClearTables" required>
+                        <label class="form-check-label" for="confirmClearTables">
+                            Я понимаю последствия и подтверждаю очистку всех таблиц
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-broom me-2"></i>Очистить таблицы
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     function showRestoreModal(filename, type, table) {
@@ -205,6 +258,11 @@
         document.getElementById('deleteForm').action = '{{ route("admin.backups.destroy", ":filename") }}'.replace(':filename', filename);
         document.getElementById('confirmDelete').checked = false;
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    function showClearTablesModal() {
+        document.getElementById('confirmClearTables').checked = false;
+        new bootstrap.Modal(document.getElementById('clearTablesModal')).show();
     }
 </script>
 @endpush
