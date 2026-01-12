@@ -487,6 +487,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('user-archive/{user}', [UserArchiveController::class, 'show'])->name('user-archive.show');
         Route::get('user-archive/{user}/certificates/{certificate}/download', [UserArchiveController::class, 'downloadCertificate'])->name('user-archive.download-certificate');
 
+        // Аналитика (только для администраторов)
+        Route::get('analytics', function () {
+            return view('admin.analytics.index');
+        })->name('analytics.index');
+
         // Статистика преподавателей (только для администраторов)
         Route::get('instructor-stats', [InstructorStatsController::class, 'index'])->name('instructor-stats.index');
         Route::get('instructor-stats/{instructor}', [InstructorStatsController::class, 'show'])->name('instructor-stats.show');
