@@ -440,6 +440,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
         // Управление пользователями (создание, редактирование, удаление - только для администраторов)
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
