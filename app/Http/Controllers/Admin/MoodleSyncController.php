@@ -170,6 +170,17 @@ class MoodleSyncController extends Controller
             $message .= "Курсы: создано {$stats['courses']['created']}, обновлено {$stats['courses']['updated']}. ";
             $message .= "Записи студентов: создано {$stats['enrollments']['created']}, обновлено {$stats['enrollments']['updated']}.";
             
+            // Если все значения равны 0, добавляем предупреждение
+            if ($stats['courses']['created'] == 0 && $stats['courses']['updated'] == 0 && 
+                $stats['enrollments']['created'] == 0 && $stats['enrollments']['updated'] == 0) {
+                $errorsCount = ($stats['courses']['errors'] ?? 0) + ($stats['enrollments']['errors'] ?? 0);
+                if ($errorsCount > 0) {
+                    $message .= " Внимание: обнаружены ошибки. Проверьте логи для деталей.";
+                } else {
+                    $message .= " Возможные причины: все данные уже синхронизированы, в Moodle нет новых курсов, или токен не имеет прав на получение данных.";
+                }
+            }
+            
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', $message);
                 

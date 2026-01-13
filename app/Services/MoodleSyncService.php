@@ -119,10 +119,29 @@ class MoodleSyncService
                 'first_course' => is_array($moodleCourses) && !empty($moodleCourses) ? $moodleCourses[0] : null
             ]);
 
-            if ($moodleCourses === false || empty($moodleCourses)) {
-                Log::warning('Не удалось получить курсы из Moodle или список пуст', [
-                    'result' => $moodleCourses
+            if ($moodleCourses === false) {
+                Log::error('Ошибка получения курсов из Moodle API', [
+                    'result' => $moodleCourses,
+                    'hint' => 'Проверьте логи Moodle API для деталей ошибки'
                 ]);
+                $stats['errors']++;
+                $stats['errors_list'][] = [
+                    'type' => 'api_error',
+                    'error' => 'Не удалось получить курсы из Moodle API. Проверьте логи для деталей.'
+                ];
+                return $stats;
+            }
+            
+            if (empty($moodleCourses)) {
+                Log::warning('Список курсов из Moodle пуст', [
+                    'result' => $moodleCourses,
+                    'hint' => 'Возможно, в Moodle нет курсов (кроме системного курса с id=1) или токен не имеет прав на получение курсов'
+                ]);
+                $stats['errors']++;
+                $stats['errors_list'][] = [
+                    'type' => 'empty_result',
+                    'error' => 'В Moodle не найдено курсов для синхронизации. Убедитесь, что в Moodle есть курсы и токен имеет права на их получение.'
+                ];
                 return $stats;
             }
 
@@ -138,15 +157,27 @@ class MoodleSyncService
                     
                     $result = $this->syncCourse($moodleCourse);
                     
-                    if ($result['created']) {
+                    Log::info('Результат синхронизации курса', [
+                        'moodle_course_id' => $moodleCourse['id'] ?? null,
+                        'created' => $result['created'] ?? false,
+                        'updated' => $result['updated'] ?? false,
+                        'course_id' => $result['course']->id ?? null
+                    ]);
+                    
+                    if (isset($result['created']) && $result['created']) {
                         $stats['created']++;
                         Log::info('Курс создан', [
                             'local_course_id' => $result['course']->id ?? null,
                             'moodle_course_id' => $moodleCourse['id'] ?? null
                         ]);
-                    } elseif ($result['updated']) {
+                    } elseif (isset($result['updated']) && $result['updated']) {
                         $stats['updated']++;
                         Log::info('Курс обновлен', [
+                            'local_course_id' => $result['course']->id ?? null,
+                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                        ]);
+                    } else {
+                        Log::info('Курс не изменился (уже синхронизирован)', [
                             'local_course_id' => $result['course']->id ?? null,
                             'moodle_course_id' => $moodleCourse['id'] ?? null
                         ]);
@@ -311,15 +342,31 @@ class MoodleSyncService
         if ($course) {
             // Обновляем существующий курс
             try {
-                $course->update($courseData);
+                // Проверяем, были ли изменения перед обновлением
+                $hasChanges = false;
+                foreach ($courseData as $key => $value) {
+                    if ($course->getAttribute($key) != $value) {
+                        $hasChanges = true;
+                        break;
+                    }
+                }
                 
-                Log::info('Курс обновлен из Moodle', [
-                    'course_id' => $course->id,
-                    'moodle_course_id' => $moodleCourseId,
-                    'name' => $course->name
-                ]);
-                
-                return ['created' => false, 'updated' => true, 'course' => $course];
+                if ($hasChanges) {
+                    $course->update($courseData);
+                    Log::info('Курс обновлен из Moodle', [
+                        'course_id' => $course->id,
+                        'moodle_course_id' => $moodleCourseId,
+                        'name' => $course->name
+                    ]);
+                    return ['created' => false, 'updated' => true, 'course' => $course];
+                } else {
+                    Log::info('Курс не изменился (данные идентичны)', [
+                        'course_id' => $course->id,
+                        'moodle_course_id' => $moodleCourseId,
+                        'name' => $course->name
+                    ]);
+                    return ['created' => false, 'updated' => false, 'course' => $course];
+                }
             } catch (\Exception $e) {
                 Log::error('Ошибка обновления курса', [
                     'course_id' => $course->id,
@@ -399,10 +446,26 @@ class MoodleSyncService
                 'first_user' => is_array($moodleUsers) && !empty($moodleUsers) ? $moodleUsers[0] : null
             ]);
 
-            if ($moodleUsers === false || empty($moodleUsers)) {
-                Log::warning('Не удалось получить пользователей курса из Moodle или список пуст', [
+            if ($moodleUsers === false) {
+                Log::error('Ошибка получения записей студентов из Moodle API', [
+                    'course_id' => $courseId,
                     'moodle_course_id' => $course->moodle_course_id,
-                    'result' => $moodleUsers
+                    'hint' => 'Проверьте логи Moodle API для деталей ошибки'
+                ]);
+                $stats['errors']++;
+                $stats['errors_list'][] = [
+                    'type' => 'api_error',
+                    'error' => 'Не удалось получить записи студентов из Moodle API для курса ' . $course->name
+                ];
+                return $stats;
+            }
+            
+            if (empty($moodleUsers)) {
+                Log::warning('Список записей студентов из Moodle пуст', [
+                    'course_id' => $courseId,
+                    'moodle_course_id' => $course->moodle_course_id,
+                    'course_name' => $course->name,
+                    'hint' => 'Возможно, на курс не записаны студенты или токен не имеет прав на получение записей'
                 ]);
                 return $stats;
             }
