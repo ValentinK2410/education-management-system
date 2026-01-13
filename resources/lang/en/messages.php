@@ -85,6 +85,7 @@ return [
     'roles' => 'Roles',
     'permissions' => 'Permissions',
     'system_settings' => 'System Settings',
+    'backups' => 'Backups',
 
     // Users
     'user' => 'User',
