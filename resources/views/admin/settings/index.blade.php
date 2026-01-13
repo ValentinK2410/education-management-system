@@ -341,7 +341,7 @@
                                             </div>
                                             @endif
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-icon-preview" id="iconPreview"></i></span>
+                                                <span class="input-group-text"><i class="fas {{ $setting->value ?: 'fa-graduation-cap' }}" id="iconPreview"></i></span>
                                                 <input 
                                                     type="text" 
                                                     name="settings[{{ $setting->key }}]" 
@@ -732,6 +732,70 @@
 
         // Дополнительные строки в сайдбаре
         updateAdditionalLinesPreview();
+        
+        // Кнопка виртуального класса в header
+        updateVirtualClassButton();
+    }
+    
+    // Обновление кнопки виртуального класса в header
+    function updateVirtualClassButton() {
+        const virtualClassButton = document.getElementById('virtualClassButton');
+        if (!virtualClassButton) return;
+        
+        // Включение/выключение
+        const enabledInput = document.querySelector('input[name="settings[virtual_class_button_enabled]"]');
+        const enabled = enabledInput ? enabledInput.checked : true;
+        
+        // Текст
+        const textInput = document.querySelector('input[name="settings[virtual_class_button_text]"]');
+        const buttonText = document.getElementById('virtualClassButtonText');
+        if (textInput && buttonText) {
+            buttonText.textContent = textInput.value || 'Перейти в виртуальный класс';
+        }
+        
+        // Иконка
+        const iconInput = document.querySelector('input[name="settings[virtual_class_button_icon]"]');
+        if (iconInput) {
+            const iconClass = iconInput.value || 'fa-graduation-cap';
+            const iconElement = virtualClassButton.querySelector('i');
+            if (iconElement) {
+                iconElement.className = 'fas ' + iconClass + ' me-1';
+            }
+            // Обновляем превью иконки
+            const iconPreview = document.getElementById('iconPreview');
+            if (iconPreview) {
+                iconPreview.className = 'fas ' + iconClass;
+            }
+        }
+        
+        // Цвет
+        const colorInput = document.querySelector('input[name="settings[virtual_class_button_color]"]');
+        const colorTextInput = document.querySelector('input[name="settings[virtual_class_button_color]_text"]');
+        if (colorInput || colorTextInput) {
+            const color = colorInput ? colorInput.value : (colorTextInput ? colorTextInput.value : '#667eea');
+            virtualClassButton.style.backgroundColor = color;
+            virtualClassButton.style.borderColor = color;
+            // Синхронизируем значения
+            if (colorInput && colorTextInput) {
+                colorTextInput.value = color;
+            }
+            if (colorTextInput && colorInput) {
+                colorInput.value = color;
+            }
+        }
+        
+        // URL
+        const urlInput = document.querySelector('input[name="settings[virtual_class_button_url]"]');
+        if (urlInput) {
+            virtualClassButton.href = urlInput.value || '#';
+        }
+        
+        // Показываем/скрываем кнопку
+        if (enabled && urlInput && urlInput.value) {
+            virtualClassButton.style.display = 'inline-flex';
+        } else {
+            virtualClassButton.style.display = 'none';
+        }
     }
 
     // Обновление предпросмотра дополнительных строк в сайдбаре
@@ -931,6 +995,48 @@
         if (nameInput) {
             nameInput.addEventListener('input', updatePreview);
             nameInput.addEventListener('change', updatePreview);
+        }
+        
+        // Обработчики для настроек кнопки виртуального класса
+        const virtualClassEnabledInput = document.querySelector('input[name="settings[virtual_class_button_enabled]"]');
+        const virtualClassTextInput = document.querySelector('input[name="settings[virtual_class_button_text]"]');
+        const virtualClassIconInput = document.querySelector('input[name="settings[virtual_class_button_icon]"]');
+        const virtualClassColorInput = document.querySelector('input[name="settings[virtual_class_button_color]"]');
+        const virtualClassColorTextInput = document.querySelector('input[name="settings[virtual_class_button_color]_text"]');
+        const virtualClassUrlInput = document.querySelector('input[name="settings[virtual_class_button_url]"]');
+        
+        if (virtualClassEnabledInput) {
+            virtualClassEnabledInput.addEventListener('change', updatePreview);
+        }
+        if (virtualClassTextInput) {
+            virtualClassTextInput.addEventListener('input', updatePreview);
+            virtualClassTextInput.addEventListener('change', updatePreview);
+        }
+        if (virtualClassIconInput) {
+            virtualClassIconInput.addEventListener('input', updatePreview);
+            virtualClassIconInput.addEventListener('change', updatePreview);
+        }
+        if (virtualClassColorInput) {
+            virtualClassColorInput.addEventListener('input', updatePreview);
+            virtualClassColorInput.addEventListener('change', updatePreview);
+        }
+        if (virtualClassColorTextInput) {
+            virtualClassColorTextInput.addEventListener('input', function() {
+                if (virtualClassColorInput) {
+                    virtualClassColorInput.value = this.value;
+                }
+                updatePreview();
+            });
+            virtualClassColorTextInput.addEventListener('change', function() {
+                if (virtualClassColorInput) {
+                    virtualClassColorInput.value = this.value;
+                }
+                updatePreview();
+            });
+        }
+        if (virtualClassUrlInput) {
+            virtualClassUrlInput.addEventListener('input', updatePreview);
+            virtualClassUrlInput.addEventListener('change', updatePreview);
         }
 
         // Обработчики для существующих дополнительных строк
