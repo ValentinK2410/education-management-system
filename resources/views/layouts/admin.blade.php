@@ -1026,7 +1026,7 @@
                     $isEnabled = is_bool($virtualClassEnabled) ? $virtualClassEnabled : ($virtualClassEnabled === '1' || $virtualClassEnabled === 1 || $virtualClassEnabled === true);
                 @endphp
                 @if($isEnabled && !empty($virtualClassUrl))
-                <a href="{{ $virtualClassUrl }}" target="_blank" class="btn btn-sm virtual-class-btn" id="virtualClassButton" style="background-color: {{ $virtualClassColor }}; border-color: {{ $virtualClassColor }}; color: white;">
+                <a href="{{ route('moodle.sso.redirect', ['redirect' => $virtualClassUrl]) }}" class="btn btn-sm virtual-class-btn" id="virtualClassButton" style="background-color: {{ $virtualClassColor }}; border-color: {{ $virtualClassColor }}; color: white;">
                     <i class="fas {{ $virtualClassIcon }} me-1"></i>
                     <span id="virtualClassButtonText">{{ $virtualClassText }}</span>
                 </a>

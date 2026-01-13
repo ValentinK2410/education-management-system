@@ -125,6 +125,14 @@ Route::prefix('api')->group(function () {
 Route::get('/sso/login', [SsoController::class, 'login'])
     ->name('sso.login');
 
+// Moodle SSO маршруты (требуют авторизации)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/moodle/sso/redirect', [\App\Http\Controllers\Auth\MoodleSsoController::class, 'redirect'])
+        ->name('moodle.sso.redirect');
+    Route::get('/moodle/sso/callback', [\App\Http\Controllers\Auth\MoodleSsoController::class, 'callback'])
+        ->name('moodle.sso.callback');
+});
+
 // Маршруты аутентификации
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
