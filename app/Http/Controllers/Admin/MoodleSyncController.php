@@ -62,6 +62,10 @@ class MoodleSyncController extends Controller
     public function syncCourses(Request $request)
     {
         try {
+            // Увеличиваем время выполнения для длительной синхронизации
+            set_time_limit(300); // 5 минут
+            ini_set('max_execution_time', '300');
+            
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
@@ -107,6 +111,10 @@ class MoodleSyncController extends Controller
     public function syncCourseEnrollments(Request $request, int $courseId)
     {
         try {
+            // Увеличиваем время выполнения для длительной синхронизации
+            set_time_limit(300); // 5 минут
+            ini_set('max_execution_time', '300');
+            
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
@@ -152,6 +160,10 @@ class MoodleSyncController extends Controller
     public function syncAll(Request $request)
     {
         try {
+            // Увеличиваем время выполнения для длительной синхронизации
+            set_time_limit(600); // 10 минут
+            ini_set('max_execution_time', '600');
+            
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
