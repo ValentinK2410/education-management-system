@@ -263,32 +263,85 @@ foreach ($migrations as $migration) {
         elseif (strpos($migration, 'create_activity_logs_table') !== false && Schema::hasTable('activity_logs')) {
             $shouldAdd = true;
         }
-        // Для миграций изменения таблиц (add_*, fix_*) всегда добавляем, если базовая таблица существует
+        // Для миграций изменения таблиц (add_*, fix_*) проверяем наличие столбцов
         elseif (strpos($migration, 'add_') !== false || strpos($migration, 'fix_') !== false || strpos($migration, 'make_') !== false) {
-            // Для миграций изменения таблиц, проверяем наличие базовой таблицы
-            if (strpos($migration, 'users') !== false && Schema::hasTable('users')) {
-                $shouldAdd = true;
+            // Специальная проверка для конкретных миграций
+            if ($migration === '2024_01_01_000020_add_payment_status_to_user_relations') {
+                // Проверяем наличие столбца payment_status в обеих таблицах
+                if (Schema::hasTable('user_courses') && Schema::hasTable('user_programs')) {
+                    $hasColumnInCourses = Schema::hasColumn('user_courses', 'payment_status');
+                    $hasColumnInPrograms = Schema::hasColumn('user_programs', 'payment_status');
+                    if ($hasColumnInCourses && $hasColumnInPrograms) {
+                        $shouldAdd = true;
+                    } elseif ($hasColumnInCourses || $hasColumnInPrograms) {
+                        // Если хотя бы один столбец существует, считаем миграцию выполненной
+                        echo "  ⚠️  Внимание: миграция {$migration} выполнена частично (не все столбцы существуют)\n";
+                        $shouldAdd = true;
+                    }
+                }
+            }
+            // Для других миграций изменения таблиц, проверяем наличие базовой таблицы
+            elseif (strpos($migration, 'users') !== false && Schema::hasTable('users')) {
+                // Для миграций изменения users, проверяем наличие столбцов если возможно
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('users', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'moodle_user_id') !== false && Schema::hasColumn('users', 'moodle_user_id')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false && strpos($migration, 'moodle_user_id') === false) {
+                    // Для других изменений users, просто проверяем наличие таблицы
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'courses') !== false && Schema::hasTable('courses')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('courses', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'programs') !== false && Schema::hasTable('programs')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('programs', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'institutions') !== false && Schema::hasTable('institutions')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('institutions', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'payments') !== false && Schema::hasTable('payments')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('payments', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'certificates') !== false && Schema::hasTable('certificates')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('certificates', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'enrollment_history') !== false && Schema::hasTable('enrollment_history')) {
-                $shouldAdd = true;
+                if (strpos($migration, 'deleted_at') !== false && Schema::hasColumn('enrollment_history', 'deleted_at')) {
+                    $shouldAdd = true;
+                } elseif (strpos($migration, 'deleted_at') === false) {
+                    $shouldAdd = true;
+                }
             }
             elseif (strpos($migration, 'course_activities') !== false && Schema::hasTable('course_activities')) {
                 $shouldAdd = true;
+            }
+            elseif (strpos($migration, 'user_relations') !== false || strpos($migration, 'user_courses') !== false || strpos($migration, 'user_programs') !== false) {
+                // Для миграций изменения таблиц связей пользователей
+                if (Schema::hasTable('user_courses') || Schema::hasTable('user_programs')) {
+                    $shouldAdd = true;
+                }
             }
         }
         }
