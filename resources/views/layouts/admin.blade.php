@@ -733,6 +733,24 @@
                     $isRealAdminForSidebar = auth()->user()->hasRole('admin');
                 }
 
+                // Проверяем, есть ли у пользователя роль администратора среди его реальных ролей
+                // (независимо от переключения ролей)
+                $hasAdminRole = false;
+                if (session('original_user_id')) {
+                    $originalUser = \App\Models\User::find(session('original_user_id'));
+                    $hasAdminRole = $originalUser && $originalUser->roles()->where('slug', 'admin')->exists();
+                } elseif (session('role_switched')) {
+                    // Если переключились на роль, проверяем оригинальные роли из сессии
+                    $originalRoles = session('original_roles', []);
+                    if (!empty($originalRoles)) {
+                        $adminRole = \App\Models\Role::where('slug', 'admin')->first();
+                        $hasAdminRole = $adminRole && in_array($adminRole->id, $originalRoles);
+                    }
+                } else {
+                    // Проверяем реальные роли пользователя напрямую
+                    $hasAdminRole = auth()->user()->roles()->where('slug', 'admin')->exists();
+                }
+
                 // Показываем раздел "Пользователи" если:
                 // 1. Пользователь имеет разрешение view_sidebar_users И не имеет hide_user_links
                 // 2. ИЛИ пользователь является реальным админом (даже при переключении на роль)
@@ -839,7 +857,7 @@
             </div>
             @endif
 
-            @if($isRealAdminForSidebar)
+            @if($hasAdminRole)
             <div class="nav-item">
                 <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">
                     <i class="fas fa-database"></i>
@@ -848,7 +866,7 @@
             </div>
             @endif
 
-            @if($isRealAdminForSidebar)
+            @if($hasAdminRole)
             <div class="nav-item">
                 <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
