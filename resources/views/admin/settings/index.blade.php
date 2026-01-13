@@ -318,7 +318,13 @@
                                             @endif
                                             <div id="additionalLinesContainer">
                                                 @php
-                                                    $lines = json_decode($setting->value ?? '[]', true);
+                                                    // Для типа json Setting уже декодирует значение, но здесь мы работаем напрямую с $setting->value
+                                                    $linesValue = $setting->value ?? '[]';
+                                                    if (is_string($linesValue)) {
+                                                        $lines = json_decode($linesValue, true);
+                                                    } else {
+                                                        $lines = is_array($linesValue) ? $linesValue : [];
+                                                    }
                                                     if (!is_array($lines)) $lines = [];
                                                 @endphp
                                                 @foreach($lines as $index => $line)
@@ -552,7 +558,13 @@
         $lines = [];
         $additionalLinesSetting = $brandingSettings->firstWhere('key', 'system_brand_additional_lines');
         if ($additionalLinesSetting) {
-            $lines = json_decode($additionalLinesSetting->value ?? '[]', true);
+            $linesValue = $additionalLinesSetting->value ?? '[]';
+            // Проверяем, является ли значение строкой (JSON) или уже массивом
+            if (is_string($linesValue)) {
+                $lines = json_decode($linesValue, true);
+            } else {
+                $lines = is_array($linesValue) ? $linesValue : [];
+            }
             if (!is_array($lines)) $lines = [];
         }
         $logoSetting = $brandingSettings->firstWhere('key', 'system_logo');

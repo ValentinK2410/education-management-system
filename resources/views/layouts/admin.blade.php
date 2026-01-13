@@ -727,9 +727,9 @@
                     $systemBrandTextSize = \App\Models\Setting::get('system_brand_text_size', '1.5');
                     $systemLogoWidth = \App\Models\Setting::get('system_logo_width', '32');
                     $systemLogoHeight = \App\Models\Setting::get('system_logo_height', '32');
-                    $additionalLines = \App\Models\Setting::get('system_brand_additional_lines', '[]');
-                    $additionalLinesArray = json_decode($additionalLines, true);
-                    if (!is_array($additionalLinesArray)) $additionalLinesArray = [];
+                    $additionalLines = \App\Models\Setting::get('system_brand_additional_lines', []);
+                    // Setting::get() уже декодирует JSON для типа 'json', поэтому проверяем тип
+                    $additionalLinesArray = is_array($additionalLines) ? $additionalLines : [];
                 @endphp
                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 0.25rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
