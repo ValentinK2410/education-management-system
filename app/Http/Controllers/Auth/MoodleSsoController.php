@@ -37,14 +37,56 @@ class MoodleSsoController extends Controller
             return redirect()->back()->with('error', 'Moodle не настроен. Обратитесь к администратору.');
         }
 
+        // Проверяем, есть ли у пользователя moodle_user_id
+        if (empty($user->moodle_user_id)) {
+            Log::info('Moodle SSO: User does not have moodle_user_id, trying to find in Moodle', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+            
+            // Пытаемся найти пользователя в Moodle по email
+            try {
+                $moodleApiService = new MoodleApiService();
+                $moodleUser = $moodleApiService->getUserByEmail($user->email);
+                
+                if ($moodleUser && isset($moodleUser['id'])) {
+                    $user->moodle_user_id = $moodleUser['id'];
+                    $user->save();
+                    Log::info('Moodle SSO: Found moodle_user_id for user', [
+                        'user_id' => $user->id,
+                        'moodle_user_id' => $user->moodle_user_id
+                    ]);
+                } else {
+                    Log::warning('Moodle SSO: User not found in Moodle', [
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
+                    return redirect()->back()->with('error', 'Пользователь не найден в Moodle. Обратитесь к администратору.');
+                }
+            } catch (\Exception $e) {
+                Log::error('Moodle SSO: Failed to find user in Moodle', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return redirect()->back()->with('error', 'Ошибка при проверке пользователя в Moodle. Обратитесь к администратору.');
+            }
+        }
+
         // Генерируем временный токен для SSO
         $token = $this->generateSsoToken($user);
         
+        // Получаем URL для перенаправления после входа
+        $redirectUrl = $request->get('redirect', '/');
+        
         // Формируем URL для автоматического входа в Moodle
+        // Используем стандартный механизм Moodle для токен-авторизации
+        // Если на Moodle установлен плагин SSO, он обработает этот токен
         $ssoUrl = rtrim($moodleUrl, '/') . '/auth/sso/login?' . http_build_query([
             'token' => $token,
             'email' => $user->email,
-            'redirect' => $request->get('redirect', '/'),
+            'moodle_user_id' => $user->moodle_user_id,
+            'redirect' => $redirectUrl,
         ]);
 
         Log::info('Moodle SSO: Redirecting user to Moodle', [
