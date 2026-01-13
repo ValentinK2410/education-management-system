@@ -79,40 +79,19 @@ class MoodleSsoController extends Controller
         // Получаем URL для перенаправления после входа
         $redirectUrl = $request->get('redirect', '/');
         
-        // Сохраняем данные SSO в сессии для передачи в Moodle
-        // Это более надежный способ, чем передача через URL
-        $ssoData = [
+        // Формируем параметры для передачи в Moodle
+        // Важно: используем urlencode для правильного кодирования параметров
+        $queryParams = [
             'token' => $token,
-            'email' => $user->email,
+            'email' => $user->email, // email не нужно кодировать, http_build_query сделает это автоматически
             'moodle_user_id' => $user->moodle_user_id,
             'redirect' => $redirectUrl,
-            'expires_at' => now()->addMinutes(5)->timestamp,
         ];
         
-        // Сохраняем в сессии с уникальным ключом
-        $ssoKey = 'moodle_sso_' . $user->id . '_' . time();
-        session([$ssoKey => $ssoData]);
-        
-        // Формируем URL для автоматического входа в Moodle
-        // Передаем только ключ сессии, данные будут получены через API
-        $queryParams = [
-            'sso_key' => $ssoKey,
-            'user_id' => $user->id,
-        ];
-        
-        // Альтернативный вариант: передаем параметры напрямую через URL (если токен не слишком длинный)
-        // Проверяем длину токена
-        if (strlen($token) < 500) {
-            // Если токен короткий, передаем через URL
-            $queryParams = [
-                'token' => $token,
-                'email' => urlencode($user->email),
-                'moodle_user_id' => $user->moodle_user_id,
-                'redirect' => urlencode($redirectUrl),
-            ];
-        }
-        
-        $ssoUrl = rtrim($moodleUrl, '/') . '/moodle-sso-from-laravel.php?' . http_build_query($queryParams, '', '&', PHP_QUERY_RFC3986);
+        // Формируем URL с параметрами
+        // Используем http_build_query с правильными настройками для внешних URL
+        $queryString = http_build_query($queryParams, '', '&', PHP_QUERY_RFC3986);
+        $ssoUrl = rtrim($moodleUrl, '/') . '/moodle-sso-from-laravel.php?' . $queryString;
 
         Log::info('Moodle SSO: Redirecting user to Moodle', [
             'user_id' => $user->id,
@@ -121,11 +100,13 @@ class MoodleSsoController extends Controller
             'redirect_url' => $redirectUrl,
             'sso_url_length' => strlen($ssoUrl),
             'token_length' => strlen($token),
-            'query_params' => $queryParams,
-            'sso_url_preview' => substr($ssoUrl, 0, 200) . '...'
+            'query_string_length' => strlen($queryString),
+            'sso_url_preview' => substr($ssoUrl, 0, 300) . (strlen($ssoUrl) > 300 ? '...' : ''),
+            'query_params_keys' => array_keys($queryParams)
         ]);
 
-        // Используем полный URL для внешнего редиректа
+        // Используем redirect()->away() для внешнего редиректа
+        // Это гарантирует, что браузер получит полный URL с параметрами
         return redirect()->away($ssoUrl);
     }
 
