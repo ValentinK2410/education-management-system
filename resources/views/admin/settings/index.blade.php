@@ -527,15 +527,20 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="brand-preview" id="brandPreview">
+                    <div class="brand-preview" id="brandPreview" style="min-height: 120px;">
                         <div class="brand-preview-content">
-                            <div class="brand-preview-logo" id="previewLogo">
+                            <div class="brand-preview-logo" id="previewLogo" style="display: flex; align-items: center; gap: 0.5rem;">
                                 <img id="previewLogoImg" src="" alt="" style="display: none; max-width: 32px; max-height: 32px; object-fit: contain;">
-                                <i id="previewLogoIcon" class="fas fa-graduation-cap"></i>
+                                <i id="previewLogoIcon" class="fas fa-graduation-cap" style="font-size: 16px;"></i>
                             </div>
-                            <div class="brand-preview-text" id="previewText" style="font-size: 1.5rem;">EduManage</div>
-                            <div id="previewAdditionalLines"></div>
+                            <div class="brand-preview-text" id="previewText" style="font-size: 1.5rem; font-weight: 700; color: white; margin-top: 0.5rem;">EduManage</div>
+                            <div id="previewAdditionalLines" style="margin-top: 0.5rem;"></div>
                         </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> Предпросмотр обновляется автоматически при изменении настроек
+                        </small>
                     </div>
                 </div>
             </div>
@@ -576,16 +581,22 @@
 
     // Обновление предпросмотра
     function updatePreview() {
+        console.log('Обновление предпросмотра...');
+        
         // Название системы
         const nameInput = document.querySelector('input[name="settings[system_name]"]');
-        if (nameInput) {
-            document.getElementById('previewText').textContent = nameInput.value || 'EduManage';
+        const previewText = document.getElementById('previewText');
+        if (nameInput && previewText) {
+            previewText.textContent = nameInput.value || 'EduManage';
+            console.log('Название обновлено:', nameInput.value);
         }
 
         // Размер текста
         const textSizeInput = document.querySelector('input[name="settings[system_brand_text_size]"]');
-        if (textSizeInput) {
-            document.getElementById('previewText').style.fontSize = (textSizeInput.value || '1.5') + 'rem';
+        if (textSizeInput && previewText) {
+            const fontSize = (textSizeInput.value || '1.5') + 'rem';
+            previewText.style.fontSize = fontSize;
+            console.log('Размер текста обновлен:', fontSize);
         }
 
         // Логотип
@@ -598,15 +609,17 @@
             const width = logoWidthInput.value || '32';
             const height = logoHeightInput.value || '32';
             
-            if (currentLogoUrl) {
+            if (currentLogoUrl && logoImg) {
                 logoImg.style.display = 'block';
                 logoIcon.style.display = 'none';
                 logoImg.style.maxWidth = width + 'px';
                 logoImg.style.maxHeight = height + 'px';
-            } else {
+                console.log('Логотип обновлен, размер:', width + 'x' + height);
+            } else if (logoIcon) {
                 logoImg.style.display = 'none';
                 logoIcon.style.display = 'block';
                 logoIcon.style.fontSize = (parseInt(height) / 2) + 'px';
+                console.log('Иконка обновлена, размер:', (parseInt(height) / 2) + 'px');
             }
         }
 
@@ -785,10 +798,42 @@
 
     // Инициализация обработчиков событий для всех полей
     document.addEventListener('DOMContentLoaded', function() {
-        // Обработчики для основных полей
+        console.log('Инициализация предпросмотра...');
+        
+        // Обработчики для основных полей настроек
         document.querySelectorAll('input[name^="settings["]').forEach(function(input) {
-            input.addEventListener('input', updatePreview);
+            input.addEventListener('input', function() {
+                console.log('Изменено поле:', input.name, 'значение:', input.value);
+                updatePreview();
+            });
+            input.addEventListener('change', function() {
+                console.log('Изменено поле (change):', input.name, 'значение:', input.value);
+                updatePreview();
+            });
         });
+
+        // Обработчики для полей размеров логотипа
+        const logoWidthInput = document.querySelector('input[name="settings[system_logo_width]"]');
+        const logoHeightInput = document.querySelector('input[name="settings[system_logo_height]"]');
+        const textSizeInput = document.querySelector('input[name="settings[system_brand_text_size]"]');
+        const nameInput = document.querySelector('input[name="settings[system_name]"]');
+        
+        if (logoWidthInput) {
+            logoWidthInput.addEventListener('input', updatePreview);
+            logoWidthInput.addEventListener('change', updatePreview);
+        }
+        if (logoHeightInput) {
+            logoHeightInput.addEventListener('input', updatePreview);
+            logoHeightInput.addEventListener('change', updatePreview);
+        }
+        if (textSizeInput) {
+            textSizeInput.addEventListener('input', updatePreview);
+            textSizeInput.addEventListener('change', updatePreview);
+        }
+        if (nameInput) {
+            nameInput.addEventListener('input', updatePreview);
+            nameInput.addEventListener('change', updatePreview);
+        }
 
         // Обработчики для существующих дополнительных строк
         document.querySelectorAll('.additional-line-item').forEach(function(item) {
@@ -806,27 +851,40 @@
         // Инициализация предпросмотра
         @if($logoExists && $currentLogo)
             const logoImg = document.getElementById('previewLogoImg');
-            logoImg.src = @json(asset('storage/' . $currentLogo));
-            logoImg.style.display = 'block';
-            document.getElementById('previewLogoIcon').style.display = 'none';
-            currentLogoUrl = @json(asset('storage/' . $currentLogo));
+            if (logoImg) {
+                logoImg.src = @json(asset('storage/' . $currentLogo));
+                logoImg.style.display = 'block';
+                logoImg.style.maxWidth = '32px';
+                logoImg.style.maxHeight = '32px';
+                const logoIcon = document.getElementById('previewLogoIcon');
+                if (logoIcon) logoIcon.style.display = 'none';
+                currentLogoUrl = @json(asset('storage/' . $currentLogo));
+            }
         @endif
         
         // Инициализация дополнительных строк в предпросмотре
         @if(!empty($lines))
             @foreach($lines as $index => $line)
-                if (document.getElementById('previewAdditionalLines')) {
-                    const lineDiv = document.createElement('div');
-                    lineDiv.className = 'brand-preview-line';
-                    lineDiv.textContent = @json($line['text'] ?? '');
-                    lineDiv.style.fontSize = @json($line['font_size'] ?? '0.875') + 'rem';
-                    lineDiv.style.opacity = @json($line['opacity'] ?? '0.9');
-                    document.getElementById('previewAdditionalLines').appendChild(lineDiv);
-                }
+                @if(!empty($line['text']))
+                    const previewLinesContainer = document.getElementById('previewAdditionalLines');
+                    if (previewLinesContainer) {
+                        const lineDiv = document.createElement('div');
+                        lineDiv.className = 'brand-preview-line';
+                        lineDiv.textContent = @json($line['text'] ?? '');
+                        lineDiv.style.fontSize = @json($line['font_size'] ?? '0.875') + 'rem';
+                        lineDiv.style.opacity = @json($line['opacity'] ?? '0.9');
+                        lineDiv.style.color = 'rgba(255,255,255,' + @json($line['opacity'] ?? '0.9') + ')';
+                        previewLinesContainer.appendChild(lineDiv);
+                    }
+                @endif
             @endforeach
         @endif
         
-        updatePreview();
+        // Вызываем обновление предпросмотра после инициализации
+        setTimeout(function() {
+            updatePreview();
+            console.log('Предпросмотр инициализирован');
+        }, 100);
     });
 </script>
 @endpush
