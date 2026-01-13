@@ -74,10 +74,26 @@
             font-weight: 700;
             text-decoration: none;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .sidebar-brand:hover {
             color: rgba(255,255,255,0.8);
+        }
+
+        .sidebar-brand .brand-logo {
+            max-height: 32px;
+            max-width: 150px;
+            object-fit: contain;
+            margin-right: 0.5rem;
+        }
+
+        .sidebar-brand .brand-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .sidebar-nav {
@@ -704,8 +720,17 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
-                <i class="fas fa-graduation-cap me-2"></i>
-                <span class="brand-text">EduManage</span>
+                @php
+                    $systemLogo = \App\Models\Setting::get('system_logo');
+                    $systemName = \App\Models\Setting::get('system_name', 'EduManage');
+                    $systemLogoIcon = \App\Models\Setting::get('system_logo_icon', 'fa-graduation-cap');
+                @endphp
+                @if($systemLogo && \Storage::disk('public')->exists($systemLogo))
+                    <img src="{{ asset('storage/' . $systemLogo) }}" alt="{{ $systemName }}" class="brand-logo" style="max-height: 32px; max-width: 32px; margin-right: 0.5rem;">
+                @else
+                    <i class="fas {{ $systemLogoIcon }} me-2"></i>
+                @endif
+                <span class="brand-text">{{ $systemName }}</span>
             </a>
         </div>
 

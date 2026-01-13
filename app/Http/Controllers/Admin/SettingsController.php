@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -38,7 +39,34 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'settings' => 'required|array',
             'settings.*' => 'nullable',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
+
+        // Обработка загрузки логотипа
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('system', 'public');
+            $setting = Setting::where('key', 'system_logo')->first();
+            if ($setting) {
+                // Удаляем старый логотип, если он существует
+                if ($setting->value && \Storage::disk('public')->exists($setting->value)) {
+                    \Storage::disk('public')->delete($setting->value);
+                }
+                $setting->value = $logoPath;
+                $setting->save();
+            }
+        }
+
+        // Обработка удаления логотипа
+        if ($request->has('delete_logo') && $request->delete_logo === '1') {
+            $setting = Setting::where('key', 'system_logo')->first();
+            if ($setting && $setting->value) {
+                if (\Storage::disk('public')->exists($setting->value)) {
+                    \Storage::disk('public')->delete($setting->value);
+                }
+                $setting->value = null;
+                $setting->save();
+            }
+        }
 
         foreach ($validated['settings'] as $key => $value) {
             $setting = Setting::where('key', $key)->first();

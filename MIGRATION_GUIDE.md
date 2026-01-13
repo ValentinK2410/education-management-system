@@ -16,6 +16,7 @@ sudo ./install-from-github.sh https://github.com/YOUR_USERNAME/education-managem
 ```
 
 После этого:
+
 1. Настройте `.env` файл с параметрами базы данных
 2. Импортируйте базу данных со старого сервера
 3. Перенесите файлы из `storage/app/public`
@@ -38,13 +39,13 @@ sudo ./install-from-github.sh https://github.com/YOUR_USERNAME/education-managem
 
 ### Требования к новому серверу
 
-- **ОС**: Ubuntu 20.04+ или Debian 11+
-- **PHP**: 8.2+ с расширениями: mbstring, xml, curl, zip, pdo_mysql, gd, fileinfo
-- **MySQL**: 5.7+ или MariaDB 10.3+
-- **Composer**: последняя версия
-- **Git**: для клонирования репозитория
-- **Nginx** или **Apache**: веб-сервер
-- **SSL сертификат**: Let's Encrypt (рекомендуется)
+-   **ОС**: Ubuntu 20.04+ или Debian 11+
+-   **PHP**: 8.2+ с расширениями: mbstring, xml, curl, zip, pdo_mysql, gd, fileinfo
+-   **MySQL**: 5.7+ или MariaDB 10.3+
+-   **Composer**: последняя версия
+-   **Git**: для клонирования репозитория
+-   **Nginx** или **Apache**: веб-сервер
+-   **SSL сертификат**: Let's Encrypt (рекомендуется)
 
 ### Установка необходимого ПО на новый сервер
 
@@ -96,10 +97,11 @@ chmod +x scripts/migrate/export-database.sh
 ```
 
 Скрипт запросит:
-- Имя пользователя MySQL
-- Пароль MySQL
-- Имя базы данных
-- Хост и порт MySQL
+
+-   Имя пользователя MySQL
+-   Пароль MySQL
+-   Имя базы данных
+-   Хост и порт MySQL
 
 Резервная копия будет сохранена в `backups/migration/` с именем `[db_name]_[timestamp].sql.gz`
 
@@ -158,14 +160,15 @@ sudo ./install-from-github.sh https://github.com/YOUR_USERNAME/education-managem
 ```
 
 Скрипт автоматически:
-- Клонирует репозиторий
-- Установит зависимости Composer
-- Создаст необходимые директории
-- Настроит права доступа
-- Создаст .env файл
-- Сгенерирует APP_KEY
-- Создаст символическую ссылку storage
-- Оптимизирует приложение
+
+-   Клонирует репозиторий
+-   Установит зависимости Composer
+-   Создаст необходимые директории
+-   Настроит права доступа
+-   Создаст .env файл
+-   Сгенерирует APP_KEY
+-   Создаст символическую ссылку storage
+-   Оптимизирует приложение
 
 **Вариант B: Ручная установка**
 
@@ -223,10 +226,11 @@ sudo ./scripts/migrate/setup-new-server.sh
 ```
 
 Скрипт выполнит:
-- Создание необходимых директорий
-- Установку прав доступа
-- Создание символической ссылки storage
-- Очистку и оптимизацию кэша
+
+-   Создание необходимых директорий
+-   Установку прав доступа
+-   Создание символической ссылки storage
+-   Очистку и оптимизацию кэша
 
 ## Импорт данных на новый сервер
 
@@ -284,10 +288,11 @@ chmod +x scripts/migrate/transfer-files.sh
 ```
 
 Скрипт перенесет:
-- `storage/app/public/avatars/` - аватары пользователей
-- `storage/app/public/certificate-templates/` - шаблоны сертификатов
-- `storage/app/public/certificate-elements/` - элементы сертификатов
-- Опционально: резервные копии базы данных
+
+-   `storage/app/public/avatars/` - аватары пользователей
+-   `storage/app/public/certificate-templates/` - шаблоны сертификатов
+-   `storage/app/public/certificate-elements/` - элементы сертификатов
+-   Опционально: резервные копии базы данных
 
 ### Ручной перенос через rsync
 
@@ -423,16 +428,16 @@ php artisan tinker
 
 ### 3. Проверка загрузки файлов
 
-- Откройте https://m.dekan.pro
-- Войдите в админ-панель
-- Проверьте отображение аватаров пользователей
-- Проверьте загрузку новых файлов
+-   Откройте https://m.dekan.pro
+-   Войдите в админ-панель
+-   Проверьте отображение аватаров пользователей
+-   Проверьте загрузку новых файлов
 
 ### 4. Проверка создания резервных копий
 
-- Войдите в админ-панель → Резервные копии
-- Создайте тестовую резервную копию
-- Убедитесь, что она успешно создается
+-   Войдите в админ-панель → Резервные копии
+-   Создайте тестовую резервную копию
+-   Убедитесь, что она успешно создается
 
 ### 5. Проверка логов
 
@@ -472,15 +477,15 @@ tail -100 /var/www/www-root/data/www/m.dekan.pro/storage/logs/laravel.log
 
 ## Чек-лист после миграции
 
-- [ ] Сайт доступен по HTTPS
-- [ ] Авторизация работает
-- [ ] Аватары пользователей отображаются
-- [ ] Создание резервных копий работает
-- [ ] Нет ошибок в логах
-- [ ] Автоматические резервные копии настроены
-- [ ] SSL сертификат настроен и обновляется автоматически
-- [ ] Права доступа установлены правильно
-- [ ] Символическая ссылка storage создана
+-   [ ] Сайт доступен по HTTPS
+-   [ ] Авторизация работает
+-   [ ] Аватары пользователей отображаются
+-   [ ] Создание резервных копий работает
+-   [ ] Нет ошибок в логах
+-   [ ] Автоматические резервные копии настроены
+-   [ ] SSL сертификат настроен и обновляется автоматически
+-   [ ] Права доступа установлены правильно
+-   [ ] Символическая ссылка storage создана
 
 ## Важные замечания
 
@@ -502,6 +507,6 @@ tail -100 /var/www/www-root/data/www/m.dekan.pro/storage/logs/laravel.log
 
 ## Дополнительные ресурсы
 
-- [Laravel Deployment Documentation](https://laravel.com/docs/deployment)
-- [Nginx Configuration Guide](https://nginx.org/en/docs/)
-- [MySQL Backup and Recovery](https://dev.mysql.com/doc/refman/8.0/en/backup-and-recovery.html)
+-   [Laravel Deployment Documentation](https://laravel.com/docs/deployment)
+-   [Nginx Configuration Guide](https://nginx.org/en/docs/)
+-   [MySQL Backup and Recovery](https://dev.mysql.com/doc/refman/8.0/en/backup-and-recovery.html)

@@ -177,7 +177,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.settings.store') }}" id="settingsForm">
+                    <form method="POST" action="{{ route('admin.settings.store') }}" id="settingsForm" enctype="multipart/form-data">
                         @csrf
 
                         @foreach($groups as $groupKey => $groupName)
@@ -199,7 +199,31 @@
                                         </div>
                                         @endif
                                         
-                                        @if($setting->type === 'text')
+                                        @if($setting->key === 'system_logo')
+                                            <div class="mb-3">
+                                                @php
+                                                    $currentLogo = $setting->value;
+                                                    $logoExists = $currentLogo && \Storage::disk('public')->exists($currentLogo);
+                                                @endphp
+                                                @if($logoExists)
+                                                    <div class="mb-2">
+                                                        <img src="{{ asset('storage/' . $currentLogo) }}" alt="Текущий логотип" style="max-height: 64px; max-width: 200px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px;">
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" name="delete_logo" value="1" id="delete_logo">
+                                                        <label class="form-check-label" for="delete_logo">
+                                                            Удалить текущий логотип
+                                                        </label>
+                                                    </div>
+                                                @endif
+                                                <input 
+                                                    type="file" 
+                                                    name="logo" 
+                                                    class="form-control" 
+                                                    accept="image/jpeg,image/png,image/jpg,image/gif,image/svg+xml,image/webp">
+                                                <small class="text-muted">Рекомендуемый размер: до 200x64px. Форматы: JPEG, PNG, GIF, SVG, WebP. Максимальный размер: 2MB</small>
+                                            </div>
+                                        @elseif($setting->type === 'text')
                                             <textarea 
                                                 name="settings[{{ $setting->key }}]" 
                                                 class="form-control" 
