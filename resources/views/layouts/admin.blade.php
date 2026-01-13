@@ -683,9 +683,24 @@
             justify-content: center !important;
         }
 
-        .pagination-wrapper nav[role="navigation"] svg {
+        .pagination-wrapper nav[role="navigation"] svg,
+        .pagination svg,
+        nav[role="navigation"] svg {
             width: 1rem !important;
             height: 1rem !important;
+            max-width: 1rem !important;
+            max-height: 1rem !important;
+        }
+        
+        /* Исправление размера стрелок в пагинации Laravel */
+        .pagination .page-link svg,
+        nav[role="navigation"] .page-link svg,
+        nav[role="navigation"] a svg,
+        nav[role="navigation"] span svg {
+            width: 0.875rem !important;
+            height: 0.875rem !important;
+            max-width: 0.875rem !important;
+            max-height: 0.875rem !important;
         }
 
         .pagination-wrapper nav[role="navigation"] .text-sm {
@@ -709,12 +724,45 @@
         }
 
         /* Уменьшаем размер иконок в пагинации */
-        .pagination-wrapper nav[role="navigation"] .w-5 {
+        .pagination-wrapper nav[role="navigation"] .w-5,
+        nav[role="navigation"] .w-5 {
             width: 1rem !important;
         }
 
-        .pagination-wrapper nav[role="navigation"] .h-5 {
+        .pagination-wrapper nav[role="navigation"] .h-5,
+        nav[role="navigation"] .h-5 {
             height: 1rem !important;
+        }
+        
+        /* Исправление размера стрелок (chevrons) в пагинации Laravel */
+        .pagination .page-link svg,
+        nav[role="navigation"] .page-link svg,
+        nav[role="navigation"] a svg,
+        nav[role="navigation"] span svg,
+        .pagination svg,
+        nav[role="navigation"] svg {
+            width: 0.875rem !important;
+            height: 0.875rem !important;
+            max-width: 0.875rem !important;
+            max-height: 0.875rem !important;
+            vertical-align: middle !important;
+        }
+        
+        /* Дополнительные стили для элементов пагинации со стрелками */
+        .pagination .page-link,
+        nav[role="navigation"] .page-link,
+        nav[role="navigation"] a,
+        nav[role="navigation"] span {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        .pagination .page-link svg,
+        nav[role="navigation"] .page-link svg,
+        nav[role="navigation"] a svg,
+        nav[role="navigation"] span svg {
+            flex-shrink: 0 !important;
         }
     </style>
 </head>
