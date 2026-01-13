@@ -125,10 +125,67 @@ $newBatch = $maxBatch + 1;
 
 echo "\n🔄 Помечаем существующие миграции как выполненные...\n";
 $added = 0;
+
+// Создаем карту миграций к таблицам для более точной проверки
+$migrationToTables = [
+    '0001_01_01_000000_create_users_table' => ['users'],
+    '0001_01_01_000001_create_cache_table' => ['cache'],
+    '0001_01_01_000002_create_jobs_table' => ['jobs'],
+    '2024_01_01_000001_create_roles_and_permissions_tables' => ['roles', 'permissions', 'role_permissions', 'user_roles'],
+    '2024_01_01_000002_create_institutions_table' => ['institutions'],
+    '2024_01_01_000003_create_programs_table' => ['programs'],
+    '2024_01_01_000004_create_courses_table' => ['courses'],
+    '2024_01_01_000009_create_user_relations_tables' => ['user_programs', 'user_courses', 'user_institutions'],
+    '2024_01_01_000011_create_reviews_table' => ['reviews'],
+    '2024_01_01_000012_create_events_table' => ['events'],
+    '2024_01_01_000016_create_certificate_templates_table' => ['certificate_templates'],
+    '2024_01_01_000017_create_certificates_table' => ['certificates'],
+    '2024_01_01_000018_create_enrollment_history_table' => ['enrollment_history'],
+    '2024_01_01_000019_create_payments_table' => ['payments'],
+    '2024_01_01_000020_create_course_activities_table' => ['course_activities'],
+    '2024_01_01_000021_create_student_activity_progress_table' => ['student_activity_progress'],
+    '2024_01_01_000022_create_student_activity_history_table' => ['student_activity_history'],
+    '2024_01_02_000002_create_settings_table' => ['settings'],
+    '2025_01_01_000009_create_data_versions_table' => ['data_versions'],
+    '2025_01_01_000010_create_activity_logs_table' => ['activity_logs'],
+];
+
 foreach ($migrations as $migration) {
     if (!in_array($migration, $executedMigrations)) {
         // Проверяем, соответствует ли миграция существующим таблицам
         $shouldAdd = false;
+        
+        // Сначала проверяем по карте миграций
+        if (isset($migrationToTables[$migration])) {
+            $requiredTables = $migrationToTables[$migration];
+            $allTablesExist = true;
+            foreach ($requiredTables as $table) {
+                if (!Schema::hasTable($table)) {
+                    $allTablesExist = false;
+                    break;
+                }
+            }
+            if ($allTablesExist) {
+                $shouldAdd = true;
+            } elseif (count($requiredTables) > 1) {
+                // Если миграция создает несколько таблиц, но хотя бы одна существует
+                // считаем миграцию выполненной (возможно частично)
+                $someTablesExist = false;
+                foreach ($requiredTables as $table) {
+                    if (Schema::hasTable($table)) {
+                        $someTablesExist = true;
+                        break;
+                    }
+                }
+                if ($someTablesExist) {
+                    echo "  ⚠️  Внимание: миграция {$migration} выполнена частично (не все таблицы существуют)\n";
+                    $shouldAdd = true;
+                }
+            }
+        }
+        
+        // Если не нашли в карте, используем старую логику
+        if (!$shouldAdd) {
         
         // Простая проверка: если таблица users существует, значит базовая миграция выполнена
         if ($migration === '0001_01_01_000000_create_users_table' && Schema::hasTable('users')) {
@@ -155,6 +212,21 @@ foreach ($migrations as $migration) {
         }
         elseif (strpos($migration, 'create_courses_table') !== false && Schema::hasTable('courses')) {
             $shouldAdd = true;
+        }
+        elseif (strpos($migration, 'create_user_relations_tables') !== false) {
+            // Проверяем все три таблицы, создаваемые этой миграцией
+            if (Schema::hasTable('user_programs') && 
+                Schema::hasTable('user_courses') && 
+                Schema::hasTable('user_institutions')) {
+                $shouldAdd = true;
+            } elseif (Schema::hasTable('user_programs') || 
+                      Schema::hasTable('user_courses') || 
+                      Schema::hasTable('user_institutions')) {
+                // Если хотя бы одна таблица существует, считаем миграцию выполненной
+                // (возможно, миграция была выполнена частично)
+                echo "  ⚠️  Внимание: миграция {$migration} выполнена частично (не все таблицы существуют)\n";
+                $shouldAdd = true;
+            }
         }
         elseif (strpos($migration, 'create_reviews_table') !== false && Schema::hasTable('reviews')) {
             $shouldAdd = true;
