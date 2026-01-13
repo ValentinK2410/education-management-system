@@ -538,33 +538,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm preview-container" style="position: sticky; top: 20px; align-self: flex-start;">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0">
-                        <i class="fas fa-eye me-2"></i>
-                        Предпросмотр
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="brand-preview" id="brandPreview" style="min-height: 120px;">
-                        <div class="brand-preview-content">
-                            <div class="brand-preview-logo" id="previewLogo" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <img id="previewLogoImg" src="" alt="" style="display: none; max-width: 32px; max-height: 32px; object-fit: contain;">
-                                <i id="previewLogoIcon" class="fas fa-graduation-cap" style="font-size: 16px;"></i>
-                            </div>
-                            <div class="brand-preview-text" id="previewText" style="font-size: 1.5rem; font-weight: 700; color: white; margin-top: 0.5rem;">EduManage</div>
-                            <div id="previewAdditionalLines" style="margin-top: 0.5rem;"></div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle"></i> Предпросмотр обновляется автоматически при изменении настроек
-                        </small>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -599,70 +572,83 @@
     let lineCounter = {{ count($lines) }};
     let currentLogoUrl = @json($logoExists && $currentLogo ? asset('storage/' . $currentLogo) : null);
 
-    // Обновление предпросмотра
+    // Обновление предпросмотра в сайдбаре
     function updatePreview() {
-        console.log('Обновление предпросмотра...');
+        console.log('Обновление предпросмотра в сайдбаре...');
         
-        // Название системы
+        // Название системы в сайдбаре
         const nameInput = document.querySelector('input[name="settings[system_name]"]');
-        const previewText = document.getElementById('previewText');
-        if (nameInput && previewText) {
-            previewText.textContent = nameInput.value || 'EduManage';
+        const sidebarBrandText = document.getElementById('sidebarBrandText');
+        if (nameInput && sidebarBrandText) {
+            sidebarBrandText.textContent = nameInput.value || 'EduManage';
             console.log('Название обновлено:', nameInput.value);
         }
 
-        // Размер текста
+        // Размер текста в сайдбаре
         const textSizeInput = document.querySelector('input[name="settings[system_brand_text_size]"]');
-        if (textSizeInput && previewText) {
+        if (textSizeInput && sidebarBrandText) {
             const fontSize = (textSizeInput.value || '1.5') + 'rem';
-            previewText.style.fontSize = fontSize;
+            sidebarBrandText.style.fontSize = fontSize;
             console.log('Размер текста обновлен:', fontSize);
         }
 
-        // Логотип
+        // Логотип в сайдбаре
         const logoWidthInput = document.querySelector('input[name="settings[system_logo_width]"]');
         const logoHeightInput = document.querySelector('input[name="settings[system_logo_height]"]');
-        const logoImg = document.getElementById('previewLogoImg');
-        const logoIcon = document.getElementById('previewLogoIcon');
+        const sidebarBrandImg = document.getElementById('sidebarBrandImg');
+        const sidebarBrandIcon = document.getElementById('sidebarBrandIcon');
+        const iconClassInput = document.querySelector('input[name="settings[system_logo_icon]"]');
         
-        if (logoWidthInput && logoHeightInput) {
+        if (logoWidthInput && logoHeightInput && sidebarBrandImg && sidebarBrandIcon) {
             const width = logoWidthInput.value || '32';
             const height = logoHeightInput.value || '32';
             
-            if (currentLogoUrl && logoImg) {
-                logoImg.style.display = 'block';
-                logoIcon.style.display = 'none';
-                logoImg.style.maxWidth = width + 'px';
-                logoImg.style.maxHeight = height + 'px';
+            if (currentLogoUrl) {
+                sidebarBrandImg.src = currentLogoUrl;
+                sidebarBrandImg.style.display = 'block';
+                sidebarBrandImg.style.maxWidth = width + 'px';
+                sidebarBrandImg.style.maxHeight = height + 'px';
+                sidebarBrandIcon.style.display = 'none';
                 console.log('Логотип обновлен, размер:', width + 'x' + height);
-            } else if (logoIcon) {
-                logoImg.style.display = 'none';
-                logoIcon.style.display = 'block';
-                logoIcon.style.fontSize = (parseInt(height) / 2) + 'px';
+            } else {
+                sidebarBrandImg.style.display = 'none';
+                sidebarBrandIcon.style.display = 'block';
+                sidebarBrandIcon.style.fontSize = (parseInt(height) / 2) + 'px';
+                
+                // Обновляем класс иконки
+                if (iconClassInput) {
+                    const iconClass = iconClassInput.value || 'fa-graduation-cap';
+                    sidebarBrandIcon.className = 'fas ' + iconClass;
+                }
                 console.log('Иконка обновлена, размер:', (parseInt(height) / 2) + 'px');
             }
         }
 
-        // Дополнительные строки
+        // Дополнительные строки в сайдбаре
         updateAdditionalLinesPreview();
     }
 
-    // Обновление предпросмотра дополнительных строк
+    // Обновление предпросмотра дополнительных строк в сайдбаре
     function updateAdditionalLinesPreview() {
-        const container = document.getElementById('previewAdditionalLines');
+        const container = document.getElementById('sidebarBrandAdditionalLines');
+        if (!container) return;
+        
         container.innerHTML = '';
         
-        document.querySelectorAll('.additional-line-item').forEach(function(item) {
+        document.querySelectorAll('.additional-line-item').forEach(function(item, index) {
             const textInput = item.querySelector('input[data-preview-target]');
             const sizeInput = item.querySelector('input[data-preview-size]');
             const opacityInput = item.querySelector('input[data-preview-opacity]');
             
             if (textInput && textInput.value) {
                 const lineDiv = document.createElement('div');
-                lineDiv.className = 'brand-preview-line';
+                lineDiv.className = 'brand-additional-line sidebar-additional-line-' + index;
                 lineDiv.textContent = textInput.value;
-                lineDiv.style.fontSize = (sizeInput ? sizeInput.value : '0.875') + 'rem';
-                lineDiv.style.opacity = opacityInput ? opacityInput.value : '0.9';
+                const fontSize = (sizeInput ? sizeInput.value : '0.875') + 'rem';
+                const opacity = opacityInput ? opacityInput.value : '0.9';
+                lineDiv.style.fontSize = fontSize;
+                lineDiv.style.opacity = opacity;
+                lineDiv.style.color = 'rgba(255,255,255,' + opacity + ')';
                 container.appendChild(lineDiv);
             }
         });
@@ -695,19 +681,10 @@
         deleteLogoCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 currentLogoUrl = null;
-                const logoImg = document.getElementById('previewLogoImg');
-                const logoIcon = document.getElementById('previewLogoIcon');
-                logoImg.style.display = 'none';
-                logoIcon.style.display = 'block';
             } else {
                 const currentLogo = @json($logoExists ? asset('storage/' . $currentLogo) : null);
                 if (currentLogo) {
                     currentLogoUrl = currentLogo;
-                    const logoImg = document.getElementById('previewLogoImg');
-                    const logoIcon = document.getElementById('previewLogoIcon');
-                    logoImg.src = currentLogoUrl;
-                    logoImg.style.display = 'block';
-                    logoIcon.style.display = 'none';
                 }
             }
             updatePreview();

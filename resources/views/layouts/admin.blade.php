@@ -719,7 +719,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-brand" id="sidebarBrand">
                 @php
                     $systemLogo = \App\Models\Setting::get('system_logo');
                     $systemName = \App\Models\Setting::get('system_name', 'EduManage');
@@ -731,24 +731,28 @@
                     // Setting::get() уже декодирует JSON для типа 'json', поэтому проверяем тип
                     $additionalLinesArray = is_array($additionalLines) ? $additionalLines : [];
                 @endphp
-                <div style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 0.25rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div id="sidebarBrandContent" style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 0.25rem;">
+                    <div id="sidebarBrandLogo" style="display: flex; align-items: center; gap: 0.5rem;">
                         @if($systemLogo && \Storage::disk('public')->exists($systemLogo))
-                            <img src="{{ asset('storage/' . $systemLogo) }}" alt="{{ $systemName }}" class="brand-logo" style="max-width: {{ $systemLogoWidth }}px; max-height: {{ $systemLogoHeight }}px; object-fit: contain;">
+                            <img src="{{ asset('storage/' . $systemLogo) }}" alt="{{ $systemName }}" id="sidebarBrandImg" class="brand-logo" style="max-width: {{ $systemLogoWidth }}px; max-height: {{ $systemLogoHeight }}px; object-fit: contain;">
+                            <i id="sidebarBrandIcon" class="fas {{ $systemLogoIcon }}" style="display: none; font-size: {{ ($systemLogoHeight / 2) }}px;"></i>
                         @else
-                            <i class="fas {{ $systemLogoIcon }}" style="font-size: {{ ($systemLogoHeight / 2) }}px;"></i>
+                            <img id="sidebarBrandImg" src="" alt="" style="display: none; max-width: {{ $systemLogoWidth }}px; max-height: {{ $systemLogoHeight }}px; object-fit: contain;">
+                            <i id="sidebarBrandIcon" class="fas {{ $systemLogoIcon }}" style="font-size: {{ ($systemLogoHeight / 2) }}px;"></i>
                         @endif
-                        <span class="brand-text" style="font-size: {{ $systemBrandTextSize }}rem;">{{ $systemName }}</span>
+                        <span id="sidebarBrandText" class="brand-text" style="font-size: {{ $systemBrandTextSize }}rem;">{{ $systemName }}</span>
                     </div>
-                    @if(!empty($additionalLinesArray))
-                        @foreach($additionalLinesArray as $line)
-                            @if(!empty($line['text']))
-                                <div class="brand-additional-line" style="font-size: {{ $line['font_size'] ?? '0.875' }}rem; opacity: {{ $line['opacity'] ?? '0.9' }}; color: rgba(255,255,255,{{ $line['opacity'] ?? '0.9' }});">
-                                    {{ $line['text'] }}
-                                </div>
-                            @endif
-                        @endforeach
-                    @endif
+                    <div id="sidebarBrandAdditionalLines">
+                        @if(!empty($additionalLinesArray))
+                            @foreach($additionalLinesArray as $index => $line)
+                                @if(!empty($line['text']))
+                                    <div class="brand-additional-line sidebar-additional-line-{{ $index }}" style="font-size: {{ $line['font_size'] ?? '0.875' }}rem; opacity: {{ $line['opacity'] ?? '0.9' }}; color: rgba(255,255,255,{{ $line['opacity'] ?? '0.9' }});">
+                                        {{ $line['text'] }}
+                                    </div>
+                                @endif
+                            @endforeach
+                        @endif
+                    </div>
                 </div>
             </a>
         </div>
