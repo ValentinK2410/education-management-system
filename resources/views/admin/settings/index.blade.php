@@ -233,19 +233,26 @@
     }
 
     .preview-container {
-        position: sticky;
-        top: 20px;
-        align-self: flex-start;
-        margin-top: 0;
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 20px !important;
+        align-self: flex-start !important;
+        margin-top: 0 !important;
+        z-index: 10;
     }
     
     @media (min-width: 992px) {
         .preview-container {
-            position: -webkit-sticky;
-            position: sticky;
-            top: 20px;
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            top: 20px !important;
             max-height: calc(100vh - 40px);
             overflow-y: auto;
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: flex-start;
         }
     }
 </style>
@@ -530,8 +537,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-4" style="order: 2;">
-            <div class="card border-0 shadow-sm preview-container">
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm preview-container" style="position: sticky; top: 20px; align-self: flex-start;">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
                         <i class="fas fa-eye me-2"></i>
