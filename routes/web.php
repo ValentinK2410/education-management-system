@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserSwitchController;
 use App\Http\Controllers\Admin\InstructorStatsController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\CourseAnalyticsController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
@@ -488,9 +489,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('user-archive/{user}/certificates/{certificate}/download', [UserArchiveController::class, 'downloadCertificate'])->name('user-archive.download-certificate');
 
         // Аналитика (только для администраторов)
-        Route::get('analytics', function () {
-            return view('admin.analytics.index');
-        })->name('analytics.index');
+        Route::get('analytics', [CourseAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::post('analytics/sync', [CourseAnalyticsController::class, 'sync'])->name('analytics.sync');
+        Route::get('analytics/export/csv', [CourseAnalyticsController::class, 'exportCsv'])->name('analytics.export.csv');
+        Route::get('analytics/export/excel', [CourseAnalyticsController::class, 'exportExcel'])->name('analytics.export.excel');
+        Route::get('analytics/export/pdf', [CourseAnalyticsController::class, 'exportPdf'])->name('analytics.export.pdf');
 
         // Статистика преподавателей (только для администраторов)
         Route::get('instructor-stats', [InstructorStatsController::class, 'index'])->name('instructor-stats.index');
