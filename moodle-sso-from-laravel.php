@@ -55,7 +55,7 @@ if (empty($token) || empty($email) || empty($moodle_user_id)) {
 // Простая проверка: проверяем, что пользователь существует и email совпадает
 try {
     // Получаем пользователя из Moodle по ID
-    $user = \core_user::get_user($moodle_user_id);
+    $user = $DB->get_record('user', array('id' => $moodle_user_id), '*', MUST_EXIST);
     
     if (!$user || empty($user->id)) {
         redirect(new moodle_url('/login/index.php'), 'Пользователь не найден в Moodle', null, \core\output\notification::NOTIFY_ERROR);
@@ -67,7 +67,7 @@ try {
     }
     
     // Проверяем, что пользователь не удален
-    if ($user->deleted) {
+    if (!empty($user->deleted)) {
         redirect(new moodle_url('/login/index.php'), 'Аккаунт пользователя удален', null, \core\output\notification::NOTIFY_ERROR);
     }
     
@@ -83,12 +83,8 @@ try {
     error_log('Laravel SSO: Moodle User ID: ' . $moodle_user_id);
     
     // Автоматически авторизуем пользователя в Moodle
-    // Используем complete_user_login() для установки сессии
-    \core\session\manager::login_user($user);
-    
-    // Устанавливаем глобальную переменную $USER
-    global $USER;
-    $USER = $user;
+    // Используем complete_user_login() - стандартную функцию Moodle для авторизации
+    complete_user_login($user);
     
     // Обновляем последний вход пользователя
     $user->lastlogin = time();
@@ -104,5 +100,10 @@ try {
     
 } catch (Exception $e) {
     error_log('Laravel SSO: Ошибка при авторизации: ' . $e->getMessage());
+    error_log('Laravel SSO: Trace: ' . $e->getTraceAsString());
+    redirect(new moodle_url('/login/index.php'), 'Ошибка при авторизации: ' . $e->getMessage(), null, \core\output\notification::NOTIFY_ERROR);
+} catch (moodle_exception $e) {
+    error_log('Laravel SSO: Moodle Exception: ' . $e->getMessage());
+    error_log('Laravel SSO: Trace: ' . $e->getTraceAsString());
     redirect(new moodle_url('/login/index.php'), 'Ошибка при авторизации: ' . $e->getMessage(), null, \core\output\notification::NOTIFY_ERROR);
 }
