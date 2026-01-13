@@ -1273,16 +1273,35 @@ class MoodleApiService
         if ($result === false || isset($result['exception'])) {
             Log::error('Ошибка получения курсов из Moodle', [
                 'exception' => $result['exception'] ?? null,
-                'message' => $result['message'] ?? null
+                'message' => $result['message'] ?? null,
+                'errorcode' => $result['errorcode'] ?? null
             ]);
             return false;
         }
 
         // Возвращаем массив курсов (исключаем системный курс с id=1)
         if (is_array($result)) {
+            $totalCourses = count($result);
+            $systemCourse = null;
+            
+            // Находим системный курс для логирования
+            foreach ($result as $course) {
+                if (isset($course['id']) && $course['id'] == 1) {
+                    $systemCourse = $course;
+                    break;
+                }
+            }
+            
             $courses = array_values(array_filter($result, function($course) {
                 return isset($course['id']) && $course['id'] > 1;
             }));
+
+            Log::info('Курсы получены из Moodle', [
+                'total_from_api' => $totalCourses,
+                'after_filtering' => count($courses),
+                'system_course_excluded' => $systemCourse ? true : false,
+                'course_ids' => array_map(function($c) { return $c['id'] ?? null; }, $courses)
+            ]);
 
             // Если указаны конкретные ID, фильтруем по ним
             if (!empty($options['ids']) && is_array($options['ids'])) {
@@ -1295,6 +1314,10 @@ class MoodleApiService
             return $courses;
         }
 
+        Log::warning('Moodle API вернул не массив курсов', [
+            'result_type' => gettype($result),
+            'result' => $result
+        ]);
         return [];
     }
 
