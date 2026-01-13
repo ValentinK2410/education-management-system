@@ -663,11 +663,6 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     currentLogoUrl = e.target.result;
-                    const logoImg = document.getElementById('previewLogoImg');
-                    const logoIcon = document.getElementById('previewLogoIcon');
-                    logoImg.src = currentLogoUrl;
-                    logoImg.style.display = 'block';
-                    logoIcon.style.display = 'none';
                     updatePreview();
                 };
                 reader.readAsDataURL(file);
@@ -845,36 +840,9 @@
             });
         }
 
-        // Инициализация предпросмотра
+        // Инициализация предпросмотра в сайдбаре
         @if($logoExists && $currentLogo)
-            const logoImg = document.getElementById('previewLogoImg');
-            if (logoImg) {
-                logoImg.src = @json(asset('storage/' . $currentLogo));
-                logoImg.style.display = 'block';
-                logoImg.style.maxWidth = '32px';
-                logoImg.style.maxHeight = '32px';
-                const logoIcon = document.getElementById('previewLogoIcon');
-                if (logoIcon) logoIcon.style.display = 'none';
-                currentLogoUrl = @json(asset('storage/' . $currentLogo));
-            }
-        @endif
-        
-        // Инициализация дополнительных строк в предпросмотре
-        @if(!empty($lines))
-            @foreach($lines as $index => $line)
-                @if(!empty($line['text']))
-                    const previewLinesContainer = document.getElementById('previewAdditionalLines');
-                    if (previewLinesContainer) {
-                        const lineDiv = document.createElement('div');
-                        lineDiv.className = 'brand-preview-line';
-                        lineDiv.textContent = @json($line['text'] ?? '');
-                        lineDiv.style.fontSize = @json($line['font_size'] ?? '0.875') + 'rem';
-                        lineDiv.style.opacity = @json($line['opacity'] ?? '0.9');
-                        lineDiv.style.color = 'rgba(255,255,255,' + @json($line['opacity'] ?? '0.9') + ')';
-                        previewLinesContainer.appendChild(lineDiv);
-                    }
-                @endif
-            @endforeach
+            currentLogoUrl = @json(asset('storage/' . $currentLogo));
         @endif
         
         // Вызываем обновление предпросмотра после инициализации
