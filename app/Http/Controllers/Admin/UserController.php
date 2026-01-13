@@ -31,6 +31,10 @@ class UserController extends Controller
     {
         $currentUser = auth()->user();
         
+        if (!$currentUser) {
+            abort(403, 'Необходима авторизация');
+        }
+        
         // Проверяем, является ли пользователь преподавателем (но не администратором)
         $isInstructor = $currentUser->hasRole('instructor') && !$currentUser->hasRole('admin');
         
@@ -39,7 +43,10 @@ class UserController extends Controller
         $statusFilter = $request->input('status', '');
 
         // Используем select для оптимизации - загружаем только нужные поля
-        $query = User::with('roles:id,name,slug')
+        // ВАЖНО: при использовании select() с отношениями, нужно убедиться, что все необходимые поля включены
+        $query = User::with(['roles' => function($q) {
+                $q->select('id', 'name', 'slug');
+            }])
             ->select('id', 'name', 'email', 'phone', 'is_active', 'created_at');
         
         // Если пользователь - преподаватель, показываем только студентов его курсов
