@@ -41,9 +41,28 @@ $email = optional_param('email', '', PARAM_EMAIL);
 $moodle_user_id = optional_param('moodle_user_id', 0, PARAM_INT);
 $redirect = optional_param('redirect', '/', PARAM_URL);
 
+// Логируем все полученные параметры для отладки
+error_log('Laravel SSO: Получены параметры:');
+error_log('  - token: ' . (empty($token) ? 'ОТСУТСТВУЕТ' : 'присутствует (длина: ' . strlen($token) . ')'));
+error_log('  - email: ' . ($email ?: 'ОТСУТСТВУЕТ'));
+error_log('  - moodle_user_id: ' . ($moodle_user_id ?: 'ОТСУТСТВУЕТ'));
+error_log('  - redirect: ' . ($redirect ?: '/'));
+
 // Проверяем обязательные параметры
 if (empty($token) || empty($email) || empty($moodle_user_id)) {
-    redirect(new moodle_url('/login/index.php'), 'Недостаточно параметров для SSO входа', null, \core\output\notification::NOTIFY_ERROR);
+    $missing_params = [];
+    if (empty($token)) $missing_params[] = 'token';
+    if (empty($email)) $missing_params[] = 'email';
+    if (empty($moodle_user_id)) $missing_params[] = 'moodle_user_id';
+    
+    error_log('Laravel SSO: Ошибка - недостаточно параметров. Отсутствуют: ' . implode(', ', $missing_params));
+    error_log('Laravel SSO: Полный URL запроса: ' . $_SERVER['REQUEST_URI']);
+    error_log('Laravel SSO: GET параметры: ' . print_r($_GET, true));
+    
+    redirect(new moodle_url('/login/index.php'), 
+        'Недостаточно параметров для SSO входа. Отсутствуют: ' . implode(', ', $missing_params) . '. Обратитесь к администратору.', 
+        null, 
+        \core\output\notification::NOTIFY_ERROR);
 }
 
 // ВАЖНО: Для расшифровки токена Laravel нужно использовать тот же APP_KEY
