@@ -163,48 +163,6 @@
         color: var(--text-color, #e2e8f0) !important;
     }
 
-    .brand-preview {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1.5rem;
-        min-height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .brand-preview-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        width: 100%;
-    }
-
-    .brand-preview-logo {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .brand-preview-logo img {
-        object-fit: contain;
-    }
-
-    .brand-preview-text {
-        color: white;
-        font-weight: 700;
-        text-align: center;
-    }
-
-    .brand-preview-line {
-        color: white;
-        font-size: 0.875rem;
-        text-align: center;
-        opacity: 0.9;
-    }
-
     .additional-line-item {
         background: #f8f9fa;
         border: 1px solid #e2e8f0;
@@ -232,37 +190,13 @@
         margin-top: 0.5rem;
     }
 
-    @media (min-width: 992px) {
-        .settings-row {
-            display: flex;
-            align-items: flex-start;
-            position: relative;
-        }
-        
-        .preview-container {
-            position: -webkit-sticky !important;
-            position: sticky !important;
-            top: 20px !important;
-            align-self: flex-start !important;
-            margin-top: 0 !important;
-            z-index: 10;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-        }
-    }
-    
-    @media (max-width: 991px) {
-        .preview-container {
-            margin-top: 2rem;
-        }
-    }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid py-4">
-    <div class="row settings-row">
-        <div class="col-12 col-lg-8">
+    <div class="row">
+        <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom">
                     <h4 class="mb-0">
