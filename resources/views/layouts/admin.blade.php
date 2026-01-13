@@ -1016,23 +1016,13 @@
 
             <div class="header-right">
                 @php
-                    $virtualClassEnabled = \App\Models\Setting::get('virtual_class_button_enabled', true);
-                    $virtualClassText = \App\Models\Setting::get('virtual_class_button_text', 'Перейти в виртуальный класс');
-                    $virtualClassIcon = \App\Models\Setting::get('virtual_class_button_icon', 'fa-graduation-cap');
-                    $virtualClassColor = \App\Models\Setting::get('virtual_class_button_color', '#667eea');
-                    $virtualClassUrl = \App\Models\Setting::get('virtual_class_button_url', '');
+                    // Берем URL Moodle из .env
                     $moodleUrl = config('services.moodle.url', '');
-                    
-                    // Проверяем, что настройка включена (обрабатываем boolean и строковые значения)
-                    $isEnabled = is_bool($virtualClassEnabled) ? $virtualClassEnabled : ($virtualClassEnabled === '1' || $virtualClassEnabled === 1 || $virtualClassEnabled === true);
-                    
-                    // Если URL не указан, используем URL Moodle из настроек
-                    $redirectUrl = !empty($virtualClassUrl) ? $virtualClassUrl : ($moodleUrl ?: '/');
                 @endphp
-                @if($isEnabled)
-                <a href="{{ route('moodle.sso.redirect', ['redirect' => $redirectUrl]) }}" class="btn btn-sm virtual-class-btn" id="virtualClassButton" style="background-color: {{ $virtualClassColor }}; border-color: {{ $virtualClassColor }}; color: white;">
-                    <i class="fas {{ $virtualClassIcon }} me-1"></i>
-                    <span id="virtualClassButtonText">{{ $virtualClassText }}</span>
+                @if(!empty($moodleUrl))
+                <a href="{{ route('moodle.sso.redirect') }}" class="btn btn-sm virtual-class-btn" style="background-color: #667eea; border-color: #667eea; color: white;">
+                    <i class="fas fa-graduation-cap me-1"></i>
+                    <span>Перейти в виртуальный класс</span>
                 </a>
                 @endif
                 

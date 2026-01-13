@@ -36,16 +36,12 @@ if (empty($laravel_url) || empty($laravel_sso_secret) || $laravel_sso_secret ===
 }
 
 // Получаем параметры из запроса
-// Сначала пробуем получить напрямую из GET параметров
-$token = optional_param('token', '', PARAM_TEXT);
+// Используем только email и moodle_user_id (токен не требуется)
 $email = optional_param('email', '', PARAM_EMAIL);
 $moodle_user_id = optional_param('moodle_user_id', 0, PARAM_INT);
 $redirect = optional_param('redirect', '/', PARAM_URL);
 
-// Если параметры не переданы через GET, пробуем получить из $_GET напрямую
-if (empty($token) && isset($_GET['token'])) {
-    $token = $_GET['token'];
-}
+// Если параметры не переданы через optional_param, пробуем получить из $_GET напрямую
 if (empty($email) && isset($_GET['email'])) {
     $email = urldecode($_GET['email']);
 }
@@ -58,29 +54,25 @@ if (empty($redirect) && isset($_GET['redirect'])) {
 
 // Логируем все полученные параметры для отладки
 error_log('Laravel SSO: Получены параметры:');
-error_log('  - token: ' . (empty($token) ? 'ОТСУТСТВУЕТ' : 'присутствует (длина: ' . strlen($token) . ')'));
 error_log('  - email: ' . ($email ?: 'ОТСУТСТВУЕТ'));
 error_log('  - moodle_user_id: ' . ($moodle_user_id ?: 'ОТСУТСТВУЕТ'));
 error_log('  - redirect: ' . ($redirect ?: '/'));
 error_log('  - REQUEST_URI: ' . ($_SERVER['REQUEST_URI'] ?? 'не установлен'));
 error_log('  - QUERY_STRING: ' . ($_SERVER['QUERY_STRING'] ?? 'не установлен'));
-error_log('  - $_GET: ' . print_r($_GET, true));
 
 // Проверяем обязательные параметры
-if (empty($token) || empty($email) || empty($moodle_user_id)) {
+if (empty($email) || empty($moodle_user_id)) {
     $missing_params = [];
-    if (empty($token)) $missing_params[] = 'token';
     if (empty($email)) $missing_params[] = 'email';
     if (empty($moodle_user_id)) $missing_params[] = 'moodle_user_id';
-
+    
     error_log('Laravel SSO: Ошибка - недостаточно параметров. Отсутствуют: ' . implode(', ', $missing_params));
     error_log('Laravel SSO: Полный URL запроса: ' . ($_SERVER['REQUEST_URI'] ?? 'не установлен'));
     error_log('Laravel SSO: GET параметры: ' . print_r($_GET, true));
-    error_log('Laravel SSO: HTTP_REFERER: ' . ($_SERVER['HTTP_REFERER'] ?? 'не установлен'));
-
-    redirect(new moodle_url('/login/index.php'),
-        'Недостаточно параметров для SSO входа. Отсутствуют: ' . implode(', ', $missing_params) . '. Обратитесь к администратору.',
-        null,
+    
+    redirect(new moodle_url('/login/index.php'), 
+        'Недостаточно параметров для SSO входа. Отсутствуют: ' . implode(', ', $missing_params) . '. Обратитесь к администратору.', 
+        null, 
         \core\output\notification::NOTIFY_ERROR);
 }
 
@@ -116,7 +108,6 @@ try {
 
     // Логируем попытку входа
     error_log('Laravel SSO: Пользователь ' . $user->email . ' (ID: ' . $user->id . ') пытается войти в Moodle');
-    error_log('Laravel SSO: Токен получен (длина: ' . strlen($token) . ' символов)');
     error_log('Laravel SSO: Email: ' . $email);
     error_log('Laravel SSO: Moodle User ID: ' . $moodle_user_id);
 
