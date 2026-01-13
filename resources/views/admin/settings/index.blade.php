@@ -455,11 +455,73 @@
                                         @enderror
                                     </div>
                                     @endforeach
-                                @else
-                                    <p class="text-muted mb-0">Настройки для этой группы отсутствуют</p>
-                                @endif
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+
+                        @foreach($groups as $groupKey => $groupName)
+                            @if($groupKey !== 'general' && isset($settings[$groupKey]) && $settings[$groupKey]->count() > 0)
+                                <div class="settings-group">
+                                    <div class="settings-group-header">
+                                        <i class="fas fa-{{ $groupKey === 'moodle' ? 'graduation-cap' : ($groupKey === 'sso' ? 'key' : 'cog') }} me-2"></i>
+                                        {{ $groupName }}
+                                    </div>
+                                    <div class="settings-group-body">
+                                        @foreach($settings[$groupKey] as $setting)
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            
+                                            @if($setting->type === 'text')
+                                                <textarea 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    rows="3"
+                                                    placeholder="Введите значение">{{ old('settings.' . $setting->key, $setting->value) }}</textarea>
+                                            @elseif($setting->type === 'boolean')
+                                                <div class="form-check form-switch">
+                                                    <input 
+                                                        class="form-check-input" 
+                                                        type="checkbox" 
+                                                        name="settings[{{ $setting->key }}]" 
+                                                        value="1"
+                                                        id="setting_{{ $setting->key }}"
+                                                        {{ old('settings.' . $setting->key, $setting->value) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="setting_{{ $setting->key }}">
+                                                        {{ $setting->value ? 'Включено' : 'Выключено' }}
+                                                    </label>
+                                                </div>
+                                            @elseif($setting->type === 'integer')
+                                                <input 
+                                                    type="number" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                    placeholder="Введите число">
+                                            @else
+                                                <input 
+                                                    type="text" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                    placeholder="Введите значение">
+                                            @endif
+                                            
+                                            @error('settings.' . $setting->key)
+                                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         @endforeach
 
                         <div class="d-flex justify-content-end mt-4">
