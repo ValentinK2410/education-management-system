@@ -43,9 +43,9 @@ class UserController extends Controller
         $statusFilter = $request->input('status', '');
 
         // Загружаем пользователей с ролями
-        // Примечание: убрали select() для избежания проблем с отношениями
+        // Примечание: указываем полное имя таблицы для колонки id, чтобы избежать неоднозначности
         $query = User::with(['roles' => function($q) {
-                $q->select('id', 'name', 'slug');
+                $q->select('roles.id', 'roles.name', 'roles.slug');
             }]);
         
         // Если пользователь - преподаватель, показываем только студентов его курсов
