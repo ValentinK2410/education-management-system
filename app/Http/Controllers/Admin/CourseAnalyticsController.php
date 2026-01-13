@@ -51,8 +51,26 @@ class CourseAnalyticsController extends Controller
      */
     public function index(Request $request)
     {
+        // Инициализируем переменные по умолчанию для предотвращения ошибок
+        $courses = collect();
+        $students = collect();
+        $filteredData = [
+            'activities' => collect(),
+            'students' => collect(),
+            'filters' => [],
+            'stats' => ['total' => 0, 'not_started' => 0, 'submitted' => 0, 'graded' => 0, 'completed' => 0],
+        ];
+        $hasNoData = false;
+        $noDataMessage = null;
+        $moodleApiService = null;
+        $hasAutoSynced = false;
+        
         try {
             $user = auth()->user();
+            
+            if (!$user) {
+                abort(403, 'Необходима авторизация');
+            }
             
             // Проверяем доступ: только администраторы и преподаватели могут видеть аналитику
             if (!$user->hasRole('admin') && !$user->hasRole('instructor')) {

@@ -519,8 +519,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('backups/clear-tables', [BackupController::class, 'clearTables'])->name('backups.clear-tables');
 
         // Настройки пользователя
-        Route::post('/save-theme-preference', [SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
-        Route::get('/user-settings', [SettingsController::class, 'getUserSettings'])->name('user-settings');
-        Route::post('/save-interface-settings', [SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
+        Route::post('/save-theme-preference', [\App\Http\Controllers\Admin\SettingsController::class, 'saveThemePreference'])->name('save-theme-preference');
+        Route::get('/user-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'getUserSettings'])->name('user-settings');
+        Route::post('/save-interface-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'saveInterfaceSettings'])->name('save-interface-settings');
     });
 });
