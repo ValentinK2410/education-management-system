@@ -45,6 +45,19 @@ class SettingsController extends Controller
             'additional_lines.*.font_size' => 'nullable|numeric|min:0.5|max:2',
             'additional_lines.*.opacity' => 'nullable|numeric|min:0|max:1',
         ]);
+        
+        // Обработка синхронизации цвета кнопки виртуального класса
+        if ($request->has('settings') && isset($request->input('settings')['virtual_class_button_color'])) {
+            $colorValue = $request->input('settings')['virtual_class_button_color'];
+            // Если есть текстовое поле цвета, используем его значение
+            if ($request->has('settings') && isset($request->input('settings')['virtual_class_button_color_text'])) {
+                $colorTextValue = $request->input('settings')['virtual_class_button_color_text'];
+                if (!empty($colorTextValue)) {
+                    $colorValue = $colorTextValue;
+                }
+            }
+            $request->merge(['settings' => array_merge($request->input('settings'), ['virtual_class_button_color' => $colorValue])]);
+        }
 
         // Обработка загрузки логотипа
         if ($request->hasFile('logo')) {
