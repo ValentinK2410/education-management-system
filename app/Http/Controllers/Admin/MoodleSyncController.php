@@ -167,20 +167,43 @@ class MoodleSyncController extends Controller
             }
             
             $message = "Полная синхронизация завершена. ";
-            $message .= "Курсы: создано {$stats['courses']['created']}, обновлено {$stats['courses']['updated']}. ";
-            $message .= "Записи студентов: создано {$stats['enrollments']['created']}, обновлено {$stats['enrollments']['updated']}.";
+            $message .= "Курсы: создано {$stats['courses']['created']}, обновлено {$stats['courses']['updated']}, всего обработано: {$stats['courses']['total']}. ";
+            $message .= "Записи студентов: создано {$stats['enrollments']['created']}, обновлено {$stats['enrollments']['updated']}, всего обработано: {$stats['enrollments']['total']}.";
             
             // Если все значения равны 0, добавляем предупреждение
             if ($stats['courses']['created'] == 0 && $stats['courses']['updated'] == 0 && 
                 $stats['enrollments']['created'] == 0 && $stats['enrollments']['updated'] == 0) {
                 $errorsCount = ($stats['courses']['errors'] ?? 0) + ($stats['enrollments']['errors'] ?? 0);
                 if ($errorsCount > 0) {
-                    $message .= " Внимание: обнаружены ошибки. Проверьте логи для деталей.";
+                    $message .= " ⚠️ Внимание: обнаружены ошибки ({$errorsCount}). Проверьте логи для деталей.";
+                    // Добавляем информацию об ошибках из списка
+                    if (!empty($stats['courses']['errors_list'])) {
+                        $firstError = $stats['courses']['errors_list'][0];
+                        $message .= " Первая ошибка: " . ($firstError['error'] ?? 'неизвестная ошибка');
+                    }
+                    return redirect()->route('admin.moodle-sync.index')
+                        ->with('warning', $message);
                 } else {
-                    $message .= " Возможные причины: все данные уже синхронизированы, в Moodle нет новых курсов, или токен не имеет прав на получение данных.";
+                    // Проверяем, были ли вообще курсы для обработки
+                    if (($stats['courses']['total'] ?? 0) == 0) {
+                        $message .= " ⚠️ В Moodle не найдено курсов для синхронизации. Возможные причины: в Moodle нет курсов (кроме системного с id=1), токен не имеет прав на получение курсов. Проверьте права токена в Moodle: Site administration → Plugins → Web services → Manage tokens → [ваш токен] → Capabilities.";
+                        return redirect()->route('admin.moodle-sync.index')
+                            ->with('warning', $message);
+                    } else {
+                        $message .= " Все данные уже синхронизированы (нет изменений для обновления).";
+                        return redirect()->route('admin.moodle-sync.index')
+                            ->with('success', $message);
+                    }
                 }
             }
             
+            // Добавляем информацию об ошибках, если они были
+            if (($stats['courses']['errors'] ?? 0) > 0 || ($stats['enrollments']['errors'] ?? 0) > 0) {
+                $message .= " ⚠️ Обнаружены ошибки: Курсы - {$stats['courses']['errors']}, Записи студентов - {$stats['enrollments']['errors']}. Подробности в логах.";
+                return redirect()->route('admin.moodle-sync.index')
+                    ->with('warning', $message); // Используем warning для смешанных результатов
+            }
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', $message);
                 

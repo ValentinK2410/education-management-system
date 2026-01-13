@@ -122,12 +122,12 @@ class MoodleSyncService
             if ($moodleCourses === false) {
                 Log::error('Ошибка получения курсов из Moodle API', [
                     'result' => $moodleCourses,
-                    'hint' => 'Проверьте логи Moodle API для деталей ошибки'
+                    'hint' => 'Проверьте логи Moodle API для деталей ошибки. Возможные причины: неправильный URL или токен, отсутствие прав у токена, проблемы с подключением к Moodle.'
                 ]);
                 $stats['errors']++;
                 $stats['errors_list'][] = [
                     'type' => 'api_error',
-                    'error' => 'Не удалось получить курсы из Moodle API. Проверьте логи для деталей.'
+                    'error' => 'Не удалось получить курсы из Moodle API. Проверьте логи для деталей. Возможные причины: неправильный URL или токен в .env, отсутствие прав у токена в Moodle, проблемы с подключением к Moodle.'
                 ];
                 return $stats;
             }
@@ -135,13 +135,15 @@ class MoodleSyncService
             if (empty($moodleCourses)) {
                 Log::warning('Список курсов из Moodle пуст', [
                     'result' => $moodleCourses,
-                    'hint' => 'Возможно, в Moodle нет курсов (кроме системного курса с id=1) или токен не имеет прав на получение курсов'
+                    'hint' => 'Возможные причины: в Moodle нет курсов (кроме системного курса с id=1), токен не имеет прав на получение курсов, или все курсы были отфильтрованы. Проверьте права токена в Moodle: Site administration → Plugins → Web services → Manage tokens → [ваш токен] → Capabilities.'
                 ]);
-                $stats['errors']++;
+                // Не считаем это ошибкой, если это просто пустой результат
+                // Возможно, все курсы уже синхронизированы или в Moodle действительно нет курсов
                 $stats['errors_list'][] = [
                     'type' => 'empty_result',
-                    'error' => 'В Moodle не найдено курсов для синхронизации. Убедитесь, что в Moodle есть курсы и токен имеет права на их получение.'
+                    'error' => 'В Moodle не найдено курсов для синхронизации. Убедитесь, что в Moodle есть курсы (кроме системного с id=1) и токен имеет права на их получение. Проверьте права токена в Moodle.'
                 ];
+                // Не возвращаем ошибку, просто возвращаем пустую статистику
                 return $stats;
             }
 
@@ -168,18 +170,23 @@ class MoodleSyncService
                         $stats['created']++;
                         Log::info('Курс создан', [
                             'local_course_id' => $result['course']->id ?? null,
-                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'course_name' => $moodleCourse['fullname'] ?? 'Без названия'
                         ]);
                     } elseif (isset($result['updated']) && $result['updated']) {
                         $stats['updated']++;
                         Log::info('Курс обновлен', [
                             'local_course_id' => $result['course']->id ?? null,
-                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'course_name' => $moodleCourse['fullname'] ?? 'Без названия'
                         ]);
                     } else {
-                        Log::info('Курс не изменился (уже синхронизирован)', [
+                        // Курс не изменился или был пропущен
+                        Log::debug('Курс не изменился или уже синхронизирован', [
                             'local_course_id' => $result['course']->id ?? null,
-                            'moodle_course_id' => $moodleCourse['id'] ?? null
+                            'moodle_course_id' => $moodleCourse['id'] ?? null,
+                            'course_name' => $moodleCourse['fullname'] ?? 'Без названия',
+                            'result' => $result
                         ]);
                     }
                 } catch (\Exception $e) {
@@ -344,10 +351,15 @@ class MoodleSyncService
             try {
                 // Проверяем, были ли изменения перед обновлением
                 $hasChanges = false;
+                $changedFields = [];
                 foreach ($courseData as $key => $value) {
-                    if ($course->getAttribute($key) != $value) {
+                    $oldValue = $course->getAttribute($key);
+                    if ($oldValue != $value) {
                         $hasChanges = true;
-                        break;
+                        $changedFields[$key] = [
+                            'old' => $oldValue,
+                            'new' => $value
+                        ];
                     }
                 }
                 
@@ -356,14 +368,16 @@ class MoodleSyncService
                     Log::info('Курс обновлен из Moodle', [
                         'course_id' => $course->id,
                         'moodle_course_id' => $moodleCourseId,
-                        'name' => $course->name
+                        'name' => $course->name,
+                        'changed_fields' => array_keys($changedFields)
                     ]);
                     return ['created' => false, 'updated' => true, 'course' => $course];
                 } else {
-                    Log::info('Курс не изменился (данные идентичны)', [
+                    Log::debug('Курс не изменился (данные идентичны)', [
                         'course_id' => $course->id,
                         'moodle_course_id' => $moodleCourseId,
-                        'name' => $course->name
+                        'name' => $course->name,
+                        'course_data' => $courseData
                     ]);
                     return ['created' => false, 'updated' => false, 'course' => $course];
                 }
@@ -450,23 +464,25 @@ class MoodleSyncService
                 Log::error('Ошибка получения записей студентов из Moodle API', [
                     'course_id' => $courseId,
                     'moodle_course_id' => $course->moodle_course_id,
-                    'hint' => 'Проверьте логи Moodle API для деталей ошибки'
+                    'course_name' => $course->name,
+                    'hint' => 'Проверьте логи Moodle API для деталей ошибки. Возможные причины: токен не имеет прав на получение записей студентов для этого курса, проблемы с подключением к Moodle.'
                 ]);
                 $stats['errors']++;
                 $stats['errors_list'][] = [
                     'type' => 'api_error',
-                    'error' => 'Не удалось получить записи студентов из Moodle API для курса ' . $course->name
+                    'error' => 'Не удалось получить записи студентов из Moodle API для курса ' . $course->name . '. Проверьте права токена в Moodle: токен должен иметь права на выполнение функции core_enrol_get_enrolled_users для курса с ID ' . $course->moodle_course_id
                 ];
                 return $stats;
             }
             
             if (empty($moodleUsers)) {
-                Log::warning('Список записей студентов из Moodle пуст', [
+                Log::info('Список записей студентов из Moodle пуст (это нормально, если на курс не записаны студенты)', [
                     'course_id' => $courseId,
                     'moodle_course_id' => $course->moodle_course_id,
                     'course_name' => $course->name,
-                    'hint' => 'Возможно, на курс не записаны студенты или токен не имеет прав на получение записей'
+                    'hint' => 'На курс не записаны студенты или токен не имеет прав на получение записей. Если студентов должно быть, проверьте права токена в Moodle.'
                 ]);
+                // Не считаем это ошибкой - возможно, на курс действительно не записаны студенты
                 return $stats;
             }
 

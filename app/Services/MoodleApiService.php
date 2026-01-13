@@ -1270,11 +1270,20 @@ class MoodleApiService
 
         $result = $this->call('core_course_get_courses', $params);
 
-        if ($result === false || isset($result['exception'])) {
-            Log::error('Ошибка получения курсов из Moodle', [
+        if ($result === false) {
+            Log::error('Ошибка получения курсов из Moodle API: запрос вернул false', [
+                'hint' => 'Проверьте подключение к Moodle, URL и токен в .env файле'
+            ]);
+            return false;
+        }
+
+        if (isset($result['exception'])) {
+            Log::error('Ошибка получения курсов из Moodle API: исключение', [
                 'exception' => $result['exception'] ?? null,
                 'message' => $result['message'] ?? null,
-                'errorcode' => $result['errorcode'] ?? null
+                'errorcode' => $result['errorcode'] ?? null,
+                'debuginfo' => $result['debuginfo'] ?? null,
+                'hint' => 'Проверьте права доступа токена в Moodle. Токен должен иметь права на выполнение функции core_course_get_courses'
             ]);
             return false;
         }
@@ -1296,11 +1305,16 @@ class MoodleApiService
                 return isset($course['id']) && $course['id'] > 1;
             }));
 
-            Log::info('Курсы получены из Moodle', [
+            Log::info('Курсы получены из Moodle API', [
                 'total_from_api' => $totalCourses,
                 'after_filtering' => count($courses),
                 'system_course_excluded' => $systemCourse ? true : false,
-                'course_ids' => array_map(function($c) { return $c['id'] ?? null; }, $courses)
+                'course_ids' => array_map(function($c) { return $c['id'] ?? null; }, $courses),
+                'first_course_sample' => !empty($courses) ? [
+                    'id' => $courses[0]['id'] ?? null,
+                    'fullname' => $courses[0]['fullname'] ?? null,
+                    'shortname' => $courses[0]['shortname'] ?? null
+                ] : null
             ]);
 
             // Если указаны конкретные ID, фильтруем по ним
@@ -1309,6 +1323,10 @@ class MoodleApiService
                     return in_array($course['id'], $options['ids']);
                 });
                 $courses = array_values($courses);
+                Log::info('Курсы после фильтрации по заданным ID', [
+                    'count' => count($courses),
+                    'ids' => $options['ids']
+                ]);
             }
 
             return $courses;
@@ -1316,7 +1334,8 @@ class MoodleApiService
 
         Log::warning('Moodle API вернул не массив курсов', [
             'result_type' => gettype($result),
-            'result' => $result
+            'result' => $result,
+            'hint' => 'Ожидался массив курсов, но получен другой тип данных'
         ]);
         return [];
     }
@@ -1333,15 +1352,40 @@ class MoodleApiService
             'courseid' => $courseId
         ]);
 
-        if ($result === false || isset($result['exception'])) {
+        if ($result === false) {
+            Log::error('Ошибка получения записей студентов из Moodle API: запрос вернул false', [
+                'course_id' => $courseId,
+                'hint' => 'Проверьте подключение к Moodle и права доступа токена'
+            ]);
+            return false;
+        }
+
+        if (isset($result['exception'])) {
+            Log::error('Ошибка получения записей студентов из Moodle API: исключение', [
+                'course_id' => $courseId,
+                'exception' => $result['exception'] ?? null,
+                'message' => $result['message'] ?? null,
+                'errorcode' => $result['errorcode'] ?? null,
+                'debuginfo' => $result['debuginfo'] ?? null,
+                'hint' => 'Проверьте права доступа токена в Moodle. Токен должен иметь права на выполнение функции core_enrol_get_enrolled_users для курса с ID ' . $courseId
+            ]);
             return false;
         }
 
         // Возвращаем массив пользователей
         if (is_array($result)) {
+            Log::info('Записи студентов получены из Moodle API', [
+                'course_id' => $courseId,
+                'users_count' => count($result)
+            ]);
             return $result;
         }
 
+        Log::warning('Moodle API вернул не массив пользователей для курса', [
+            'course_id' => $courseId,
+            'result_type' => gettype($result),
+            'result' => $result
+        ]);
         return [];
     }
 
