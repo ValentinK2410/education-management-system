@@ -65,14 +65,14 @@ if (empty($email) || empty($moodle_user_id)) {
     $missing_params = [];
     if (empty($email)) $missing_params[] = 'email';
     if (empty($moodle_user_id)) $missing_params[] = 'moodle_user_id';
-    
+
     error_log('Laravel SSO: Ошибка - недостаточно параметров. Отсутствуют: ' . implode(', ', $missing_params));
     error_log('Laravel SSO: Полный URL запроса: ' . ($_SERVER['REQUEST_URI'] ?? 'не установлен'));
     error_log('Laravel SSO: GET параметры: ' . print_r($_GET, true));
-    
-    redirect(new moodle_url('/login/index.php'), 
-        'Недостаточно параметров для SSO входа. Отсутствуют: ' . implode(', ', $missing_params) . '. Обратитесь к администратору.', 
-        null, 
+
+    redirect(new moodle_url('/login/index.php'),
+        'Недостаточно параметров для SSO входа. Отсутствуют: ' . implode(', ', $missing_params) . '. Обратитесь к администратору.',
+        null,
         \core\output\notification::NOTIFY_ERROR);
 }
 

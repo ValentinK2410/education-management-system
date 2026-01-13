@@ -212,8 +212,15 @@
                             $brandingSettings = isset($settings['general']) ? $settings['general']->filter(function($s) {
                                 return in_array($s->key, ['system_name', 'system_logo', 'system_logo_icon', 'system_brand_text_size', 'system_logo_width', 'system_logo_height', 'system_brand_additional_lines']);
                             }) : collect();
-                            $otherGeneralSettings = isset($settings['general']) ? $settings['general']->filter(function($s) {
-                                return !in_array($s->key, ['system_name', 'system_logo', 'system_logo_icon', 'system_brand_text_size', 'system_logo_width', 'system_logo_height', 'system_brand_additional_lines']);
+                            // Исключаем настройки кнопки виртуального класса из отображения
+                            $excludedKeys = [
+                                'system_name', 'system_logo', 'system_logo_icon', 'system_brand_text_size', 
+                                'system_logo_width', 'system_logo_height', 'system_brand_additional_lines',
+                                'virtual_class_button_enabled', 'virtual_class_button_text', 'virtual_class_button_icon',
+                                'virtual_class_button_color', 'virtual_class_button_url'
+                            ];
+                            $otherGeneralSettings = isset($settings['general']) ? $settings['general']->filter(function($s) use ($excludedKeys) {
+                                return !in_array($s->key, $excludedKeys);
                             }) : collect();
                         @endphp
 
