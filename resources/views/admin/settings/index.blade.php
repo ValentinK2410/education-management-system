@@ -235,6 +235,18 @@
     .preview-container {
         position: sticky;
         top: 20px;
+        align-self: flex-start;
+        margin-top: 0;
+    }
+    
+    @media (min-width: 992px) {
+        .preview-container {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
     }
 </style>
 @endpush
@@ -518,7 +530,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-lg-4">
+        <div class="col-12 col-lg-4" style="order: 2;">
             <div class="card border-0 shadow-sm preview-container">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0">
