@@ -356,6 +356,7 @@
                                         <div class="setting-item">
                                             <label class="setting-label">
                                                 {{ $setting->label ?? $setting->key }}
+                                                <span class="text-danger">*</span>
                                             </label>
                                             @if($setting->description)
                                             <div class="setting-description">
@@ -368,7 +369,12 @@
                                                 class="form-control" 
                                                 value="{{ old('settings.' . $setting->key, $setting->value) }}"
                                                 placeholder="https://class.dekan.pro"
-                                                data-preview-url="virtual-class-button">
+                                                data-preview-url="virtual-class-button"
+                                                required>
+                                            <small class="text-muted mt-1 d-block">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Кнопка будет отображаться только если указан URL
+                                            </small>
                                         </div>
                                     @elseif($setting->key === 'system_brand_additional_lines')
                                         <div class="setting-item">

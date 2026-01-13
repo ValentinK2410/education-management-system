@@ -182,6 +182,9 @@
 
         /* Header */
         .admin-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             height: var(--header-height);
             background: white;
             border-bottom: 1px solid #e2e8f0;
@@ -970,8 +973,11 @@
                     $virtualClassIcon = \App\Models\Setting::get('virtual_class_button_icon', 'fa-graduation-cap');
                     $virtualClassColor = \App\Models\Setting::get('virtual_class_button_color', '#667eea');
                     $virtualClassUrl = \App\Models\Setting::get('virtual_class_button_url', '');
+                    
+                    // Проверяем, что настройка включена (обрабатываем boolean и строковые значения)
+                    $isEnabled = is_bool($virtualClassEnabled) ? $virtualClassEnabled : ($virtualClassEnabled === '1' || $virtualClassEnabled === 1 || $virtualClassEnabled === true);
                 @endphp
-                @if($virtualClassEnabled && !empty($virtualClassUrl))
+                @if($isEnabled && !empty($virtualClassUrl))
                 <a href="{{ $virtualClassUrl }}" target="_blank" class="btn btn-sm virtual-class-btn" id="virtualClassButton" style="background-color: {{ $virtualClassColor }}; border-color: {{ $virtualClassColor }}; color: white;">
                     <i class="fas {{ $virtualClassIcon }} me-1"></i>
                     <span id="virtualClassButtonText">{{ $virtualClassText }}</span>
