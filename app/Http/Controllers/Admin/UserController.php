@@ -42,12 +42,11 @@ class UserController extends Controller
         $roleFilter = $request->input('role', '');
         $statusFilter = $request->input('status', '');
 
-        // Используем select для оптимизации - загружаем только нужные поля
-        // ВАЖНО: при использовании select() с отношениями, нужно убедиться, что все необходимые поля включены
+        // Загружаем пользователей с ролями
+        // Примечание: убрали select() для избежания проблем с отношениями
         $query = User::with(['roles' => function($q) {
                 $q->select('id', 'name', 'slug');
-            }])
-            ->select('id', 'name', 'email', 'phone', 'is_active', 'created_at');
+            }]);
         
         // Если пользователь - преподаватель, показываем только студентов его курсов
         if ($isInstructor) {
