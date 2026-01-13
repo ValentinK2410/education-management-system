@@ -232,27 +232,28 @@
         margin-top: 0.5rem;
     }
 
-    .preview-container {
-        position: -webkit-sticky !important;
-        position: sticky !important;
-        top: 20px !important;
-        align-self: flex-start !important;
-        margin-top: 0 !important;
-        z-index: 10;
-    }
-    
     @media (min-width: 992px) {
+        .settings-row {
+            display: flex;
+            align-items: flex-start;
+            position: relative;
+        }
+        
         .preview-container {
             position: -webkit-sticky !important;
             position: sticky !important;
             top: 20px !important;
+            align-self: flex-start !important;
+            margin-top: 0 !important;
+            z-index: 10;
             max-height: calc(100vh - 40px);
             overflow-y: auto;
         }
-        
-        .settings-row {
-            display: flex;
-            align-items: flex-start;
+    }
+    
+    @media (max-width: 991px) {
+        .preview-container {
+            margin-top: 2rem;
         }
     }
 </style>
