@@ -81,17 +81,22 @@ class MoodleSsoController extends Controller
         
         // Формируем URL для автоматического входа в Moodle
         // Используем готовый скрипт moodle-sso-from-laravel.php
-        $ssoUrl = rtrim($moodleUrl, '/') . '/moodle-sso-from-laravel.php?' . http_build_query([
+        $queryParams = [
             'token' => $token,
             'email' => $user->email,
             'moodle_user_id' => $user->moodle_user_id,
             'redirect' => $redirectUrl,
-        ]);
+        ];
+        
+        $ssoUrl = rtrim($moodleUrl, '/') . '/moodle-sso-from-laravel.php?' . http_build_query($queryParams);
 
         Log::info('Moodle SSO: Redirecting user to Moodle', [
             'user_id' => $user->id,
             'email' => $user->email,
-            'moodle_user_id' => $user->moodle_user_id
+            'moodle_user_id' => $user->moodle_user_id,
+            'redirect_url' => $redirectUrl,
+            'sso_url' => $ssoUrl,
+            'query_params' => $queryParams
         ]);
 
         return redirect($ssoUrl);
