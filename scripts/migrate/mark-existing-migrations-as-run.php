@@ -186,8 +186,7 @@ foreach ($migrations as $migration) {
         
         // Если не нашли в карте, используем старую логику
         if (!$shouldAdd) {
-        
-        // Простая проверка: если таблица users существует, значит базовая миграция выполнена
+            // Простая проверка: если таблица users существует, значит базовая миграция выполнена
         if ($migration === '0001_01_01_000000_create_users_table' && Schema::hasTable('users')) {
             $shouldAdd = true;
         }
@@ -291,6 +290,7 @@ foreach ($migrations as $migration) {
             elseif (strpos($migration, 'course_activities') !== false && Schema::hasTable('course_activities')) {
                 $shouldAdd = true;
             }
+        }
         }
         
         if ($shouldAdd) {
