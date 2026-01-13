@@ -80,9 +80,8 @@ class MoodleSsoController extends Controller
         $redirectUrl = $request->get('redirect', '/');
         
         // Формируем URL для автоматического входа в Moodle
-        // Используем стандартный механизм Moodle для токен-авторизации
-        // Если на Moodle установлен плагин SSO, он обработает этот токен
-        $ssoUrl = rtrim($moodleUrl, '/') . '/auth/sso/login?' . http_build_query([
+        // Используем готовый скрипт moodle-sso-from-laravel.php
+        $ssoUrl = rtrim($moodleUrl, '/') . '/moodle-sso-from-laravel.php?' . http_build_query([
             'token' => $token,
             'email' => $user->email,
             'moodle_user_id' => $user->moodle_user_id,
