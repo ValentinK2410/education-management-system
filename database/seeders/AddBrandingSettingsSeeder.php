@@ -37,6 +37,38 @@ class AddBrandingSettingsSeeder extends Seeder
                 'label' => 'Иконка системы',
                 'description' => 'Класс Font Awesome иконки (используется, если логотип не загружен)',
             ],
+            [
+                'key' => 'system_brand_text_size',
+                'value' => '1.5',
+                'type' => 'string',
+                'group' => 'general',
+                'label' => 'Размер текста названия (rem)',
+                'description' => 'Размер шрифта названия системы в сайдбаре',
+            ],
+            [
+                'key' => 'system_logo_width',
+                'value' => '32',
+                'type' => 'string',
+                'group' => 'general',
+                'label' => 'Ширина логотипа (px)',
+                'description' => 'Максимальная ширина логотипа в пикселях',
+            ],
+            [
+                'key' => 'system_logo_height',
+                'value' => '32',
+                'type' => 'string',
+                'group' => 'general',
+                'label' => 'Высота логотипа (px)',
+                'description' => 'Максимальная высота логотипа в пикселях',
+            ],
+            [
+                'key' => 'system_brand_additional_lines',
+                'value' => '[]',
+                'type' => 'json',
+                'group' => 'general',
+                'label' => 'Дополнительные строки',
+                'description' => 'Дополнительные строки текста под названием системы (в формате JSON)',
+            ],
         ];
 
         foreach ($settings as $settingData) {

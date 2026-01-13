@@ -40,6 +40,10 @@ class SettingsController extends Controller
             'settings' => 'required|array',
             'settings.*' => 'nullable',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'additional_lines' => 'nullable|array',
+            'additional_lines.*.text' => 'nullable|string|max:255',
+            'additional_lines.*.font_size' => 'nullable|numeric|min:0.5|max:2',
+            'additional_lines.*.opacity' => 'nullable|numeric|min:0|max:1',
         ]);
 
         // Обработка загрузки логотипа
@@ -64,6 +68,26 @@ class SettingsController extends Controller
                     \Storage::disk('public')->delete($setting->value);
                 }
                 $setting->value = null;
+                $setting->save();
+            }
+        }
+
+        // Обработка дополнительных строк
+        if ($request->has('additional_lines')) {
+            $additionalLines = [];
+            foreach ($request->input('additional_lines', []) as $line) {
+                if (!empty($line['text'])) {
+                    $additionalLines[] = [
+                        'text' => $line['text'],
+                        'font_size' => $line['font_size'] ?? '0.875',
+                        'opacity' => $line['opacity'] ?? '0.9',
+                    ];
+                }
+            }
+            
+            $setting = Setting::where('key', 'system_brand_additional_lines')->first();
+            if ($setting) {
+                $setting->value = json_encode($additionalLines);
                 $setting->save();
             }
         }

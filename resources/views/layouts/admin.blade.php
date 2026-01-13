@@ -724,13 +724,32 @@
                     $systemLogo = \App\Models\Setting::get('system_logo');
                     $systemName = \App\Models\Setting::get('system_name', 'EduManage');
                     $systemLogoIcon = \App\Models\Setting::get('system_logo_icon', 'fa-graduation-cap');
+                    $systemBrandTextSize = \App\Models\Setting::get('system_brand_text_size', '1.5');
+                    $systemLogoWidth = \App\Models\Setting::get('system_logo_width', '32');
+                    $systemLogoHeight = \App\Models\Setting::get('system_logo_height', '32');
+                    $additionalLines = \App\Models\Setting::get('system_brand_additional_lines', '[]');
+                    $additionalLinesArray = json_decode($additionalLines, true);
+                    if (!is_array($additionalLinesArray)) $additionalLinesArray = [];
                 @endphp
-                @if($systemLogo && \Storage::disk('public')->exists($systemLogo))
-                    <img src="{{ asset('storage/' . $systemLogo) }}" alt="{{ $systemName }}" class="brand-logo" style="max-height: 32px; max-width: 32px; margin-right: 0.5rem;">
-                @else
-                    <i class="fas {{ $systemLogoIcon }} me-2"></i>
-                @endif
-                <span class="brand-text">{{ $systemName }}</span>
+                <div style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 0.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        @if($systemLogo && \Storage::disk('public')->exists($systemLogo))
+                            <img src="{{ asset('storage/' . $systemLogo) }}" alt="{{ $systemName }}" class="brand-logo" style="max-width: {{ $systemLogoWidth }}px; max-height: {{ $systemLogoHeight }}px; object-fit: contain;">
+                        @else
+                            <i class="fas {{ $systemLogoIcon }}" style="font-size: {{ ($systemLogoHeight / 2) }}px;"></i>
+                        @endif
+                        <span class="brand-text" style="font-size: {{ $systemBrandTextSize }}rem;">{{ $systemName }}</span>
+                    </div>
+                    @if(!empty($additionalLinesArray))
+                        @foreach($additionalLinesArray as $line)
+                            @if(!empty($line['text']))
+                                <div class="brand-additional-line" style="font-size: {{ $line['font_size'] ?? '0.875' }}rem; opacity: {{ $line['opacity'] ?? '0.9' }}; color: rgba(255,255,255,{{ $line['opacity'] ?? '0.9' }});">
+                                    {{ $line['text'] }}
+                                </div>
+                            @endif
+                        @endforeach
+                    @endif
+                </div>
             </a>
         </div>
 
