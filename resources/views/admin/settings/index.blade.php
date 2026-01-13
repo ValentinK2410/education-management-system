@@ -260,6 +260,116 @@
                                                 <small class="text-muted">Рекомендуемый размер: до 200x64px. Форматы: JPEG, PNG, GIF, SVG, WebP. Максимальный размер: 2MB</small>
                                             </div>
                                         </div>
+                                    @elseif($setting->key === 'virtual_class_button_enabled')
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            <div class="form-check form-switch">
+                                                <input 
+                                                    class="form-check-input" 
+                                                    type="checkbox" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    value="1"
+                                                    id="setting_{{ $setting->key }}"
+                                                    data-preview-toggle="virtual-class-button"
+                                                    {{ old('settings.' . $setting->key, $setting->value) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="setting_{{ $setting->key }}">
+                                                    {{ $setting->value ? 'Включено' : 'Выключено' }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @elseif($setting->key === 'virtual_class_button_color')
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input 
+                                                    type="color" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control form-control-color" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value ?: '#667eea') }}"
+                                                    data-preview-color="virtual-class-button"
+                                                    style="width: 60px; height: 38px;">
+                                                <input 
+                                                    type="text" 
+                                                    name="settings[{{ $setting->key }}]_text" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value ?: '#667eea') }}"
+                                                    placeholder="#667eea"
+                                                    data-preview-color-text="virtual-class-button"
+                                                    style="max-width: 150px;">
+                                            </div>
+                                        </div>
+                                    @elseif($setting->key === 'virtual_class_button_text')
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            <input 
+                                                type="text" 
+                                                name="settings[{{ $setting->key }}]" 
+                                                class="form-control" 
+                                                value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                placeholder="Перейти в виртуальный класс"
+                                                data-preview-text="virtual-class-button">
+                                        </div>
+                                    @elseif($setting->key === 'virtual_class_button_icon')
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-icon-preview" id="iconPreview"></i></span>
+                                                <input 
+                                                    type="text" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                    placeholder="fa-graduation-cap"
+                                                    data-preview-icon="virtual-class-button">
+                                            </div>
+                                            <small class="text-muted mt-1 d-block">Примеры: fa-graduation-cap, fa-chalkboard-teacher, fa-laptop</small>
+                                        </div>
+                                    @elseif($setting->key === 'virtual_class_button_url')
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            <input 
+                                                type="url" 
+                                                name="settings[{{ $setting->key }}]" 
+                                                class="form-control" 
+                                                value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                placeholder="https://class.dekan.pro"
+                                                data-preview-url="virtual-class-button">
+                                        </div>
                                     @elseif($setting->key === 'system_brand_additional_lines')
                                         <div class="setting-item">
                                             <label class="setting-label">

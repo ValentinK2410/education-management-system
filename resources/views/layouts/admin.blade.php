@@ -964,6 +964,20 @@
             </div>
 
             <div class="header-right">
+                @php
+                    $virtualClassEnabled = \App\Models\Setting::get('virtual_class_button_enabled', true);
+                    $virtualClassText = \App\Models\Setting::get('virtual_class_button_text', 'Перейти в виртуальный класс');
+                    $virtualClassIcon = \App\Models\Setting::get('virtual_class_button_icon', 'fa-graduation-cap');
+                    $virtualClassColor = \App\Models\Setting::get('virtual_class_button_color', '#667eea');
+                    $virtualClassUrl = \App\Models\Setting::get('virtual_class_button_url', '');
+                @endphp
+                @if($virtualClassEnabled && !empty($virtualClassUrl))
+                <a href="{{ $virtualClassUrl }}" target="_blank" class="btn btn-sm virtual-class-btn" id="virtualClassButton" style="background-color: {{ $virtualClassColor }}; border-color: {{ $virtualClassColor }}; color: white;">
+                    <i class="fas {{ $virtualClassIcon }} me-1"></i>
+                    <span id="virtualClassButtonText">{{ $virtualClassText }}</span>
+                </a>
+                @endif
+                
                 <!-- Language Switcher -->
                 <div class="language-switcher">
                     <div class="dropdown">
