@@ -241,9 +241,9 @@
                             
                             <div class="col-md-3">
                                 <label for="student_email_search" class="form-label">Поиск по email студента</label>
-                                <input type="email" class="form-control" id="student_email_search" name="student_email_search" 
+                                <input type="text" class="form-control" id="student_email_search" name="student_email_search" 
                                        value="{{ request('student_email_search') }}" 
-                                       placeholder="Введите email студента">
+                                       placeholder="Введите часть email (например: gmail)">
                             </div>
                             
                             <div class="col-md-3">
