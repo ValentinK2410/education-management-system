@@ -780,6 +780,10 @@ class CourseAnalyticsController extends Controller
         $filters = [
             'course_id' => $courseIdParam,
             'user_id' => $userIdParam,
+            'course_search' => $request->get('course_search'),
+            'student_search' => $request->get('student_search'),
+            'student_email_search' => $request->get('student_email_search'),
+            'student_id_search' => $request->get('student_id_search'),
             'activity_type' => $request->get('activity_type'),
             'status' => $request->get('status'),
             'date_from' => $request->get('date_from'),
@@ -848,6 +852,12 @@ class CourseAnalyticsController extends Controller
             Log::info('Применен фильтр по курсу', ['course_id' => $filters['course_id']]);
         }
         
+        // Поиск по названию курса (текстовый поиск)
+        if (!empty($filters['course_search'])) {
+            $query->where('courses.name', 'LIKE', '%' . $filters['course_search'] . '%');
+            Log::info('Применен поиск по названию курса', ['course_search' => $filters['course_search']]);
+        }
+        
         if (!empty($filters['user_id'])) {
             $query->where('student_activity_progress.user_id', (int)$filters['user_id']);
             Log::info('Применен фильтр по студенту', [
@@ -862,6 +872,24 @@ class CourseAnalyticsController extends Controller
                 'student_progress_count' => $studentProgressCount,
                 'user_exists' => User::where('id', (int)$filters['user_id'])->exists()
             ]);
+        }
+        
+        // Поиск по имени студента (текстовый поиск)
+        if (!empty($filters['student_search'])) {
+            $query->where('users.name', 'LIKE', '%' . $filters['student_search'] . '%');
+            Log::info('Применен поиск по имени студента', ['student_search' => $filters['student_search']]);
+        }
+        
+        // Поиск по email студента
+        if (!empty($filters['student_email_search'])) {
+            $query->where('users.email', 'LIKE', '%' . $filters['student_email_search'] . '%');
+            Log::info('Применен поиск по email студента', ['student_email_search' => $filters['student_email_search']]);
+        }
+        
+        // Поиск по ID студента
+        if (!empty($filters['student_id_search'])) {
+            $query->where('student_activity_progress.user_id', (int)$filters['student_id_search']);
+            Log::info('Применен поиск по ID студента', ['student_id_search' => $filters['student_id_search']]);
         }
         
         if (!empty($filters['activity_type'])) {

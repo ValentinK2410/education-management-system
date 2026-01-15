@@ -214,6 +214,13 @@
                             </div>
                             
                             <div class="col-md-3">
+                                <label for="course_search" class="form-label">Поиск по названию курса</label>
+                                <input type="text" class="form-control" id="course_search" name="course_search" 
+                                       value="{{ request('course_search') }}" 
+                                       placeholder="Введите название курса">
+                            </div>
+                            
+                            <div class="col-md-3">
                                 <label for="user_id" class="form-label">{{ __('messages.students') }}</label>
                                 <select class="form-select" id="user_id" name="user_id">
                                     <option value="">{{ __('messages.all_students') }}</option>
@@ -223,6 +230,27 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="student_search" class="form-label">Поиск по имени студента</label>
+                                <input type="text" class="form-control" id="student_search" name="student_search" 
+                                       value="{{ request('student_search') }}" 
+                                       placeholder="Введите имя студента">
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="student_email_search" class="form-label">Поиск по email студента</label>
+                                <input type="email" class="form-control" id="student_email_search" name="student_email_search" 
+                                       value="{{ request('student_email_search') }}" 
+                                       placeholder="Введите email студента">
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="student_id_search" class="form-label">Поиск по ID студента</label>
+                                <input type="number" class="form-control" id="student_id_search" name="student_id_search" 
+                                       value="{{ request('student_id_search') }}" 
+                                       placeholder="Введите ID студента" min="1">
                             </div>
                             
                             <div class="col-md-2">
