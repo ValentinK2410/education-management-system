@@ -112,8 +112,14 @@ class MoodleSyncController extends Controller
     {
         try {
             // Увеличиваем время выполнения для длительной синхронизации
-            set_time_limit(300); // 5 минут
-            ini_set('max_execution_time', '300');
+            set_time_limit(1800); // 30 минут
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true);
+            
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no');
+            }
             
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
@@ -161,8 +167,17 @@ class MoodleSyncController extends Controller
     {
         try {
             // Увеличиваем время выполнения для длительной синхронизации
-            set_time_limit(600); // 10 минут
-            ini_set('max_execution_time', '600');
+            set_time_limit(1800); // 30 минут
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M'); // Увеличиваем лимит памяти
+            
+            // Отключаем ограничение времени выполнения для этого скрипта
+            ignore_user_abort(true);
+            
+            // Устанавливаем заголовки для увеличения таймаута nginx
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no'); // Отключаем буферизацию nginx
+            }
             
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
