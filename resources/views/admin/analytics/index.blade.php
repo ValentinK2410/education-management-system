@@ -1054,11 +1054,25 @@ function syncActivities() {
         },
         body: JSON.stringify(requestData)
     })
-    .then(response => {
+    .then(async response => {
+        // Проверяем Content-Type перед парсингом JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            // Если ответ не JSON (например, HTML страница ошибки или редирект)
+            const text = await response.text();
+            console.error('Ожидался JSON, но получен:', contentType, text.substring(0, 200));
+            
+            // Проверяем, не является ли это страницей входа
+            if (text.includes('Вход в систему') || text.includes('login') || response.status === 401 || response.status === 403) {
+                throw new Error('Сессия истекла. Пожалуйста, войдите в систему снова.');
+            }
+            
+            throw new Error('Сервер вернул неверный формат ответа. Пожалуйста, обновите страницу и попробуйте снова.');
+        }
+        
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.message || analyticsTranslations.server_error);
-            });
+            const data = await response.json();
+            throw new Error(data.message || analyticsTranslations.server_error);
         }
         return response.json();
     })
