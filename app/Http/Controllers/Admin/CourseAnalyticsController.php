@@ -328,6 +328,14 @@ class CourseAnalyticsController extends Controller
     public function sync(Request $request)
     {
         try {
+            // Проверяем авторизацию
+            if (!auth()->check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Необходима авторизация'
+                ], 401);
+            }
+            
             // Получаем параметры, преобразуя пустые строки в null
             $courseId = $request->input('course_id');
             $userId = $request->input('user_id');
@@ -339,7 +347,10 @@ class CourseAnalyticsController extends Controller
             Log::info('Запрос синхронизации аналитики', [
                 'course_id' => $courseId,
                 'user_id' => $userId,
-                'user' => auth()->user()->id
+                'user' => auth()->user()->id,
+                'request_method' => $request->method(),
+                'is_ajax' => $request->ajax(),
+                'wants_json' => $request->wantsJson()
             ]);
             
             if (!$this->syncService) {
@@ -474,16 +485,30 @@ class CourseAnalyticsController extends Controller
                     'stats' => $stats
                 ]);
             }
-        } catch (\Exception $e) {
-            Log::error('Ошибка синхронизации в контроллере аналитики', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Ошибка валидации при синхронизации аналитики', [
+                'errors' => $e->errors(),
+                'message' => $e->getMessage()
             ]);
             
             return response()->json([
                 'success' => false,
+                'message' => 'Ошибка валидации: ' . $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422)->header('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации в контроллере аналитики', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Всегда возвращаем JSON, даже при ошибках
+            return response()->json([
+                'success' => false,
                 'message' => 'Ошибка синхронизации: ' . $e->getMessage()
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 

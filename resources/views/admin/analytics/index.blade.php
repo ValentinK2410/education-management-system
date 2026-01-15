@@ -1056,24 +1056,54 @@ function syncActivities() {
     })
     .then(async response => {
         // Проверяем Content-Type перед парсингом JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            // Если ответ не JSON (например, HTML страница ошибки или редирект)
+        const contentType = response.headers.get('content-type') || '';
+        const isJson = contentType.includes('application/json');
+        
+        // Если ответ не JSON, пытаемся понять причину
+        if (!isJson) {
             const text = await response.text();
-            console.error('Ожидался JSON, но получен:', contentType, text.substring(0, 200));
+            console.error('Ожидался JSON, но получен:', {
+                contentType: contentType,
+                status: response.status,
+                statusText: response.statusText,
+                preview: text.substring(0, 500)
+            });
             
-            // Проверяем, не является ли это страницей входа
-            if (text.includes('Вход в систему') || text.includes('login') || response.status === 401 || response.status === 403) {
+            // Проверяем различные типы ошибок
+            if (response.status === 401 || response.status === 403 || text.includes('Вход в систему') || text.includes('login')) {
                 throw new Error('Сессия истекла. Пожалуйста, войдите в систему снова.');
             }
             
-            throw new Error('Сервер вернул неверный формат ответа. Пожалуйста, обновите страницу и попробуйте снова.');
+            if (response.status === 419) {
+                throw new Error('CSRF токен истек. Пожалуйста, обновите страницу и попробуйте снова.');
+            }
+            
+            if (response.status === 500) {
+                // Пытаемся извлечь сообщение об ошибке из HTML
+                const errorMatch = text.match(/<title>(.*?)<\/title>/i) || text.match(/<h1>(.*?)<\/h1>/i);
+                const errorMsg = errorMatch ? errorMatch[1] : 'Внутренняя ошибка сервера';
+                throw new Error(`Ошибка сервера (${response.status}): ${errorMsg}`);
+            }
+            
+            if (response.status === 404) {
+                throw new Error('Маршрут не найден. Возможно, произошла ошибка в конфигурации.');
+            }
+            
+            // Общая ошибка для других случаев
+            throw new Error(`Сервер вернул неверный формат ответа (${response.status}). Content-Type: ${contentType}. Пожалуйста, проверьте консоль браузера для подробностей.`);
         }
         
+        // Если ответ JSON, но статус не OK
         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || analyticsTranslations.server_error);
+            try {
+                const data = await response.json();
+                throw new Error(data.message || data.error || analyticsTranslations.server_error);
+            } catch (jsonError) {
+                // Если не удалось распарсить JSON даже при правильном Content-Type
+                throw new Error(`Ошибка сервера (${response.status}): ${response.statusText}`);
+            }
         }
+        
         return response.json();
     })
     .then(data => {
