@@ -364,6 +364,23 @@ class CourseAnalyticsController extends Controller
             
             if ($courseId && $userId) {
                 // Синхронизация конкретного курса и студента
+                $course = Course::find($courseId);
+                $user = User::find($userId);
+                
+                if (!$course) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Курс не найден'
+                    ], 404);
+                }
+                
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Студент не найден'
+                    ], 404);
+                }
+                
                 $activityStats = $this->syncService->syncCourseActivities($courseId);
                 $progressStats = $this->syncService->syncStudentProgress($courseId, $userId);
                 
