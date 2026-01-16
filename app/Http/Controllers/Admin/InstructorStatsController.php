@@ -149,33 +149,42 @@ class InstructorStatsController extends Controller
                     if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at || 
                         $progress->submitted_at || $progress->is_graded || $progress->has_draft)) {
                         
-                        // Определяем статус
+                        // Определяем статус (приоритет: проверено > сдано > ожидает проверки > в процессе > прочитано > просмотрено)
                         $status = 'viewed';
                         $statusText = 'Просмотрено';
                         $statusIcon = 'fa-eye';
                         $statusClass = 'secondary';
                         
-                        if ($progress->is_graded && $progress->grade !== null) {
+                        // Приоритет 1: Проверено (есть оценка)
+                        if ($progress->grade !== null || ($progress->is_graded && $progress->graded_at)) {
                             $status = 'graded';
                             $statusText = 'Проверено';
                             $statusIcon = 'fa-check-circle';
                             $statusClass = 'success';
-                        } elseif ($progress->submitted_at) {
+                        } 
+                        // Приоритет 2: Сдано (есть дата сдачи)
+                        elseif ($progress->submitted_at) {
                             $status = 'submitted';
                             $statusText = 'Сдано';
                             $statusIcon = 'fa-paper-plane';
                             $statusClass = 'info';
-                        } elseif ($progress->needs_grading) {
+                        } 
+                        // Приоритет 3: Ожидает проверки
+                        elseif ($progress->needs_grading || ($progress->submitted_at && !$progress->is_graded)) {
                             $status = 'needs_grading';
                             $statusText = 'Ожидает проверки';
                             $statusIcon = 'fa-clock';
                             $statusClass = 'warning';
-                        } elseif ($progress->has_draft || $progress->started_at) {
+                        } 
+                        // Приоритет 4: В процессе (есть черновик или начато)
+                        elseif ($progress->has_draft || $progress->started_at) {
                             $status = 'in_progress';
                             $statusText = 'В процессе';
                             $statusIcon = 'fa-edit';
                             $statusClass = 'primary';
-                        } elseif ($progress->is_read) {
+                        } 
+                        // Приоритет 5: Прочитано
+                        elseif ($progress->is_read) {
                             $status = 'read';
                             $statusText = 'Прочитано';
                             $statusIcon = 'fa-book-open';

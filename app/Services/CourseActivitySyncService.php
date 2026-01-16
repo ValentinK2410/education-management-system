@@ -299,6 +299,11 @@ class CourseActivitySyncService
                     $grade = $activityData['grade'] ?? null;
                     $maxGrade = $activityData['max_grade'] ?? $activity->max_grade;
                     
+                    // Если есть оценка, статус должен быть 'graded'
+                    if ($grade !== null && $grade !== '') {
+                        $status = 'graded';
+                    }
+                    
                     // Преобразуем timestamp в datetime для submitted_at и graded_at
                     $submittedAt = null;
                     if (isset($activityData['submitted_at']) && $activityData['submitted_at']) {
@@ -437,7 +442,8 @@ class CourseActivitySyncService
                         $progressData['needs_grading'] = $needsGrading;
                     }
                     if (in_array('is_graded', $fillableFields)) {
-                        $progressData['is_graded'] = $isGraded;
+                        // Если есть оценка, считаем что проверено
+                        $progressData['is_graded'] = $isGraded || ($grade !== null && $grade !== '');
                     }
                     if (in_array('grading_requested_at', $fillableFields)) {
                         $progressData['grading_requested_at'] = $gradingRequestedAt;
