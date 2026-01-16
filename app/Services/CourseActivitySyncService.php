@@ -125,17 +125,32 @@ class CourseActivitySyncService
                         $stats['updated']++;
                     }
                 } catch (\Exception $e) {
+                    $errorMessage = $e->getMessage();
+                    
+                    // Игнорируем ошибки доступа к Moodle API - они не критичны
+                    if (strpos($errorMessage, 'webservice_access_exception') !== false ||
+                        strpos($errorMessage, 'accessexception') !== false ||
+                        strpos($errorMessage, 'Исключительная ситуация контроля доступа') !== false) {
+                        Log::debug('Ошибка доступа к Moodle API при синхронизации элемента курса (игнорируется)', [
+                            'course_id' => $courseId,
+                            'activity_type' => $activity['type'] ?? 'unknown',
+                            'moodle_id' => $activity['moodle_id'] ?? 'unknown',
+                            'error' => $errorMessage
+                        ]);
+                        continue; // Пропускаем эту активность, не добавляем в список ошибок
+                    }
+                    
                     $stats['errors']++;
                     $stats['errors_list'][] = [
                         'activity_type' => $activity['type'] ?? 'unknown',
                         'moodle_id' => $activity['moodle_id'] ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $errorMessage
                     ];
                     
                     Log::error('Ошибка синхронизации элемента курса', [
                         'course_id' => $courseId,
                         'activity' => $activity,
-                        'error' => $e->getMessage()
+                        'error' => $errorMessage
                     ]);
                 }
             }
@@ -628,17 +643,32 @@ class CourseActivitySyncService
                         }
                     }
                 } catch (\Exception $e) {
+                    $errorMessage = $e->getMessage();
+                    
+                    // Игнорируем ошибки доступа к Moodle API - они не критичны
+                    if (strpos($errorMessage, 'webservice_access_exception') !== false ||
+                        strpos($errorMessage, 'accessexception') !== false ||
+                        strpos($errorMessage, 'Исключительная ситуация контроля доступа') !== false) {
+                        Log::debug('Ошибка доступа к Moodle API (игнорируется)', [
+                            'course_id' => $courseId,
+                            'user_id' => $userId,
+                            'activity_type' => $activityData['type'] ?? 'unknown',
+                            'error' => $errorMessage
+                        ]);
+                        continue; // Пропускаем эту активность, не добавляем в список ошибок
+                    }
+                    
                     $stats['errors']++;
                     $stats['errors_list'][] = [
                         'activity_type' => $activityData['type'] ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $errorMessage
                     ];
                     
                     Log::error('Ошибка синхронизации прогресса студента', [
                         'course_id' => $courseId,
                         'user_id' => $userId,
                         'activity' => $activityData,
-                        'error' => $e->getMessage()
+                        'error' => $errorMessage
                     ]);
                 }
             }
