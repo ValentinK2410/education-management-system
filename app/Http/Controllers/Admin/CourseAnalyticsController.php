@@ -328,6 +328,16 @@ class CourseAnalyticsController extends Controller
     public function sync(Request $request)
     {
         try {
+            // Увеличиваем время выполнения для синхронизации
+            set_time_limit(1800); // 30 минут
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true);
+            
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no');
+            }
+            
             // Проверяем авторизацию
             if (!auth()->check()) {
                 return response()->json([

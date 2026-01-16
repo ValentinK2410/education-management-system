@@ -763,20 +763,40 @@ class MoodleApiService
             return [];
         }
 
+        // Если studentMoodleId = 0, пропускаем запросы попыток (требуют реального пользователя)
+        if ($studentMoodleId == 0) {
+            Log::info('getStudentQuizAttempts: пропущено (student_moodle_id = 0)', ['course_id' => $courseId]);
+            return [];
+        }
+
         $quizIds = array_column($quizzes, 'id');
         $allAttempts = [];
 
         foreach ($quizIds as $quizId) {
-            $result = $this->call('mod_quiz_get_user_attempts', [
-                'quizid' => $quizId,
-                'userid' => $studentMoodleId,
-                'status' => 'all'
-            ]);
+            try {
+                $result = $this->call('mod_quiz_get_user_attempts', [
+                    'quizid' => $quizId,
+                    'userid' => $studentMoodleId,
+                    'status' => 'all'
+                ]);
 
-            if ($result !== false && !isset($result['exception']) && isset($result['attempts'])) {
-                foreach ($result['attempts'] as $attempt) {
-                    $allAttempts[$quizId][] = $attempt;
+                if ($result !== false && !isset($result['exception']) && isset($result['attempts'])) {
+                    foreach ($result['attempts'] as $attempt) {
+                        $allAttempts[$quizId][] = $attempt;
+                    }
+                } elseif (isset($result['exception']) && isset($result['errorcode']) && $result['errorcode'] === 'accessexception') {
+                    // Игнорируем ошибки доступа - это нормально для некоторых пользователей
+                    Log::debug('getStudentQuizAttempts: ошибка доступа (игнорируется)', [
+                        'quiz_id' => $quizId,
+                        'student_moodle_id' => $studentMoodleId
+                    ]);
                 }
+            } catch (\Exception $e) {
+                Log::warning('getStudentQuizAttempts: ошибка при получении попыток', [
+                    'quiz_id' => $quizId,
+                    'student_moodle_id' => $studentMoodleId,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -799,17 +819,37 @@ class MoodleApiService
             return [];
         }
 
+        // Если studentMoodleId = 0, пропускаем запросы оценок (требуют реального пользователя)
+        if ($studentMoodleId == 0) {
+            Log::info('getStudentQuizGrades: пропущено (student_moodle_id = 0)', ['course_id' => $courseId]);
+            return [];
+        }
+
         $quizIds = array_column($quizzes, 'id');
         $grades = [];
 
         foreach ($quizIds as $quizId) {
-            $result = $this->call('mod_quiz_get_user_best_grade', [
-                'quizid' => $quizId,
-                'userid' => $studentMoodleId
-            ]);
+            try {
+                $result = $this->call('mod_quiz_get_user_best_grade', [
+                    'quizid' => $quizId,
+                    'userid' => $studentMoodleId
+                ]);
 
-            if ($result !== false && !isset($result['exception']) && isset($result['grade'])) {
-                $grades[$quizId] = $result;
+                if ($result !== false && !isset($result['exception']) && isset($result['grade'])) {
+                    $grades[$quizId] = $result;
+                } elseif (isset($result['exception']) && isset($result['errorcode']) && $result['errorcode'] === 'accessexception') {
+                    // Игнорируем ошибки доступа
+                    Log::debug('getStudentQuizGrades: ошибка доступа (игнорируется)', [
+                        'quiz_id' => $quizId,
+                        'student_moodle_id' => $studentMoodleId
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('getStudentQuizGrades: ошибка при получении оценок', [
+                    'quiz_id' => $quizId,
+                    'student_moodle_id' => $studentMoodleId,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
