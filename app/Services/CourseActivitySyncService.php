@@ -319,22 +319,27 @@ class CourseActivitySyncService
                         $activity = $activity['activity'];
                     }
 
-                    // Определяем статус прогресса
-                    $status = $this->mapStatus($activityData['status'] ?? 'not_started');
-                    $grade = $activityData['grade'] ?? null;
-                    $maxGrade = $activityData['max_grade'] ?? $activity->max_grade;
-                    
-                    // Если есть оценка, статус должен быть 'graded'
-                    if ($grade !== null && $grade !== '') {
-                        $status = 'graded';
-                    }
-                    
                     // Преобразуем timestamp в datetime для submitted_at и graded_at
                     $submittedAt = null;
                     if (isset($activityData['submitted_at']) && $activityData['submitted_at']) {
                         $submittedAt = is_numeric($activityData['submitted_at']) 
                             ? \Carbon\Carbon::createFromTimestamp($activityData['submitted_at'])
                             : $activityData['submitted_at'];
+                    }
+                    
+                    // Определяем статус прогресса
+                    $status = $this->mapStatus($activityData['status'] ?? 'not_started');
+                    $grade = $activityData['grade'] ?? null;
+                    $maxGrade = $activityData['max_grade'] ?? $activity->max_grade;
+                    
+                    // Если есть дата сдачи, но нет оценки, статус должен быть 'submitted'
+                    if ($submittedAt && ($grade === null || $grade === '')) {
+                        $status = 'submitted';
+                    }
+                    
+                    // Если есть оценка, статус должен быть 'graded'
+                    if ($grade !== null && $grade !== '') {
+                        $status = 'graded';
                     }
                     
                     $gradedAt = null;
@@ -380,6 +385,11 @@ class CourseActivitySyncService
                         $gradingRequestedAt = is_numeric($activityData['grading_requested_at'])
                             ? \Carbon\Carbon::createFromTimestamp($activityData['grading_requested_at'])
                             : $activityData['grading_requested_at'];
+                    }
+                    
+                    // Если есть дата сдачи, но нет оценки, требуется проверка
+                    if ($submittedAt && ($grade === null || $grade === '')) {
+                        $needsGrading = true;
                     }
                     
                     // Для форумов: если нужен ответ преподавателя, устанавливаем needs_grading
