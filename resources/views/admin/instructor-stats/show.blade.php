@@ -307,62 +307,154 @@
         </div>
     </div>
 
-    <!-- Курсы преподавателя -->
+    <!-- Курсы преподавателя с активностью студентов -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="fas fa-chalkboard-teacher me-2"></i>
-                        Курсы преподавателя ({{ $courses->count() }})
+                        Курсы преподавателя и активность студентов ({{ $courses->count() }})
                     </h5>
                 </div>
                 <div class="card-body">
                     @if($courses->isEmpty())
                         <p class="text-muted text-center py-4">У преподавателя нет курсов</p>
                     @else
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Название курса</th>
-                                        <th>Программа</th>
-                                        <th>Студентов</th>
-                                        <th>Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($courses as $course)
-                                    <tr>
-                                        <td>{{ $course->id }}</td>
-                                        <td>
-                                            <strong>{{ $course->name }}</strong>
-                                            @if($course->code)
-                                                <br><small class="text-muted">{{ $course->code }}</small>
-                                            @endif
-                                        </td>
-                                        <td>
+                        @foreach($courses as $course)
+                            <div class="card mb-4 border">
+                                <div class="card-header bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">
+                                                <strong>{{ $course->name }}</strong>
+                                                @if($course->code)
+                                                    <small class="text-muted">({{ $course->code }})</small>
+                                                @endif
+                                            </h6>
                                             @if($course->program)
-                                                {{ $course->program->name }}
-                                            @else
-                                                <span class="text-muted">Без программы</span>
+                                                <small class="text-muted">{{ $course->program->name }}</small>
                                             @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-success">{{ $course->users_count }}</span>
-                                        </td>
-                                        <td>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-info">Студентов: {{ $course->users_count }}</span>
+                                            @if(isset($coursesWithStudents[$course->id]) && !empty($coursesWithStudents[$course->id]))
+                                                <span class="badge bg-success">Активных: {{ count($coursesWithStudents[$course->id]) }}</span>
+                                            @endif
                                             <a href="{{ route('admin.courses.show', $course->id) }}" 
-                                               class="btn btn-sm btn-outline-primary">
+                                               class="btn btn-sm btn-outline-primary ms-2">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    @if(isset($coursesWithStudents[$course->id]) && !empty($coursesWithStudents[$course->id]))
+                                        @foreach($coursesWithStudents[$course->id] as $studentData)
+                                            @php
+                                                $student = $studentData['student'];
+                                                $activities = $studentData['activities'];
+                                            @endphp
+                                            <div class="border rounded p-3 mb-3 bg-white">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1">
+                                                            <a href="{{ route('admin.users.show', $student->id) }}" 
+                                                               class="text-decoration-none">
+                                                                <i class="fas fa-user me-2"></i>{{ $student->name }}
+                                                            </a>
+                                                        </h6>
+                                                        <small class="text-muted">{{ $student->email }}</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <div class="small text-muted mb-1">Активность</div>
+                                                        <div>
+                                                            <span class="badge bg-success">{{ $studentData['graded_count'] }} проверено</span>
+                                                            <span class="badge bg-info">{{ $studentData['submitted_count'] }} сдано</span>
+                                                            <span class="badge bg-warning">{{ $studentData['pending_count'] }} ожидает</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row g-2">
+                                                    @foreach($activities as $item)
+                                                        @php
+                                                            $activity = $item['activity'];
+                                                            $activityTypeIcons = [
+                                                                'assign' => 'fa-file-alt',
+                                                                'quiz' => 'fa-question-circle',
+                                                                'forum' => 'fa-comments',
+                                                                'resource' => 'fa-file',
+                                                                'page' => 'fa-file-alt',
+                                                                'url' => 'fa-link',
+                                                            ];
+                                                            $activityTypeLabels = [
+                                                                'assign' => 'Задание',
+                                                                'quiz' => 'Тест',
+                                                                'forum' => 'Форум',
+                                                                'resource' => 'Ресурс',
+                                                                'page' => 'Страница',
+                                                                'url' => 'Ссылка',
+                                                            ];
+                                                            $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
+                                                            $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
+                                                        @endphp
+                                                        <div class="col-md-6 col-lg-4">
+                                                            <div class="border rounded p-2 bg-light">
+                                                                <div class="d-flex align-items-start mb-1">
+                                                                    <i class="fas {{ $icon }} me-2 text-primary mt-1"></i>
+                                                                    <div class="flex-grow-1">
+                                                                        <div class="small fw-bold mb-1">
+                                                                            {{ \Illuminate\Support\Str::limit($activity->name, 40) }}
+                                                                        </div>
+                                                                        <div class="d-flex flex-wrap gap-1 mb-1">
+                                                                            <span class="badge bg-secondary small">{{ $typeLabel }}</span>
+                                                                            <span class="badge bg-{{ $item['status_class'] }} small">
+                                                                                <i class="fas {{ $item['status_icon'] }} me-1"></i>{{ $item['status_text'] }}
+                                                                            </span>
+                                                                        </div>
+                                                                        @if($item['submitted_at'])
+                                                                            <div class="small text-info">
+                                                                                <i class="fas fa-paper-plane me-1"></i>
+                                                                                Сдано: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                            </div>
+                                                                        @endif
+                                                                        @if($item['graded_at'])
+                                                                            <div class="small text-success">
+                                                                                <i class="fas fa-check-double me-1"></i>
+                                                                                Проверено: {{ \Carbon\Carbon::parse($item['graded_at'])->format('d.m.Y H:i') }}
+                                                                            </div>
+                                                                        @endif
+                                                                        @if($item['grade'] !== null && $item['max_grade'])
+                                                                            <div class="small text-primary fw-bold">
+                                                                                <i class="fas fa-star me-1"></i>
+                                                                                Оценка: {{ number_format($item['grade'], 1) }} / {{ number_format($item['max_grade'], 1) }}
+                                                                                @if($item['max_grade'] > 0)
+                                                                                    ({{ number_format(($item['grade'] / $item['max_grade']) * 100, 1) }}%)
+                                                                                @endif
+                                                                            </div>
+                                                                        @elseif($item['status'] === 'needs_grading' || $item['status'] === 'submitted')
+                                                                            <div class="small text-warning">
+                                                                                <i class="fas fa-clock me-1"></i>Ожидает оценки
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <p class="text-muted text-center py-3 mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Нет студентов с учебной активностью в Moodle
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
                     @endif
                 </div>
             </div>

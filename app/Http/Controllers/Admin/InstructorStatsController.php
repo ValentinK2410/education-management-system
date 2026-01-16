@@ -106,7 +106,7 @@ class InstructorStatsController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         
-        // Получаем все курсы преподавателя с количеством студентов
+        // Получаем все курсы преподавателя с количеством студентов и активными студентами
         $courses = Course::where('instructor_id', $instructor->id)
             ->with(['program', 'instructor'])
             ->withCount(['users' => function ($query) {
@@ -115,6 +115,100 @@ class InstructorStatsController extends Controller
                 });
             }])
             ->get();
+        
+        // Получаем данные о студентах и их активности по каждому курсу
+        $coursesWithStudents = [];
+        
+        foreach ($courses as $course) {
+            // Получаем студентов курса
+            $students = $course->users()
+                ->whereHas('roles', function ($q) {
+                    $q->where('slug', 'student');
+                })
+                ->get();
+            
+            $studentsWithActivity = [];
+            
+            foreach ($students as $student) {
+                // Получаем все элементы курса, с которыми студент взаимодействовал
+                $activities = \App\Models\CourseActivity::where('course_id', $course->id)->get();
+                
+                $studentActivities = [];
+                
+                foreach ($activities as $activity) {
+                    // Получаем прогресс студента по этому элементу
+                    $progress = \App\Models\StudentActivityProgress::where('user_id', $student->id)
+                        ->where('course_id', $course->id)
+                        ->where('activity_id', $activity->id)
+                        ->first();
+                    
+                    // Показываем только элементы, с которыми студент взаимодействовал
+                    if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at || 
+                        $progress->submitted_at || $progress->is_graded || $progress->has_draft)) {
+                        
+                        // Определяем статус
+                        $status = 'viewed';
+                        $statusText = 'Просмотрено';
+                        $statusIcon = 'fa-eye';
+                        $statusClass = 'secondary';
+                        
+                        if ($progress->is_graded && $progress->grade !== null) {
+                            $status = 'graded';
+                            $statusText = 'Проверено';
+                            $statusIcon = 'fa-check-circle';
+                            $statusClass = 'success';
+                        } elseif ($progress->submitted_at) {
+                            $status = 'submitted';
+                            $statusText = 'Сдано';
+                            $statusIcon = 'fa-paper-plane';
+                            $statusClass = 'info';
+                        } elseif ($progress->needs_grading) {
+                            $status = 'needs_grading';
+                            $statusText = 'Ожидает проверки';
+                            $statusIcon = 'fa-clock';
+                            $statusClass = 'warning';
+                        } elseif ($progress->has_draft || $progress->started_at) {
+                            $status = 'in_progress';
+                            $statusText = 'В процессе';
+                            $statusIcon = 'fa-edit';
+                            $statusClass = 'primary';
+                        } elseif ($progress->is_read) {
+                            $status = 'read';
+                            $statusText = 'Прочитано';
+                            $statusIcon = 'fa-book-open';
+                            $statusClass = 'info';
+                        }
+                        
+                        $studentActivities[] = [
+                            'activity' => $activity,
+                            'progress' => $progress,
+                            'status' => $status,
+                            'status_text' => $statusText,
+                            'status_icon' => $statusIcon,
+                            'status_class' => $statusClass,
+                            'grade' => $progress->grade,
+                            'max_grade' => $progress->max_grade ?? $activity->max_grade,
+                            'submitted_at' => $progress->submitted_at,
+                            'graded_at' => $progress->graded_at,
+                        ];
+                    }
+                }
+                
+                // Добавляем студента только если у него есть активность
+                if (!empty($studentActivities)) {
+                    $studentsWithActivity[] = [
+                        'student' => $student,
+                        'activities' => $studentActivities,
+                        'total_activities' => count($studentActivities),
+                        'graded_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'graded')),
+                        'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
+                        'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading')),
+                    ];
+                }
+            }
+            
+            $coursesWithStudents[$course->id] = $studentsWithActivity;
+        }
         
         // Получаем все проверенные работы преподавателя
         // Если graded_by_user_id заполнен, проверяем его
@@ -206,7 +300,7 @@ class InstructorStatsController extends Controller
             'forums_graded' => $activityStats->get('forum', 0),
         ];
         
-        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'gradedActivities', 'pendingActivities', 'stats', 'dateFrom', 'dateTo'));
+        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'coursesWithStudents', 'gradedActivities', 'pendingActivities', 'stats', 'dateFrom', 'dateTo'));
     }
 }
 
