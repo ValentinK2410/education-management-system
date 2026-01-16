@@ -381,25 +381,40 @@ class CourseAnalyticsController extends Controller
                     ], 404);
                 }
                 
-                $activityStats = $this->syncService->syncCourseActivities($courseId);
-                $progressStats = $this->syncService->syncStudentProgress($courseId, $userId);
-                
-                $stats = [
-                    'activities' => $activityStats,
-                    'progress' => $progressStats
-                ];
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => sprintf(
-                        'Синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
-                        $activityStats['created'] ?? 0,
-                        $activityStats['updated'] ?? 0,
-                        $progressStats['created'] ?? 0,
-                        $progressStats['updated'] ?? 0
-                    ),
-                    'stats' => $stats
-                ]);
+                try {
+                    $activityStats = $this->syncService->syncCourseActivities($courseId);
+                    $progressStats = $this->syncService->syncStudentProgress($courseId, $userId);
+                    
+                    $stats = [
+                        'activities' => $activityStats,
+                        'progress' => $progressStats
+                    ];
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => sprintf(
+                            'Синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                            $activityStats['created'] ?? 0,
+                            $activityStats['updated'] ?? 0,
+                            $progressStats['created'] ?? 0,
+                            $progressStats['updated'] ?? 0
+                        ),
+                        'stats' => $stats
+                    ]);
+                } catch (\Exception $syncException) {
+                    Log::error('Ошибка при синхронизации курса и студента', [
+                        'course_id' => $courseId,
+                        'user_id' => $userId,
+                        'error' => $syncException->getMessage(),
+                        'file' => $syncException->getFile(),
+                        'line' => $syncException->getLine()
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ошибка при синхронизации: ' . $syncException->getMessage()
+                    ], 500);
+                }
             } elseif ($courseId) {
                 // Синхронизация конкретного курса
                 $course = Course::find($courseId);
