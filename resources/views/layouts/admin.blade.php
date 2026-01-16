@@ -884,6 +884,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasPermission('view_sidebar_subjects') || auth()->user()->hasRole('admin'))
+            <div class="nav-item">
+                <a href="{{ route('admin.subjects.index') }}" class="nav-link {{ request()->routeIs('admin.subjects.*') ? 'active' : '' }}">
+                    <i class="fas fa-book-open"></i>
+                    <span>Предметы</span>
+                </a>
+            </div>
+            @endif
+
             @if(auth()->user()->hasPermission('view_sidebar_courses'))
             <div class="nav-item">
                 <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}">

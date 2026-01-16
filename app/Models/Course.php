@@ -8,6 +8,7 @@ use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -28,7 +29,8 @@ class Course extends Model
         'description',       // Описание курса
         'short_description', // Краткое описание
         'image',             // Изображение обложки курса
-        'program_id',        // ID образовательной программы
+        'program_id',        // ID образовательной программы (для обратной совместимости)
+        'subject_id',        // ID предмета (глобального курса)
         'order',             // Порядок курса в программе
         'instructor_id',     // ID преподавателя
         'code',              // Код курса
@@ -75,6 +77,16 @@ class Course extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    /**
+     * Получить предмет (глобальный курс), к которому принадлежит курс
+     *
+     * @return BelongsTo
+     */
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InstitutionController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
@@ -466,7 +467,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
         Route::post('programs/{program}/courses/{course}/move-up', [ProgramController::class, 'moveCourseUp'])->name('programs.courses.move-up')->where(['course' => '[0-9]+']);
         Route::post('programs/{program}/courses/{course}/move-down', [ProgramController::class, 'moveCourseDown'])->name('programs.courses.move-down')->where(['course' => '[0-9]+']);
+        Route::post('programs/{program}/subjects/{subject}/attach', [ProgramController::class, 'attachSubject'])->name('programs.subjects.attach');
+        Route::post('programs/{program}/subjects/{subject}/detach', [ProgramController::class, 'detachSubject'])->name('programs.subjects.detach');
+        Route::post('programs/{program}/subjects/{subject}/move-up', [ProgramController::class, 'moveSubjectUp'])->name('programs.subjects.move-up');
+        Route::post('programs/{program}/subjects/{subject}/move-down', [ProgramController::class, 'moveSubjectDown'])->name('programs.subjects.move-down');
         Route::resource('programs', ProgramController::class);
+
+        // Управление предметами (глобальными курсами)
+        Route::resource('subjects', SubjectController::class);
 
         // Управление курсами
         Route::post('courses/{course}/duplicate', [CourseController::class, 'duplicate'])->name('courses.duplicate');

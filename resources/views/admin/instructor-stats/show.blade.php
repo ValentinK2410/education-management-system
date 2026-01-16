@@ -341,6 +341,16 @@
                                             @if(isset($coursesWithStudents[$course->id]) && !empty($coursesWithStudents[$course->id]))
                                                 <span class="badge bg-success">Активных: {{ count($coursesWithStudents[$course->id]) }}</span>
                                             @endif
+                                            @if($course->moodle_course_id)
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-success ms-2 sync-course-btn" 
+                                                        data-course-id="{{ $course->id }}"
+                                                        data-course-name="{{ $course->name }}"
+                                                        title="Синхронизировать данные из Moodle">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                    <span class="sync-btn-text">Синхронизировать</span>
+                                                </button>
+                                            @endif
                                             <a href="{{ route('admin.courses.show', $course->id) }}" 
                                                class="btn btn-sm btn-outline-primary ms-2">
                                                 <i class="fas fa-eye"></i>
@@ -421,8 +431,13 @@
                                                                         </div>
                                                                         @if($item['submitted_at'])
                                                                             <div class="small text-info">
-                                                                                <i class="fas fa-paper-plane me-1"></i>
-                                                                                Сдано: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                @if($item['is_forum'] && $item['needs_response'])
+                                                                                    <i class="fas fa-comments me-1"></i>
+                                                                                    Ответил: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                @else
+                                                                                    <i class="fas fa-paper-plane me-1"></i>
+                                                                                    Сдано: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                @endif
                                                                             </div>
                                                                         @endif
                                                                         @if($item['graded_at'])
@@ -438,6 +453,10 @@
                                                                                 @if($item['max_grade'] > 0)
                                                                                     ({{ number_format(($item['grade'] / $item['max_grade']) * 100, 1) }}%)
                                                                                 @endif
+                                                                            </div>
+                                                                        @elseif($item['status'] === 'needs_response')
+                                                                            <div class="small text-warning fw-bold">
+                                                                                <i class="fas fa-comments me-1"></i>Студент ответил на форуме, ожидает вашего ответа
                                                                             </div>
                                                                         @elseif($item['status'] === 'needs_grading' || $item['status'] === 'submitted')
                                                                             <div class="small text-warning">
@@ -641,10 +660,22 @@
                                             {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : 'Не указано' }}
                                         </td>
                                         <td>
+                                            @php
+                                                $isForum = ($activity->activity->activity_type ?? '') === 'forum';
+                                                $needsResponse = false;
+                                                if ($isForum && isset($activity->progress_data['needs_response'])) {
+                                                    $needsResponse = $activity->progress_data['needs_response'] ?? false;
+                                                }
+                                            @endphp
+                                            @if($isForum && $needsResponse)
+                                                <span class="badge bg-warning me-2">
+                                                    <i class="fas fa-comments me-1"></i>Ожидает ответа
+                                                </span>
+                                            @endif
                                             <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
                                                class="btn btn-sm btn-warning">
                                                 <i class="fas fa-eye"></i>
-                                                Проверить
+                                                {{ $isForum && $needsResponse ? 'Ответить' : 'Проверить' }}
                                             </a>
                                         </td>
                                     </tr>
@@ -658,5 +689,132 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка синхронизации курса
+    document.querySelectorAll('.sync-course-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseName = this.getAttribute('data-course-name');
+            const btnText = this.querySelector('.sync-btn-text');
+            const btnIcon = this.querySelector('i');
+            
+            if (this.disabled) {
+                return;
+            }
+            
+            // Подтверждение
+            if (!confirm('Синхронизировать данные из Moodle для курса «' + courseName + '»?\n\nЭто может занять некоторое время.')) {
+                return;
+            }
+            
+            // Блокируем кнопку
+            this.disabled = true;
+            btnText.textContent = 'Синхронизация...';
+            btnIcon.classList.add('fa-spin');
+            
+            // Показываем индикатор прогресса
+            const progressAlert = document.createElement('div');
+            progressAlert.className = 'alert alert-info alert-dismissible fade show mt-2';
+            progressAlert.id = 'sync-progress-' + courseId;
+            progressAlert.innerHTML = `
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                <strong>Синхронизация курса «${courseName}»...</strong>
+                <div class="mt-2">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Вставляем индикатор после заголовка курса
+            const courseCard = this.closest('.card');
+            const cardBody = courseCard.querySelector('.card-body');
+            cardBody.insertBefore(progressAlert, cardBody.firstChild);
+            
+            // Получаем CSRF токен
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                alert('CSRF токен не найден');
+                resetButton();
+                return;
+            }
+            
+            // Отправляем AJAX запрос
+            fetch('{{ route("admin.moodle-sync.sync-activities", ":courseId") }}'.replace(':courseId', courseId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            })
+            .then(async response => {
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+                
+                if (!isJson) {
+                    const text = await response.text();
+                    throw new Error('Сервер вернул неверный формат ответа');
+                }
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Ошибка синхронизации');
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Успешная синхронизация
+                    progressAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                    progressAlert.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Синхронизация завершена успешно!</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <div class="mt-2 small">
+                            <strong>Результаты:</strong><br>
+                            Элементы курса: создано ${data.stats?.activities?.created || 0}, обновлено ${data.stats?.activities?.updated || 0}<br>
+                            Прогресс студентов: создано ${data.stats?.progress?.created || 0}, обновлено ${data.stats?.progress?.updated || 0}<br>
+                            Обработано студентов: ${data.stats?.students_processed || 0}
+                            ${(data.stats?.progress?.errors || 0) > 0 ? '<br><span class="text-warning">Ошибок: ' + data.stats.progress.errors + '</span>' : ''}
+                        </div>
+                    `;
+                    
+                    // Обновляем страницу через 3 секунды
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    throw new Error(data.message || 'Ошибка синхронизации');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка синхронизации:', error);
+                progressAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+                progressAlert.innerHTML = `
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Ошибка синхронизации:</strong> ${error.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                resetButton();
+            });
+            
+            function resetButton() {
+                btn.disabled = false;
+                btnText.textContent = 'Синхронизировать';
+                btnIcon.classList.remove('fa-spin');
+            }
+        });
+    });
+});
+</script>
+@endpush
 @endsection
 

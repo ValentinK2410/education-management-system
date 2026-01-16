@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\Program;
 use App\Models\Course;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 
 /**
@@ -23,7 +24,7 @@ class ProgramController extends Controller
      */
     public function index()
     {
-        $programs = Program::with(['institution', 'courses'])->paginate(15);
+        $programs = Program::with(['institution', 'subjects', 'courses'])->paginate(15);
         return view('admin.programs.index', compact('programs'));
     }
 
@@ -103,27 +104,55 @@ class ProgramController extends Controller
      */
     public function show(Program $program)
     {
-        // Загружаем курсы с сортировкой по order, затем по id
-        $program->load(['institution']);
+        // Загружаем предметы и курсы
+        $program->load(['institution', 'subjects']);
         
-        // Загружаем курсы с сортировкой
+        // Загружаем предметы программы с сортировкой
+        $subjects = $program->subjects()
+            ->orderBy('program_subject.order', 'asc')
+            ->orderBy('subjects.order', 'asc')
+            ->orderBy('subjects.name', 'asc')
+            ->get();
+        
+        // Для каждого предмета загружаем его курсы
+        foreach ($subjects as $subject) {
+            $subject->load(['courses' => function ($query) {
+                $query->with('instructor')
+                    ->orderBy('order', 'asc')
+                    ->orderBy('id', 'asc');
+            }]);
+            
+            // Загружаем количество студентов для каждого курса предмета
+            foreach ($subject->courses as $course) {
+                $course->loadCount(['users' => function ($query) {
+                    $query->whereHas('roles', function ($q) {
+                        $q->where('slug', 'student');
+                    });
+                }]);
+            }
+        }
+        
+        // Также загружаем старые курсы (для обратной совместимости)
         $courses = Course::where('program_id', $program->id)
+            ->whereNull('subject_id')
             ->with('instructor')
             ->orderBy('order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
         
-        // Загружаем количество студентов для каждого курса
         $courses->loadCount(['users' => function ($query) {
             $query->whereHas('roles', function ($q) {
                 $q->where('slug', 'student');
             });
         }]);
         
-        // Устанавливаем коллекцию курсов
-        $program->setRelation('courses', $courses);
+        // Получаем все доступные предметы для добавления в программу
+        $availableSubjects = Subject::active()
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
         
-        return view('admin.programs.show', compact('program'));
+        return view('admin.programs.show', compact('program', 'subjects', 'courses', 'availableSubjects'));
     }
     
     /**
@@ -307,5 +336,113 @@ class ProgramController extends Controller
 
         return redirect()->route('admin.programs.index')
             ->with('success', 'Учебная программа успешно удалена.');
+    }
+
+    /**
+     * Добавить предмет в программу
+     *
+     * @param Request $request
+     * @param Program $program
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function attachSubject(Request $request, Program $program)
+    {
+        $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'order' => 'nullable|integer|min:0',
+        ]);
+
+        $subjectId = $request->input('subject_id');
+        $order = $request->input('order', 0);
+
+        // Проверяем, не добавлен ли уже предмет
+        if ($program->subjects()->where('subject_id', $subjectId)->exists()) {
+            return redirect()->back()
+                ->with('error', 'Этот предмет уже добавлен в программу.');
+        }
+
+        $program->subjects()->attach($subjectId, ['order' => $order]);
+
+        return redirect()->back()
+            ->with('success', 'Предмет успешно добавлен в программу.');
+    }
+
+    /**
+     * Удалить предмет из программы
+     *
+     * @param Program $program
+     * @param Subject $subject
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function detachSubject(Program $program, Subject $subject)
+    {
+        $program->subjects()->detach($subject->id);
+
+        return redirect()->back()
+            ->with('success', 'Предмет успешно удален из программы.');
+    }
+
+    /**
+     * Переместить предмет вверх в списке программы
+     *
+     * @param Program $program
+     * @param Subject $subject
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function moveSubjectUp(Program $program, Subject $subject)
+    {
+        $subjects = $program->subjects()
+            ->orderBy('program_subject.order', 'asc')
+            ->orderBy('subjects.name', 'asc')
+            ->get();
+
+        $currentIndex = $subjects->search(function ($item) use ($subject) {
+            return $item->id === $subject->id;
+        });
+
+        if ($currentIndex > 0) {
+            $previousSubject = $subjects[$currentIndex - 1];
+            
+            $currentOrder = $program->subjects()->where('subject_id', $subject->id)->first()->pivot->order;
+            $previousOrder = $program->subjects()->where('subject_id', $previousSubject->id)->first()->pivot->order;
+            
+            $program->subjects()->updateExistingPivot($subject->id, ['order' => $previousOrder]);
+            $program->subjects()->updateExistingPivot($previousSubject->id, ['order' => $currentOrder]);
+        }
+
+        return redirect()->back()
+            ->with('success', 'Порядок предмета изменен');
+    }
+
+    /**
+     * Переместить предмет вниз в списке программы
+     *
+     * @param Program $program
+     * @param Subject $subject
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function moveSubjectDown(Program $program, Subject $subject)
+    {
+        $subjects = $program->subjects()
+            ->orderBy('program_subject.order', 'asc')
+            ->orderBy('subjects.name', 'asc')
+            ->get();
+
+        $currentIndex = $subjects->search(function ($item) use ($subject) {
+            return $item->id === $subject->id;
+        });
+
+        if ($currentIndex !== false && $currentIndex < $subjects->count() - 1) {
+            $nextSubject = $subjects[$currentIndex + 1];
+            
+            $currentOrder = $program->subjects()->where('subject_id', $subject->id)->first()->pivot->order;
+            $nextOrder = $program->subjects()->where('subject_id', $nextSubject->id)->first()->pivot->order;
+            
+            $program->subjects()->updateExistingPivot($subject->id, ['order' => $nextOrder]);
+            $program->subjects()->updateExistingPivot($nextSubject->id, ['order' => $currentOrder]);
+        }
+
+        return redirect()->back()
+            ->with('success', 'Порядок предмета изменен');
     }
 }

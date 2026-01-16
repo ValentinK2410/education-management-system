@@ -373,12 +373,18 @@ class CourseActivitySyncService
                     
                     // Информация о проверке
                     $needsGrading = $activityData['needs_grading'] ?? false;
+                    $needsResponse = $activityData['needs_response'] ?? false; // Для форумов: нужен ответ преподавателя
                     $isGraded = $activityData['is_graded'] ?? false;
                     $gradingRequestedAt = null;
                     if (isset($activityData['grading_requested_at']) && $activityData['grading_requested_at']) {
                         $gradingRequestedAt = is_numeric($activityData['grading_requested_at'])
                             ? \Carbon\Carbon::createFromTimestamp($activityData['grading_requested_at'])
                             : $activityData['grading_requested_at'];
+                    }
+                    
+                    // Для форумов: если нужен ответ преподавателя, устанавливаем needs_grading
+                    if ($activityType === 'forum' && $needsResponse) {
+                        $needsGrading = true;
                     }
                     
                     // Информация о попытках

@@ -8,6 +8,7 @@ use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -70,13 +71,26 @@ class Program extends Model
     }
 
     /**
-     * Получить курсы, входящие в программу
+     * Получить курсы, входящие в программу (для обратной совместимости)
      *
      * @return HasMany
      */
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class);
+    }
+
+    /**
+     * Получить предметы, входящие в программу
+     *
+     * @return BelongsToMany
+     */
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'program_subject')
+                    ->withPivot('order')
+                    ->withTimestamps()
+                    ->orderBy('program_subject.order');
     }
 
     /**

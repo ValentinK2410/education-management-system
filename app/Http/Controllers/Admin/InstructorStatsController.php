@@ -149,11 +149,18 @@ class InstructorStatsController extends Controller
                     if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at || 
                         $progress->submitted_at || $progress->is_graded || $progress->has_draft)) {
                         
-                        // Определяем статус (приоритет: проверено > сдано > ожидает проверки > в процессе > прочитано > просмотрено)
+                        // Определяем статус (приоритет: проверено > сдано > ожидает проверки/ответа > в процессе > прочитано > просмотрено)
                         $status = 'viewed';
                         $statusText = 'Просмотрено';
                         $statusIcon = 'fa-eye';
                         $statusClass = 'secondary';
+                        
+                        // Проверяем, является ли это форумом
+                        $isForum = $activity->activity_type === 'forum';
+                        $needsResponse = false;
+                        if ($isForum && isset($progress->progress_data['needs_response'])) {
+                            $needsResponse = $progress->progress_data['needs_response'] ?? false;
+                        }
                         
                         // Приоритет 1: Проверено (есть оценка)
                         if ($progress->grade !== null || ($progress->is_graded && $progress->graded_at)) {
@@ -169,12 +176,19 @@ class InstructorStatsController extends Controller
                             $statusIcon = 'fa-paper-plane';
                             $statusClass = 'info';
                         } 
-                        // Приоритет 3: Ожидает проверки
+                        // Приоритет 3: Ожидает проверки или ответа преподавателя (для форумов)
                         elseif ($progress->needs_grading || ($progress->submitted_at && !$progress->is_graded)) {
-                            $status = 'needs_grading';
-                            $statusText = 'Ожидает проверки';
-                            $statusIcon = 'fa-clock';
-                            $statusClass = 'warning';
+                            if ($isForum && $needsResponse) {
+                                $status = 'needs_response';
+                                $statusText = 'Ожидает ответа преподавателя';
+                                $statusIcon = 'fa-comments';
+                                $statusClass = 'warning';
+                            } else {
+                                $status = 'needs_grading';
+                                $statusText = 'Ожидает проверки';
+                                $statusIcon = 'fa-clock';
+                                $statusClass = 'warning';
+                            }
                         } 
                         // Приоритет 4: В процессе (есть черновик или начато)
                         elseif ($progress->has_draft || $progress->started_at) {
@@ -202,6 +216,8 @@ class InstructorStatsController extends Controller
                             'max_grade' => $progress->max_grade ?? $activity->max_grade,
                             'submitted_at' => $progress->submitted_at,
                             'graded_at' => $progress->graded_at,
+                            'is_forum' => $isForum,
+                            'needs_response' => $needsResponse,
                         ];
                     }
                 }
@@ -213,7 +229,7 @@ class InstructorStatsController extends Controller
                     'total_activities' => count($studentActivities),
                     'graded_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'graded')),
                     'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
-                    'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading')),
+                    'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading' || $a['status'] === 'needs_response')),
                     'has_activity' => !empty($studentActivities),
                     'can_sync' => $canSync,
                     'missing_moodle_course_id' => empty($course->moodle_course_id),
@@ -249,11 +265,18 @@ class InstructorStatsController extends Controller
             ->orderBy('graded_at', 'desc')
             ->get();
         
-        // Получаем непроверенные работы
+        // Получаем непроверенные работы (включая форумы, ожидающие ответа преподавателя)
         $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
         })
-        ->where('status', 'submitted')
+        ->where(function ($query) {
+            $query->where('status', 'submitted')
+                  ->orWhere('needs_grading', true);
+        })
+        ->whereHas('activity', function ($query) {
+            // Включаем задания, тесты и форумы
+            $query->whereIn('activity_type', ['assign', 'quiz', 'forum']);
+        })
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();

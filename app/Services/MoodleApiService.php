@@ -886,11 +886,11 @@ class MoodleApiService
     }
 
     /**
-     * Получить посты студента в форумах курса
+     * Получить посты студента в форумах курса с проверкой ответов преподавателя
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
-     * @return array|false Массив с постами или false в случае ошибки
+     * @return array|false Массив с постами и информацией об ответах преподавателя или false в случае ошибки
      */
     public function getStudentForumPosts(int $courseId, int $studentMoodleId)
     {
@@ -899,6 +899,13 @@ class MoodleApiService
 
         if ($forums === false || empty($forums)) {
             return [];
+        }
+
+        // Получаем преподавателей курса для проверки их ответов
+        $teachers = $this->getCourseTeachers($courseId);
+        $teacherIds = [];
+        if ($teachers !== false && is_array($teachers)) {
+            $teacherIds = array_column($teachers, 'id');
         }
 
         $allPosts = [];
@@ -926,17 +933,50 @@ class MoodleApiService
                     continue;
                 }
 
-                // Получаем посты в обсуждении
+                // Получаем ВСЕ посты в обсуждении (не только студента)
                 $postsResult = $this->call('mod_forum_get_discussion_posts', [
                     'discussionid' => $discussionId
                 ]);
 
                 if ($postsResult !== false && !isset($postsResult['exception']) && isset($postsResult['posts'])) {
-                    foreach ($postsResult['posts'] as $post) {
-                        // Фильтруем только посты студента
-                        if (isset($post['author']['id']) && $post['author']['id'] == $studentMoodleId) {
-                            $allPosts[$forumId][] = $post;
+                    $allDiscussionPosts = $postsResult['posts'];
+                    $studentPosts = [];
+                    $teacherReplies = [];
+
+                    // Разделяем посты студента и ответы преподавателей
+                    foreach ($allDiscussionPosts as $post) {
+                        $authorId = $post['author']['id'] ?? null;
+                        $parentId = $post['parent'] ?? null;
+
+                        if ($authorId == $studentMoodleId) {
+                            // Пост студента
+                            $studentPosts[] = $post;
+                        } elseif (in_array($authorId, $teacherIds) && $parentId) {
+                            // Ответ преподавателя (если есть parent, значит это ответ на чей-то пост)
+                            // Проверяем, является ли родительский пост постом студента
+                            foreach ($allDiscussionPosts as $parentPost) {
+                                if (($parentPost['id'] ?? null) == $parentId && 
+                                    ($parentPost['author']['id'] ?? null) == $studentMoodleId) {
+                                    $teacherReplies[$parentId] = true;
+                                    break;
+                                }
+                            }
                         }
+                    }
+
+                    // Добавляем посты студента с информацией о наличии ответов преподавателя
+                    foreach ($studentPosts as $post) {
+                        $postId = $post['id'] ?? null;
+                        $hasTeacherReply = isset($teacherReplies[$postId]);
+                        
+                        // Добавляем флаг о наличии ответа преподавателя
+                        $post['has_teacher_reply'] = $hasTeacherReply;
+                        $post['needs_response'] = !$hasTeacherReply; // Если нет ответа преподавателя, требуется ответ
+                        
+                        if (!isset($allPosts[$forumId])) {
+                            $allPosts[$forumId] = [];
+                        }
+                        $allPosts[$forumId][] = $post;
                     }
                 }
             }
@@ -1459,21 +1499,43 @@ class MoodleApiService
 
                 $posts = $forumPosts[$forumId] ?? [];
                 $needsGrading = false;
+                $needsResponse = false;
                 $isGraded = false;
+                $hasTeacherReply = false;
 
                 $status = empty($posts) ? 'not_started' : 'completed';
                 $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
                 $submittedAt = !empty($posts) ? max(array_column($posts, 'timecreated')) : null;
                 
-                // Проверяем, есть ли непроверенные посты (если форум оценивается)
-                if (!empty($posts) && isset($forum['grade'])) {
+                // Проверяем посты студента
+                if (!empty($posts)) {
                     foreach ($posts as $post) {
-                        // Если пост не оценен, требуется проверка
-                        if (!isset($post['grade']) || $post['grade'] === null) {
-                            $needsGrading = true;
-                        } else {
-                            $isGraded = true;
+                        // Проверяем, нужен ли ответ преподавателя
+                        if (isset($post['needs_response']) && $post['needs_response']) {
+                            $needsResponse = true;
                         }
+                        
+                        // Проверяем, есть ли ответ преподавателя
+                        if (isset($post['has_teacher_reply']) && $post['has_teacher_reply']) {
+                            $hasTeacherReply = true;
+                        }
+                        
+                        // Проверяем, есть ли непроверенные посты (если форум оценивается)
+                        if (isset($forum['grade'])) {
+                            // Если пост не оценен, требуется проверка
+                            if (!isset($post['grade']) || $post['grade'] === null) {
+                                $needsGrading = true;
+                            } else {
+                                $isGraded = true;
+                            }
+                        }
+                    }
+                    
+                    // Если студент ответил, но преподаватель не ответил, устанавливаем статус
+                    if ($needsResponse && !$hasTeacherReply) {
+                        $status = 'needs_response';
+                        $statusText = 'Ожидает ответа преподавателя';
+                        $needsGrading = true; // Используем needs_grading для отображения в списке ожидающих проверки
                     }
                 }
 
@@ -1494,7 +1556,9 @@ class MoodleApiService
                     'max_grade' => $forum['grade'] ?? null,
                     'submitted_at' => $submittedAt,
                     'graded_at' => null,
-                    'needs_grading' => $needsGrading,
+                    'needs_grading' => $needsGrading || $needsResponse,
+                    'needs_response' => $needsResponse,
+                    'has_teacher_reply' => $hasTeacherReply,
                     'is_graded' => $isGraded,
                     'posts_data' => $posts,
                     'posts_count' => count($posts),
