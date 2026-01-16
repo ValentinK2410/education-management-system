@@ -158,14 +158,27 @@ class CourseActivitySyncService
             'name' => $activityData['name'] ?? 'Без названия',
             'section_name' => $activityData['section_name'] ?? null,
             'moodle_section_id' => $activityData['moodle_section_id'] ?? null,
-            'week_number' => $activityData['week_number'] ?? null,
-            'section_number' => $activityData['section_number'] ?? null,
-            'section_order' => $activityData['section_order'] ?? null,
-            'section_type' => $activityData['section_type'] ?? 'week',
             'max_grade' => $activityData['max_grade'] ?? $activityData['grade'] ?? null,
             'description' => $activityData['description'] ?? null,
             'meta' => $activityData,
         ];
+        
+        // Добавляем новые поля только если они существуют в схеме БД
+        // Проверяем наличие полей через fillable модели
+        $fillableFields = (new \App\Models\CourseActivity())->getFillable();
+        
+        if (in_array('week_number', $fillableFields)) {
+            $activityDataToSave['week_number'] = $activityData['week_number'] ?? null;
+        }
+        if (in_array('section_number', $fillableFields)) {
+            $activityDataToSave['section_number'] = $activityData['section_number'] ?? null;
+        }
+        if (in_array('section_order', $fillableFields)) {
+            $activityDataToSave['section_order'] = $activityData['section_order'] ?? null;
+        }
+        if (in_array('section_type', $fillableFields)) {
+            $activityDataToSave['section_type'] = $activityData['section_type'] ?? 'week';
+        }
 
         if ($activity) {
             // Обновляем существующий элемент
@@ -380,74 +393,159 @@ class CourseActivitySyncService
                         ->where('activity_id', $activity->id)
                         ->first();
 
+                    // Проверяем наличие полей в модели перед добавлением
+                    $fillableFields = (new \App\Models\StudentActivityProgress())->getFillable();
+                    
                     $progressData = [
                         'user_id' => $user->id,
                         'course_id' => $course->id,
                         'activity_id' => $activity->id,
                         'status' => $status,
-                        'is_viewed' => $isViewed,
-                        'is_read' => $isRead,
-                        'last_viewed_at' => $lastViewedAt,
-                        'view_count' => $viewCount,
-                        'has_draft' => $hasDraft,
-                        'draft_created_at' => $draftCreatedAt,
-                        'draft_updated_at' => $draftUpdatedAt,
-                        'draft_data' => $draftData,
-                        'needs_grading' => $needsGrading,
-                        'is_graded' => $isGraded,
-                        'grading_requested_at' => $gradingRequestedAt,
-                        'attempts_count' => $attemptsCount,
-                        'max_attempts' => $maxAttempts,
-                        'last_attempt_at' => $lastAttemptAt,
-                        'questions_data' => $questionsData,
-                        'correct_answers' => $correctAnswers,
-                        'total_questions' => $totalQuestions,
-                        'completion_data' => $completionData,
-                        'completion_percentage' => $completionPercentage,
                         'grade' => $grade,
                         'max_grade' => $maxGrade,
                         'submitted_at' => $submittedAt,
                         'graded_at' => $gradedAt,
                         'progress_data' => $activityData,
                     ];
+                    
+                    // Добавляем новые поля только если они существуют в схеме БД
+                    if (in_array('is_viewed', $fillableFields)) {
+                        $progressData['is_viewed'] = $isViewed;
+                    }
+                    if (in_array('is_read', $fillableFields)) {
+                        $progressData['is_read'] = $isRead;
+                    }
+                    if (in_array('last_viewed_at', $fillableFields)) {
+                        $progressData['last_viewed_at'] = $lastViewedAt;
+                    }
+                    if (in_array('view_count', $fillableFields)) {
+                        $progressData['view_count'] = $viewCount;
+                    }
+                    if (in_array('has_draft', $fillableFields)) {
+                        $progressData['has_draft'] = $hasDraft;
+                    }
+                    if (in_array('draft_created_at', $fillableFields)) {
+                        $progressData['draft_created_at'] = $draftCreatedAt;
+                    }
+                    if (in_array('draft_updated_at', $fillableFields)) {
+                        $progressData['draft_updated_at'] = $draftUpdatedAt;
+                    }
+                    if (in_array('draft_data', $fillableFields)) {
+                        $progressData['draft_data'] = $draftData;
+                    }
+                    if (in_array('needs_grading', $fillableFields)) {
+                        $progressData['needs_grading'] = $needsGrading;
+                    }
+                    if (in_array('is_graded', $fillableFields)) {
+                        $progressData['is_graded'] = $isGraded;
+                    }
+                    if (in_array('grading_requested_at', $fillableFields)) {
+                        $progressData['grading_requested_at'] = $gradingRequestedAt;
+                    }
+                    if (in_array('attempts_count', $fillableFields)) {
+                        $progressData['attempts_count'] = $attemptsCount;
+                    }
+                    if (in_array('max_attempts', $fillableFields)) {
+                        $progressData['max_attempts'] = $maxAttempts;
+                    }
+                    if (in_array('last_attempt_at', $fillableFields)) {
+                        $progressData['last_attempt_at'] = $lastAttemptAt;
+                    }
+                    if (in_array('questions_data', $fillableFields)) {
+                        $progressData['questions_data'] = $questionsData;
+                    }
+                    if (in_array('correct_answers', $fillableFields)) {
+                        $progressData['correct_answers'] = $correctAnswers;
+                    }
+                    if (in_array('total_questions', $fillableFields)) {
+                        $progressData['total_questions'] = $totalQuestions;
+                    }
+                    if (in_array('completion_data', $fillableFields)) {
+                        $progressData['completion_data'] = $completionData;
+                    }
+                    if (in_array('completion_percentage', $fillableFields)) {
+                        $progressData['completion_percentage'] = $completionPercentage;
+                    }
 
-                    if ($progress) {
-                        // Сохраняем существующие данные, если новые не переданы
-                        if (!$submittedAt && $progress->submitted_at) {
-                            $progressData['submitted_at'] = $progress->submitted_at;
-                        }
-                        if (!$lastViewedAt && $progress->last_viewed_at) {
-                            $progressData['last_viewed_at'] = $progress->last_viewed_at;
-                        }
-                        if ($viewCount == 0 && $progress->view_count > 0) {
-                            $progressData['view_count'] = $progress->view_count;
-                        }
-                        
-                        // Обновляем счетчик просмотров, если материал был просмотрен
-                        if ($isViewed && !$progress->is_viewed) {
-                            $progressData['view_count'] = ($progress->view_count ?? 0) + 1;
-                        }
-                        
-                        // Обновляем существующий прогресс
-                        $progress->update($progressData);
-                        $stats['updated']++;
-                        
-                        // Создаем запись в истории, если статус изменился или появились новые данные
-                        $statusChanged = $progress->status !== $status;
-                        $draftChanged = $progress->has_draft !== $hasDraft;
-                        $gradingChanged = $progress->needs_grading !== $needsGrading;
-                        
-                        if ($statusChanged || $draftChanged || $gradingChanged) {
+                    try {
+                        if ($progress) {
+                            // Сохраняем существующие данные, если новые не переданы
+                            if (!$submittedAt && $progress->submitted_at) {
+                                $progressData['submitted_at'] = $progress->submitted_at;
+                            }
+                            if (isset($progressData['last_viewed_at']) && !$lastViewedAt && isset($progress->last_viewed_at) && $progress->last_viewed_at) {
+                                $progressData['last_viewed_at'] = $progress->last_viewed_at;
+                            }
+                            if (isset($progressData['view_count']) && $viewCount == 0 && isset($progress->view_count) && $progress->view_count > 0) {
+                                $progressData['view_count'] = $progress->view_count;
+                            }
+                            
+                            // Обновляем счетчик просмотров, если материал был просмотрен
+                            if (isset($progressData['is_viewed']) && isset($progressData['view_count']) && $isViewed && isset($progress->is_viewed) && !$progress->is_viewed) {
+                                $progressData['view_count'] = (isset($progress->view_count) ? $progress->view_count : 0) + 1;
+                            }
+                            
+                            // Обновляем существующий прогресс
+                            $progress->update($progressData);
+                            $stats['updated']++;
+                            
+                            // Создаем запись в истории, если статус изменился или появились новые данные
+                            $statusChanged = $progress->status !== $status;
+                            $draftChanged = isset($progress->has_draft) && isset($progressData['has_draft']) && $progress->has_draft !== $hasDraft;
+                            $gradingChanged = isset($progress->needs_grading) && isset($progressData['needs_grading']) && $progress->needs_grading !== $needsGrading;
+                            
+                            if ($statusChanged || $draftChanged || $gradingChanged) {
+                                $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                            }
+                        } else {
+                            // Создаем новый прогресс
+                            $progressData['started_at'] = $activityData['submitted_at'] ?? (isset($progressData['last_viewed_at']) ? $lastViewedAt : null) ?? now();
+                            StudentActivityProgress::create($progressData);
+                            $stats['created']++;
+                            
+                            // Создаем запись в истории
                             $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
                         }
-                    } else {
-                        // Создаем новый прогресс
-                        $progressData['started_at'] = $activityData['submitted_at'] ?? $lastViewedAt ?? now();
-                        StudentActivityProgress::create($progressData);
-                        $stats['created']++;
-                        
-                        // Создаем запись в истории
-                        $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                    } catch (\Illuminate\Database\QueryException $dbException) {
+                        // Обрабатываем ошибки базы данных (например, отсутствие полей)
+                        $errorMessage = $dbException->getMessage();
+                        if (strpos($errorMessage, 'Unknown column') !== false) {
+                            // Поле не существует в БД - пропускаем его
+                            Log::warning('Поле не существует в БД, пропускаем', [
+                                'error' => $errorMessage,
+                                'course_id' => $courseId,
+                                'user_id' => $userId,
+                                'activity_id' => $activity->id ?? null
+                            ]);
+                            
+                            // Пытаемся сохранить без проблемных полей
+                            $safeProgressData = array_intersect_key($progressData, array_flip([
+                                'user_id', 'course_id', 'activity_id', 'status', 'grade', 'max_grade',
+                                'submitted_at', 'graded_at', 'progress_data', 'started_at'
+                            ]));
+                            
+                            try {
+                                if ($progress) {
+                                    $progress->update($safeProgressData);
+                                    $stats['updated']++;
+                                } else {
+                                    StudentActivityProgress::create($safeProgressData);
+                                    $stats['created']++;
+                                }
+                            } catch (\Exception $retryException) {
+                                $stats['errors']++;
+                                $stats['errors_list'][] = [
+                                    'activity_type' => $activityData['type'] ?? 'unknown',
+                                    'error' => 'Ошибка БД: ' . $retryException->getMessage()
+                                ];
+                                Log::error('Ошибка сохранения прогресса после удаления проблемных полей', [
+                                    'error' => $retryException->getMessage()
+                                ]);
+                            }
+                        } else {
+                            // Другая ошибка БД
+                            throw $dbException;
+                        }
                     }
                 } catch (\Exception $e) {
                     $stats['errors']++;

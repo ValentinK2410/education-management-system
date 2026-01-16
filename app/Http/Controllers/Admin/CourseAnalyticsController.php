@@ -603,8 +603,8 @@ class CourseAnalyticsController extends Controller
             
             $currentItem = null;
             $stats = [
-                'activities' => ['created' => 0, 'updated' => 0, 'errors' => 0],
-                'progress' => ['created' => 0, 'updated' => 0, 'errors' => 0]
+                'activities' => ['created' => 0, 'updated' => 0, 'errors' => 0, 'errors_list' => []],
+                'progress' => ['created' => 0, 'updated' => 0, 'errors' => 0, 'errors_list' => []]
             ];
             
             if ($courseId) {
@@ -628,19 +628,19 @@ class CourseAnalyticsController extends Controller
                 try {
                     // Синхронизируем элементы курса
                     $activityStats = $this->syncService->syncCourseActivities($courseId);
-                    $stats['activities'] = $activityStats;
+                    $stats['activities'] = array_merge($stats['activities'], $activityStats);
                     
                     // Если указан студент, синхронизируем его прогресс
                     if ($userId) {
                         $user = User::find($userId);
                         if ($user) {
                             $progressStats = $this->syncService->syncStudentProgress($courseId, $userId);
-                            $stats['progress'] = $progressStats;
+                            $stats['progress'] = array_merge($stats['progress'], $progressStats);
                         }
                     } else {
                         // Синхронизируем прогресс всех студентов курса
                         $students = $course->users()->whereNotNull('moodle_user_id')->get();
-                        $totalProgress = ['created' => 0, 'updated' => 0, 'total' => 0, 'errors' => 0];
+                        $totalProgress = ['created' => 0, 'updated' => 0, 'total' => 0, 'errors' => 0, 'errors_list' => []];
                         
                         foreach ($students as $student) {
                             try {
@@ -649,6 +649,11 @@ class CourseAnalyticsController extends Controller
                                 $totalProgress['updated'] += $progressStats['updated'] ?? 0;
                                 $totalProgress['total'] += $progressStats['total'] ?? 0;
                                 $totalProgress['errors'] += $progressStats['errors'] ?? 0;
+                                
+                                // Собираем список ошибок
+                                if (isset($progressStats['errors_list']) && is_array($progressStats['errors_list'])) {
+                                    $totalProgress['errors_list'] = array_merge($totalProgress['errors_list'], $progressStats['errors_list']);
+                                }
                             } catch (\Exception $studentSyncException) {
                                 Log::warning('Ошибка синхронизации прогресса студента', [
                                     'course_id' => $courseId,
@@ -656,20 +661,32 @@ class CourseAnalyticsController extends Controller
                                     'error' => $studentSyncException->getMessage()
                                 ]);
                                 $totalProgress['errors']++;
+                                $totalProgress['errors_list'][] = [
+                                    'student_id' => $student->id,
+                                    'error' => $studentSyncException->getMessage()
+                                ];
                             }
                         }
                         
                         $stats['progress'] = $totalProgress;
                     }
                     
+                    // Формируем сообщение с учетом ошибок
+                    $hasErrors = ($stats['activities']['errors'] ?? 0) > 0 || ($stats['progress']['errors'] ?? 0) > 0;
                     $message = sprintf(
-                        'Синхронизирован курс: %s. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                        'Синхронизирован курс: %s. Элементов: создано %d, обновлено %d%s. Прогресс: создано %d, обновлено %d%s.',
                         $course->name,
                         $stats['activities']['created'] ?? 0,
                         $stats['activities']['updated'] ?? 0,
+                        ($stats['activities']['errors'] ?? 0) > 0 ? ', ошибок: ' . $stats['activities']['errors'] : '',
                         $stats['progress']['created'] ?? 0,
-                        $stats['progress']['updated'] ?? 0
+                        $stats['progress']['updated'] ?? 0,
+                        ($stats['progress']['errors'] ?? 0) > 0 ? ', ошибок: ' . $stats['progress']['errors'] : ''
                     );
+                    
+                    if ($hasErrors) {
+                        $message .= ' Внимание: обнаружены ошибки при синхронизации. Проверьте детали в таблице.';
+                    }
                     
                     return response()->json([
                         'success' => true,
@@ -678,7 +695,8 @@ class CourseAnalyticsController extends Controller
                         'current_item' => $currentItem,
                         'stats' => $stats,
                         'has_more' => $step < $totalSteps,
-                        'message' => $message
+                        'message' => $message,
+                        'has_errors' => $hasErrors
                     ]);
                 } catch (\Exception $syncException) {
                     Log::error('Ошибка при синхронизации курса (chunk)', [

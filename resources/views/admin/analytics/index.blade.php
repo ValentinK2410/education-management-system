@@ -1310,8 +1310,12 @@ function syncNextChunk(csrfToken, analyticsTranslations, btn, originalText) {
             syncStats.total.progress.errors += data.stats.progress?.errors || 0;
         }
         
-        if (data.success) {
+        // Обновляем статистику успешных/неудачных синхронизаций
+        const hasErrors = (data.stats?.activities?.errors || 0) > 0 || (data.stats?.progress?.errors || 0) > 0;
+        if (data.success && !hasErrors) {
             syncStats.successful++;
+        } else if (data.success && hasErrors) {
+            syncStats.successful++; // Считаем успешным, но с предупреждениями
         } else {
             syncStats.failed++;
         }
@@ -1369,9 +1373,33 @@ function addProcessedItem(step, item, result) {
     const tbody = document.getElementById('sync-items-list');
     const row = document.createElement('tr');
     
-    const statusClass = result.success ? 'success' : 'danger';
-    const statusIcon = result.success ? 'fa-check-circle' : 'fa-times-circle';
-    const statusText = result.success ? 'Успешно' : 'Ошибка';
+    // Определяем статус с учетом ошибок
+    const hasErrors = (result.stats?.activities?.errors || 0) > 0 || (result.stats?.progress?.errors || 0) > 0;
+    const statusClass = result.success && !hasErrors ? 'success' : (result.success && hasErrors ? 'warning' : 'danger');
+    const statusIcon = result.success && !hasErrors ? 'fa-check-circle' : (result.success && hasErrors ? 'fa-exclamation-triangle' : 'fa-times-circle');
+    const statusText = result.success && !hasErrors ? 'Успешно' : (result.success && hasErrors ? 'С предупреждениями' : 'Ошибка');
+    
+    // Формируем информацию об ошибках
+    let errorsInfo = '';
+    if ((result.stats?.activities?.errors || 0) > 0) {
+        errorsInfo += `<br><span class="text-danger"><small>Ошибок элементов: ${result.stats.activities.errors}</small></span>`;
+    }
+    if ((result.stats?.progress?.errors || 0) > 0) {
+        errorsInfo += `<br><span class="text-danger"><small>Ошибок прогресса: ${result.stats.progress.errors}</small></span>`;
+    }
+    
+    // Добавляем детали ошибок, если они есть
+    let errorsDetails = '';
+    if (result.stats?.activities?.errors_list && result.stats.activities.errors_list.length > 0) {
+        errorsDetails = '<br><details class="mt-1"><summary class="text-danger small">Детали ошибок элементов</summary><ul class="small mb-0 mt-1">';
+        result.stats.activities.errors_list.slice(0, 5).forEach(err => {
+            errorsDetails += `<li>${err.activity_type || 'unknown'}: ${err.error || 'неизвестная ошибка'}</li>`;
+        });
+        if (result.stats.activities.errors_list.length > 5) {
+            errorsDetails += `<li>... и еще ${result.stats.activities.errors_list.length - 5} ошибок</li>`;
+        }
+        errorsDetails += '</ul></details>';
+    }
     
     row.innerHTML = `
         <td>${step}</td>
@@ -1380,17 +1408,19 @@ function addProcessedItem(step, item, result) {
             <small>
                 Создано: ${result.stats?.activities?.created || 0}, 
                 Обновлено: ${result.stats?.activities?.updated || 0}
-                ${(result.stats?.activities?.errors || 0) > 0 ? ', Ошибок: ' + result.stats.activities.errors : ''}
+                ${errorsInfo}
+                ${errorsDetails}
             </small>
         </td>
         <td>
             <small>
                 Создано: ${result.stats?.progress?.created || 0}, 
                 Обновлено: ${result.stats?.progress?.updated || 0}
+                ${(result.stats?.progress?.errors || 0) > 0 ? '<br><span class="text-danger"><small>Ошибок: ' + result.stats.progress.errors + '</small></span>' : ''}
             </small>
         </td>
         <td>
-            <span class="badge bg-${statusClass}">
+            <span class="badge bg-${statusClass}" title="${result.message || ''}">
                 <i class="fas ${statusIcon} me-1"></i>${statusText}
             </span>
         </td>
