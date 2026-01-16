@@ -467,7 +467,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('programs/{program}/duplicate', [ProgramController::class, 'duplicate'])->name('programs.duplicate');
         Route::post('programs/{program}/courses/{course}/move-up', [ProgramController::class, 'moveCourseUp'])->name('programs.courses.move-up')->where(['course' => '[0-9]+']);
         Route::post('programs/{program}/courses/{course}/move-down', [ProgramController::class, 'moveCourseDown'])->name('programs.courses.move-down')->where(['course' => '[0-9]+']);
-        Route::post('programs/{program}/subjects/{subject}/attach', [ProgramController::class, 'attachSubject'])->name('programs.subjects.attach');
+        Route::post('programs/{program}/subjects/attach', [ProgramController::class, 'attachSubject'])->name('programs.subjects.attach');
         Route::post('programs/{program}/subjects/{subject}/detach', [ProgramController::class, 'detachSubject'])->name('programs.subjects.detach');
         Route::post('programs/{program}/subjects/{subject}/move-up', [ProgramController::class, 'moveSubjectUp'])->name('programs.subjects.move-up');
         Route::post('programs/{program}/subjects/{subject}/move-down', [ProgramController::class, 'moveSubjectDown'])->name('programs.subjects.move-down');
