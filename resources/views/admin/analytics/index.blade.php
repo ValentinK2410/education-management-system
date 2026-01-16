@@ -1090,7 +1090,8 @@ let syncStats = {
     failed: 0
 };
 
-function syncActivities() {
+// Делаем функцию глобально доступной
+window.syncActivities = function syncActivities() {
     // Translations for JavaScript
     const analyticsTranslations = {
         sync_started: '{{ __('messages.synchronization_in_progress') }}',
@@ -1133,46 +1134,42 @@ function syncActivities() {
     // Показываем контейнер прогресса
     const progressContainer = document.getElementById('sync-progress-container');
     if (progressContainer) {
-        progressContainer.style.display = 'block';
-        progressContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    
-    // Сбрасываем UI прогресса только если начинаем новую синхронизацию
-    // Если контейнер уже видим (предыдущая синхронизация), очищаем список
-    const progressContainer = document.getElementById('sync-progress-container');
-    if (progressContainer && progressContainer.style.display === 'block') {
-        // Контейнер уже видим - очищаем для новой синхронизации
-        updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
-        document.getElementById('sync-items-list').innerHTML = '';
-        document.getElementById('sync-final-stats').style.display = 'none';
+        // Сбрасываем UI прогресса только если начинаем новую синхронизацию
+        // Если контейнер уже видим (предыдущая синхронизация), очищаем список
+        const isAlreadyVisible = progressContainer.style.display === 'block';
         
-        // Сбрасываем заголовок
-        const cardHeader = document.querySelector('#sync-progress-container .card-header');
-        if (cardHeader) {
-            cardHeader.className = 'card-header bg-info text-white';
-            cardHeader.innerHTML = '<h5 class="mb-0"><i class="fas fa-sync fa-spin me-2"></i>Синхронизация в процессе...</h5>';
-        }
-        
-        // Показываем кнопку остановки
-        const stopBtn = document.getElementById('stop-sync-btn');
-        if (stopBtn) {
-            stopBtn.style.display = 'inline-block';
-        }
-        
-        // Удаляем кнопку обновления страницы, если она есть
-        const refreshBtn = document.getElementById('refresh-page-btn');
-        if (refreshBtn) {
-            refreshBtn.remove();
-        }
-    } else {
-        // Контейнер скрыт - показываем его и очищаем
-        if (progressContainer) {
+        if (isAlreadyVisible) {
+            // Контейнер уже видим - очищаем для новой синхронизации
+            updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
+            document.getElementById('sync-items-list').innerHTML = '';
+            document.getElementById('sync-final-stats').style.display = 'none';
+            
+            // Сбрасываем заголовок
+            const cardHeader = document.querySelector('#sync-progress-container .card-header');
+            if (cardHeader) {
+                cardHeader.className = 'card-header bg-info text-white';
+                cardHeader.innerHTML = '<h5 class="mb-0"><i class="fas fa-sync fa-spin me-2"></i>Синхронизация в процессе...</h5>';
+            }
+            
+            // Показываем кнопку остановки
+            const stopBtn = document.getElementById('stop-sync-btn');
+            if (stopBtn) {
+                stopBtn.style.display = 'inline-block';
+            }
+            
+            // Удаляем кнопку обновления страницы, если она есть
+            const refreshBtn = document.getElementById('refresh-page-btn');
+            if (refreshBtn) {
+                refreshBtn.remove();
+            }
+        } else {
+            // Контейнер скрыт - показываем его и очищаем
             progressContainer.style.display = 'block';
             progressContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
+            document.getElementById('sync-items-list').innerHTML = '';
+            document.getElementById('sync-final-stats').style.display = 'none';
         }
-        updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
-        document.getElementById('sync-items-list').innerHTML = '';
-        document.getElementById('sync-final-stats').style.display = 'none';
     }
     
     // Получаем значения фильтров
