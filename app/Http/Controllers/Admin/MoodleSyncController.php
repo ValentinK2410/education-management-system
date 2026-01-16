@@ -215,7 +215,16 @@ class MoodleSyncController extends Controller
                         foreach ($progressStats['errors_list'] as $error) {
                             // Создаем уникальный ключ для ошибки
                             $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
-                            $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
+                            
+                            // Для ошибок "Unknown column" используем только текст ошибки (без привязки к активности)
+                            // чтобы одинаковые ошибки БД считались один раз
+                            if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
+                                strpos($errorMsg, 'Unknown column') !== false) {
+                                $errorKey = md5($errorMsg);
+                            } else {
+                                // Для других ошибок учитываем тип активности и Moodle ID
+                                $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
+                            }
                             
                             // Добавляем ошибку только если она еще не была добавлена
                             if (!isset($seenErrors[$errorKey])) {
@@ -271,16 +280,42 @@ class MoodleSyncController extends Controller
                 $students->count()
             );
             
-            // Собираем все ошибки
+            // Собираем все ошибки с дедупликацией
             $allErrors = [];
+            $allErrorKeys = []; // Для отслеживания уникальных ошибок при объединении
+            
+            // Функция для добавления ошибки с дедупликацией
+            $addError = function($error) use (&$allErrors, &$allErrorKeys) {
+                $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
+                
+                // Для ошибок "Unknown column" используем только текст ошибки
+                if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
+                    strpos($errorMsg, 'Unknown column') !== false) {
+                    $errorKey = md5($errorMsg);
+                } else {
+                    // Для других ошибок учитываем тип активности и Moodle ID
+                    $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
+                }
+                
+                if (!isset($allErrorKeys[$errorKey])) {
+                    $allErrorKeys[$errorKey] = true;
+                    $allErrors[] = $error;
+                }
+            };
+            
             if (isset($activitiesStats['errors_list']) && is_array($activitiesStats['errors_list'])) {
-                $allErrors = array_merge($allErrors, $activitiesStats['errors_list']);
+                foreach ($activitiesStats['errors_list'] as $error) {
+                    $addError($error);
+                }
             }
             if (isset($totalProgressStats['errors_list']) && is_array($totalProgressStats['errors_list'])) {
-                $allErrors = array_merge($allErrors, $totalProgressStats['errors_list']);
+                foreach ($totalProgressStats['errors_list'] as $error) {
+                    $addError($error);
+                }
             }
             
-            $totalErrors = ($activitiesStats['errors'] ?? 0) + $totalProgressStats['errors'];
+            // Используем количество уникальных ошибок вместо суммы
+            $totalErrors = count($allErrors);
             
             if ($totalErrors > 0) {
                 $message .= " Ошибок: {$totalErrors}.";
