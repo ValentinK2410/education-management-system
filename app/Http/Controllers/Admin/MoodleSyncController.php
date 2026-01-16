@@ -308,6 +308,13 @@ class MoodleSyncController extends Controller
             $addError = function($error) use (&$allErrors, &$allErrorKeys) {
                 $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
                 
+                // Игнорируем ошибки доступа к Moodle API - они не критичны
+                if (strpos($errorMsg, 'webservice_access_exception') !== false ||
+                    strpos($errorMsg, 'accessexception') !== false ||
+                    strpos($errorMsg, 'Исключительная ситуация контроля доступа') !== false) {
+                    return; // Пропускаем эту ошибку, не добавляем в список
+                }
+                
                 // Для ошибок "Unknown column" используем только текст ошибки
                 if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
                     strpos($errorMsg, 'Unknown column') !== false) {
