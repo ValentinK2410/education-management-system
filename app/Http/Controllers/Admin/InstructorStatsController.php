@@ -157,10 +157,7 @@ class InstructorStatsController extends Controller
                         
                         // Проверяем, является ли это форумом
                         $isForum = $activity->activity_type === 'forum';
-                        $needsResponse = false;
-                        if ($isForum && isset($progress->progress_data['needs_response'])) {
-                            $needsResponse = $progress->progress_data['needs_response'] ?? false;
-                        }
+                        $needsResponse = $progress->needs_response ?? false;
                         
                         // Приоритет 1: Проверено (есть оценка)
                         if ($progress->grade !== null || ($progress->is_graded && $progress->graded_at)) {
