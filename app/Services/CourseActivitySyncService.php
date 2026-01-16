@@ -482,6 +482,9 @@ class CourseActivitySyncService
                     if ($this->hasColumn($tableName, 'needs_grading')) {
                         $progressData['needs_grading'] = $needsGrading;
                     }
+                    if ($this->hasColumn($tableName, 'needs_response')) {
+                        $progressData['needs_response'] = $needsResponse;
+                    }
                     if ($this->hasColumn($tableName, 'is_graded')) {
                         // Если есть оценка, считаем что проверено
                         $progressData['is_graded'] = $isGraded || ($grade !== null && $grade !== '');
@@ -651,6 +654,9 @@ class CourseActivitySyncService
             ]);
             $stats['errors']++;
         }
+
+        // Удаляем служебное поле перед возвратом
+        unset($stats['_seen_errors']);
 
         return $stats;
     }
