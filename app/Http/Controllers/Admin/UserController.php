@@ -217,46 +217,72 @@ class UserController extends Controller
             })
             : $user->courses;
         
-        // Получаем задания из Moodle для каждого курса студента
-        $coursesWithAssignments = [];
-        $moodleApiService = null;
-        
-        if ($user->moodle_user_id) {
-            try {
-                $moodleApiService = new \App\Services\MoodleApiService();
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Ошибка инициализации MoodleApiService в UserController', [
-                    'error' => $e->getMessage()
-                ]);
-            }
-        }
+        // Получаем все элементы курсов и прогресс студента из базы данных
+        $coursesWithActivities = [];
         
         foreach ($coursesToShow as $course) {
-            $assignmentsData = null;
+            // Получаем все элементы курса
+            $activities = \App\Models\CourseActivity::where('course_id', $course->id)
+                ->orderBy('week_number')
+                ->orderBy('section_order')
+                ->orderBy('name')
+                ->get();
             
-            // Получаем задания только если есть moodle_user_id и moodle_course_id
-            if ($moodleApiService && $user->moodle_user_id && $course->moodle_course_id) {
-                try {
-                    $assignments = $moodleApiService->getCourseAssignmentsWithStatus(
-                        $course->moodle_course_id,
-                        $user->moodle_user_id,
-                        'ПОСЛЕ СЕССИИ'
-                    );
-                    
-                    if ($assignments !== false && !empty($assignments)) {
-                        $assignmentsData = $assignments;
+            $activitiesWithProgress = [];
+            
+            foreach ($activities as $activity) {
+                // Получаем прогресс студента по этому элементу
+                $progress = \App\Models\StudentActivityProgress::where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('activity_id', $activity->id)
+                    ->first();
+                
+                // Определяем статус элемента
+                $status = 'not_started';
+                $statusText = 'Не начато';
+                $statusClass = 'secondary';
+                
+                if ($progress) {
+                    if ($progress->is_graded && $progress->grade !== null) {
+                        $status = 'graded';
+                        $statusText = 'Проверено';
+                        $statusClass = 'success';
+                    } elseif ($progress->submitted_at) {
+                        $status = 'submitted';
+                        $statusText = 'Сдано';
+                        $statusClass = 'info';
+                    } elseif ($progress->needs_grading) {
+                        $status = 'needs_grading';
+                        $statusText = 'Требует проверки';
+                        $statusClass = 'warning';
+                    } elseif ($progress->has_draft || $progress->started_at) {
+                        $status = 'in_progress';
+                        $statusText = 'В процессе';
+                        $statusClass = 'primary';
+                    } elseif ($progress->is_viewed || $progress->is_read) {
+                        $status = 'viewed';
+                        $statusText = 'Просмотрено';
+                        $statusClass = 'secondary';
                     }
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Ошибка при получении заданий из Moodle в UserController', [
-                        'course_id' => $course->id,
-                        'moodle_course_id' => $course->moodle_course_id,
-                        'moodle_user_id' => $user->moodle_user_id,
-                        'error' => $e->getMessage()
-                    ]);
+                }
+                
+                // Показываем только элементы, которые студент начал или сдал
+                if ($progress && ($progress->started_at || $progress->submitted_at || $progress->is_graded || $progress->is_viewed || $progress->has_draft)) {
+                    $activitiesWithProgress[] = [
+                        'activity' => $activity,
+                        'progress' => $progress,
+                        'status' => $status,
+                        'status_text' => $statusText,
+                        'status_class' => $statusClass,
+                        'grade' => $progress->grade,
+                        'max_grade' => $progress->max_grade ?? $activity->max_grade,
+                        'submitted_at' => $progress->submitted_at,
+                        'graded_at' => $progress->graded_at,
+                    ];
                 }
             }
             
-            $coursesWithAssignments[$course->id] = $assignmentsData;
+            $coursesWithActivities[$course->id] = $activitiesWithProgress;
         }
         
         // Получаем детальную аналитику по всем элементам курса
@@ -294,7 +320,7 @@ class UserController extends Controller
         // Проверяем доступ к аналитике (только для администраторов и преподавателей)
         $hasAnalyticsAccess = $currentUser->hasRole('admin') || $currentUser->hasRole('instructor');
         
-        return view('admin.users.show', compact('user', 'coursesWithAssignments', 'detailedAnalytics', 'hasAnalyticsAccess'));
+        return view('admin.users.show', compact('user', 'coursesWithActivities', 'detailedAnalytics', 'hasAnalyticsAccess'));
     }
 
     /**

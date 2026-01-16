@@ -672,7 +672,7 @@
                             <th style="width: 25%;">Название курса</th>
                             <th style="width: 15%;">Программа</th>
                             <th style="width: 15%;">Преподаватель</th>
-                            <th style="width: 20%;">Статус заданий (ПОСЛЕ СЕССИИ)</th>
+                            <th style="width: 25%;">Элементы курса (начатые/сданные)</th>
                             <th style="width: 10%;">Прогресс</th>
                             <th style="width: 10%;">Статус</th>
                         </tr>
@@ -723,59 +723,103 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if(isset($coursesWithAssignments[$course->id]) && !empty($coursesWithAssignments[$course->id]))
-                                        <div class="d-flex flex-column gap-1">
-                                            @foreach($coursesWithAssignments[$course->id] as $assignment)
+                                    @if(isset($coursesWithActivities[$course->id]) && !empty($coursesWithActivities[$course->id]))
+                                        <div class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
+                                            @foreach($coursesWithActivities[$course->id] as $item)
                                                 @php
-                                                    $moodleApiService = new \App\Services\MoodleApiService();
-                                                    $assignmentUrl = $moodleApiService->getAssignmentUrl(
-                                                        $assignment['cmid'] ?? null,
-                                                        $assignment['id'] ?? null,
-                                                        $course->moodle_course_id ?? null
-                                                    );
+                                                    $activity = $item['activity'];
+                                                    $progress = $item['progress'];
+                                                    $activityTypeIcons = [
+                                                        'assign' => 'fa-file-alt',
+                                                        'quiz' => 'fa-question-circle',
+                                                        'forum' => 'fa-comments',
+                                                        'resource' => 'fa-file',
+                                                        'page' => 'fa-file-alt',
+                                                        'url' => 'fa-link',
+                                                        'folder' => 'fa-folder',
+                                                    ];
+                                                    $activityTypeLabels = [
+                                                        'assign' => 'Задание',
+                                                        'quiz' => 'Тест',
+                                                        'forum' => 'Форум',
+                                                        'resource' => 'Ресурс',
+                                                        'page' => 'Страница',
+                                                        'url' => 'Ссылка',
+                                                        'folder' => 'Папка',
+                                                    ];
+                                                    $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
+                                                    $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
                                                 @endphp
-                                                <div class="d-flex align-items-center">
-                                                    @if($assignmentUrl && ($assignment['status'] === 'not_submitted' || $assignment['status'] === 'pending'))
-                                                        <a href="{{ $assignmentUrl }}" target="_blank" class="text-decoration-none">
-                                                            <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
-                                                                  title="{{ $assignment['name'] }} - Нажмите для сдачи">
-                                                                @if($assignment['status'] === 'not_submitted')
-                                                                    <i class="fas fa-times-circle me-1"></i>Не сдано
-                                                                @elseif($assignment['status'] === 'pending')
-                                                                    <i class="fas fa-clock me-1"></i>Не проверено
-                                                                @else
-                                                                    <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
-                                                                @endif
-                                                            </span>
-                                                        </a>
-                                                    @else
-                                                        <span class="badge assignment-mini-badge assignment-status-{{ $assignment['status'] }}" 
-                                                              title="{{ $assignment['name'] }}">
-                                                            @if($assignment['status'] === 'not_submitted')
-                                                                <i class="fas fa-times-circle me-1"></i>Не сдано
-                                                            @elseif($assignment['status'] === 'pending')
-                                                                <i class="fas fa-clock me-1"></i>Не проверено
-                                                            @else
-                                                                <i class="fas fa-check-circle me-1"></i>{{ $assignment['status_text'] }}
+                                                <div class="border rounded p-2 bg-light">
+                                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <i class="fas {{ $icon }} me-2 text-primary"></i>
+                                                                <strong class="small">{{ $typeLabel }}</strong>
+                                                                <span class="badge bg-{{ $item['status_class'] }} ms-2">{{ $item['status_text'] }}</span>
+                                                            </div>
+                                                            <div class="small text-muted mb-1">
+                                                                {{ \Illuminate\Support\Str::limit($activity->name, 50) }}
+                                                            </div>
+                                                            @if($item['week_number'])
+                                                                <div class="small text-muted">
+                                                                    <i class="fas fa-calendar-week me-1"></i>Неделя {{ $item['week_number'] }}
+                                                                    @if($activity->section_name)
+                                                                        | {{ $activity->section_name }}
+                                                                    @endif
+                                                                </div>
                                                             @endif
-                                                        </span>
-                                                    @endif
-                                                    <small class="text-muted ms-2" title="{{ $assignment['name'] }}">
-                                                        {{ \Illuminate\Support\Str::limit($assignment['name'], 30) }}
-                                                    </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                                        @if($item['submitted_at'])
+                                                            <small class="text-info">
+                                                                <i class="fas fa-paper-plane me-1"></i>
+                                                                Сдано: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                            </small>
+                                                        @endif
+                                                        @if($item['graded_at'])
+                                                            <small class="text-success">
+                                                                <i class="fas fa-check-double me-1"></i>
+                                                                Проверено: {{ \Carbon\Carbon::parse($item['graded_at'])->format('d.m.Y H:i') }}
+                                                            </small>
+                                                        @endif
+                                                        @if($item['grade'] !== null && $item['max_grade'])
+                                                            <small class="text-primary fw-bold">
+                                                                <i class="fas fa-star me-1"></i>
+                                                                Оценка: {{ number_format($item['grade'], 1) }} / {{ number_format($item['max_grade'], 1) }}
+                                                                @if($item['max_grade'] > 0)
+                                                                    ({{ number_format(($item['grade'] / $item['max_grade']) * 100, 1) }}%)
+                                                                @endif
+                                                            </small>
+                                                        @elseif($item['max_grade'])
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-star me-1"></i>
+                                                                Макс. оценка: {{ number_format($item['max_grade'], 1) }}
+                                                            </small>
+                                                        @endif
+                                                        @if($progress->has_draft)
+                                                            <small class="text-warning">
+                                                                <i class="fas fa-edit me-1"></i>Есть черновик
+                                                            </small>
+                                                        @endif
+                                                        @if($progress->attempts_count)
+                                                            <small class="text-info">
+                                                                <i class="fas fa-redo me-1"></i>
+                                                                Попыток: {{ $progress->attempts_count }}
+                                                                @if($progress->max_attempts)
+                                                                    / {{ $progress->max_attempts }}
+                                                                @endif
+                                                            </small>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             @endforeach
                                         </div>
-                                    @elseif($course->moodle_course_id && $user->moodle_user_id)
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>Задания не найдены
-                                        </small>
-                                    @elseif(!$user->moodle_user_id)
-                                        <small class="text-warning">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Не настроена синхронизация
-                                        </small>
                                     @else
-                                        <small class="text-muted">—</small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>Нет начатых или сданных элементов курса
+                                        </small>
                                     @endif
                                 </td>
                                 <td>
