@@ -9,6 +9,7 @@ use App\Models\StudentActivityHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Сервис для синхронизации элементов курса и прогресса студентов из Moodle
@@ -26,6 +27,13 @@ class CourseActivitySyncService
     protected MoodleApiService $moodleApi;
 
     /**
+     * Кэш для проверки наличия колонок в БД
+     * 
+     * @var array
+     */
+    protected array $columnCache = [];
+
+    /**
      * Конструктор
      * 
      * @param MoodleApiService|null $moodleApi
@@ -40,6 +48,24 @@ class CourseActivitySyncService
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Проверить наличие колонки в таблице БД (с кэшированием)
+     * 
+     * @param string $table Имя таблицы
+     * @param string $column Имя колонки
+     * @return bool
+     */
+    protected function hasColumn(string $table, string $column): bool
+    {
+        $cacheKey = "{$table}.{$column}";
+        
+        if (!isset($this->columnCache[$cacheKey])) {
+            $this->columnCache[$cacheKey] = Schema::hasColumn($table, $column);
+        }
+        
+        return $this->columnCache[$cacheKey];
     }
 
     /**
@@ -164,19 +190,18 @@ class CourseActivitySyncService
         ];
         
         // Добавляем новые поля только если они существуют в схеме БД
-        // Проверяем наличие полей через fillable модели
-        $fillableFields = (new \App\Models\CourseActivity())->getFillable();
+        $tableName = (new CourseActivity())->getTable();
         
-        if (in_array('week_number', $fillableFields)) {
+        if ($this->hasColumn($tableName, 'week_number')) {
             $activityDataToSave['week_number'] = $activityData['week_number'] ?? null;
         }
-        if (in_array('section_number', $fillableFields)) {
+        if ($this->hasColumn($tableName, 'section_number')) {
             $activityDataToSave['section_number'] = $activityData['section_number'] ?? null;
         }
-        if (in_array('section_order', $fillableFields)) {
+        if ($this->hasColumn($tableName, 'section_order')) {
             $activityDataToSave['section_order'] = $activityData['section_order'] ?? null;
         }
-        if (in_array('section_type', $fillableFields)) {
+        if ($this->hasColumn($tableName, 'section_type')) {
             $activityDataToSave['section_type'] = $activityData['section_type'] ?? 'week';
         }
 
@@ -398,9 +423,6 @@ class CourseActivitySyncService
                         ->where('activity_id', $activity->id)
                         ->first();
 
-                    // Проверяем наличие полей в модели перед добавлением
-                    $fillableFields = (new \App\Models\StudentActivityProgress())->getFillable();
-                    
                     $progressData = [
                         'user_id' => $user->id,
                         'course_id' => $course->id,
@@ -414,62 +436,64 @@ class CourseActivitySyncService
                     ];
                     
                     // Добавляем новые поля только если они существуют в схеме БД
-                    if (in_array('is_viewed', $fillableFields)) {
+                    $tableName = (new StudentActivityProgress())->getTable();
+                    
+                    if ($this->hasColumn($tableName, 'is_viewed')) {
                         $progressData['is_viewed'] = $isViewed;
                     }
-                    if (in_array('is_read', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'is_read')) {
                         $progressData['is_read'] = $isRead;
                     }
-                    if (in_array('last_viewed_at', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'last_viewed_at')) {
                         $progressData['last_viewed_at'] = $lastViewedAt;
                     }
-                    if (in_array('view_count', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'view_count')) {
                         $progressData['view_count'] = $viewCount;
                     }
-                    if (in_array('has_draft', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'has_draft')) {
                         $progressData['has_draft'] = $hasDraft;
                     }
-                    if (in_array('draft_created_at', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'draft_created_at')) {
                         $progressData['draft_created_at'] = $draftCreatedAt;
                     }
-                    if (in_array('draft_updated_at', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'draft_updated_at')) {
                         $progressData['draft_updated_at'] = $draftUpdatedAt;
                     }
-                    if (in_array('draft_data', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'draft_data')) {
                         $progressData['draft_data'] = $draftData;
                     }
-                    if (in_array('needs_grading', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'needs_grading')) {
                         $progressData['needs_grading'] = $needsGrading;
                     }
-                    if (in_array('is_graded', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'is_graded')) {
                         // Если есть оценка, считаем что проверено
                         $progressData['is_graded'] = $isGraded || ($grade !== null && $grade !== '');
                     }
-                    if (in_array('grading_requested_at', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'grading_requested_at')) {
                         $progressData['grading_requested_at'] = $gradingRequestedAt;
                     }
-                    if (in_array('attempts_count', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'attempts_count')) {
                         $progressData['attempts_count'] = $attemptsCount;
                     }
-                    if (in_array('max_attempts', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'max_attempts')) {
                         $progressData['max_attempts'] = $maxAttempts;
                     }
-                    if (in_array('last_attempt_at', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'last_attempt_at')) {
                         $progressData['last_attempt_at'] = $lastAttemptAt;
                     }
-                    if (in_array('questions_data', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'questions_data')) {
                         $progressData['questions_data'] = $questionsData;
                     }
-                    if (in_array('correct_answers', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'correct_answers')) {
                         $progressData['correct_answers'] = $correctAnswers;
                     }
-                    if (in_array('total_questions', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'total_questions')) {
                         $progressData['total_questions'] = $totalQuestions;
                     }
-                    if (in_array('completion_data', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'completion_data')) {
                         $progressData['completion_data'] = $completionData;
                     }
-                    if (in_array('completion_percentage', $fillableFields)) {
+                    if ($this->hasColumn($tableName, 'completion_percentage')) {
                         $progressData['completion_percentage'] = $completionPercentage;
                     }
 
