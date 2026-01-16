@@ -271,7 +271,8 @@ class InstructorStatsController extends Controller
         })
         ->where(function ($query) {
             $query->where('status', 'submitted')
-                  ->orWhere('needs_grading', true);
+                  ->orWhere('needs_grading', true)
+                  ->orWhere('needs_response', true); // Включаем форумы, ожидающие ответа
         })
         ->whereHas('activity', function ($query) {
             // Включаем задания, тесты и форумы

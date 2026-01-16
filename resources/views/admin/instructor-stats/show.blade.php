@@ -622,6 +622,7 @@
                                         <th>Курс</th>
                                         <th>Элемент</th>
                                         <th>Тип</th>
+                                        <th>Статус</th>
                                         <th>Дата сдачи</th>
                                         <th>Действия</th>
                                     </tr>
@@ -657,26 +658,71 @@
                                             </span>
                                         </td>
                                         <td>
+                                            @php
+                                                $isForum = ($activity->activity->activity_type ?? '') === 'forum';
+                                                $needsResponse = $activity->needs_response ?? false;
+                                                $needsGrading = $activity->needs_grading ?? false;
+                                                $status = $activity->status ?? '';
+                                            @endphp
+                                            @if($isForum && $needsResponse)
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-comments me-1"></i>Ожидает ответа
+                                                </span>
+                                            @elseif($needsGrading || $status === 'submitted')
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-clock me-1"></i>Ожидает оценки
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">Не указано</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : 'Не указано' }}
                                         </td>
                                         <td>
                                             @php
                                                 $isForum = ($activity->activity->activity_type ?? '') === 'forum';
-                                                $needsResponse = false;
-                                                if ($isForum && isset($activity->progress_data['needs_response'])) {
-                                                    $needsResponse = $activity->progress_data['needs_response'] ?? false;
-                                                }
+                                                $needsResponse = $activity->needs_response ?? false;
+                                                $needsGrading = $activity->needs_grading ?? false;
+                                                $status = $activity->status ?? '';
                                             @endphp
                                             @if($isForum && $needsResponse)
                                                 <span class="badge bg-warning me-2">
                                                     <i class="fas fa-comments me-1"></i>Ожидает ответа
                                                 </span>
+                                            @elseif($needsGrading || $status === 'submitted')
+                                                <span class="badge bg-info me-2">
+                                                    <i class="fas fa-clock me-1"></i>Ожидает оценки
+                                                </span>
                                             @endif
-                                            <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
-                                               class="btn btn-sm btn-warning">
-                                                <i class="fas fa-eye"></i>
-                                                {{ $isForum && $needsResponse ? 'Ответить' : 'Проверить' }}
-                                            </a>
+                                            @php
+                                                $gradingUrl = null;
+                                                if ($activity->user && $activity->user->moodle_user_id && $activity->course && $activity->course->moodle_course_id && $activity->activity && $activity->activity->cmid) {
+                                                    try {
+                                                        $moodleApiService = new \App\Services\MoodleApiService();
+                                                        $gradingUrl = $moodleApiService->getGradingUrl(
+                                                            $activity->activity->activity_type,
+                                                            $activity->activity->cmid,
+                                                            $activity->user->moodle_user_id,
+                                                            $activity->course->moodle_course_id
+                                                        );
+                                                    } catch (\Exception $e) {
+                                                        // Игнорируем ошибки получения URL
+                                                    }
+                                                }
+                                            @endphp
+                                            @if($gradingUrl)
+                                                <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-{{ $needsResponse ? 'primary' : 'warning' }}">
+                                                    <i class="fas fa-{{ $needsResponse ? 'reply' : 'eye' }}"></i>
+                                                    {{ $needsResponse ? 'Ответить' : 'Проверить' }}
+                                                </a>
+                                            @else
+                                                <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-eye"></i>
+                                                    {{ $needsResponse ? 'Ответить' : 'Проверить' }}
+                                                </a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
