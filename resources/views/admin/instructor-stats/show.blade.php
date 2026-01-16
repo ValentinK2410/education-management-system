@@ -478,6 +478,11 @@
                                                                 <a href="{{ route('admin.moodle-sync.index') }}" target="_blank">
                                                                     <i class="fas fa-external-link-alt me-1"></i>Полную синхронизацию Moodle
                                                                 </a>.
+                                                                <br>
+                                                                <small class="text-muted mt-2 d-block">
+                                                                    <i class="fas fa-info-circle me-1"></i>
+                                                                    После синхронизации данные из Moodle (включая оценки и статусы заданий) появятся на этой странице.
+                                                                </small>
                                                             @else
                                                                 Студент записан на курс, но еще не начал работу с элементами курса или данные не синхронизированы из Moodle.
                                                             @endif
