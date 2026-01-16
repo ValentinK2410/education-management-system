@@ -141,7 +141,16 @@ class SubjectController extends Controller
      */
     public function edit(Subject $subject)
     {
-        return view('admin.subjects.edit', compact('subject'));
+        // Загружаем программы предмета
+        $subject->load('programs.institution');
+        
+        // Получаем все активные программы для выбора
+        $availablePrograms = Program::active()
+            ->with('institution')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.subjects.edit', compact('subject', 'availablePrograms'));
     }
 
     /**
