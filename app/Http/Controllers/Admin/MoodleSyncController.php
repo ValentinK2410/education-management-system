@@ -201,32 +201,48 @@ class MoodleSyncController extends Controller
                 'errors_list' => []
             ];
             
+            // Отслеживание уникальных ошибок для предотвращения дублирования
+            $seenErrors = [];
+            
             foreach ($students as $student) {
                 try {
                     $progressStats = $activitySyncService->syncStudentProgress($courseId, $student->id);
                     $totalProgressStats['total'] += $progressStats['total'];
                     $totalProgressStats['created'] += $progressStats['created'];
                     $totalProgressStats['updated'] += $progressStats['updated'];
-                    $totalProgressStats['errors'] += $progressStats['errors'];
                     
                     if (isset($progressStats['errors_list']) && is_array($progressStats['errors_list'])) {
-                        $totalProgressStats['errors_list'] = array_merge(
-                            $totalProgressStats['errors_list'],
-                            $progressStats['errors_list']
-                        );
+                        foreach ($progressStats['errors_list'] as $error) {
+                            // Создаем уникальный ключ для ошибки
+                            $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
+                            $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
+                            
+                            // Добавляем ошибку только если она еще не была добавлена
+                            if (!isset($seenErrors[$errorKey])) {
+                                $seenErrors[$errorKey] = true;
+                                $totalProgressStats['errors']++;
+                                $totalProgressStats['errors_list'][] = $error;
+                            }
+                        }
                     }
                 } catch (\Exception $e) {
-                    Log::error('Ошибка синхронизации прогресса студента', [
-                        'course_id' => $courseId,
-                        'user_id' => $student->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    $totalProgressStats['errors']++;
-                    $totalProgressStats['errors_list'][] = [
-                        'student_id' => $student->id,
-                        'student_name' => $student->name,
-                        'error' => $e->getMessage()
-                    ];
+                    $errorMsg = $e->getMessage();
+                    $errorKey = md5($errorMsg);
+                    
+                    if (!isset($seenErrors[$errorKey])) {
+                        Log::error('Ошибка синхронизации прогресса студента', [
+                            'course_id' => $courseId,
+                            'user_id' => $student->id,
+                            'error' => $errorMsg
+                        ]);
+                        $seenErrors[$errorKey] = true;
+                        $totalProgressStats['errors']++;
+                        $totalProgressStats['errors_list'][] = [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'error' => $errorMsg
+                        ];
+                    }
                 }
             }
             
