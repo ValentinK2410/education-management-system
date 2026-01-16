@@ -44,20 +44,24 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="program_id" class="form-label">Образовательная программа *</label>
-                                    <select class="form-select @error('program_id') is-invalid @enderror"
-                                            id="program_id" name="program_id" required>
-                                        <option value="">Выберите программу</option>
-                                        @foreach($programs as $program)
-                                            <option value="{{ $program->id }}"
-                                                    {{ old('program_id') == $program->id ? 'selected' : '' }}>
-                                                {{ $program->name }}
+                                    <label for="subject_id" class="form-label">Предмет *</label>
+                                    <select class="form-select @error('subject_id') is-invalid @enderror"
+                                            id="subject_id" name="subject_id" required>
+                                        <option value="">Выберите предмет</option>
+                                        @foreach($subjects as $subject)
+                                            <option value="{{ $subject->id }}"
+                                                    {{ old('subject_id', $selectedSubjectId ?? '') == $subject->id ? 'selected' : '' }}>
+                                                {{ $subject->name }}
+                                                @if($subject->code)
+                                                    ({{ $subject->code }})
+                                                @endif
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('program_id')
+                                    @error('subject_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                    <div class="form-text">Предмет объединяет несколько курсов одной тематики</div>
                                 </div>
                             </div>
 

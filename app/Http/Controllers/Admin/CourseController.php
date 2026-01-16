@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\MoodleApiService;
 use Illuminate\Http\Request;
@@ -113,17 +114,20 @@ class CourseController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function create()
+    public function create(Request $request)
     {
-        // Получение активных программ с их учебными заведениями
-        $programs = Program::active()->with('institution')->get();
+        // Получение активных предметов
+        $subjects = Subject::active()->orderBy('order')->orderBy('name')->get();
 
         // Получение пользователей с ролью преподавателя
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('slug', 'instructor');
         })->get();
 
-        return view('admin.courses.create', compact('programs', 'instructors'));
+        // Если передан subject_id в запросе, используем его
+        $selectedSubjectId = $request->get('subject_id');
+
+        return view('admin.courses.create', compact('subjects', 'instructors', 'selectedSubjectId'));
     }
 
     /**
@@ -139,7 +143,7 @@ class CourseController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'program_id' => 'required|exists:programs,id',
+            'subject_id' => 'required|exists:subjects,id',
             'instructor_id' => 'nullable|exists:users,id',
             'code' => 'nullable|string|max:20',
             'credits' => 'nullable|integer|min:0',
@@ -203,15 +207,15 @@ class CourseController extends Controller
      */
     public function edit(Course $course)
     {
-        // Получение активных программ с их учебными заведениями
-        $programs = Program::active()->with('institution')->get();
+        // Получение активных предметов
+        $subjects = Subject::active()->orderBy('order')->orderBy('name')->get();
 
         // Получение пользователей с ролью преподавателя
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('slug', 'instructor');
         })->get();
 
-        return view('admin.courses.edit', compact('course', 'programs', 'instructors'));
+        return view('admin.courses.edit', compact('course', 'subjects', 'instructors'));
     }
 
     /**
@@ -228,7 +232,7 @@ class CourseController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'program_id' => 'required|exists:programs,id',
+            'subject_id' => 'required|exists:subjects,id',
             'instructor_id' => 'nullable|exists:users,id',
             'code' => 'nullable|string|max:20',
             'credits' => 'nullable|integer|min:0',
