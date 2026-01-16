@@ -385,10 +385,17 @@ class CourseAnalyticsController extends Controller
                 ]);
             } elseif ($courseId) {
                 // Синхронизация конкретного курса
+                $course = Course::find($courseId);
+                if (!$course) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Курс не найден'
+                    ], 404);
+                }
+                
                 $activityStats = $this->syncService->syncCourseActivities($courseId);
                 
                 // Синхронизация прогресса всех студентов курса
-                $course = Course::find($courseId);
                 $students = $course->users()->whereNotNull('moodle_user_id')->get();
                 
                 $totalProgress = ['created' => 0, 'updated' => 0, 'total' => 0, 'errors' => 0];
@@ -415,6 +422,13 @@ class CourseAnalyticsController extends Controller
             } elseif ($userId) {
                 // Синхронизация конкретного студента по всем курсам
                 $user = User::find($userId);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Студент не найден'
+                    ], 404);
+                }
+                
                 $courses = $user->courses()->whereNotNull('moodle_course_id')->get();
                 
                 $totalActivities = ['created' => 0, 'updated' => 0, 'errors' => 0];
@@ -471,19 +485,33 @@ class CourseAnalyticsController extends Controller
                     ], 400);
                 }
                 
-                $stats = $this->syncService->syncAll();
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => sprintf(
-                        'Полная синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
-                        $stats['activities']['created'] ?? 0,
-                        $stats['activities']['updated'] ?? 0,
-                        $stats['progress']['created'] ?? 0,
-                        $stats['progress']['updated'] ?? 0
-                    ),
-                    'stats' => $stats
-                ]);
+                try {
+                    $stats = $this->syncService->syncAll();
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => sprintf(
+                            'Полная синхронизация завершена. Элементов: создано %d, обновлено %d. Прогресс: создано %d, обновлено %d.',
+                            $stats['activities']['created'] ?? 0,
+                            $stats['activities']['updated'] ?? 0,
+                            $stats['progress']['created'] ?? 0,
+                            $stats['progress']['updated'] ?? 0
+                        ),
+                        'stats' => $stats
+                    ]);
+                } catch (\Exception $syncException) {
+                    Log::error('Ошибка при выполнении syncAll', [
+                        'error' => $syncException->getMessage(),
+                        'file' => $syncException->getFile(),
+                        'line' => $syncException->getLine(),
+                        'trace' => $syncException->getTraceAsString()
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ошибка при выполнении синхронизации: ' . $syncException->getMessage()
+                    ], 500);
+                }
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Ошибка валидации при синхронизации аналитики', [
