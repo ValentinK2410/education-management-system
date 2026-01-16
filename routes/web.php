@@ -474,7 +474,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('programs', ProgramController::class);
 
         // Управление предметами (глобальными курсами)
-        Route::post('subjects/{subject}/programs/{program}/attach', [SubjectController::class, 'attachProgram'])->name('subjects.programs.attach');
+        Route::post('subjects/{subject}/programs/attach', [SubjectController::class, 'attachProgram'])->name('subjects.programs.attach');
         Route::post('subjects/{subject}/programs/{program}/detach', [SubjectController::class, 'detachProgram'])->name('subjects.programs.detach');
         Route::resource('subjects', SubjectController::class);
 
