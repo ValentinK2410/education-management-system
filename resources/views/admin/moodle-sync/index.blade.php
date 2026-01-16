@@ -348,19 +348,66 @@
 </div>
 
 @if(session('success'))
-    <script>
-        setTimeout(function() {
-            alert('{{ session('success') }}');
-        }, 100);
-    </script>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if(session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
+        @if(session('sync_errors'))
+            @php
+                $syncErrors = session('sync_errors');
+            @endphp
+            <hr>
+            <strong>Детали ошибок ({{ $syncErrors['total'] }} всего):</strong>
+            <div class="mt-2">
+                @foreach($syncErrors['groups'] as $category => $errors)
+                    <details class="mb-2">
+                        <summary class="text-danger small">
+                            <strong>{{ $category }}</strong> ({{ count($errors) }} ошибок)
+                        </summary>
+                        <ul class="small mt-2 mb-0">
+                            @foreach(array_unique(array_slice($errors, 0, 5)) as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                            @if(count($errors) > 5)
+                                <li><em>... и еще {{ count($errors) - 5 }} похожих ошибок</em></li>
+                            @endif
+                        </ul>
+                    </details>
+                @endforeach
+            </div>
+            @if(count($syncErrors['details']) > 0)
+                <details class="mt-2">
+                    <summary class="small">Показать первые 20 ошибок детально</summary>
+                    <ul class="small mt-2 mb-0" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($syncErrors['details'] as $error)
+                            <li>
+                                @if(isset($error['student_name']))
+                                    <strong>Студент:</strong> {{ $error['student_name'] }} (ID: {{ $error['student_id'] ?? 'N/A' }})<br>
+                                @endif
+                                @if(isset($error['activity_type']))
+                                    <strong>Элемент:</strong> {{ $error['activity_type'] }} (Moodle ID: {{ $error['moodle_id'] ?? 'N/A' }})<br>
+                                @endif
+                                <strong>Ошибка:</strong> {{ $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка') }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </details>
+            @endif
+        @endif
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 @endif
 
 @if(session('error'))
-    <script>
-        setTimeout(function() {
-            alert('Ошибка: {{ session('error') }}');
-        }, 100);
-    </script>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-times-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 @endif
 
 @push('scripts')

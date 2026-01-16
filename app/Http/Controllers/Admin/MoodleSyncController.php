@@ -248,19 +248,50 @@ class MoodleSyncController extends Controller
                 'Синхронизация активности студентов завершена. ' .
                 'Элементы курса: создано %d, обновлено %d. ' .
                 'Прогресс студентов: создано %d, обновлено %d, обработано студентов: %d.',
-                $activitiesStats['created'],
-                $activitiesStats['updated'],
+                $activitiesStats['created'] ?? 0,
+                $activitiesStats['updated'] ?? 0,
                 $totalProgressStats['created'],
                 $totalProgressStats['updated'],
                 $students->count()
             );
             
-            if ($totalProgressStats['errors'] > 0) {
-                $message .= " Ошибок: {$totalProgressStats['errors']}.";
+            // Собираем все ошибки
+            $allErrors = [];
+            if (isset($activitiesStats['errors_list']) && is_array($activitiesStats['errors_list'])) {
+                $allErrors = array_merge($allErrors, $activitiesStats['errors_list']);
+            }
+            if (isset($totalProgressStats['errors_list']) && is_array($totalProgressStats['errors_list'])) {
+                $allErrors = array_merge($allErrors, $totalProgressStats['errors_list']);
             }
             
+            $totalErrors = ($activitiesStats['errors'] ?? 0) + $totalProgressStats['errors'];
+            
+            if ($totalErrors > 0) {
+                $message .= " Ошибок: {$totalErrors}.";
+                
+                // Группируем ошибки по типам для более понятного отображения
+                $errorGroups = [];
+                foreach ($allErrors as $error) {
+                    $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
+                    $errorType = $this->categorizeError($errorMsg);
+                    if (!isset($errorGroups[$errorType])) {
+                        $errorGroups[$errorType] = [];
+                    }
+                    $errorGroups[$errorType][] = $errorMsg;
+                }
+                
+                // Сохраняем детали ошибок в сессию для отображения
+                session()->flash('sync_errors', [
+                    'total' => $totalErrors,
+                    'groups' => $errorGroups,
+                    'details' => array_slice($allErrors, 0, 20) // Первые 20 ошибок для детального просмотра
+                ]);
+            }
+            
+            $flashType = $totalErrors > 0 ? 'warning' : 'success';
+            
             return redirect()->route('admin.moodle-sync.index')
-                ->with('success', $message);
+                ->with($flashType, $message);
                 
         } catch (\Exception $e) {
             Log::error('Ошибка синхронизации активности студентов через админ-панель', [
@@ -720,6 +751,39 @@ class MoodleSyncController extends Controller
                 'message' => 'Ошибка синхронизации: ' . $e->getMessage()
             ], 500)->header('Content-Type', 'application/json');
         }
+    }
+    
+    /**
+     * Категоризировать ошибку для группировки
+     *
+     * @param string $errorMessage
+     * @return string
+     */
+    protected function categorizeError(string $errorMessage): string
+    {
+        $errorMessage = strtolower($errorMessage);
+        
+        if (strpos($errorMessage, 'unknown column') !== false || strpos($errorMessage, 'column') !== false) {
+            return 'Отсутствующие поля в базе данных';
+        }
+        
+        if (strpos($errorMessage, 'webservice_access_exception') !== false || strpos($errorMessage, 'access') !== false) {
+            return 'Проблемы с правами доступа к Moodle API';
+        }
+        
+        if (strpos($errorMessage, 'timeout') !== false || strpos($errorMessage, 'time') !== false) {
+            return 'Таймауты при обращении к Moodle';
+        }
+        
+        if (strpos($errorMessage, 'not found') !== false || strpos($errorMessage, 'не найден') !== false) {
+            return 'Элементы не найдены';
+        }
+        
+        if (strpos($errorMessage, 'connection') !== false || strpos($errorMessage, 'подключ') !== false) {
+            return 'Проблемы с подключением к Moodle';
+        }
+        
+        return 'Прочие ошибки';
     }
 }
 
