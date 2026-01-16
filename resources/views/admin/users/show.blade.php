@@ -768,6 +768,10 @@
                                                                         | {{ $activity->section_name }}
                                                                     @endif
                                                                 </div>
+                                                            @elseif($activity->section_name)
+                                                                <div class="small text-muted">
+                                                                    {{ $activity->section_name }}
+                                                                </div>
                                                             @endif
                                                         </div>
                                                     </div>
