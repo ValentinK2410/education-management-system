@@ -76,6 +76,49 @@ class MoodleSyncService
     }
 
     /**
+     * Получить список курсов из Moodle (без синхронизации)
+     * 
+     * @return array|false Массив курсов или false в случае ошибки
+     */
+    public function getMoodleCoursesList()
+    {
+        // Проверяем конфигурацию перед началом
+        try {
+            $this->validateConfiguration();
+        } catch (\InvalidArgumentException $e) {
+            Log::error('Ошибка конфигурации Moodle', [
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+
+        try {
+            // Получаем все курсы из Moodle
+            $moodleCourses = $this->moodleApi->getAllCourses();
+
+            if ($moodleCourses === false) {
+                Log::error('Ошибка получения курсов из Moodle API', [
+                    'hint' => 'Проверьте логи Moodle API для деталей ошибки.'
+                ]);
+                return false;
+            }
+            
+            if (empty($moodleCourses)) {
+                Log::warning('Список курсов из Moodle пуст');
+                return [];
+            }
+
+            return $moodleCourses;
+        } catch (\Exception $e) {
+            Log::error('Критическая ошибка при получении списка курсов', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Синхронизировать все курсы из Moodle
      * 
      * @return array Статистика синхронизации

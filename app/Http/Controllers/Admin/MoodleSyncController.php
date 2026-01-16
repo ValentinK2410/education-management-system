@@ -62,8 +62,46 @@ class MoodleSyncController extends Controller
     public function syncCourses(Request $request)
     {
         try {
-            // Увеличиваем время выполнения для длительной синхронизации
-            set_time_limit(1800); // 30 минут
+            if (!$this->syncService) {
+                throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
+            }
+            
+            // Получаем список курсов из Moodle для пошаговой синхронизации
+            $moodleCourses = $this->syncService->getMoodleCoursesList();
+            
+            if ($moodleCourses === false || empty($moodleCourses)) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Не удалось получить курсы из Moodle или список пуст'
+                    ], 400);
+                }
+                
+                return redirect()->route('admin.moodle-sync.index')
+                    ->with('error', 'Не удалось получить курсы из Moodle или список пуст');
+            }
+            
+            // Формируем список курсов для синхронизации
+            $coursesList = array_map(function($course) {
+                return [
+                    'moodle_id' => $course['id'] ?? null,
+                    'name' => $course['fullname'] ?? 'Без названия',
+                    'shortname' => $course['shortname'] ?? null,
+                ];
+            }, $moodleCourses);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'sync_type' => 'courses',
+                    'total_steps' => count($coursesList),
+                    'courses' => $coursesList,
+                    'message' => 'Начинаем пошаговую синхронизацию курсов. Всего курсов: ' . count($coursesList)
+                ]);
+            }
+            
+            // Для обычных запросов возвращаем старую логику (полная синхронизация)
+            set_time_limit(1800);
             ini_set('max_execution_time', '1800');
             ini_set('memory_limit', '512M');
             ignore_user_abort(true);
@@ -72,19 +110,7 @@ class MoodleSyncController extends Controller
                 header('X-Accel-Buffering: no');
             }
             
-            if (!$this->syncService) {
-                throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
-            }
-            
             $stats = $this->syncService->syncCourses();
-            
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Синхронизация курсов завершена',
-                    'stats' => $stats
-                ]);
-            }
             
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', "Синхронизация курсов завершена. Создано: {$stats['created']}, Обновлено: {$stats['updated']}, Ошибок: {$stats['errors']}");
@@ -172,21 +198,52 @@ class MoodleSyncController extends Controller
     public function syncAll(Request $request)
     {
         try {
-            // Увеличиваем время выполнения для длительной синхронизации
-            set_time_limit(1800); // 30 минут
-            ini_set('max_execution_time', '1800');
-            ini_set('memory_limit', '512M'); // Увеличиваем лимит памяти
-            
-            // Отключаем ограничение времени выполнения для этого скрипта
-            ignore_user_abort(true);
-            
-            // Устанавливаем заголовки для увеличения таймаута nginx
-            if (!headers_sent()) {
-                header('X-Accel-Buffering: no'); // Отключаем буферизацию nginx
-            }
-            
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
+            }
+            
+            // Получаем список курсов из Moodle для пошаговой синхронизации
+            $moodleCourses = $this->syncService->getMoodleCoursesList();
+            
+            if ($moodleCourses === false || empty($moodleCourses)) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Не удалось получить курсы из Moodle или список пуст'
+                    ], 400);
+                }
+                
+                return redirect()->route('admin.moodle-sync.index')
+                    ->with('error', 'Не удалось получить курсы из Moodle или список пуст');
+            }
+            
+            // Формируем список курсов для синхронизации
+            $coursesList = array_map(function($course) {
+                return [
+                    'moodle_id' => $course['id'] ?? null,
+                    'name' => $course['fullname'] ?? 'Без названия',
+                    'shortname' => $course['shortname'] ?? null,
+                ];
+            }, $moodleCourses);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'sync_type' => 'all',
+                    'total_steps' => count($coursesList),
+                    'courses' => $coursesList,
+                    'message' => 'Начинаем пошаговую полную синхронизацию. Всего курсов: ' . count($coursesList)
+                ]);
+            }
+            
+            // Для обычных запросов возвращаем старую логику (полная синхронизация)
+            set_time_limit(1800);
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true);
+            
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no');
             }
             
             $stats = $this->syncService->syncAll();
@@ -359,6 +416,162 @@ class MoodleSyncController extends Controller
         // Разбиваем на строки и берем последние N
         $allLines = explode("\n", $buffer);
         return array_slice($allLines, -$lines);
+    }
+
+    /**
+     * Синхронизировать один курс (для пошаговой синхронизации)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function syncChunk(Request $request)
+    {
+        try {
+            // Проверяем авторизацию
+            if (!auth()->check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Необходима авторизация'
+                ], 401);
+            }
+            
+            if (!$this->syncService) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Сервис синхронизации недоступен. Проверьте настройки Moodle.'
+                ], 500);
+            }
+            
+            // Получаем параметры
+            $moodleCourseId = $request->input('moodle_course_id');
+            $syncEnrollments = $request->input('sync_enrollments', false);
+            $step = (int)$request->input('step', 1);
+            $totalSteps = (int)$request->input('total_steps', 1);
+            
+            if (!$moodleCourseId) {
+                return response()->json([
+                    'success' => false,
+                    'step' => $step,
+                    'total_steps' => $totalSteps,
+                    'message' => 'Не указан ID курса в Moodle'
+                ], 400);
+            }
+            
+            Log::info('Запрос синхронизации курса (chunk)', [
+                'moodle_course_id' => $moodleCourseId,
+                'sync_enrollments' => $syncEnrollments,
+                'step' => $step,
+                'total_steps' => $totalSteps
+            ]);
+            
+            // Получаем данные курса из Moodle
+            $moodleCourses = $this->syncService->getMoodleCoursesList();
+            $moodleCourse = null;
+            
+            foreach ($moodleCourses as $course) {
+                if (($course['id'] ?? null) == $moodleCourseId) {
+                    $moodleCourse = $course;
+                    break;
+                }
+            }
+            
+            if (!$moodleCourse) {
+                return response()->json([
+                    'success' => false,
+                    'step' => $step,
+                    'total_steps' => $totalSteps,
+                    'message' => 'Курс не найден в Moodle'
+                ], 404);
+            }
+            
+            $currentItem = [
+                'type' => 'course',
+                'moodle_id' => $moodleCourseId,
+                'name' => $moodleCourse['fullname'] ?? 'Без названия'
+            ];
+            
+            $stats = [
+                'course' => ['created' => 0, 'updated' => 0, 'errors' => 0],
+                'enrollments' => ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0]
+            ];
+            
+            try {
+                // Синхронизируем курс
+                $courseResult = $this->syncService->syncCourse($moodleCourse);
+                
+                if ($courseResult['created']) {
+                    $stats['course']['created'] = 1;
+                } elseif ($courseResult['updated']) {
+                    $stats['course']['updated'] = 1;
+                }
+                
+                $localCourseId = $courseResult['course']->id ?? null;
+                
+                // Если нужно синхронизировать записи студентов
+                if ($syncEnrollments && $localCourseId) {
+                    try {
+                        $enrollmentStats = $this->syncService->syncCourseEnrollments($localCourseId);
+                        $stats['enrollments'] = $enrollmentStats;
+                    } catch (\Exception $enrollmentException) {
+                        Log::warning('Ошибка синхронизации записей студентов для курса (chunk)', [
+                            'course_id' => $localCourseId,
+                            'moodle_course_id' => $moodleCourseId,
+                            'error' => $enrollmentException->getMessage()
+                        ]);
+                        $stats['enrollments']['errors'] = 1;
+                    }
+                }
+                
+                $message = sprintf(
+                    'Синхронизирован курс: %s. Курс: %s, Записи: создано %d, обновлено %d.',
+                    $moodleCourse['fullname'] ?? 'Без названия',
+                    ($courseResult['created'] ? 'создан' : ($courseResult['updated'] ? 'обновлен' : 'без изменений')),
+                    $stats['enrollments']['created'],
+                    $stats['enrollments']['updated']
+                );
+                
+                return response()->json([
+                    'success' => true,
+                    'step' => $step,
+                    'total_steps' => $totalSteps,
+                    'current_item' => $currentItem,
+                    'stats' => $stats,
+                    'has_more' => $step < $totalSteps,
+                    'message' => $message
+                ]);
+            } catch (\Exception $syncException) {
+                Log::error('Ошибка при синхронизации курса (chunk)', [
+                    'moodle_course_id' => $moodleCourseId,
+                    'step' => $step,
+                    'error' => $syncException->getMessage(),
+                    'file' => $syncException->getFile(),
+                    'line' => $syncException->getLine()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'step' => $step,
+                    'total_steps' => $totalSteps,
+                    'current_item' => $currentItem,
+                    'has_more' => $step < $totalSteps,
+                    'message' => 'Ошибка при синхронизации курса: ' . $syncException->getMessage(),
+                    'stats' => $stats
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации курса (chunk)', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'step' => $request->input('step', 1),
+                'total_steps' => $request->input('total_steps', 1),
+                'message' => 'Ошибка синхронизации: ' . $e->getMessage()
+            ], 500)->header('Content-Type', 'application/json');
+        }
     }
 }
 

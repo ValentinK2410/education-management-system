@@ -511,6 +511,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware(['check.permission:sync_moodle'])->group(function () {
             Route::get('moodle-sync', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'index'])->name('moodle-sync.index');
             Route::post('moodle-sync/courses', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourses'])->name('moodle-sync.sync-courses');
+            Route::post('moodle-sync/sync-chunk', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncChunk'])->name('moodle-sync.sync-chunk');
             Route::post('moodle-sync/enrollments/{course}', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncCourseEnrollments'])->name('moodle-sync.sync-enrollments');
             Route::post('moodle-sync/all', [\App\Http\Controllers\Admin\MoodleSyncController::class, 'syncAll'])->name('moodle-sync.sync-all');
         });
