@@ -134,6 +134,154 @@ class MoodleSyncController extends Controller
     }
 
     /**
+     * Синхронизировать активность студентов для курса (элементы курса и прогресс)
+     *
+     * @param Request $request
+     * @param int $courseId
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function syncCourseActivities(Request $request, int $courseId)
+    {
+        try {
+            // Увеличиваем время выполнения для длительной синхронизации
+            set_time_limit(1800); // 30 минут
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true);
+            
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no');
+            }
+            
+            $course = Course::findOrFail($courseId);
+            
+            if (!$course->moodle_course_id) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'У курса не указан Moodle Course ID'
+                    ], 400);
+                }
+                
+                return redirect()->route('admin.moodle-sync.index')
+                    ->with('error', 'У курса не указан Moodle Course ID');
+            }
+            
+            // Получаем студентов курса
+            $students = $course->users()
+                ->whereHas('roles', function ($q) {
+                    $q->where('slug', 'student');
+                })
+                ->whereNotNull('moodle_user_id')
+                ->get();
+            
+            if ($students->isEmpty()) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'На курсе нет студентов с настроенным Moodle User ID'
+                    ], 400);
+                }
+                
+                return redirect()->route('admin.moodle-sync.index')
+                    ->with('error', 'На курсе нет студентов с настроенным Moodle User ID');
+            }
+            
+            $activitySyncService = new \App\Services\CourseActivitySyncService();
+            
+            // Синхронизируем элементы курса
+            $activitiesStats = $activitySyncService->syncCourseActivities($courseId);
+            
+            // Синхронизируем прогресс студентов
+            $totalProgressStats = [
+                'total' => 0,
+                'created' => 0,
+                'updated' => 0,
+                'errors' => 0,
+                'errors_list' => []
+            ];
+            
+            foreach ($students as $student) {
+                try {
+                    $progressStats = $activitySyncService->syncStudentProgress($courseId, $student->id);
+                    $totalProgressStats['total'] += $progressStats['total'];
+                    $totalProgressStats['created'] += $progressStats['created'];
+                    $totalProgressStats['updated'] += $progressStats['updated'];
+                    $totalProgressStats['errors'] += $progressStats['errors'];
+                    
+                    if (isset($progressStats['errors_list']) && is_array($progressStats['errors_list'])) {
+                        $totalProgressStats['errors_list'] = array_merge(
+                            $totalProgressStats['errors_list'],
+                            $progressStats['errors_list']
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ошибка синхронизации прогресса студента', [
+                        'course_id' => $courseId,
+                        'user_id' => $student->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    $totalProgressStats['errors']++;
+                    $totalProgressStats['errors_list'][] = [
+                        'student_id' => $student->id,
+                        'student_name' => $student->name,
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+            
+            $stats = [
+                'activities' => $activitiesStats,
+                'progress' => $totalProgressStats,
+                'students_processed' => $students->count()
+            ];
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Синхронизация активности студентов завершена',
+                    'stats' => $stats
+                ]);
+            }
+            
+            $message = sprintf(
+                'Синхронизация активности студентов завершена. ' .
+                'Элементы курса: создано %d, обновлено %d. ' .
+                'Прогресс студентов: создано %d, обновлено %d, обработано студентов: %d.',
+                $activitiesStats['created'],
+                $activitiesStats['updated'],
+                $totalProgressStats['created'],
+                $totalProgressStats['updated'],
+                $students->count()
+            );
+            
+            if ($totalProgressStats['errors'] > 0) {
+                $message .= " Ошибок: {$totalProgressStats['errors']}.";
+            }
+            
+            return redirect()->route('admin.moodle-sync.index')
+                ->with('success', $message);
+                
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации активности студентов через админ-панель', [
+                'course_id' => $courseId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка синхронизации: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('admin.moodle-sync.index')
+                ->with('error', 'Ошибка синхронизации: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Синхронизировать записи студентов для курса
      *
      * @param Request $request

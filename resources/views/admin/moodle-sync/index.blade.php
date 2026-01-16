@@ -281,22 +281,42 @@
                                                 <th>ID</th>
                                                 <th>Название курса</th>
                                                 <th>Moodle ID</th>
-                                                <th>Действие</th>
+                                                <th>Студентов</th>
+                                                <th>Действия</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach($moodleCourses as $course)
+                                                @php
+                                                    $studentsCount = $course->users()
+                                                        ->whereHas('roles', function ($q) {
+                                                            $q->where('slug', 'student');
+                                                        })
+                                                        ->whereNotNull('moodle_user_id')
+                                                        ->count();
+                                                @endphp
                                                 <tr>
                                                     <td>{{ $course->id }}</td>
                                                     <td>{{ $course->name }}</td>
                                                     <td><span class="badge bg-secondary">{{ $course->moodle_course_id }}</span></td>
                                                     <td>
-                                                        <form action="{{ route('admin.moodle-sync.sync-enrollments', $course->id) }}" method="POST" class="d-inline">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Синхронизировать записи студентов для курса «{{ $course->name }}»?')">
-                                                                <i class="fas fa-users me-1"></i>Синхронизировать записи
-                                                            </button>
-                                                        </form>
+                                                        <span class="badge bg-info">{{ $studentsCount }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group" role="group">
+                                                            <form action="{{ route('admin.moodle-sync.sync-enrollments', $course->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Синхронизировать записи студентов для курса «{{ $course->name }}»?')" title="Синхронизировать только записи студентов на курс">
+                                                                    <i class="fas fa-users me-1"></i>Записи
+                                                                </button>
+                                                            </form>
+                                                            <form action="{{ route('admin.moodle-sync.sync-activities', $course->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Синхронизировать активность студентов (элементы курса и прогресс) для курса «{{ $course->name }}»? Это может занять некоторое время.')" title="Синхронизировать элементы курса и активность всех студентов">
+                                                                    <i class="fas fa-tasks me-1"></i>Активность
+                                                                </button>
+                                                            </form>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             @endforeach
