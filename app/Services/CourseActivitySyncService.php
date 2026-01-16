@@ -157,6 +157,11 @@ class CourseActivitySyncService
             'activity_type' => $activityType,
             'name' => $activityData['name'] ?? 'Без названия',
             'section_name' => $activityData['section_name'] ?? null,
+            'moodle_section_id' => $activityData['moodle_section_id'] ?? null,
+            'week_number' => $activityData['week_number'] ?? null,
+            'section_number' => $activityData['section_number'] ?? null,
+            'section_order' => $activityData['section_order'] ?? null,
+            'section_type' => $activityData['section_type'] ?? 'week',
             'max_grade' => $activityData['max_grade'] ?? $activityData['grade'] ?? null,
             'description' => $activityData['description'] ?? null,
             'meta' => $activityData,
@@ -295,6 +300,79 @@ class CourseActivitySyncService
                             ? \Carbon\Carbon::createFromTimestamp($activityData['graded_at'])
                             : $activityData['graded_at'];
                     }
+                    
+                    // Детальная информация о просмотрах
+                    $isViewed = $activityData['is_viewed'] ?? false;
+                    $isRead = $activityData['is_read'] ?? false;
+                    $lastViewedAt = null;
+                    if (isset($activityData['last_viewed_at']) && $activityData['last_viewed_at']) {
+                        $lastViewedAt = is_numeric($activityData['last_viewed_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['last_viewed_at'])
+                            : $activityData['last_viewed_at'];
+                    }
+                    $viewCount = $activityData['view_count'] ?? 0;
+                    
+                    // Информация о черновиках
+                    $hasDraft = $activityData['has_draft'] ?? false;
+                    $draftCreatedAt = null;
+                    $draftUpdatedAt = null;
+                    if (isset($activityData['draft_created_at']) && $activityData['draft_created_at']) {
+                        $draftCreatedAt = is_numeric($activityData['draft_created_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['draft_created_at'])
+                            : $activityData['draft_created_at'];
+                    }
+                    if (isset($activityData['draft_updated_at']) && $activityData['draft_updated_at']) {
+                        $draftUpdatedAt = is_numeric($activityData['draft_updated_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['draft_updated_at'])
+                            : $activityData['draft_updated_at'];
+                    }
+                    $draftData = $activityData['draft_data'] ?? null;
+                    
+                    // Информация о проверке
+                    $needsGrading = $activityData['needs_grading'] ?? false;
+                    $isGraded = $activityData['is_graded'] ?? false;
+                    $gradingRequestedAt = null;
+                    if (isset($activityData['grading_requested_at']) && $activityData['grading_requested_at']) {
+                        $gradingRequestedAt = is_numeric($activityData['grading_requested_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['grading_requested_at'])
+                            : $activityData['grading_requested_at'];
+                    }
+                    
+                    // Информация о попытках
+                    $attemptsCount = $activityData['attempts_count'] ?? 0;
+                    $maxAttempts = $activityData['max_attempts'] ?? null;
+                    $lastAttemptAt = null;
+                    if (isset($activityData['last_attempt_at']) && $activityData['last_attempt_at']) {
+                        $lastAttemptAt = is_numeric($activityData['last_attempt_at'])
+                            ? \Carbon\Carbon::createFromTimestamp($activityData['last_attempt_at'])
+                            : $activityData['last_attempt_at'];
+                    }
+                    
+                    // Информация о вопросах и ответах (для тестов)
+                    $questionsData = $activityData['questions_data'] ?? null;
+                    $correctAnswers = $activityData['correct_answers'] ?? null;
+                    $totalQuestions = $activityData['total_questions'] ?? null;
+                    
+                    // Данные о завершении
+                    $completionData = [
+                        'is_viewed' => $isViewed,
+                        'is_read' => $isRead,
+                        'has_draft' => $hasDraft,
+                        'needs_grading' => $needsGrading,
+                        'is_graded' => $isGraded,
+                        'attempts_count' => $attemptsCount,
+                    ];
+                    
+                    $completionPercentage = null;
+                    if ($maxGrade && $maxGrade > 0 && $grade !== null) {
+                        $completionPercentage = min(100, ($grade / $maxGrade) * 100);
+                    } elseif ($totalQuestions && $totalQuestions > 0 && $correctAnswers !== null) {
+                        $completionPercentage = ($correctAnswers / $totalQuestions) * 100;
+                    } elseif ($status === 'completed' || $status === 'graded') {
+                        $completionPercentage = 100;
+                    } elseif ($status === 'submitted') {
+                        $completionPercentage = 50;
+                    }
 
                     // Ищем существующий прогресс
                     $progress = StudentActivityProgress::where('user_id', $user->id)
@@ -307,6 +385,25 @@ class CourseActivitySyncService
                         'course_id' => $course->id,
                         'activity_id' => $activity->id,
                         'status' => $status,
+                        'is_viewed' => $isViewed,
+                        'is_read' => $isRead,
+                        'last_viewed_at' => $lastViewedAt,
+                        'view_count' => $viewCount,
+                        'has_draft' => $hasDraft,
+                        'draft_created_at' => $draftCreatedAt,
+                        'draft_updated_at' => $draftUpdatedAt,
+                        'draft_data' => $draftData,
+                        'needs_grading' => $needsGrading,
+                        'is_graded' => $isGraded,
+                        'grading_requested_at' => $gradingRequestedAt,
+                        'attempts_count' => $attemptsCount,
+                        'max_attempts' => $maxAttempts,
+                        'last_attempt_at' => $lastAttemptAt,
+                        'questions_data' => $questionsData,
+                        'correct_answers' => $correctAnswers,
+                        'total_questions' => $totalQuestions,
+                        'completion_data' => $completionData,
+                        'completion_percentage' => $completionPercentage,
                         'grade' => $grade,
                         'max_grade' => $maxGrade,
                         'submitted_at' => $submittedAt,
@@ -315,23 +412,37 @@ class CourseActivitySyncService
                     ];
 
                     if ($progress) {
-                        // Сохраняем существующую дату сдачи, если новая дата не передана
-                        // Это важно, так как для проверенных заданий Moodle может не возвращать дату сдачи
+                        // Сохраняем существующие данные, если новые не переданы
                         if (!$submittedAt && $progress->submitted_at) {
                             $progressData['submitted_at'] = $progress->submitted_at;
+                        }
+                        if (!$lastViewedAt && $progress->last_viewed_at) {
+                            $progressData['last_viewed_at'] = $progress->last_viewed_at;
+                        }
+                        if ($viewCount == 0 && $progress->view_count > 0) {
+                            $progressData['view_count'] = $progress->view_count;
+                        }
+                        
+                        // Обновляем счетчик просмотров, если материал был просмотрен
+                        if ($isViewed && !$progress->is_viewed) {
+                            $progressData['view_count'] = ($progress->view_count ?? 0) + 1;
                         }
                         
                         // Обновляем существующий прогресс
                         $progress->update($progressData);
                         $stats['updated']++;
                         
-                        // Создаем запись в истории, если статус изменился
-                        if ($progress->status !== $status) {
+                        // Создаем запись в истории, если статус изменился или появились новые данные
+                        $statusChanged = $progress->status !== $status;
+                        $draftChanged = $progress->has_draft !== $hasDraft;
+                        $gradingChanged = $progress->needs_grading !== $needsGrading;
+                        
+                        if ($statusChanged || $draftChanged || $gradingChanged) {
                             $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
                         }
                     } else {
                         // Создаем новый прогресс
-                        $progressData['started_at'] = $activityData['submitted_at'] ?? now();
+                        $progressData['started_at'] = $activityData['submitted_at'] ?? $lastViewedAt ?? now();
                         StudentActivityProgress::create($progressData);
                         $stats['created']++;
                         

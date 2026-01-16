@@ -1019,6 +1019,48 @@ class MoodleApiService
     }
 
     /**
+     * Получить содержимое курса с разделами и неделями
+     *
+     * @param int $courseId ID курса в Moodle
+     * @return array|false Массив с разделами курса или false в случае ошибки
+     */
+    public function getCourseContentsWithSections(int $courseId)
+    {
+        $contents = $this->getCourseContents($courseId);
+        
+        if ($contents === false) {
+            return false;
+        }
+        
+        // Обрабатываем разделы для определения недель
+        $sections = [];
+        foreach ($contents as $section) {
+            $sectionNumber = $section['section'] ?? null;
+            $sectionName = $section['name'] ?? '';
+            
+            // Определяем номер недели из названия раздела (если есть паттерн "Неделя 1", "Week 1" и т.д.)
+            $weekNumber = null;
+            if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
+                $weekNumber = (int)$matches[1];
+            } elseif ($sectionNumber !== null && $sectionNumber > 0) {
+                // Если номер недели не найден в названии, используем номер раздела
+                $weekNumber = $sectionNumber;
+            }
+            
+            $sections[] = [
+                'id' => $section['id'] ?? null,
+                'section' => $sectionNumber,
+                'name' => $sectionName,
+                'summary' => $section['summary'] ?? '',
+                'week_number' => $weekNumber,
+                'modules' => $section['modules'] ?? [],
+            ];
+        }
+        
+        return $sections;
+    }
+
+    /**
      * Получить все активности курса с их статусами для студента
      *
      * @param int $courseId ID курса в Moodle
@@ -1033,6 +1075,33 @@ class MoodleApiService
             'course_id' => $courseId,
             'student_moodle_id' => $studentMoodleId
         ]);
+
+        // Получаем содержимое курса с разделами для определения недель
+        $courseContents = $this->getCourseContents($courseId);
+        $sectionsMap = [];
+        if ($courseContents !== false) {
+            foreach ($courseContents as $section) {
+                $sectionId = $section['id'] ?? null;
+                $sectionNumber = $section['section'] ?? null;
+                $sectionName = $section['name'] ?? '';
+                
+                // Определяем номер недели из названия раздела
+                $weekNumber = null;
+                if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
+                    $weekNumber = (int)$matches[1];
+                } elseif ($sectionNumber !== null && $sectionNumber > 0) {
+                    $weekNumber = $sectionNumber;
+                }
+                
+                $sectionsMap[$sectionId] = [
+                    'id' => $sectionId,
+                    'section' => $sectionNumber,
+                    'name' => $sectionName,
+                    'week_number' => $weekNumber,
+                    'modules' => $section['modules'] ?? [],
+                ];
+            }
+        }
 
         // Получаем задания курса напрямую (без использования getCourseContents)
         $assignments = $this->getCourseAssignments($courseId);
@@ -1084,15 +1153,39 @@ class MoodleApiService
                 $submission = $submissions[$assignmentId] ?? null;
                 $grade = $grades[$assignmentId] ?? null;
 
+                // Находим раздел для этого задания
+                $sectionInfo = null;
+                $weekNumber = null;
+                $sectionNumber = null;
+                $sectionName = '';
+                $sectionOrder = null;
+                
+                foreach ($sectionsMap as $section) {
+                    foreach ($section['modules'] as $order => $module) {
+                        if (($module['modname'] ?? '') === 'assign' && ($module['instance'] ?? null) == $assignmentId) {
+                            $sectionInfo = $section;
+                            $weekNumber = $section['week_number'];
+                            $sectionNumber = $section['section'];
+                            $sectionName = $section['name'];
+                            $sectionOrder = $order;
+                            break 2;
+                        }
+                    }
+                }
+
                 $status = 'not_submitted';
                 $statusText = 'Не сдано';
                 $gradeValue = null;
                 $submittedAt = null;
                 $gradedAt = null;
+                $hasDraft = false;
+                $needsGrading = false;
+                $isGraded = false;
+                $draftCreatedAt = null;
+                $draftUpdatedAt = null;
 
                 if ($submission) {
                     // Определяем дату сдачи: приоритет timesubmitted, затем timemodified, затем timecreated
-                    // Важно: извлекаем дату сдачи ДО проверки статуса, чтобы она была доступна даже для проверенных заданий
                     if (isset($submission['timesubmitted']) && $submission['timesubmitted'] > 0) {
                         $submittedAt = $submission['timesubmitted'];
                     } elseif (isset($submission['timemodified']) && $submission['timemodified'] > 0) {
@@ -1103,30 +1196,52 @@ class MoodleApiService
 
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
+                    
+                    // Определяем наличие черновика
+                    if ($submissionStatus === 'draft' || (!$submissionSubmitted && (isset($submission['filesubmissions']) || isset($submission['onlinetext'])))) {
+                        $hasDraft = true;
+                        $draftCreatedAt = $submission['timecreated'] ?? null;
+                        $draftUpdatedAt = $submission['timemodified'] ?? null;
+                    }
 
                     if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '' && $grade['grade'] >= 0) {
                         $status = 'graded';
                         $statusText = (string)$grade['grade'];
                         $gradeValue = (float)$grade['grade'];
                         $gradedAt = isset($grade['timecreated']) ? $grade['timecreated'] : null;
+                        $isGraded = true;
                     } elseif ($submissionSubmitted || isset($submission['filesubmissions']) || isset($submission['onlinetext'])) {
-                        $status = 'pending';
+                        $status = 'submitted';
                         $statusText = 'Не проверено';
+                        $needsGrading = true;
                     }
                 }
 
                 $activities[] = [
                     'type' => 'assign',
                     'moodle_id' => $assignmentId,
-                    'cmid' => $cmid, // Course Module ID для ссылок
+                    'cmid' => $cmid,
                     'name' => $assignment['name'] ?? 'Без названия',
-                    'section_name' => '', // Не можем получить без getCourseContents
+                    'section_name' => $sectionName,
+                    'moodle_section_id' => $sectionInfo['id'] ?? null,
+                    'week_number' => $weekNumber,
+                    'section_number' => $sectionNumber,
+                    'section_order' => $sectionOrder,
+                    'section_type' => 'week',
                     'status' => $status,
                     'status_text' => $statusText,
                     'grade' => $gradeValue,
                     'max_grade' => $assignment['grade'] ?? null,
                     'submitted_at' => $submittedAt,
                     'graded_at' => $gradedAt,
+                    'has_draft' => $hasDraft,
+                    'needs_grading' => $needsGrading,
+                    'is_graded' => $isGraded,
+                    'draft_created_at' => $draftCreatedAt,
+                    'draft_updated_at' => $draftUpdatedAt,
+                    'draft_data' => $hasDraft ? $submission : null,
+                    'submission_data' => $submission,
+                    'grade_data' => $grade,
                 ];
             }
         }
@@ -1168,37 +1283,84 @@ class MoodleApiService
                     ]);
                 }
 
+                // Находим раздел для этого теста
+                $sectionInfo = null;
+                $weekNumber = null;
+                $sectionNumber = null;
+                $sectionName = '';
+                $sectionOrder = null;
+                
+                foreach ($sectionsMap as $section) {
+                    foreach ($section['modules'] as $order => $module) {
+                        if (($module['modname'] ?? '') === 'quiz' && ($module['instance'] ?? null) == $quizId) {
+                            $sectionInfo = $section;
+                            $weekNumber = $section['week_number'];
+                            $sectionNumber = $section['section'];
+                            $sectionName = $section['name'];
+                            $sectionOrder = $order;
+                            break 2;
+                        }
+                    }
+                }
+
                 $attempts = $quizAttempts[$quizId] ?? [];
                 $grade = $quizGrades[$quizId] ?? null;
 
                 $status = 'not_started';
                 $statusText = 'Не начато';
                 $gradeValue = null;
+                $hasDraft = false;
+                $needsGrading = false;
+                $isGraded = false;
+                $questionsData = null;
+                $correctAnswers = null;
+                $totalQuestions = null;
 
                 if (!empty($attempts)) {
                     $latestAttempt = end($attempts);
                     $attemptStatus = $latestAttempt['state'] ?? '';
+
+                    // Определяем наличие черновика (незавершенная попытка)
+                    if ($attemptStatus !== 'finished') {
+                        $hasDraft = true;
+                    }
 
                     if ($attemptStatus === 'finished') {
                         if ($grade && isset($grade['grade'])) {
                             $status = 'graded';
                             $statusText = (string)$grade['grade'];
                             $gradeValue = (float)$grade['grade'];
+                            $isGraded = true;
                         } else {
                             $status = 'submitted';
                             $statusText = 'Сдано';
+                            $needsGrading = true;
                         }
                     } else {
-                        $status = 'submitted';
-                        $statusText = 'Сдано';
+                        $status = 'in_progress';
+                        $statusText = 'В процессе';
+                    }
+                    
+                    // Собираем данные о вопросах и ответах
+                    if (isset($latestAttempt['questions'])) {
+                        $questionsData = $latestAttempt['questions'];
+                        $totalQuestions = count($questionsData);
+                        $correctAnswers = 0;
+                        foreach ($questionsData as $question) {
+                            if (isset($question['mark']) && $question['mark'] > 0) {
+                                $correctAnswers++;
+                            }
+                        }
                     }
                 }
 
                 $submittedAt = null;
                 $gradedAt = null;
+                $lastAttemptAt = null;
                 if (!empty($attempts)) {
                     $latestAttempt = end($attempts);
                     $submittedAt = $latestAttempt['timefinish'] ?? null;
+                    $lastAttemptAt = $latestAttempt['timestart'] ?? null;
                     if ($status === 'graded') {
                         $gradedAt = $submittedAt;
                     }
@@ -1207,16 +1369,31 @@ class MoodleApiService
                 $activities[] = [
                     'type' => 'quiz',
                     'moodle_id' => $quizId,
-                    'cmid' => $cmid, // Course Module ID для ссылок
+                    'cmid' => $cmid,
                     'name' => $quiz['name'] ?? 'Без названия',
-                    'section_name' => '', // Не можем получить без getCourseContents
+                    'section_name' => $sectionName,
+                    'moodle_section_id' => $sectionInfo['id'] ?? null,
+                    'week_number' => $weekNumber,
+                    'section_number' => $sectionNumber,
+                    'section_order' => $sectionOrder,
+                    'section_type' => 'week',
                     'status' => $status,
                     'status_text' => $statusText,
                     'grade' => $gradeValue,
                     'max_grade' => $quiz['grade'] ?? null,
                     'submitted_at' => $submittedAt,
                     'graded_at' => $gradedAt,
+                    'has_draft' => $hasDraft,
+                    'needs_grading' => $needsGrading,
+                    'is_graded' => $isGraded,
                     'attempts_count' => count($attempts),
+                    'max_attempts' => $quiz['attempts'] ?? null,
+                    'last_attempt_at' => $lastAttemptAt,
+                    'questions_data' => $questionsData,
+                    'correct_answers' => $correctAnswers,
+                    'total_questions' => $totalQuestions,
+                    'attempts_data' => $attempts,
+                    'grade_data' => $grade,
                 ];
             }
         }
@@ -1260,31 +1437,142 @@ class MoodleApiService
                     ]);
                 }
 
+                // Находим раздел для этого форума
+                $sectionInfo = null;
+                $weekNumber = null;
+                $sectionNumber = null;
+                $sectionName = '';
+                $sectionOrder = null;
+                
+                foreach ($sectionsMap as $section) {
+                    foreach ($section['modules'] as $order => $module) {
+                        if (($module['modname'] ?? '') === 'forum' && ($module['instance'] ?? null) == $forumId) {
+                            $sectionInfo = $section;
+                            $weekNumber = $section['week_number'];
+                            $sectionNumber = $section['section'];
+                            $sectionName = $section['name'];
+                            $sectionOrder = $order;
+                            break 2;
+                        }
+                    }
+                }
+
                 $posts = $forumPosts[$forumId] ?? [];
+                $needsGrading = false;
+                $isGraded = false;
 
                 $status = empty($posts) ? 'not_started' : 'completed';
                 $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
                 $submittedAt = !empty($posts) ? max(array_column($posts, 'timecreated')) : null;
+                
+                // Проверяем, есть ли непроверенные посты (если форум оценивается)
+                if (!empty($posts) && isset($forum['grade'])) {
+                    foreach ($posts as $post) {
+                        // Если пост не оценен, требуется проверка
+                        if (!isset($post['grade']) || $post['grade'] === null) {
+                            $needsGrading = true;
+                        } else {
+                            $isGraded = true;
+                        }
+                    }
+                }
 
                 $activities[] = [
                     'type' => 'forum',
                     'moodle_id' => $forumId,
-                    'cmid' => $cmid, // Course Module ID для ссылок
+                    'cmid' => $cmid,
                     'name' => $forum['name'] ?? 'Без названия',
-                    'section_name' => '', // Не можем получить без getCourseContents
+                    'section_name' => $sectionName,
+                    'moodle_section_id' => $sectionInfo['id'] ?? null,
+                    'week_number' => $weekNumber,
+                    'section_number' => $sectionNumber,
+                    'section_order' => $sectionOrder,
+                    'section_type' => 'week',
                     'status' => $status,
                     'status_text' => $statusText,
                     'grade' => null,
-                    'max_grade' => null,
+                    'max_grade' => $forum['grade'] ?? null,
                     'submitted_at' => $submittedAt,
                     'graded_at' => null,
+                    'needs_grading' => $needsGrading,
+                    'is_graded' => $isGraded,
+                    'posts_data' => $posts,
+                    'posts_count' => count($posts),
                 ];
             }
         }
 
-        // Получаем материалы курса (resources) - этот метод тоже использует getCourseContents
-        // Пока пропускаем, так как он требует getCourseContents
-        // Можно добавить позже, если будет доступ к другим методам API
+        // Получаем материалы курса (resources) из содержимого курса
+        if ($courseContents !== false) {
+            foreach ($courseContents as $section) {
+                if (!isset($section['modules'])) {
+                    continue;
+                }
+                
+                $sectionId = $section['id'] ?? null;
+                $sectionNumber = $section['section'] ?? null;
+                $sectionName = $section['name'] ?? '';
+                
+                // Определяем номер недели
+                $weekNumber = null;
+                if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
+                    $weekNumber = (int)$matches[1];
+                } elseif ($sectionNumber !== null && $sectionNumber > 0) {
+                    $weekNumber = $sectionNumber;
+                }
+                
+                foreach ($section['modules'] as $order => $module) {
+                    $modname = $module['modname'] ?? '';
+                    $resourceTypes = ['resource', 'file', 'folder', 'page', 'url', 'book'];
+                    
+                    if (in_array($modname, $resourceTypes)) {
+                        $instanceId = $module['instance'] ?? null;
+                        $cmid = $module['id'] ?? null;
+                        
+                        if (!$instanceId && !$cmid) {
+                            continue;
+                        }
+                        
+                        // Определяем, просмотрен ли материал (используем completion, если доступен)
+                        $isViewed = false;
+                        $isRead = false;
+                        $lastViewedAt = null;
+                        $viewCount = 0;
+                        
+                        if (isset($module['completion']) && $module['completion'] > 0) {
+                            $isViewed = true;
+                            $isRead = true;
+                            $lastViewedAt = $module['completion'] ?? null;
+                            $viewCount = 1;
+                        }
+                        
+                        $activities[] = [
+                            'type' => $modname,
+                            'moodle_id' => $instanceId ?? $cmid,
+                            'cmid' => $cmid,
+                            'name' => $module['name'] ?? 'Без названия',
+                            'section_name' => $sectionName,
+                            'moodle_section_id' => $sectionId,
+                            'week_number' => $weekNumber,
+                            'section_number' => $sectionNumber,
+                            'section_order' => $order,
+                            'section_type' => 'week',
+                            'status' => $isViewed ? 'completed' : 'not_started',
+                            'status_text' => $isViewed ? 'Просмотрено' : 'Не просмотрено',
+                            'grade' => null,
+                            'max_grade' => null,
+                            'submitted_at' => null,
+                            'graded_at' => null,
+                            'is_viewed' => $isViewed,
+                            'is_read' => $isRead,
+                            'last_viewed_at' => $lastViewedAt,
+                            'view_count' => $viewCount,
+                            'module_data' => $module,
+                        ];
+                    }
+                }
+            }
+        }
 
         Log::info('getAllCourseActivities: завершено', [
             'course_id' => $courseId,
