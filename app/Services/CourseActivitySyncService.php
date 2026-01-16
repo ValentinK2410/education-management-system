@@ -569,6 +569,18 @@ class CourseActivitySyncService
                                 'hint' => 'Выполните миграции базы данных: php artisan migrate'
                             ]);
                             
+                            // Добавляем ошибку в список только один раз для каждого отсутствующего поля
+                            $errorKey = 'missing_column_' . $missingColumn;
+                            if (!isset($stats['_seen_errors'][$errorKey])) {
+                                $stats['errors']++;
+                                $stats['errors_list'][] = [
+                                    'activity_type' => $activityData['type'] ?? 'unknown',
+                                    'moodle_id' => $moodleActivityId,
+                                    'error' => 'Отсутствует поле БД: ' . $missingColumn . '. Выполните миграции: php artisan migrate'
+                                ];
+                                $stats['_seen_errors'][$errorKey] = true;
+                            }
+                            
                             // Удаляем проблемное поле из данных
                             unset($progressData[$missingColumn]);
                             
