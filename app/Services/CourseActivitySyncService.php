@@ -230,7 +230,8 @@ class CourseActivitySyncService
             'created' => 0,
             'updated' => 0,
             'errors' => 0,
-            'errors_list' => []
+            'errors_list' => [],
+            '_seen_errors' => [] // Для отслеживания уникальных ошибок
         ];
 
         $course = Course::find($courseId);
