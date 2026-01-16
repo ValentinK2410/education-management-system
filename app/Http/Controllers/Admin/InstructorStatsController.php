@@ -194,17 +194,16 @@ class InstructorStatsController extends Controller
                     }
                 }
                 
-                // Добавляем студента только если у него есть активность
-                if (!empty($studentActivities)) {
-                    $studentsWithActivity[] = [
-                        'student' => $student,
-                        'activities' => $studentActivities,
-                        'total_activities' => count($studentActivities),
-                        'graded_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'graded')),
-                        'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
-                        'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading')),
-                    ];
-                }
+                // Добавляем всех студентов, даже если у них нет активности
+                $studentsWithActivity[] = [
+                    'student' => $student,
+                    'activities' => $studentActivities,
+                    'total_activities' => count($studentActivities),
+                    'graded_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'graded')),
+                    'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
+                    'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading')),
+                    'has_activity' => !empty($studentActivities),
+                ];
             }
             
             $coursesWithStudents[$course->id] = $studentsWithActivity;

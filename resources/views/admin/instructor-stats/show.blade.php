@@ -354,6 +354,7 @@
                                             @php
                                                 $student = $studentData['student'];
                                                 $activities = $studentData['activities'];
+                                                $hasActivity = $studentData['has_activity'] ?? !empty($activities);
                                             @endphp
                                             <div class="border rounded p-3 mb-3 bg-white">
                                                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -367,17 +368,22 @@
                                                         <small class="text-muted">{{ $student->email }}</small>
                                                     </div>
                                                     <div class="text-end">
-                                                        <div class="small text-muted mb-1">Активность</div>
-                                                        <div>
-                                                            <span class="badge bg-success">{{ $studentData['graded_count'] }} проверено</span>
-                                                            <span class="badge bg-info">{{ $studentData['submitted_count'] }} сдано</span>
-                                                            <span class="badge bg-warning">{{ $studentData['pending_count'] }} ожидает</span>
-                                                        </div>
+                                                        @if($hasActivity)
+                                                            <div class="small text-muted mb-1">Активность</div>
+                                                            <div>
+                                                                <span class="badge bg-success">{{ $studentData['graded_count'] }} проверено</span>
+                                                                <span class="badge bg-info">{{ $studentData['submitted_count'] }} сдано</span>
+                                                                <span class="badge bg-warning">{{ $studentData['pending_count'] }} ожидает</span>
+                                                            </div>
+                                                        @else
+                                                            <span class="badge bg-secondary">Нет активности</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 
-                                                <div class="row g-2">
-                                                    @foreach($activities as $item)
+                                                @if($hasActivity && !empty($activities))
+                                                    <div class="row g-2">
+                                                        @foreach($activities as $item)
                                                         @php
                                                             $activity = $item['activity'];
                                                             $activityTypeIcons = [
@@ -444,12 +450,20 @@
                                                         </div>
                                                     @endforeach
                                                 </div>
+                                                @else
+                                                    <div class="alert alert-info mb-0">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        <strong>Нет учебной активности в Moodle.</strong>
+                                                        <br>
+                                                        <small>Студент записан на курс, но еще не начал работу с элементами курса или данные не синхронизированы из Moodle.</small>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endforeach
                                     @else
                                         <p class="text-muted text-center py-3 mb-0">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            Нет студентов с учебной активностью в Moodle
+                                            На этом курсе нет студентов
                                         </p>
                                     @endif
                                 </div>
