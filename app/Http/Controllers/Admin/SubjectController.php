@@ -25,11 +25,18 @@ class SubjectController extends Controller
     {
         $subjects = Subject::withCount('courses')
             ->withCount('programs')
+            ->with('programs') // Загружаем программы для каждого предмета
             ->orderBy('order')
             ->orderBy('name')
             ->paginate(15);
         
-        return view('admin.subjects.index', compact('subjects'));
+        // Получаем все активные программы для модального окна
+        $availablePrograms = Program::active()
+            ->with('institution')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.subjects.index', compact('subjects', 'availablePrograms'));
     }
 
     /**
