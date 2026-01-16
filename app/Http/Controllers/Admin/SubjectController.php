@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use App\Models\Course;
+use App\Models\Program;
 use Illuminate\Http\Request;
 
 /**
@@ -111,7 +112,18 @@ class SubjectController extends Controller
             });
         }]);
         
-        return view('admin.subjects.show', compact('subject', 'courses'));
+        // Загружаем программы предмета с сортировкой
+        $programs = $subject->programs()
+            ->orderBy('program_subject.order', 'asc')
+            ->orderBy('programs.name', 'asc')
+            ->get();
+        
+        // Получаем все доступные программы для добавления
+        $availablePrograms = Program::active()
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.subjects.show', compact('subject', 'courses', 'programs', 'availablePrograms'));
     }
 
     /**
@@ -206,5 +218,49 @@ class SubjectController extends Controller
 
         return redirect()->route('admin.subjects.index')
             ->with('success', 'Предмет успешно удален.');
+    }
+
+    /**
+     * Добавить программу к предмету
+     *
+     * @param Request $request
+     * @param Subject $subject
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function attachProgram(Request $request, Subject $subject)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+            'order' => 'nullable|integer|min:0',
+        ]);
+
+        $programId = $request->input('program_id');
+        $order = $request->input('order', 0);
+
+        // Проверяем, не добавлена ли уже программа
+        if ($subject->programs()->where('program_id', $programId)->exists()) {
+            return redirect()->back()
+                ->with('error', 'Эта программа уже добавлена к предмету.');
+        }
+
+        $subject->programs()->attach($programId, ['order' => $order]);
+
+        return redirect()->back()
+            ->with('success', 'Программа успешно добавлена к предмету.');
+    }
+
+    /**
+     * Удалить программу из предмета
+     *
+     * @param Subject $subject
+     * @param Program $program
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function detachProgram(Subject $subject, Program $program)
+    {
+        $subject->programs()->detach($program->id);
+
+        return redirect()->back()
+            ->with('success', 'Программа успешно удалена из предмета.');
     }
 }
