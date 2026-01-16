@@ -216,6 +216,13 @@ class MoodleSyncController extends Controller
                             // Создаем уникальный ключ для ошибки
                             $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
                             
+                            // Игнорируем ошибки доступа к Moodle API - они не критичны
+                            if (strpos($errorMsg, 'webservice_access_exception') !== false ||
+                                strpos($errorMsg, 'accessexception') !== false ||
+                                strpos($errorMsg, 'Исключительная ситуация контроля доступа') !== false) {
+                                continue; // Пропускаем эту ошибку, не добавляем в список
+                            }
+                            
                             // Для ошибок "Unknown column" используем только текст ошибки (без привязки к активности)
                             // чтобы одинаковые ошибки БД считались один раз
                             if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
@@ -236,6 +243,19 @@ class MoodleSyncController extends Controller
                     }
                 } catch (\Exception $e) {
                     $errorMsg = $e->getMessage();
+                    
+                    // Игнорируем ошибки доступа к Moodle API - они не критичны
+                    if (strpos($errorMsg, 'webservice_access_exception') !== false ||
+                        strpos($errorMsg, 'accessexception') !== false ||
+                        strpos($errorMsg, 'Исключительная ситуация контроля доступа') !== false) {
+                        Log::debug('Ошибка доступа к Moodle API при синхронизации прогресса студента (игнорируется)', [
+                            'course_id' => $courseId,
+                            'user_id' => $student->id,
+                            'error' => $errorMsg
+                        ]);
+                        continue; // Пропускаем этого студента, не добавляем в список ошибок
+                    }
+                    
                     $errorKey = md5($errorMsg);
                     
                     if (!isset($seenErrors[$errorKey])) {
