@@ -153,4 +153,43 @@ class SettingsController extends Controller
                 return $value;
         }
     }
+
+    /**
+     * Получить настройки пользователя (тема, состояние сайдбара и т.д.)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserSettings()
+    {
+        try {
+            $user = auth()->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'theme' => 'light',
+                    'sidebar_collapsed' => false
+                ]);
+            }
+
+            // Получаем настройки пользователя из базы данных или используем значения по умолчанию
+            $theme = $user->theme_preference ?? 'light';
+            $sidebarCollapsed = $user->sidebar_collapsed ?? false;
+
+            return response()->json([
+                'theme' => $theme,
+                'sidebar_collapsed' => $sidebarCollapsed
+            ]);
+        } catch (\Exception $e) {
+            // В случае ошибки возвращаем настройки по умолчанию
+            \Log::error('Ошибка получения настроек пользователя', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'theme' => 'light',
+                'sidebar_collapsed' => false
+            ], 500);
+        }
+    }
 }
