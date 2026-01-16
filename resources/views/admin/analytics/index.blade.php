@@ -1137,10 +1137,43 @@ function syncActivities() {
         progressContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
-    // Сбрасываем UI прогресса
-    updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
-    document.getElementById('sync-items-list').innerHTML = '';
-    document.getElementById('sync-final-stats').style.display = 'none';
+    // Сбрасываем UI прогресса только если начинаем новую синхронизацию
+    // Если контейнер уже видим (предыдущая синхронизация), очищаем список
+    const progressContainer = document.getElementById('sync-progress-container');
+    if (progressContainer && progressContainer.style.display === 'block') {
+        // Контейнер уже видим - очищаем для новой синхронизации
+        updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
+        document.getElementById('sync-items-list').innerHTML = '';
+        document.getElementById('sync-final-stats').style.display = 'none';
+        
+        // Сбрасываем заголовок
+        const cardHeader = document.querySelector('#sync-progress-container .card-header');
+        if (cardHeader) {
+            cardHeader.className = 'card-header bg-info text-white';
+            cardHeader.innerHTML = '<h5 class="mb-0"><i class="fas fa-sync fa-spin me-2"></i>Синхронизация в процессе...</h5>';
+        }
+        
+        // Показываем кнопку остановки
+        const stopBtn = document.getElementById('stop-sync-btn');
+        if (stopBtn) {
+            stopBtn.style.display = 'inline-block';
+        }
+        
+        // Удаляем кнопку обновления страницы, если она есть
+        const refreshBtn = document.getElementById('refresh-page-btn');
+        if (refreshBtn) {
+            refreshBtn.remove();
+        }
+    } else {
+        // Контейнер скрыт - показываем его и очищаем
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+            progressContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        updateProgressUI(0, 0, 'Подготовка к синхронизации...', null);
+        document.getElementById('sync-items-list').innerHTML = '';
+        document.getElementById('sync-final-stats').style.display = 'none';
+    }
     
     // Получаем значения фильтров
     const courseIdEl = document.getElementById('course_id');
@@ -1483,10 +1516,21 @@ function finishSync(analyticsTranslations, btn, originalText) {
         btn.innerHTML = originalText;
     }
     
-    // Обновляем страницу через 5 секунд
-    setTimeout(() => {
-        window.location.reload();
-    }, 5000);
+    // Добавляем кнопку для обновления страницы вручную
+    const refreshBtn = document.createElement('button');
+    refreshBtn.type = 'button';
+    refreshBtn.className = 'btn btn-primary btn-sm mt-2';
+    refreshBtn.innerHTML = '<i class="fas fa-sync me-2"></i>Обновить страницу';
+    refreshBtn.onclick = () => window.location.reload();
+    
+    const cardBody = document.querySelector('#sync-progress-container .card-body');
+    if (cardBody && !document.getElementById('refresh-page-btn')) {
+        refreshBtn.id = 'refresh-page-btn';
+        cardBody.appendChild(refreshBtn);
+    }
+    
+    // НЕ обновляем страницу автоматически - оставляем результаты видимыми
+    // Пользователь может обновить страницу вручную, если нужно
 }
 
 function stopSync() {
@@ -1520,10 +1564,8 @@ function resetSyncUI(btn, originalText) {
         btn.innerHTML = originalText;
     }
     
-    const progressContainer = document.getElementById('sync-progress-container');
-    if (progressContainer) {
-        progressContainer.style.display = 'none';
-    }
+    // НЕ скрываем контейнер прогресса, чтобы результаты оставались видимыми
+    // Пользователь может закрыть его вручную или начать новую синхронизацию
 }
 
 function showSuccessMessage(analyticsTranslations, message) {
