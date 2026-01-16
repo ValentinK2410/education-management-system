@@ -278,6 +278,7 @@ class UserController extends Controller
                         'max_grade' => $progress->max_grade ?? $activity->max_grade,
                         'submitted_at' => $progress->submitted_at,
                         'graded_at' => $progress->graded_at,
+                        'week_number' => $activity->week_number,
                     ];
                 }
             }
