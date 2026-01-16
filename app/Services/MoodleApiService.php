@@ -1155,6 +1155,11 @@ class MoodleApiService
 
                     if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
                         $cmid = $cmResult['cm']['id'];
+                    } elseif (isset($cmResult['exception']) && isset($cmResult['errorcode']) && $cmResult['errorcode'] === 'accessexception') {
+                        // Игнорируем ошибки доступа при получении cmid - это нормально
+                        Log::debug('Не удалось получить cmid для теста (ошибка доступа, игнорируется)', [
+                            'quiz_id' => $quizId
+                        ]);
                     }
                 } catch (\Exception $e) {
                     Log::warning('Не удалось получить cmid для теста', [
