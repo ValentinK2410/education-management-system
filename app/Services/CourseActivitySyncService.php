@@ -516,41 +516,59 @@ class CourseActivitySyncService
                         // Обрабатываем ошибки базы данных (например, отсутствие полей)
                         $errorMessage = $dbException->getMessage();
                         if (strpos($errorMessage, 'Unknown column') !== false) {
-                            // Поле не существует в БД - пропускаем его
+                            // Поле не существует в БД - определяем какое поле отсутствует
+                            preg_match("/Unknown column '([^']+)'/", $errorMessage, $matches);
+                            $missingColumn = $matches[1] ?? 'unknown';
+                            
                             Log::warning('Поле не существует в БД, пропускаем', [
+                                'missing_column' => $missingColumn,
                                 'error' => $errorMessage,
                                 'course_id' => $courseId,
                                 'user_id' => $userId,
-                                'activity_id' => $activity->id ?? null
+                                'activity_id' => $activity->id ?? null,
+                                'hint' => 'Выполните миграции базы данных: php artisan migrate'
                             ]);
                             
-                            // Пытаемся сохранить без проблемных полей
-                            $safeProgressData = array_intersect_key($progressData, array_flip([
-                                'user_id', 'course_id', 'activity_id', 'status', 'grade', 'max_grade',
-                                'submitted_at', 'graded_at', 'progress_data', 'started_at'
-                            ]));
+                            // Удаляем проблемное поле из данных
+                            unset($progressData[$missingColumn]);
                             
+                            // Пытаемся сохранить без проблемных полей
                             try {
                                 if ($progress) {
-                                    $progress->update($safeProgressData);
+                                    $progress->update($progressData);
                                     $stats['updated']++;
+                                    // Не считаем это ошибкой, если данные сохранены успешно
                                 } else {
-                                    StudentActivityProgress::create($safeProgressData);
+                                    StudentActivityProgress::create($progressData);
                                     $stats['created']++;
+                                    // Не считаем это ошибкой, если данные сохранены успешно
                                 }
                             } catch (\Exception $retryException) {
+                                // Только если повторная попытка тоже не удалась, считаем ошибкой
                                 $stats['errors']++;
                                 $stats['errors_list'][] = [
                                     'activity_type' => $activityData['type'] ?? 'unknown',
-                                    'error' => 'Ошибка БД: ' . $retryException->getMessage()
+                                    'moodle_id' => $moodleActivityId,
+                                    'error' => 'Отсутствует поле БД: ' . $missingColumn . '. ' . $retryException->getMessage()
                                 ];
                                 Log::error('Ошибка сохранения прогресса после удаления проблемных полей', [
+                                    'missing_column' => $missingColumn,
                                     'error' => $retryException->getMessage()
                                 ]);
                             }
                         } else {
                             // Другая ошибка БД
-                            throw $dbException;
+                            $stats['errors']++;
+                            $stats['errors_list'][] = [
+                                'activity_type' => $activityData['type'] ?? 'unknown',
+                                'moodle_id' => $moodleActivityId,
+                                'error' => 'Ошибка БД: ' . $errorMessage
+                            ];
+                            Log::error('Ошибка базы данных при сохранении прогресса', [
+                                'error' => $errorMessage,
+                                'course_id' => $courseId,
+                                'user_id' => $userId
+                            ]);
                         }
                     }
                 } catch (\Exception $e) {
