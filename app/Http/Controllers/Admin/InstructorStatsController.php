@@ -130,6 +130,9 @@ class InstructorStatsController extends Controller
             $studentsWithActivity = [];
             
             foreach ($students as $student) {
+                // Проверяем наличие настроек для синхронизации
+                $canSync = !empty($course->moodle_course_id) && !empty($student->moodle_user_id);
+                
                 // Получаем все элементы курса, с которыми студент взаимодействовал
                 $activities = \App\Models\CourseActivity::where('course_id', $course->id)->get();
                 
@@ -203,6 +206,9 @@ class InstructorStatsController extends Controller
                     'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
                     'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading')),
                     'has_activity' => !empty($studentActivities),
+                    'can_sync' => $canSync,
+                    'missing_moodle_course_id' => empty($course->moodle_course_id),
+                    'missing_moodle_user_id' => empty($student->moodle_user_id),
                 ];
             }
             

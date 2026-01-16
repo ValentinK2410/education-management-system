@@ -451,11 +451,37 @@
                                                     @endforeach
                                                 </div>
                                                 @else
-                                                    <div class="alert alert-info mb-0">
-                                                        <i class="fas fa-info-circle me-2"></i>
-                                                        <strong>Нет учебной активности в Moodle.</strong>
+                                                    <div class="alert alert-{{ $studentData['can_sync'] ? 'warning' : 'info' }} mb-0">
+                                                        <i class="fas fa-{{ $studentData['can_sync'] ? 'exclamation-triangle' : 'info-circle' }} me-2"></i>
+                                                        <strong>
+                                                            @if($studentData['can_sync'])
+                                                                Данные не синхронизированы из Moodle
+                                                            @else
+                                                                Нет учебной активности в Moodle
+                                                            @endif
+                                                        </strong>
                                                         <br>
-                                                        <small>Студент записан на курс, но еще не начал работу с элементами курса или данные не синхронизированы из Moodle.</small>
+                                                        <small>
+                                                            @if($studentData['missing_moodle_course_id'])
+                                                                <i class="fas fa-times-circle text-danger me-1"></i>У курса не указан Moodle Course ID.
+                                                            @endif
+                                                            @if($studentData['missing_moodle_user_id'])
+                                                                <i class="fas fa-times-circle text-danger me-1"></i>У студента не указан Moodle User ID.
+                                                            @endif
+                                                            @if($studentData['can_sync'])
+                                                                <br><br>
+                                                                <strong>Рекомендация:</strong> Выполните синхронизацию данных из Moodle на странице 
+                                                                <a href="{{ route('admin.analytics.index', ['course_id' => $course->id, 'user_id' => $student->id]) }}" target="_blank">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>Аналитика курсов
+                                                                </a>
+                                                                или используйте 
+                                                                <a href="{{ route('admin.moodle-sync.index') }}" target="_blank">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>Полную синхронизацию Moodle
+                                                                </a>.
+                                                            @else
+                                                                Студент записан на курс, но еще не начал работу с элементами курса или данные не синхронизированы из Moodle.
+                                                            @endif
+                                                        </small>
                                                     </div>
                                                 @endif
                                             </div>
