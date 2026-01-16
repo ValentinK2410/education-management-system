@@ -498,6 +498,7 @@ Route::middleware(['auth'])->group(function () {
         // Аналитика (только для администраторов)
         Route::get('analytics', [CourseAnalyticsController::class, 'index'])->name('analytics.index');
         Route::post('analytics/sync', [CourseAnalyticsController::class, 'sync'])->name('analytics.sync');
+        Route::post('analytics/sync-chunk', [CourseAnalyticsController::class, 'syncChunk'])->name('analytics.sync-chunk');
         Route::get('analytics/export/csv', [CourseAnalyticsController::class, 'exportCsv'])->name('analytics.export.csv');
         Route::get('analytics/export/excel', [CourseAnalyticsController::class, 'exportExcel'])->name('analytics.export.excel');
         Route::get('analytics/export/pdf', [CourseAnalyticsController::class, 'exportPdf'])->name('analytics.export.pdf');
