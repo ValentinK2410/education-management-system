@@ -123,12 +123,25 @@ class CourseActivity extends Model
     }
 
     /**
+     * Кэш для moodle_url, чтобы избежать повторных вычислений
+     *
+     * @var array
+     */
+    protected static $moodleUrlCache = [];
+
+    /**
      * Получить URL для перехода к элементу в Moodle
      *
      * @return string|null
      */
     public function getMoodleUrlAttribute(): ?string
     {
+        // Используем кэш для избежания повторных вычислений
+        $cacheKey = $this->id ?? 'unknown';
+        if (isset(self::$moodleUrlCache[$cacheKey])) {
+            return self::$moodleUrlCache[$cacheKey];
+        }
+
         try {
             $cmid = $this->cmid;
 
@@ -145,63 +158,34 @@ class CourseActivity extends Model
                     }
                 }
             } catch (\Exception $e) {
-                // Если произошла ошибка, логируем и пытаемся загрузить напрямую
-                \Log::debug('Ошибка при получении курса для активности', [
-                    'activity_id' => $this->id ?? null,
-                    'course_id' => $this->course_id ?? null,
-                    'error' => $e->getMessage()
-                ]);
-                // Пытаемся загрузить напрямую через курс
+                // Если произошла ошибка, пытаемся загрузить напрямую
                 try {
                     if ($this->course_id) {
                         $course = \App\Models\Course::find($this->course_id);
                     }
                 } catch (\Exception $e2) {
-                    \Log::warning('Не удалось загрузить курс для активности', [
-                        'activity_id' => $this->id ?? null,
-                        'course_id' => $this->course_id ?? null,
-                        'error' => $e2->getMessage()
-                    ]);
+                    // Игнорируем ошибки загрузки курса
                 }
             }
 
             if (!$course || !$course->moodle_course_id) {
-                \Log::debug('Не удалось получить URL Moodle: отсутствует курс или moodle_course_id', [
-                    'activity_id' => $this->id,
-                    'activity_type' => $this->activity_type,
-                    'activity_name' => $this->name,
-                    'course_id' => $this->course_id,
-                    'has_course' => $course ? true : false,
-                    'moodle_course_id' => $course->moodle_course_id ?? null
-                ]);
+                // Не логируем каждый раз - это создает слишком много записей
+                self::$moodleUrlCache[$cacheKey] = null;
                 return null;
             }
 
             $moodleUrl = config('services.moodle.url');
             if (!$moodleUrl) {
-                \Log::debug('Не удалось получить URL Moodle: не настроен MOODLE_URL', [
-                    'activity_id' => $this->id,
-                    'activity_type' => $this->activity_type
-                ]);
+                self::$moodleUrlCache[$cacheKey] = null;
                 return null;
             }
 
             $moodleUrl = rtrim($moodleUrl, '/');
 
-            // Если cmid отсутствует, НЕ пытаемся получить его через API в представлении
-            // Это может привести к множественным запросам и таймаутам
-            // Вместо этого cmid должен быть получен при синхронизации из Moodle
             // Если cmid отсутствует, просто возвращаем null
-
             if (!$cmid) {
-                \Log::debug('Не удалось получить URL Moodle: отсутствует cmid', [
-                    'activity_id' => $this->id,
-                    'activity_type' => $this->activity_type,
-                    'activity_name' => $this->name,
-                    'moodle_activity_id' => $this->moodle_activity_id,
-                    'has_cmid_in_attributes' => isset($this->attributes['cmid']),
-                    'has_cmid_in_meta' => isset($this->meta['cmid']) ?? false
-                ]);
+                // Не логируем каждый раз - это создает слишком много записей
+                self::$moodleUrlCache[$cacheKey] = null;
                 return null;
             }
 
@@ -239,14 +223,7 @@ class CourseActivity extends Model
             return $url;
         } catch (\Exception $e) {
             // В случае ошибки возвращаем null вместо исключения
-            // Логируем только критичные ошибки, не каждый вызов
-            if (strpos($e->getMessage(), 'memory') === false) {
-                \Log::warning('Ошибка при формировании URL Moodle для элемента курса', [
-                    'activity_id' => $this->id ?? null,
-                    'activity_type' => $this->activity_type ?? null,
-                    'error' => $e->getMessage()
-                ]);
-            }
+            // Не логируем каждый вызов - это создает слишком много записей и может привести к исчерпанию памяти
             self::$moodleUrlCache[$cacheKey] = null;
             return null;
         }
