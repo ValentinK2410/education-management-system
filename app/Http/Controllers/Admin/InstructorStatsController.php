@@ -149,6 +149,11 @@ class InstructorStatsController extends Controller
         // Получаем данные о студентах и их активности по каждому курсу
         $coursesWithStudents = [];
 
+        // Ограничиваем общее количество обрабатываемых студентов для предотвращения исчерпания памяти
+        // Максимум 100 студентов на всех курсах
+        $maxStudentsToProcess = 100;
+        $totalStudentsProcessed = 0;
+
         // Получаем всех студентов всех курсов одним запросом с ролями
         // Ограничиваем количество для предотвращения исчерпания памяти
         $allStudents = \App\Models\User::whereHas('courses', function ($query) use ($courseIds) {
@@ -186,11 +191,6 @@ class InstructorStatsController extends Controller
             ->whereIn('user_id', $allStudents->pluck('id'))
             ->get()
             ->groupBy('course_id');
-
-        // Ограничиваем общее количество обрабатываемых студентов для предотвращения исчерпания памяти
-        // Максимум 100 студентов на всех курсах
-        $maxStudentsToProcess = 100;
-        $totalStudentsProcessed = 0;
 
         foreach ($courses as $course) {
             // Получаем студентов этого курса
