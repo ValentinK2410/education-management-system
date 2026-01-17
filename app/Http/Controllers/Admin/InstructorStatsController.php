@@ -116,27 +116,62 @@ class InstructorStatsController extends Controller
             }])
             ->get();
 
-        // Получаем все элементы курса для каждого курса
+        // Получаем все ID курсов для оптимизации запросов
+        $courseIds = $courses->pluck('id');
+
+        // Получаем все элементы курса для всех курсов одним запросом
+        $allActivities = \App\Models\CourseActivity::whereIn('course_id', $courseIds)
+            ->with('course') // Загружаем связь course для доступа к moodle_course_id
+            ->orderBy('section_number')
+            ->orderBy('section_order')
+            ->get();
+
+        // Группируем элементы по курсам
         $coursesWithActivities = [];
-        foreach ($courses as $course) {
-            $activities = \App\Models\CourseActivity::where('course_id', $course->id)
-                ->with('course') // Загружаем связь course для доступа к moodle_course_id
-                ->orderBy('section_number')
-                ->orderBy('section_order')
-                ->get();
-            $coursesWithActivities[$course->id] = $activities;
+        foreach ($allActivities as $activity) {
+            $coursesWithActivities[$activity->course_id][] = $activity;
+        }
+        // Преобразуем массивы в коллекции
+        foreach ($coursesWithActivities as $courseId => $activities) {
+            $coursesWithActivities[$courseId] = collect($activities);
         }
 
         // Получаем данные о студентах и их активности по каждому курсу
         $coursesWithStudents = [];
 
+        // Получаем всех студентов всех курсов одним запросом с ролями
+        $allStudents = \App\Models\User::whereHas('courses', function ($query) use ($courseIds) {
+                $query->whereIn('courses.id', $courseIds);
+            })
+            ->whereHas('roles', function ($q) {
+                $q->where('slug', 'student');
+            })
+            ->with('roles')
+            ->get();
+
+        // Получаем все прогрессы студентов одним запросом
+        $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
+            ->whereIn('user_id', $allStudents->pluck('id'))
+            ->with(['activity', 'user'])
+            ->get();
+
+        // Группируем прогрессы по course_id -> user_id -> activity_id
+        $progressesByCourseAndUser = [];
+        foreach ($allProgresses as $progress) {
+            $progressesByCourseAndUser[$progress->course_id][$progress->user_id][$progress->activity_id] = $progress;
+        }
+
+        // Получаем связи студентов с курсами
+        $userCourseRelations = \DB::table('user_courses')
+            ->whereIn('course_id', $courseIds)
+            ->whereIn('user_id', $allStudents->pluck('id'))
+            ->get()
+            ->groupBy('course_id');
+
         foreach ($courses as $course) {
-            // Получаем студентов курса
-            $students = $course->users()
-                ->whereHas('roles', function ($q) {
-                    $q->where('slug', 'student');
-                })
-                ->get();
+            // Получаем студентов этого курса
+            $courseUserIds = $userCourseRelations->get($course->id, collect())->pluck('user_id');
+            $students = $allStudents->whereIn('id', $courseUserIds);
 
             $studentsWithActivity = [];
 
@@ -144,17 +179,17 @@ class InstructorStatsController extends Controller
                 // Проверяем наличие настроек для синхронизации
                 $canSync = !empty($course->moodle_course_id) && !empty($student->moodle_user_id);
 
-                // Получаем все элементы курса, с которыми студент взаимодействовал
-                $activities = \App\Models\CourseActivity::where('course_id', $course->id)->get();
+                // Получаем все элементы курса из уже загруженных данных
+                $activities = $coursesWithActivities[$course->id] ?? collect();
+
+                // Получаем прогрессы студента по этому курсу из уже загруженных данных
+                $studentProgresses = $progressesByCourseAndUser[$course->id][$student->id] ?? [];
 
                 $studentActivities = [];
 
                 foreach ($activities as $activity) {
-                    // Получаем прогресс студента по этому элементу
-                    $progress = \App\Models\StudentActivityProgress::where('user_id', $student->id)
-                        ->where('course_id', $course->id)
-                        ->where('activity_id', $activity->id)
-                        ->first();
+                    // Получаем прогресс студента по этому элементу из уже загруженных данных
+                    $progress = $studentProgresses[$activity->id] ?? null;
 
                     // Показываем только элементы, с которыми студент взаимодействовал
                     if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at ||
