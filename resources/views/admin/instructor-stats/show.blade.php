@@ -782,8 +782,8 @@
                                                                         @endphp
                                                                         @if($moodleUrl)
                                                                             <div class="mt-2">
-                                                                                <a href="{{ $moodleUrl }}" 
-                                                                                   target="_blank" 
+                                                                                <a href="{{ $moodleUrl }}"
+                                                                                   target="_blank"
                                                                                    class="btn btn-sm btn-success w-100">
                                                                                     <i class="fas fa-external-link-alt me-1"></i>
                                                                                     Перейти в Moodle
@@ -915,8 +915,8 @@
                                                             <span class="badge bg-secondary small">{{ $typeLabel }}</span>
                                                         </div>
                                                         @if($moodleUrl)
-                                                            <a href="{{ $moodleUrl }}" 
-                                                               target="_blank" 
+                                                            <a href="{{ $moodleUrl }}"
+                                                               target="_blank"
                                                                class="btn btn-sm btn-success w-100">
                                                                 <i class="fas fa-external-link-alt me-1"></i>
                                                                 Перейти в Moodle
