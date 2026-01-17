@@ -148,24 +148,21 @@ class CourseActivity extends Model
             // Получаем курс безопасным способом
             $course = null;
             try {
-                // Сначала пытаемся получить через свойство (если связь загружена)
+                // Сначала пытаемся получить через связь (если загружена)
                 if (property_exists($this, 'relations') && isset($this->relations['course'])) {
                     $course = $this->relations['course'];
+                } elseif (method_exists($this, 'getRelation') && $this->getRelation('course')) {
+                    $course = $this->getRelation('course');
                 } else {
-                    // Если связь не загружена, пытаемся загрузить напрямую через ID
-                    if ($this->course_id) {
-                        $course = \App\Models\Course::find($this->course_id);
-                    }
+                    // Если связь не загружена, возвращаем null без дополнительных запросов
+                    // Это предотвращает исчерпание памяти при большом количестве активностей
+                    self::$moodleUrlCache[$cacheKey] = null;
+                    return null;
                 }
             } catch (\Exception $e) {
-                // Если произошла ошибка, пытаемся загрузить напрямую
-                try {
-                    if ($this->course_id) {
-                        $course = \App\Models\Course::find($this->course_id);
-                    }
-                } catch (\Exception $e2) {
-                    // Игнорируем ошибки загрузки курса
-                }
+                // В случае ошибки возвращаем null без дополнительных запросов
+                self::$moodleUrlCache[$cacheKey] = null;
+                return null;
             }
 
             if (!$course || !$course->moodle_course_id) {

@@ -120,12 +120,21 @@ class InstructorStatsController extends Controller
         // Получаем все ID курсов для оптимизации запросов
         $courseIds = $courses->pluck('id');
 
+        // Загружаем все курсы в память для быстрого доступа
+        $coursesById = $courses->keyBy('id');
+
         // Получаем все элементы курса для всех курсов одним запросом
         $allActivities = \App\Models\CourseActivity::whereIn('course_id', $courseIds)
-            ->with('course') // Загружаем связь course для доступа к moodle_course_id
             ->orderBy('section_number')
             ->orderBy('section_order')
             ->get();
+
+        // Присваиваем курсы к активностям вручную для избежания дополнительных запросов
+        foreach ($allActivities as $activity) {
+            if (isset($coursesById[$activity->course_id])) {
+                $activity->setRelation('course', $coursesById[$activity->course_id]);
+            }
+        }
 
         // Группируем элементы по курсам
         $coursesWithActivities = [];

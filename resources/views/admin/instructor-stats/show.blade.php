@@ -778,14 +778,11 @@
                                                                             </div>
                                                                         @endif
                                                                         @php
+                                                                            // Используем try-catch без логирования для предотвращения исчерпания памяти
                                                                             try {
                                                                                 $moodleUrl = $activity->moodle_url;
                                                                             } catch (\Exception $e) {
                                                                                 $moodleUrl = null;
-                                                                                \Log::warning('Ошибка при получении moodle_url в представлении', [
-                                                                                    'activity_id' => $activity->id ?? null,
-                                                                                    'error' => $e->getMessage()
-                                                                                ]);
                                                                             }
                                                                         @endphp
                                                                         @if($moodleUrl)
@@ -909,14 +906,11 @@
                                             ];
                                             $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
                                             $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
+                                            // Используем try-catch без логирования для предотвращения исчерпания памяти
                                             try {
                                                 $moodleUrl = $activity->moodle_url;
                                             } catch (\Exception $e) {
                                                 $moodleUrl = null;
-                                                \Log::warning('Ошибка при получении moodle_url в представлении', [
-                                                    'activity_id' => $activity->id ?? null,
-                                                    'error' => $e->getMessage()
-                                                ]);
                                             }
                                         @endphp
                                         <div class="col-md-6 col-lg-4">
