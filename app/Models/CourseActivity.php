@@ -98,12 +98,15 @@ class CourseActivity extends Model
     {
         // Проверяем, есть ли поле cmid в таблице
         if (isset($this->attributes['cmid'])) {
-            return $this->attributes['cmid'];
+            return $this->attributes['cmid'] ? (int)$this->attributes['cmid'] : null;
         }
 
-        // Если нет, пытаемся получить из meta
+        // Если нет, пытаемся получить из meta (только реальный cmid, не moodle_id)
         if ($this->meta && is_array($this->meta)) {
-            return $this->meta['cmid'] ?? $this->meta['moodle_id'] ?? null;
+            // Используем только cmid из meta, не используем moodle_id (это instance ID, а не cmid)
+            if (isset($this->meta['cmid'])) {
+                return (int)$this->meta['cmid'];
+            }
         }
 
         return null;
