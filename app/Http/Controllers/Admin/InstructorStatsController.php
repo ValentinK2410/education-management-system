@@ -324,7 +324,7 @@ class InstructorStatsController extends Controller
                             $meta = $activity->meta ?? [];
                             $activityCmid = $meta['cmid'] ?? null;
                         }
-                        
+
                         // Сохраняем только необходимые данные вместо полных объектов для экономии памяти
                         $studentActivities[] = [
                             'activity_id' => $activity->id,
