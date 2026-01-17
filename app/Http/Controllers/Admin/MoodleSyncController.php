@@ -46,7 +46,7 @@ class MoodleSyncController extends Controller
         // Получаем статистику курсов
         $coursesCount = Course::whereNotNull('moodle_course_id')->count();
         $totalCourses = Course::count();
-        
+
         // Получаем последние логи синхронизации (из файла логов)
         $recentLogs = $this->getRecentSyncLogs();
 
@@ -65,10 +65,10 @@ class MoodleSyncController extends Controller
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
-            
+
             // Получаем список курсов из Moodle для пошаговой синхронизации
             $moodleCourses = $this->syncService->getMoodleCoursesList();
-            
+
             if ($moodleCourses === false || empty($moodleCourses)) {
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -76,11 +76,11 @@ class MoodleSyncController extends Controller
                         'message' => 'Не удалось получить курсы из Moodle или список пуст'
                     ], 400);
                 }
-                
+
                 return redirect()->route('admin.moodle-sync.index')
                     ->with('error', 'Не удалось получить курсы из Moodle или список пуст');
             }
-            
+
             // Формируем список курсов для синхронизации
             $coursesList = array_map(function($course) {
                 return [
@@ -89,7 +89,7 @@ class MoodleSyncController extends Controller
                     'shortname' => $course['shortname'] ?? null,
                 ];
             }, $moodleCourses);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -99,35 +99,35 @@ class MoodleSyncController extends Controller
                     'message' => 'Начинаем пошаговую синхронизацию курсов. Всего курсов: ' . count($coursesList)
                 ]);
             }
-            
+
             // Для обычных запросов возвращаем старую логику (полная синхронизация)
             set_time_limit(1800);
             ini_set('max_execution_time', '1800');
             ini_set('memory_limit', '512M');
             ignore_user_abort(true);
-            
+
             if (!headers_sent()) {
                 header('X-Accel-Buffering: no');
             }
-            
+
             $stats = $this->syncService->syncCourses();
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', "Синхронизация курсов завершена. Создано: {$stats['created']}, Обновлено: {$stats['updated']}, Ошибок: {$stats['errors']}");
-                
+
         } catch (\Exception $e) {
             Log::error('Ошибка синхронизации курсов через админ-панель', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка синхронизации: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('error', 'Ошибка синхронизации: ' . $e->getMessage());
         }
@@ -148,13 +148,13 @@ class MoodleSyncController extends Controller
             ini_set('max_execution_time', '1800');
             ini_set('memory_limit', '512M');
             ignore_user_abort(true);
-            
+
             if (!headers_sent()) {
                 header('X-Accel-Buffering: no');
             }
-            
+
             $course = Course::findOrFail($courseId);
-            
+
             if (!$course->moodle_course_id) {
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -162,11 +162,11 @@ class MoodleSyncController extends Controller
                         'message' => 'У курса не указан Moodle Course ID'
                     ], 400);
                 }
-                
+
                 return redirect()->route('admin.moodle-sync.index')
                     ->with('error', 'У курса не указан Moodle Course ID');
             }
-            
+
             // Получаем студентов курса
             $students = $course->users()
                 ->whereHas('roles', function ($q) {
@@ -174,7 +174,7 @@ class MoodleSyncController extends Controller
                 })
                 ->whereNotNull('moodle_user_id')
                 ->get();
-            
+
             if ($students->isEmpty()) {
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -182,16 +182,16 @@ class MoodleSyncController extends Controller
                         'message' => 'На курсе нет студентов с настроенным Moodle User ID'
                     ], 400);
                 }
-                
+
                 return redirect()->route('admin.moodle-sync.index')
                     ->with('error', 'На курсе нет студентов с настроенным Moodle User ID');
             }
-            
+
             $activitySyncService = new \App\Services\CourseActivitySyncService();
-            
+
             // Синхронизируем элементы курса
             $activitiesStats = $activitySyncService->syncCourseActivities($courseId);
-            
+
             // Синхронизируем прогресс студентов
             $totalProgressStats = [
                 'total' => 0,
@@ -200,39 +200,39 @@ class MoodleSyncController extends Controller
                 'errors' => 0,
                 'errors_list' => []
             ];
-            
+
             // Отслеживание уникальных ошибок для предотвращения дублирования
             $seenErrors = [];
-            
+
             foreach ($students as $student) {
                 try {
                     $progressStats = $activitySyncService->syncStudentProgress($courseId, $student->id);
                     $totalProgressStats['total'] += $progressStats['total'];
                     $totalProgressStats['created'] += $progressStats['created'];
                     $totalProgressStats['updated'] += $progressStats['updated'];
-                    
+
                     if (isset($progressStats['errors_list']) && is_array($progressStats['errors_list'])) {
                         foreach ($progressStats['errors_list'] as $error) {
                             // Создаем уникальный ключ для ошибки
                             $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
-                            
+
                             // Игнорируем ошибки доступа к Moodle API - они не критичны
                             if (strpos($errorMsg, 'webservice_access_exception') !== false ||
                                 strpos($errorMsg, 'accessexception') !== false ||
                                 strpos($errorMsg, 'Исключительная ситуация контроля доступа') !== false) {
                                 continue; // Пропускаем эту ошибку, не добавляем в список
                             }
-                            
+
                             // Для ошибок "Unknown column" используем только текст ошибки (без привязки к активности)
                             // чтобы одинаковые ошибки БД считались один раз
-                            if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
+                            if (strpos($errorMsg, 'Отсутствует поле БД:') !== false ||
                                 strpos($errorMsg, 'Unknown column') !== false) {
                                 $errorKey = md5($errorMsg);
                             } else {
                                 // Для других ошибок учитываем тип активности и Moodle ID
                                 $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
                             }
-                            
+
                             // Добавляем ошибку только если она еще не была добавлена
                             if (!isset($seenErrors[$errorKey])) {
                                 $seenErrors[$errorKey] = true;
@@ -243,7 +243,7 @@ class MoodleSyncController extends Controller
                     }
                 } catch (\Exception $e) {
                     $errorMsg = $e->getMessage();
-                    
+
                     // Игнорируем ошибки доступа к Moodle API - они не критичны
                     if (strpos($errorMsg, 'webservice_access_exception') !== false ||
                         strpos($errorMsg, 'accessexception') !== false ||
@@ -255,9 +255,9 @@ class MoodleSyncController extends Controller
                         ]);
                         continue; // Пропускаем этого студента, не добавляем в список ошибок
                     }
-                    
+
                     $errorKey = md5($errorMsg);
-                    
+
                     if (!isset($seenErrors[$errorKey])) {
                         Log::error('Ошибка синхронизации прогресса студента', [
                             'course_id' => $courseId,
@@ -274,13 +274,13 @@ class MoodleSyncController extends Controller
                     }
                 }
             }
-            
+
             $stats = [
                 'activities' => $activitiesStats,
                 'progress' => $totalProgressStats,
                 'students_processed' => $students->count()
             ];
-            
+
             if ($request->expectsJson()) {
                 // Формируем детальное сообщение об ошибках
                 $errorDetails = [];
@@ -303,7 +303,7 @@ class MoodleSyncController extends Controller
                     $errorDetails['groups'] = $errorGroups;
                     $errorDetails['total_unique'] = count($totalProgressStats['errors_list']);
                 }
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Синхронизация активности студентов завершена',
@@ -311,7 +311,7 @@ class MoodleSyncController extends Controller
                     'errors' => $errorDetails
                 ]);
             }
-            
+
             $message = sprintf(
                 'Синхронизация активности студентов завершена. ' .
                 'Элементы курса: создано %d, обновлено %d. ' .
@@ -322,37 +322,37 @@ class MoodleSyncController extends Controller
                 $totalProgressStats['updated'],
                 $students->count()
             );
-            
+
             // Собираем все ошибки с дедупликацией
             $allErrors = [];
             $allErrorKeys = []; // Для отслеживания уникальных ошибок при объединении
-            
+
             // Функция для добавления ошибки с дедупликацией
             $addError = function($error) use (&$allErrors, &$allErrorKeys) {
                 $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
-                
+
                 // Игнорируем ошибки доступа к Moodle API - они не критичны
                 if (strpos($errorMsg, 'webservice_access_exception') !== false ||
                     strpos($errorMsg, 'accessexception') !== false ||
                     strpos($errorMsg, 'Исключительная ситуация контроля доступа') !== false) {
                     return; // Пропускаем эту ошибку, не добавляем в список
                 }
-                
+
                 // Для ошибок "Unknown column" используем только текст ошибки
-                if (strpos($errorMsg, 'Отсутствует поле БД:') !== false || 
+                if (strpos($errorMsg, 'Отсутствует поле БД:') !== false ||
                     strpos($errorMsg, 'Unknown column') !== false) {
                     $errorKey = md5($errorMsg);
                 } else {
                     // Для других ошибок учитываем тип активности и Moodle ID
                     $errorKey = md5($errorMsg . ($error['activity_type'] ?? '') . ($error['moodle_id'] ?? ''));
                 }
-                
+
                 if (!isset($allErrorKeys[$errorKey])) {
                     $allErrorKeys[$errorKey] = true;
                     $allErrors[] = $error;
                 }
             };
-            
+
             if (isset($activitiesStats['errors_list']) && is_array($activitiesStats['errors_list'])) {
                 foreach ($activitiesStats['errors_list'] as $error) {
                     $addError($error);
@@ -363,13 +363,13 @@ class MoodleSyncController extends Controller
                     $addError($error);
                 }
             }
-            
+
             // Используем количество уникальных ошибок вместо суммы
             $totalErrors = count($allErrors);
-            
+
             if ($totalErrors > 0) {
                 $message .= " Ошибок: {$totalErrors}.";
-                
+
                 // Группируем ошибки по типам для более понятного отображения
                 $errorGroups = [];
                 $errorDetails = [];
@@ -381,7 +381,7 @@ class MoodleSyncController extends Controller
                         $errorDetails[$errorType] = [];
                     }
                     $errorGroups[$errorType][] = $errorMsg;
-                    
+
                     // Сохраняем детальную информацию об ошибке
                     $errorDetails[$errorType][] = [
                         'activity_type' => $error['activity_type'] ?? 'unknown',
@@ -391,7 +391,7 @@ class MoodleSyncController extends Controller
                         'error' => $errorMsg
                     ];
                 }
-                
+
                 // Формируем детальное сообщение об ошибках
                 $detailedMessage = $message . "\n\nДетали ошибок:\n";
                 foreach ($errorDetails as $type => $errors) {
@@ -410,7 +410,7 @@ class MoodleSyncController extends Controller
                         $detailedMessage .= "  ... и еще " . (count($errors) - 10) . " ошибок этого типа\n";
                     }
                 }
-                
+
                 // Сохраняем детали ошибок в сессию для отображения
                 session()->flash('sync_errors', [
                     'total' => $totalErrors,
@@ -419,26 +419,26 @@ class MoodleSyncController extends Controller
                     'message' => $detailedMessage
                 ]);
             }
-            
+
             $flashType = $totalErrors > 0 ? 'warning' : 'success';
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with($flashType, $message);
-                
+
         } catch (\Exception $e) {
             Log::error('Ошибка синхронизации активности студентов через админ-панель', [
                 'course_id' => $courseId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка синхронизации: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('error', 'Ошибка синхронизации: ' . $e->getMessage());
         }
@@ -459,17 +459,17 @@ class MoodleSyncController extends Controller
             ini_set('max_execution_time', '1800');
             ini_set('memory_limit', '512M');
             ignore_user_abort(true);
-            
+
             if (!headers_sent()) {
                 header('X-Accel-Buffering: no');
             }
-            
+
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
-            
+
             $stats = $this->syncService->syncCourseEnrollments($courseId);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -477,24 +477,24 @@ class MoodleSyncController extends Controller
                     'stats' => $stats
                 ]);
             }
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', "Синхронизация записей студентов завершена. Создано: {$stats['created']}, Обновлено: {$stats['updated']}, Ошибок: {$stats['errors']}");
-                
+
         } catch (\Exception $e) {
             Log::error('Ошибка синхронизации записей студентов через админ-панель', [
                 'course_id' => $courseId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка синхронизации: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('error', 'Ошибка синхронизации: ' . $e->getMessage());
         }
@@ -512,10 +512,10 @@ class MoodleSyncController extends Controller
             if (!$this->syncService) {
                 throw new \Exception('Сервис синхронизации не инициализирован. Проверьте конфигурацию Moodle в .env файле.');
             }
-            
+
             // Получаем список курсов из Moodle для пошаговой синхронизации
             $moodleCourses = $this->syncService->getMoodleCoursesList();
-            
+
             if ($moodleCourses === false || empty($moodleCourses)) {
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -523,11 +523,11 @@ class MoodleSyncController extends Controller
                         'message' => 'Не удалось получить курсы из Moodle или список пуст'
                     ], 400);
                 }
-                
+
                 return redirect()->route('admin.moodle-sync.index')
                     ->with('error', 'Не удалось получить курсы из Moodle или список пуст');
             }
-            
+
             // Формируем список курсов для синхронизации
             $coursesList = array_map(function($course) {
                 return [
@@ -536,7 +536,7 @@ class MoodleSyncController extends Controller
                     'shortname' => $course['shortname'] ?? null,
                 ];
             }, $moodleCourses);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -546,19 +546,19 @@ class MoodleSyncController extends Controller
                     'message' => 'Начинаем пошаговую полную синхронизацию. Всего курсов: ' . count($coursesList)
                 ]);
             }
-            
+
             // Для обычных запросов возвращаем старую логику (полная синхронизация)
             set_time_limit(1800);
             ini_set('max_execution_time', '1800');
             ini_set('memory_limit', '512M');
             ignore_user_abort(true);
-            
+
             if (!headers_sent()) {
                 header('X-Accel-Buffering: no');
             }
-            
+
             $stats = $this->syncService->syncAll();
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -566,13 +566,13 @@ class MoodleSyncController extends Controller
                     'stats' => $stats
                 ]);
             }
-            
+
             $message = "Полная синхронизация завершена. ";
             $message .= "Курсы: создано {$stats['courses']['created']}, обновлено {$stats['courses']['updated']}, всего обработано: {$stats['courses']['total']}. ";
             $message .= "Записи студентов: создано {$stats['enrollments']['created']}, обновлено {$stats['enrollments']['updated']}, всего обработано: {$stats['enrollments']['total']}.";
-            
+
             // Если все значения равны 0, добавляем предупреждение
-            if ($stats['courses']['created'] == 0 && $stats['courses']['updated'] == 0 && 
+            if ($stats['courses']['created'] == 0 && $stats['courses']['updated'] == 0 &&
                 $stats['enrollments']['created'] == 0 && $stats['enrollments']['updated'] == 0) {
                 $errorsCount = ($stats['courses']['errors'] ?? 0) + ($stats['enrollments']['errors'] ?? 0);
                 if ($errorsCount > 0) {
@@ -597,7 +597,7 @@ class MoodleSyncController extends Controller
                     }
                 }
             }
-            
+
             // Добавляем информацию об ошибках, если они были
             if (($stats['courses']['errors'] ?? 0) > 0 || ($stats['enrollments']['errors'] ?? 0) > 0) {
                 $message .= " ⚠️ Обнаружены ошибки: Курсы - {$stats['courses']['errors']}, Записи студентов - {$stats['enrollments']['errors']}. Подробности в логах.";
@@ -607,20 +607,20 @@ class MoodleSyncController extends Controller
 
             return redirect()->route('admin.moodle-sync.index')
                 ->with('success', $message);
-                
+
         } catch (\Exception $e) {
             Log::error('Ошибка полной синхронизации через админ-панель', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка синхронизации: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('admin.moodle-sync.index')
                 ->with('error', 'Ошибка синхронизации: ' . $e->getMessage());
         }
@@ -635,29 +635,29 @@ class MoodleSyncController extends Controller
     {
         // Читаем последние строки из лог-файла
         $logFile = storage_path('logs/laravel.log');
-        
+
         if (!file_exists($logFile) || !is_readable($logFile)) {
             return [];
         }
-        
+
         // Увеличиваем лимит памяти для чтения логов
         $memoryLimit = ini_get('memory_limit');
         ini_set('memory_limit', '256M');
-        
+
         try {
             // Используем более эффективный способ чтения последних строк файла
             $lines = $this->readLastLines($logFile, 100);
             $recentLogs = [];
-            
+
             // Фильтруем по ключевым словам
             foreach ($lines as $line) {
-                if (stripos($line, 'Moodle') !== false || 
+                if (stripos($line, 'Moodle') !== false ||
                     stripos($line, 'синхронизац') !== false ||
                     stripos($line, 'sync') !== false) {
                     $recentLogs[] = trim($line);
                 }
             }
-            
+
             // Возвращаем последние 10 релевантных строк
             return array_slice($recentLogs, -10);
         } catch (\Exception $e) {
@@ -670,7 +670,7 @@ class MoodleSyncController extends Controller
             ini_set('memory_limit', $memoryLimit);
         }
     }
-    
+
     /**
      * Читает последние N строк из файла без загрузки всего файла в память
      *
@@ -684,11 +684,11 @@ class MoodleSyncController extends Controller
         if (!$file) {
             return [];
         }
-        
+
         // Перемещаемся в конец файла
         fseek($file, 0, SEEK_END);
         $fileSize = ftell($file);
-        
+
         // Если файл маленький, читаем его полностью
         if ($fileSize < 1024 * 1024) { // Меньше 1 МБ
             fseek($file, 0);
@@ -697,33 +697,33 @@ class MoodleSyncController extends Controller
             $allLines = explode("\n", $content);
             return array_slice($allLines, -$lines);
         }
-        
+
         // Для больших файлов читаем с конца
         $buffer = '';
         $lineCount = 0;
         $chunkSize = 8192; // 8 КБ
-        
+
         // Читаем файл с конца по частям
         for ($pos = $fileSize - $chunkSize; $pos >= 0; $pos -= $chunkSize) {
             if ($pos < 0) {
                 $chunkSize += $pos;
                 $pos = 0;
             }
-            
+
             fseek($file, $pos);
             $chunk = fread($file, $chunkSize);
             $buffer = $chunk . $buffer;
-            
+
             // Подсчитываем количество строк
             $lineCount = substr_count($buffer, "\n");
-            
+
             if ($lineCount >= $lines) {
                 break;
             }
         }
-        
+
         fclose($file);
-        
+
         // Разбиваем на строки и берем последние N
         $allLines = explode("\n", $buffer);
         return array_slice($allLines, -$lines);
@@ -745,20 +745,20 @@ class MoodleSyncController extends Controller
                     'message' => 'Необходима авторизация'
                 ], 401);
             }
-            
+
             if (!$this->syncService) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Сервис синхронизации недоступен. Проверьте настройки Moodle.'
                 ], 500);
             }
-            
+
             // Получаем параметры
             $moodleCourseId = $request->input('moodle_course_id');
             $syncEnrollments = $request->input('sync_enrollments', false);
             $step = (int)$request->input('step', 1);
             $totalSteps = (int)$request->input('total_steps', 1);
-            
+
             if (!$moodleCourseId) {
                 return response()->json([
                     'success' => false,
@@ -767,25 +767,25 @@ class MoodleSyncController extends Controller
                     'message' => 'Не указан ID курса в Moodle'
                 ], 400);
             }
-            
+
             Log::info('Запрос синхронизации курса (chunk)', [
                 'moodle_course_id' => $moodleCourseId,
                 'sync_enrollments' => $syncEnrollments,
                 'step' => $step,
                 'total_steps' => $totalSteps
             ]);
-            
+
             // Получаем данные курса из Moodle
             $moodleCourses = $this->syncService->getMoodleCoursesList();
             $moodleCourse = null;
-            
+
             foreach ($moodleCourses as $course) {
                 if (($course['id'] ?? null) == $moodleCourseId) {
                     $moodleCourse = $course;
                     break;
                 }
             }
-            
+
             if (!$moodleCourse) {
                 return response()->json([
                     'success' => false,
@@ -794,30 +794,30 @@ class MoodleSyncController extends Controller
                     'message' => 'Курс не найден в Moodle'
                 ], 404);
             }
-            
+
             $currentItem = [
                 'type' => 'course',
                 'moodle_id' => $moodleCourseId,
                 'name' => $moodleCourse['fullname'] ?? 'Без названия'
             ];
-            
+
             $stats = [
                 'course' => ['created' => 0, 'updated' => 0, 'errors' => 0],
                 'enrollments' => ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0]
             ];
-            
+
             try {
                 // Синхронизируем курс
                 $courseResult = $this->syncService->syncCourse($moodleCourse);
-                
+
                 if ($courseResult['created']) {
                     $stats['course']['created'] = 1;
                 } elseif ($courseResult['updated']) {
                     $stats['course']['updated'] = 1;
                 }
-                
+
                 $localCourseId = $courseResult['course']->id ?? null;
-                
+
                 // Если нужно синхронизировать записи студентов
                 if ($syncEnrollments && $localCourseId) {
                     try {
@@ -832,7 +832,7 @@ class MoodleSyncController extends Controller
                         $stats['enrollments']['errors'] = 1;
                     }
                 }
-                
+
                 $message = sprintf(
                     'Синхронизирован курс: %s. Курс: %s, Записи: создано %d, обновлено %d.',
                     $moodleCourse['fullname'] ?? 'Без названия',
@@ -840,7 +840,7 @@ class MoodleSyncController extends Controller
                     $stats['enrollments']['created'],
                     $stats['enrollments']['updated']
                 );
-                
+
                 return response()->json([
                     'success' => true,
                     'step' => $step,
@@ -858,7 +858,7 @@ class MoodleSyncController extends Controller
                     'file' => $syncException->getFile(),
                     'line' => $syncException->getLine()
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
                     'step' => $step,
@@ -875,7 +875,7 @@ class MoodleSyncController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'step' => $request->input('step', 1),
@@ -884,7 +884,7 @@ class MoodleSyncController extends Controller
             ], 500)->header('Content-Type', 'application/json');
         }
     }
-    
+
     /**
      * Категоризировать ошибку для группировки
      *
@@ -894,27 +894,27 @@ class MoodleSyncController extends Controller
     protected function categorizeError(string $errorMessage): string
     {
         $errorMessage = strtolower($errorMessage);
-        
+
         if (strpos($errorMessage, 'unknown column') !== false || strpos($errorMessage, 'column') !== false) {
             return 'Отсутствующие поля в базе данных';
         }
-        
+
         if (strpos($errorMessage, 'webservice_access_exception') !== false || strpos($errorMessage, 'access') !== false) {
             return 'Проблемы с правами доступа к Moodle API';
         }
-        
+
         if (strpos($errorMessage, 'timeout') !== false || strpos($errorMessage, 'time') !== false) {
             return 'Таймауты при обращении к Moodle';
         }
-        
+
         if (strpos($errorMessage, 'not found') !== false || strpos($errorMessage, 'не найден') !== false) {
             return 'Элементы не найдены';
         }
-        
+
         if (strpos($errorMessage, 'connection') !== false || strpos($errorMessage, 'подключ') !== false) {
             return 'Проблемы с подключением к Moodle';
         }
-        
+
         return 'Прочие ошибки';
     }
 }

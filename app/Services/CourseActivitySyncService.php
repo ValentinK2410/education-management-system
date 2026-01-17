@@ -180,7 +180,7 @@ class CourseActivitySyncService
     {
         $moodleActivityId = $activityData['moodle_id'] ?? null;
         $rawActivityType = $activityData['type'] ?? 'other';
-        
+
         // Нормализуем тип активности - поддерживаем все типы из Moodle
         // Основные типы: assign, quiz, forum, resource, page, file, folder, url, book
         $activityType = $this->normalizeActivityType($rawActivityType);
@@ -354,7 +354,7 @@ class CourseActivitySyncService
                     $moodleActivityId = $activityData['moodle_id'] ?? null;
                     $rawActivityType = $activityData['type'] ?? 'other';
                     $activityType = $this->normalizeActivityType($rawActivityType);
-                    
+
                     if (!$moodleActivityId) {
                         continue;
                     }
@@ -899,7 +899,7 @@ class CourseActivitySyncService
 
     /**
      * Нормализовать тип активности из Moodle
-     * 
+     *
      * @param string $rawType Тип из Moodle
      * @return string Нормализованный тип
      */
@@ -907,26 +907,26 @@ class CourseActivitySyncService
     {
         // Поддерживаемые типы из Moodle
         $supportedTypes = [
-            'assign', 'quiz', 'forum', 'resource', 
+            'assign', 'quiz', 'forum', 'resource',
             'page', 'file', 'folder', 'url', 'book',
             'label', 'text', 'video', 'audio', 'scorm',
             'hvp', 'lti', 'workshop', 'choice', 'feedback'
         ];
-        
+
         $normalizedType = strtolower(trim($rawType));
-        
+
         // Если тип поддерживается, возвращаем его
         if (in_array($normalizedType, $supportedTypes)) {
             return $normalizedType;
         }
-        
+
         // Для неизвестных типов возвращаем 'other'
         return 'other';
     }
 
     /**
      * Преобразовать статус из Moodle в локальный формат
-     * 
+     *
      * @param string $moodleStatus Статус из Moodle
      * @return string Локальный статус
      */

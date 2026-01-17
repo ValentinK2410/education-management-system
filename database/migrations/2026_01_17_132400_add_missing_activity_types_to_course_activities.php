@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Миграция для добавления недостающих типов активностей в ENUM
- * 
+ *
  * Добавляет типы: page, file, folder, url, book и другие возможные типы из Moodle
  */
 return new class extends Migration
@@ -19,7 +19,7 @@ return new class extends Migration
     {
         // Изменяем тип колонки с ENUM на VARCHAR для поддержки всех типов из Moodle
         DB::statement("ALTER TABLE `course_activities` MODIFY `activity_type` VARCHAR(50) NOT NULL");
-        
+
         // Добавляем индекс для быстрого поиска по типу активности
         Schema::table('course_activities', function (Blueprint $table) {
             if (!$this->hasIndex('course_activities', 'activity_type')) {
@@ -39,11 +39,11 @@ return new class extends Migration
                 $table->dropIndex(['activity_type']);
             }
         });
-        
+
         // Возвращаем ENUM с расширенным списком типов
         DB::statement("ALTER TABLE `course_activities` MODIFY `activity_type` ENUM('assign', 'quiz', 'forum', 'resource', 'page', 'file', 'folder', 'url', 'book', 'other') NOT NULL");
     }
-    
+
     /**
      * Проверить наличие индекса
      */

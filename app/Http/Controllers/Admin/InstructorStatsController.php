@@ -34,10 +34,10 @@ class InstructorStatsController extends Controller
             // Подсчитываем статистику для каждого преподавателя
             $courses = $instructor->taughtCourses;
             $totalCourses = $courses->count();
-            
+
             // Общее количество студентов (сумма по всем курсам, с возможными дубликатами)
             $totalStudentsAll = $courses->sum('users_count');
-            
+
             // Получаем уникальных студентов по всем курсам преподавателя
             $courseIds = $courses->pluck('id');
             $uniqueStudents = 0;
@@ -51,7 +51,7 @@ class InstructorStatsController extends Controller
                     ->distinct('user_courses.user_id')
                     ->count('user_courses.user_id');
             }
-            
+
             // Подсчитываем проверенные работы
             // Если graded_by_user_id заполнен, проверяем его
             // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
@@ -64,14 +64,14 @@ class InstructorStatsController extends Controller
                       ->orWhereNull('graded_by_user_id');
             })
             ->count();
-            
+
             // Подсчитываем непроверенные работы
             $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
                 $query->where('instructor_id', $instructor->id);
             })
             ->where('status', 'submitted')
             ->count();
-            
+
             return [
                 'id' => $instructor->id,
                 'name' => $instructor->name,
@@ -84,10 +84,10 @@ class InstructorStatsController extends Controller
                 'pending_activities' => $pendingActivities,
             ];
         });
-        
+
         return view('admin.instructor-stats.index', compact('instructors'));
     }
-    
+
     /**
      * Показать детальную статистику конкретного преподавателя
      *
@@ -101,11 +101,11 @@ class InstructorStatsController extends Controller
         if (!$instructor->hasRole('instructor')) {
             abort(404, 'Пользователь не является преподавателем');
         }
-        
+
         // Получаем фильтры по дате
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        
+
         // Получаем все курсы преподавателя с количеством студентов и активными студентами
         $courses = Course::where('instructor_id', $instructor->id)
             ->with(['program', 'instructor'])
@@ -115,10 +115,10 @@ class InstructorStatsController extends Controller
                 });
             }])
             ->get();
-        
+
         // Получаем данные о студентах и их активности по каждому курсу
         $coursesWithStudents = [];
-        
+
         foreach ($courses as $course) {
             // Получаем студентов курса
             $students = $course->users()
@@ -126,53 +126,53 @@ class InstructorStatsController extends Controller
                     $q->where('slug', 'student');
                 })
                 ->get();
-            
+
             $studentsWithActivity = [];
-            
+
             foreach ($students as $student) {
                 // Проверяем наличие настроек для синхронизации
                 $canSync = !empty($course->moodle_course_id) && !empty($student->moodle_user_id);
-                
+
                 // Получаем все элементы курса, с которыми студент взаимодействовал
                 $activities = \App\Models\CourseActivity::where('course_id', $course->id)->get();
-                
+
                 $studentActivities = [];
-                
+
                 foreach ($activities as $activity) {
                     // Получаем прогресс студента по этому элементу
                     $progress = \App\Models\StudentActivityProgress::where('user_id', $student->id)
                         ->where('course_id', $course->id)
                         ->where('activity_id', $activity->id)
                         ->first();
-                    
+
                     // Показываем только элементы, с которыми студент взаимодействовал
-                    if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at || 
+                    if ($progress && ($progress->is_viewed || $progress->is_read || $progress->started_at ||
                         $progress->submitted_at || $progress->is_graded || $progress->has_draft)) {
-                        
+
                         // Определяем статус (приоритет: проверено > сдано > ожидает проверки/ответа > в процессе > прочитано > просмотрено)
                         $status = 'viewed';
                         $statusText = 'Просмотрено';
                         $statusIcon = 'fa-eye';
                         $statusClass = 'secondary';
-                        
+
                         // Проверяем, является ли это форумом
                         $isForum = $activity->activity_type === 'forum';
                         $needsResponse = $progress->needs_response ?? false;
-                        
+
                         // Приоритет 1: Проверено (есть оценка)
                         if ($progress->grade !== null || ($progress->is_graded && $progress->graded_at)) {
                             $status = 'graded';
                             $statusText = 'Проверено';
                             $statusIcon = 'fa-check-circle';
                             $statusClass = 'success';
-                        } 
+                        }
                         // Приоритет 2: Сдано (есть дата сдачи)
                         elseif ($progress->submitted_at) {
                             $status = 'submitted';
                             $statusText = 'Сдано';
                             $statusIcon = 'fa-paper-plane';
                             $statusClass = 'info';
-                        } 
+                        }
                         // Приоритет 3: Ожидает проверки или ответа преподавателя (для форумов)
                         elseif ($progress->needs_grading || ($progress->submitted_at && !$progress->is_graded)) {
                             if ($isForum && $needsResponse) {
@@ -186,14 +186,14 @@ class InstructorStatsController extends Controller
                                 $statusIcon = 'fa-clock';
                                 $statusClass = 'warning';
                             }
-                        } 
+                        }
                         // Приоритет 4: В процессе (есть черновик или начато)
                         elseif ($progress->has_draft || $progress->started_at) {
                             $status = 'in_progress';
                             $statusText = 'В процессе';
                             $statusIcon = 'fa-edit';
                             $statusClass = 'primary';
-                        } 
+                        }
                         // Приоритет 5: Прочитано
                         elseif ($progress->is_read) {
                             $status = 'read';
@@ -201,7 +201,7 @@ class InstructorStatsController extends Controller
                             $statusIcon = 'fa-book-open';
                             $statusClass = 'info';
                         }
-                        
+
                         $studentActivities[] = [
                             'activity' => $activity,
                             'progress' => $progress,
@@ -218,7 +218,7 @@ class InstructorStatsController extends Controller
                         ];
                     }
                 }
-                
+
                 // Добавляем всех студентов, даже если у них нет активности
                 $studentsWithActivity[] = [
                     'student' => $student,
@@ -233,10 +233,10 @@ class InstructorStatsController extends Controller
                     'missing_moodle_user_id' => empty($student->moodle_user_id),
                 ];
             }
-            
+
             $coursesWithStudents[$course->id] = $studentsWithActivity;
         }
-        
+
         // Получаем все проверенные работы преподавателя
         // Если graded_by_user_id заполнен, проверяем его
         // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
@@ -248,7 +248,7 @@ class InstructorStatsController extends Controller
             $query->where('graded_by_user_id', $instructor->id)
                   ->orWhereNull('graded_by_user_id');
         });
-        
+
         // Применяем фильтр по дате проверки
         if ($dateFrom) {
             $gradedActivitiesQuery->whereDate('graded_at', '>=', $dateFrom);
@@ -256,12 +256,12 @@ class InstructorStatsController extends Controller
         if ($dateTo) {
             $gradedActivitiesQuery->whereDate('graded_at', '<=', $dateTo);
         }
-        
+
         $gradedActivities = $gradedActivitiesQuery
             ->with(['user', 'course', 'activity', 'gradedBy'])
             ->orderBy('graded_at', 'desc')
             ->get();
-        
+
         // Получаем непроверенные работы (включая форумы, ожидающие ответа преподавателя)
         $pendingActivities = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
@@ -278,7 +278,7 @@ class InstructorStatsController extends Controller
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();
-        
+
         // Статистика по типам активностей
         // Если graded_by_user_id заполнен, проверяем его
         // Если нет, но курс принадлежит преподавателю и статус 'graded', считаем проверенным преподавателем
@@ -290,7 +290,7 @@ class InstructorStatsController extends Controller
             $query->where('graded_by_user_id', $instructor->id)
                   ->orWhereNull('graded_by_user_id');
         });
-        
+
         // Применяем фильтр по дате проверки
         if ($dateFrom) {
             $activityStatsQuery->whereDate('graded_at', '>=', $dateFrom);
@@ -298,17 +298,17 @@ class InstructorStatsController extends Controller
         if ($dateTo) {
             $activityStatsQuery->whereDate('graded_at', '<=', $dateTo);
         }
-        
+
         $activityStats = $activityStatsQuery
             ->join('course_activities', 'student_activity_progress.activity_id', '=', 'course_activities.id')
             ->select('course_activities.activity_type', DB::raw('COUNT(*) as count'))
             ->groupBy('course_activities.activity_type')
             ->get()
             ->pluck('count', 'activity_type');
-        
+
         // Общее количество студентов (сумма по всем курсам)
         $totalStudentsAll = $courses->sum('users_count');
-        
+
         // Получаем уникальных студентов по всем курсам преподавателя
         $courseIds = $courses->pluck('id');
         $uniqueStudentsCount = 0;
@@ -322,7 +322,7 @@ class InstructorStatsController extends Controller
                 ->distinct('user_courses.user_id')
                 ->count('user_courses.user_id');
         }
-        
+
         // Получаем важные уведомления для преподавателя
         // 1. Сданные задания (ожидают проверки)
         $submittedAssignments = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
@@ -346,7 +346,7 @@ class InstructorStatsController extends Controller
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();
-        
+
         // 2. Форумы, ожидающие ответа преподавателя
         $forumsNeedingResponse = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
@@ -359,7 +359,7 @@ class InstructorStatsController extends Controller
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();
-        
+
         // 3. Работы, ожидающие оценки (задания и тесты)
         $activitiesNeedingGrading = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
@@ -381,7 +381,7 @@ class InstructorStatsController extends Controller
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();
-        
+
         // 4. Сданные тесты и экзамены (показываем все сданные, но особо выделяем непроверенные)
         $submittedQuizzes = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
             $query->where('instructor_id', $instructor->id);
@@ -393,7 +393,7 @@ class InstructorStatsController extends Controller
         ->with(['user', 'course', 'activity'])
         ->orderBy('submitted_at', 'desc')
         ->get();
-        
+
         // Общая статистика
         $stats = [
             'total_courses' => $courses->count(),
@@ -405,15 +405,15 @@ class InstructorStatsController extends Controller
             'quizzes_graded' => $activityStats->get('quiz', 0),
             'forums_graded' => $activityStats->get('forum', 0),
         ];
-        
+
         return view('admin.instructor-stats.show', compact(
-            'instructor', 
-            'courses', 
-            'coursesWithStudents', 
-            'gradedActivities', 
-            'pendingActivities', 
-            'stats', 
-            'dateFrom', 
+            'instructor',
+            'courses',
+            'coursesWithStudents',
+            'gradedActivities',
+            'pendingActivities',
+            'stats',
+            'dateFrom',
             'dateTo',
             'submittedAssignments',
             'forumsNeedingResponse',

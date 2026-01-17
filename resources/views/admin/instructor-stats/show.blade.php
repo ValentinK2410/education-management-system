@@ -1129,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const hasErrors = (data.stats?.progress?.errors || 0) > 0 || (data.errors?.total_unique || 0) > 0;
                     const alertClass = hasErrors ? 'alert-warning' : 'alert-success';
                     const alertIcon = hasErrors ? 'fa-exclamation-triangle' : 'fa-check-circle';
-                    
+
                     // Формируем детальную информацию об ошибках
                     let errorsHtml = '';
                     if (hasErrors && data.errors && data.errors.groups) {
@@ -1151,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         errorsHtml += '</ul></div>';
                     }
-                    
+
                     // Успешная синхронизация (с возможными ошибками)
                     progressAlert.className = `alert ${alertClass} alert-dismissible fade show mt-2`;
                     progressAlert.innerHTML = `
