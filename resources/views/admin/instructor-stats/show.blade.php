@@ -742,10 +742,12 @@
                                                             ];
                                                             $icon = $activityTypeIcons[$activityType] ?? 'fa-circle';
                                                             $typeLabel = $activityTypeLabels[$activityType] ?? ucfirst($activityType);
-                                                            
+
                                                             // Формируем URL Moodle напрямую без создания объекта
                                                             $moodleUrl = null;
-                                                            if (!empty($item['activity_cmid']) && !empty($course->moodle_course_id)) {
+                                                            // Получаем moodle_course_id из курса
+                                                            $moodleCourseId = $course->moodle_course_id ?? null;
+                                                            if (!empty($item['activity_cmid']) && !empty($moodleCourseId)) {
                                                                 $moodleBaseUrl = rtrim(config('services.moodle.url'), '/');
                                                                 if ($moodleBaseUrl) {
                                                                     switch ($activityType) {
