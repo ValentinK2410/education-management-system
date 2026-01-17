@@ -211,8 +211,14 @@ class CourseActivitySyncService
         // Добавляем новые поля только если они существуют в схеме БД
         $tableName = (new CourseActivity())->getTable();
 
+        // Сохраняем cmid (только реальный cmid, не moodle_id который является instance ID)
+        $cmid = $activityData['cmid'] ?? null;
         if ($this->hasColumn($tableName, 'cmid')) {
-            $activityDataToSave['cmid'] = $activityData['cmid'] ?? $activityData['moodle_id'] ?? null;
+            $activityDataToSave['cmid'] = $cmid;
+        }
+        // Также сохраняем cmid в meta для доступа через getCmidAttribute()
+        if ($cmid && isset($activityDataToSave['meta']) && is_array($activityDataToSave['meta'])) {
+            $activityDataToSave['meta']['cmid'] = $cmid;
         }
         if ($this->hasColumn($tableName, 'week_number')) {
             $activityDataToSave['week_number'] = $activityData['week_number'] ?? null;

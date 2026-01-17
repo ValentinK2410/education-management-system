@@ -131,10 +131,7 @@ class CourseActivity extends Model
     {
         try {
             $cmid = $this->cmid;
-            if (!$cmid) {
-                return null;
-            }
-
+            
             // Получаем курс безопасным способом
             try {
                 $course = $this->course;
@@ -144,15 +141,74 @@ class CourseActivity extends Model
             }
 
             if (!$course || !$course->moodle_course_id) {
+                \Log::debug('Не удалось получить URL Moodle: отсутствует курс или moodle_course_id', [
+                    'activity_id' => $this->id,
+                    'activity_type' => $this->activity_type,
+                    'activity_name' => $this->name,
+                    'course_id' => $this->course_id,
+                    'has_course' => $course ? true : false,
+                    'moodle_course_id' => $course->moodle_course_id ?? null
+                ]);
                 return null;
             }
 
             $moodleUrl = config('services.moodle.url');
             if (!$moodleUrl) {
+                \Log::debug('Не удалось получить URL Moodle: не настроен MOODLE_URL', [
+                    'activity_id' => $this->id,
+                    'activity_type' => $this->activity_type
+                ]);
                 return null;
             }
 
             $moodleUrl = rtrim($moodleUrl, '/');
+
+            // Если cmid отсутствует, пытаемся получить его через API для тестов
+            if (!$cmid && $this->activity_type === 'quiz' && $this->moodle_activity_id && $course->moodle_course_id) {
+                try {
+                    $moodleApiService = new \App\Services\MoodleApiService();
+                    $cmResult = $moodleApiService->call('core_course_get_course_module_by_instance', [
+                        'module' => 'quiz',
+                        'instance' => $this->moodle_activity_id
+                    ]);
+                    
+                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                        $cmid = $cmResult['cm']['id'];
+                        // Сохраняем cmid для будущего использования
+                        $updateData = [];
+                        // Проверяем, есть ли поле cmid в таблице (проверяем через attributes)
+                        if (array_key_exists('cmid', $this->attributes)) {
+                            $updateData['cmid'] = $cmid;
+                        }
+                        // Всегда сохраняем в meta для надежности
+                        $meta = $this->meta ?? [];
+                        $meta['cmid'] = $cmid;
+                        $updateData['meta'] = $meta;
+                        
+                        if (!empty($updateData)) {
+                            $this->update($updateData);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::debug('Не удалось получить cmid через API для теста', [
+                        'activity_id' => $this->id,
+                        'moodle_activity_id' => $this->moodle_activity_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            if (!$cmid) {
+                \Log::debug('Не удалось получить URL Moodle: отсутствует cmid', [
+                    'activity_id' => $this->id,
+                    'activity_type' => $this->activity_type,
+                    'activity_name' => $this->name,
+                    'moodle_activity_id' => $this->moodle_activity_id,
+                    'has_cmid_in_attributes' => isset($this->attributes['cmid']),
+                    'has_cmid_in_meta' => isset($this->meta['cmid']) ?? false
+                ]);
+                return null;
+            }
 
             // Формируем URL в зависимости от типа элемента
             switch ($this->activity_type) {
@@ -179,11 +235,20 @@ class CourseActivity extends Model
             // В случае ошибки возвращаем null вместо исключения
             \Log::warning('Ошибка при формировании URL Moodle для элемента курса', [
                 'activity_id' => $this->id,
+                'activity_type' => $this->activity_type,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             return null;
         }
+    }
+    
+    /**
+     * Проверить, есть ли колонка в таблице
+     */
+    protected function hasColumn(string $column): bool
+    {
+        return \Schema::hasColumn($this->getTable(), $column);
     }
 }
 
