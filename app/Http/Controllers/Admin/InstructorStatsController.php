@@ -100,7 +100,7 @@ class InstructorStatsController extends Controller
         // Увеличение памяти для этого конкретного запроса (на случай, если другие методы не работают)
         ini_set('memory_limit', '512M');
         ini_set('max_execution_time', '300');
-        
+
         try {
             // Проверяем, что пользователь является преподавателем
             if (!$instructor->hasRole('instructor')) {
@@ -129,8 +129,9 @@ class InstructorStatsController extends Controller
 
         // Получаем все элементы курса для всех курсов одним запросом
         // Загружаем только необходимые поля для экономии памяти
+        // Не включаем cmid в select, так как колонка может отсутствовать - получаем через accessor
         $allActivities = \App\Models\CourseActivity::whereIn('course_id', $courseIds)
-            ->select('id', 'course_id', 'name', 'activity_type', 'cmid', 'max_grade')
+            ->select('id', 'course_id', 'name', 'activity_type', 'max_grade', 'meta')
             ->orderBy('section_number')
             ->orderBy('section_order')
             ->get();
@@ -314,12 +315,22 @@ class InstructorStatsController extends Controller
                             }
                         }
 
+                        // Получаем cmid через accessor (может быть в колонке или в meta)
+                        $activityCmid = null;
+                        try {
+                            $activityCmid = $activity->cmid;
+                        } catch (\Exception $e) {
+                            // Если accessor не работает, пытаемся получить из meta
+                            $meta = $activity->meta ?? [];
+                            $activityCmid = $meta['cmid'] ?? null;
+                        }
+                        
                         // Сохраняем только необходимые данные вместо полных объектов для экономии памяти
                         $studentActivities[] = [
                             'activity_id' => $activity->id,
                             'activity_name' => $activity->name,
                             'activity_type' => $activity->activity_type,
-                            'activity_cmid' => $activity->cmid,
+                            'activity_cmid' => $activityCmid,
                             'activity_max_grade' => $activity->max_grade,
                             'status' => $status,
                             'status_text' => $statusText,
