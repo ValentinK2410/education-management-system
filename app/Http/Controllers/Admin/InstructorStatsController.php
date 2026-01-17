@@ -120,6 +120,7 @@ class InstructorStatsController extends Controller
         $coursesWithActivities = [];
         foreach ($courses as $course) {
             $activities = \App\Models\CourseActivity::where('course_id', $course->id)
+                ->with('course') // Загружаем связь course для доступа к moodle_course_id
                 ->orderBy('section_number')
                 ->orderBy('section_order')
                 ->get();

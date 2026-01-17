@@ -119,40 +119,51 @@ class CourseActivity extends Model
      */
     public function getMoodleUrlAttribute(): ?string
     {
-        $cmid = $this->cmid;
-        $course = $this->course;
+        try {
+            $cmid = $this->cmid;
+            
+            // Пытаемся получить курс, если связь не загружена - загружаем её
+            $course = $this->relationLoaded('course') ? $this->course : $this->course()->first();
 
-        if (!$cmid || !$course || !$course->moodle_course_id) {
+            if (!$cmid || !$course || !$course->moodle_course_id) {
+                return null;
+            }
+
+            $moodleUrl = config('services.moodle.url');
+            if (!$moodleUrl) {
+                return null;
+            }
+
+            $moodleUrl = rtrim($moodleUrl, '/');
+
+            // Формируем URL в зависимости от типа элемента
+            switch ($this->activity_type) {
+                case 'assign':
+                    return $moodleUrl . "/mod/assign/view.php?id={$cmid}";
+                case 'quiz':
+                    // Для тестов направляем на страницу отчета для просмотра ответов
+                    return $moodleUrl . "/mod/quiz/report.php?id={$cmid}&mode=overview";
+                case 'forum':
+                    return $moodleUrl . "/mod/forum/view.php?id={$cmid}";
+                case 'resource':
+                case 'file':
+                case 'url':
+                case 'page':
+                case 'book':
+                    return $moodleUrl . "/mod/{$this->activity_type}/view.php?id={$cmid}";
+                case 'folder':
+                    return $moodleUrl . "/mod/folder/view.php?id={$cmid}";
+                default:
+                    // Для других типов - общая ссылка на курс
+                    return $moodleUrl . "/course/view.php?id={$course->moodle_course_id}";
+            }
+        } catch (\Exception $e) {
+            // В случае ошибки возвращаем null вместо исключения
+            \Log::warning('Ошибка при формировании URL Moodle для элемента курса', [
+                'activity_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
             return null;
-        }
-
-        $moodleUrl = config('services.moodle.url');
-        if (!$moodleUrl) {
-            return null;
-        }
-
-        $moodleUrl = rtrim($moodleUrl, '/');
-
-        // Формируем URL в зависимости от типа элемента
-        switch ($this->activity_type) {
-            case 'assign':
-                return $moodleUrl . "/mod/assign/view.php?id={$cmid}";
-            case 'quiz':
-                // Для тестов направляем на страницу отчета для просмотра ответов
-                return $moodleUrl . "/mod/quiz/report.php?id={$cmid}&mode=overview";
-            case 'forum':
-                return $moodleUrl . "/mod/forum/view.php?id={$cmid}";
-            case 'resource':
-            case 'file':
-            case 'url':
-            case 'page':
-            case 'book':
-                return $moodleUrl . "/mod/{$this->activity_type}/view.php?id={$cmid}";
-            case 'folder':
-                return $moodleUrl . "/mod/folder/view.php?id={$cmid}";
-            default:
-                // Для других типов - общая ссылка на курс
-                return $moodleUrl . "/course/view.php?id={$course->moodle_course_id}";
         }
     }
 }
