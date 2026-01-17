@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Сервис для синхронизации элементов курса и прогресса студентов из Moodle
- * 
+ *
  * Синхронизирует все элементы курса (assignments, quizzes, forums, resources)
  * и прогресс студентов по этим элементам
  */
@@ -21,21 +21,21 @@ class CourseActivitySyncService
 {
     /**
      * Сервис для работы с Moodle API
-     * 
+     *
      * @var MoodleApiService
      */
     protected MoodleApiService $moodleApi;
 
     /**
      * Кэш для проверки наличия колонок в БД
-     * 
+     *
      * @var array
      */
     protected array $columnCache = [];
 
     /**
      * Конструктор
-     * 
+     *
      * @param MoodleApiService|null $moodleApi
      */
     public function __construct(?MoodleApiService $moodleApi = null)
@@ -52,7 +52,7 @@ class CourseActivitySyncService
 
     /**
      * Проверить наличие колонки в таблице БД (с кэшированием)
-     * 
+     *
      * @param string $table Имя таблицы
      * @param string $column Имя колонки
      * @return bool
@@ -60,17 +60,17 @@ class CourseActivitySyncService
     protected function hasColumn(string $table, string $column): bool
     {
         $cacheKey = "{$table}.{$column}";
-        
+
         if (!isset($this->columnCache[$cacheKey])) {
             $this->columnCache[$cacheKey] = Schema::hasColumn($table, $column);
         }
-        
+
         return $this->columnCache[$cacheKey];
     }
 
     /**
      * Синхронизировать все элементы курса из Moodle
-     * 
+     *
      * @param int $courseId ID курса в локальной БД
      * @return array Статистика синхронизации
      */
@@ -85,7 +85,7 @@ class CourseActivitySyncService
         ];
 
         $course = Course::find($courseId);
-        
+
         if (!$course) {
             throw new \Exception("Курс с ID {$courseId} не найден");
         }
@@ -105,7 +105,7 @@ class CourseActivitySyncService
         try {
             // Получаем все активности курса из Moodle
             $activities = $this->moodleApi->getAllCourseActivities($course->moodle_course_id, 0);
-            
+
             if ($activities === false) {
                 Log::warning('Не удалось получить активности курса из Moodle', [
                     'moodle_course_id' => $course->moodle_course_id
@@ -118,7 +118,7 @@ class CourseActivitySyncService
             foreach ($activities as $activity) {
                 try {
                     $result = $this->syncActivity($course, $activity);
-                    
+
                     if ($result['created']) {
                         $stats['created']++;
                     } elseif ($result['updated']) {
@@ -126,7 +126,7 @@ class CourseActivitySyncService
                     }
                 } catch (\Exception $e) {
                     $errorMessage = $e->getMessage();
-                    
+
                     // Игнорируем ошибки доступа к Moodle API - они не критичны
                     if (strpos($errorMessage, 'webservice_access_exception') !== false ||
                         strpos($errorMessage, 'accessexception') !== false ||
@@ -139,14 +139,14 @@ class CourseActivitySyncService
                         ]);
                         continue; // Пропускаем эту активность, не добавляем в список ошибок
                     }
-                    
+
                     $stats['errors']++;
                     $stats['errors_list'][] = [
                         'activity_type' => $activity['type'] ?? 'unknown',
                         'moodle_id' => $activity['moodle_id'] ?? 'unknown',
                         'error' => $errorMessage
                     ];
-                    
+
                     Log::error('Ошибка синхронизации элемента курса', [
                         'course_id' => $courseId,
                         'activity' => $activity,
@@ -171,7 +171,7 @@ class CourseActivitySyncService
 
     /**
      * Синхронизировать один элемент курса
-     * 
+     *
      * @param Course $course Курс
      * @param array $activityData Данные элемента из Moodle
      * @return array Результат синхронизации
@@ -179,8 +179,12 @@ class CourseActivitySyncService
     protected function syncActivity(Course $course, array $activityData): array
     {
         $moodleActivityId = $activityData['moodle_id'] ?? null;
-        $activityType = $activityData['type'] ?? 'other';
+        $rawActivityType = $activityData['type'] ?? 'other';
         
+        // Нормализуем тип активности - поддерживаем все типы из Moodle
+        // Основные типы: assign, quiz, forum, resource, page, file, folder, url, book
+        $activityType = $this->normalizeActivityType($rawActivityType);
+
         if (!$moodleActivityId) {
             throw new \Exception('Отсутствует ID элемента в данных Moodle');
         }
@@ -203,10 +207,10 @@ class CourseActivitySyncService
             'description' => $activityData['description'] ?? null,
             'meta' => $activityData,
         ];
-        
+
         // Добавляем новые поля только если они существуют в схеме БД
         $tableName = (new CourseActivity())->getTable();
-        
+
         if ($this->hasColumn($tableName, 'cmid')) {
             $activityDataToSave['cmid'] = $activityData['cmid'] ?? $activityData['moodle_id'] ?? null;
         }
@@ -235,15 +239,15 @@ class CourseActivitySyncService
             }
         } catch (\Illuminate\Database\QueryException $dbException) {
             $errorMessage = $dbException->getMessage();
-            
+
             // Если ошибка связана с отсутствующим полем, пытаемся сохранить без него
             if (strpos($errorMessage, 'Unknown column') !== false) {
                 preg_match("/Unknown column '([^']+)'/", $errorMessage, $matches);
                 $missingColumn = $matches[1] ?? 'unknown';
-                
+
                 // Удаляем проблемное поле
                 unset($activityDataToSave[$missingColumn]);
-                
+
                 // Пытаемся сохранить снова
                 try {
                     if ($activity) {
@@ -257,14 +261,14 @@ class CourseActivitySyncService
                     throw new \Exception('Ошибка сохранения элемента курса: ' . $retryException->getMessage() . ' (отсутствует поле: ' . $missingColumn . ')');
                 }
             }
-            
+
             throw new \Exception('Ошибка сохранения элемента курса: ' . $errorMessage);
         }
     }
 
     /**
      * Синхронизировать прогресс студента по элементам курса
-     * 
+     *
      * @param int $courseId ID курса в локальной БД
      * @param int $userId ID студента в локальной БД
      * @return array Статистика синхронизации
@@ -282,7 +286,7 @@ class CourseActivitySyncService
 
         $course = Course::find($courseId);
         $user = User::find($userId);
-        
+
         if (!$course) {
             throw new \Exception("Курс с ID {$courseId} не найден");
         }
@@ -316,9 +320,9 @@ class CourseActivitySyncService
                 'course_id' => $course->id,
                 'user_id' => $user->id
             ]);
-            
+
             $activities = $this->moodleApi->getAllCourseActivities($course->moodle_course_id, $user->moodle_user_id);
-            
+
             if ($activities === false) {
                 Log::warning('Не удалось получить активности курса из Moodle (вернул false)', [
                     'moodle_course_id' => $course->moodle_course_id,
@@ -335,7 +339,7 @@ class CourseActivitySyncService
             ]);
 
             $stats['total'] = count($activities);
-            
+
             if (empty($activities)) {
                 Log::warning('Moodle API вернул пустой массив активностей', [
                     'moodle_course_id' => $course->moodle_course_id,
@@ -349,7 +353,7 @@ class CourseActivitySyncService
                 try {
                     $moodleActivityId = $activityData['moodle_id'] ?? null;
                     $activityType = $activityData['type'] ?? 'other';
-                    
+
                     if (!$moodleActivityId) {
                         continue;
                     }
@@ -393,33 +397,33 @@ class CourseActivitySyncService
                     // Преобразуем timestamp в datetime для submitted_at и graded_at
                     $submittedAt = null;
                     if (isset($activityData['submitted_at']) && $activityData['submitted_at']) {
-                        $submittedAt = is_numeric($activityData['submitted_at']) 
+                        $submittedAt = is_numeric($activityData['submitted_at'])
                             ? \Carbon\Carbon::createFromTimestamp($activityData['submitted_at'])
                             : $activityData['submitted_at'];
                     }
-                    
+
                     // Определяем статус прогресса
                     $status = $this->mapStatus($activityData['status'] ?? 'not_started');
                     $grade = $activityData['grade'] ?? null;
                     $maxGrade = $activityData['max_grade'] ?? $activity->max_grade;
-                    
+
                     // Если есть дата сдачи, но нет оценки, статус должен быть 'submitted'
                     if ($submittedAt && ($grade === null || $grade === '')) {
                         $status = 'submitted';
                     }
-                    
+
                     // Если есть оценка, статус должен быть 'graded'
                     if ($grade !== null && $grade !== '') {
                         $status = 'graded';
                     }
-                    
+
                     $gradedAt = null;
                     if (isset($activityData['graded_at']) && $activityData['graded_at']) {
                         $gradedAt = is_numeric($activityData['graded_at'])
                             ? \Carbon\Carbon::createFromTimestamp($activityData['graded_at'])
                             : $activityData['graded_at'];
                     }
-                    
+
                     // Детальная информация о просмотрах
                     $isViewed = $activityData['is_viewed'] ?? false;
                     $isRead = $activityData['is_read'] ?? false;
@@ -430,7 +434,7 @@ class CourseActivitySyncService
                             : $activityData['last_viewed_at'];
                     }
                     $viewCount = $activityData['view_count'] ?? 0;
-                    
+
                     // Информация о черновиках
                     $hasDraft = $activityData['has_draft'] ?? false;
                     $draftCreatedAt = null;
@@ -446,7 +450,7 @@ class CourseActivitySyncService
                             : $activityData['draft_updated_at'];
                     }
                     $draftData = $activityData['draft_data'] ?? null;
-                    
+
                     // Информация о проверке
                     $needsGrading = $activityData['needs_grading'] ?? false;
                     $needsResponse = $activityData['needs_response'] ?? false; // Для форумов: нужен ответ преподавателя
@@ -457,17 +461,17 @@ class CourseActivitySyncService
                             ? \Carbon\Carbon::createFromTimestamp($activityData['grading_requested_at'])
                             : $activityData['grading_requested_at'];
                     }
-                    
+
                     // Если есть дата сдачи, но нет оценки, требуется проверка
                     if ($submittedAt && ($grade === null || $grade === '')) {
                         $needsGrading = true;
                     }
-                    
+
                     // Для форумов: если нужен ответ преподавателя, устанавливаем needs_grading
                     if ($activityType === 'forum' && $needsResponse) {
                         $needsGrading = true;
                     }
-                    
+
                     // Информация о попытках
                     $attemptsCount = $activityData['attempts_count'] ?? 0;
                     $maxAttempts = $activityData['max_attempts'] ?? null;
@@ -477,12 +481,12 @@ class CourseActivitySyncService
                             ? \Carbon\Carbon::createFromTimestamp($activityData['last_attempt_at'])
                             : $activityData['last_attempt_at'];
                     }
-                    
+
                     // Информация о вопросах и ответах (для тестов)
                     $questionsData = $activityData['questions_data'] ?? null;
                     $correctAnswers = $activityData['correct_answers'] ?? null;
                     $totalQuestions = $activityData['total_questions'] ?? null;
-                    
+
                     // Данные о завершении
                     $completionData = [
                         'is_viewed' => $isViewed,
@@ -492,7 +496,7 @@ class CourseActivitySyncService
                         'is_graded' => $isGraded,
                         'attempts_count' => $attemptsCount,
                     ];
-                    
+
                     $completionPercentage = null;
                     if ($maxGrade && $maxGrade > 0 && $grade !== null) {
                         $completionPercentage = min(100, ($grade / $maxGrade) * 100);
@@ -521,10 +525,10 @@ class CourseActivitySyncService
                         'graded_at' => $gradedAt,
                         'progress_data' => $activityData,
                     ];
-                    
+
                     // Добавляем новые поля только если они существуют в схеме БД
                     $tableName = (new StudentActivityProgress())->getTable();
-                    
+
                     if ($this->hasColumn($tableName, 'is_viewed')) {
                         $progressData['is_viewed'] = $isViewed;
                     }
@@ -590,7 +594,7 @@ class CourseActivitySyncService
                     // Фильтруем данные перед сохранением - удаляем поля, которых нет в БД
                     $filteredProgressData = [];
                     $tableName = (new StudentActivityProgress())->getTable();
-                    
+
                     foreach ($progressData as $key => $value) {
                         // Проверяем наличие колонки перед добавлением
                         if ($this->hasColumn($tableName, $key)) {
@@ -609,7 +613,7 @@ class CourseActivitySyncService
                             }
                         }
                     }
-                    
+
                     try {
                         if ($progress) {
                             // Сохраняем существующие данные, если новые не переданы
@@ -622,21 +626,21 @@ class CourseActivitySyncService
                             if (isset($filteredProgressData['view_count']) && $viewCount == 0 && isset($progress->view_count) && $progress->view_count > 0) {
                                 $filteredProgressData['view_count'] = $progress->view_count;
                             }
-                            
+
                             // Обновляем счетчик просмотров, если материал был просмотрен
                             if (isset($filteredProgressData['is_viewed']) && isset($filteredProgressData['view_count']) && $isViewed && isset($progress->is_viewed) && !$progress->is_viewed) {
                                 $filteredProgressData['view_count'] = (isset($progress->view_count) ? $progress->view_count : 0) + 1;
                             }
-                            
+
                             // Обновляем существующий прогресс
                             $progress->update($filteredProgressData);
                             $stats['updated']++;
-                            
+
                             // Создаем запись в истории, если статус изменился или появились новые данные
                             $statusChanged = $progress->status !== $status;
                             $draftChanged = isset($progress->has_draft) && isset($filteredProgressData['has_draft']) && $progress->has_draft !== $hasDraft;
                             $gradingChanged = isset($progress->needs_grading) && isset($filteredProgressData['needs_grading']) && $progress->needs_grading !== $needsGrading;
-                            
+
                             if ($statusChanged || $draftChanged || $gradingChanged) {
                                 try {
                                     $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
@@ -654,7 +658,7 @@ class CourseActivitySyncService
                             }
                             StudentActivityProgress::create($filteredProgressData);
                             $stats['created']++;
-                            
+
                             // Создаем запись в истории
                             try {
                                 $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
@@ -668,17 +672,17 @@ class CourseActivitySyncService
                     } catch (\Illuminate\Database\QueryException $dbException) {
                         // Обрабатываем ошибки базы данных
                         $errorMessage = $dbException->getMessage();
-                        
+
                         // Определяем тип ошибки
                         $errorType = 'unknown';
                         $errorDetails = '';
-                        
+
                         if (strpos($errorMessage, 'Unknown column') !== false) {
                             preg_match("/Unknown column '([^']+)'/", $errorMessage, $matches);
                             $missingColumn = $matches[1] ?? 'unknown';
                             $errorType = 'missing_column';
                             $errorDetails = "Отсутствует поле БД: {$missingColumn}. Выполните миграции: php artisan migrate";
-                            
+
                             // Добавляем ошибку в список только один раз для каждого отсутствующего поля
                             $errorKey = 'missing_column_' . $missingColumn;
                             if (!isset($stats['_seen_errors'][$errorKey])) {
@@ -691,7 +695,7 @@ class CourseActivitySyncService
                                 ];
                                 $stats['_seen_errors'][$errorKey] = true;
                             }
-                            
+
                             Log::warning('Поле не существует в БД', [
                                 'missing_column' => $missingColumn,
                                 'error' => $errorMessage,
@@ -703,7 +707,7 @@ class CourseActivitySyncService
                             // Другая ошибка БД
                             $errorType = 'database_error';
                             $errorDetails = 'Ошибка БД: ' . $errorMessage;
-                            
+
                             $stats['errors']++;
                             $stats['errors_list'][] = [
                                 'activity_type' => $activityType,
@@ -711,7 +715,7 @@ class CourseActivitySyncService
                                 'activity_name' => $activityData['name'] ?? 'Неизвестно',
                                 'error' => $errorDetails
                             ];
-                            
+
                             Log::error('Ошибка базы данных при сохранении прогресса', [
                                 'error' => $errorMessage,
                                 'course_id' => $courseId,
@@ -731,7 +735,7 @@ class CourseActivitySyncService
                             'activity_name' => $activityData['name'] ?? 'Неизвестно',
                             'error' => 'Ошибка сохранения: ' . $errorMessage
                         ];
-                        
+
                         Log::error('Ошибка при сохранении прогресса', [
                             'error' => $errorMessage,
                             'course_id' => $courseId,
@@ -742,7 +746,7 @@ class CourseActivitySyncService
                     }
                 } catch (\Exception $e) {
                     $errorMessage = $e->getMessage();
-                    
+
                     // Игнорируем ошибки доступа к Moodle API - они не критичны
                     if (strpos($errorMessage, 'webservice_access_exception') !== false ||
                         strpos($errorMessage, 'accessexception') !== false ||
@@ -755,13 +759,13 @@ class CourseActivitySyncService
                         ]);
                         continue; // Пропускаем эту активность, не добавляем в список ошибок
                     }
-                    
+
                     $stats['errors']++;
                     $stats['errors_list'][] = [
                         'activity_type' => $activityData['type'] ?? 'unknown',
                         'error' => $errorMessage
                     ];
-                    
+
                     Log::error('Ошибка синхронизации прогресса студента', [
                         'course_id' => $courseId,
                         'user_id' => $userId,
@@ -791,7 +795,7 @@ class CourseActivitySyncService
 
     /**
      * Синхронизировать историю действий студента
-     * 
+     *
      * @param int $courseId ID курса в локальной БД
      * @param int $userId ID студента в локальной БД
      * @return array Статистика синхронизации
@@ -801,7 +805,7 @@ class CourseActivitySyncService
         // История действий создается автоматически при синхронизации прогресса
         // Этот метод можно использовать для дополнительной синхронизации из Moodle logs
         // Пока возвращаем пустую статистику
-        
+
         return [
             'total' => 0,
             'created' => 0,
@@ -813,7 +817,7 @@ class CourseActivitySyncService
 
     /**
      * Полная синхронизация для всех курсов и студентов
-     * 
+     *
      * @return array Статистика синхронизации
      */
     public function syncAll(): array
@@ -827,7 +831,7 @@ class CourseActivitySyncService
 
         // Синхронизируем элементы курсов
         $courses = Course::whereNotNull('moodle_course_id')->get();
-        
+
         $totalActivities = [
             'total' => 0,
             'created' => 0,
@@ -838,7 +842,7 @@ class CourseActivitySyncService
         foreach ($courses as $course) {
             try {
                 $activityStats = $this->syncCourseActivities($course->id);
-                
+
                 $totalActivities['total'] += $activityStats['total'];
                 $totalActivities['created'] += $activityStats['created'];
                 $totalActivities['updated'] += $activityStats['updated'];
@@ -865,11 +869,11 @@ class CourseActivitySyncService
         foreach ($courses as $course) {
             // Получаем всех студентов курса
             $students = $course->users()->whereNotNull('moodle_user_id')->get();
-            
+
             foreach ($students as $student) {
                 try {
                     $progressStats = $this->syncStudentProgress($course->id, $student->id);
-                    
+
                     $totalProgress['total'] += $progressStats['total'];
                     $totalProgress['created'] += $progressStats['created'];
                     $totalProgress['updated'] += $progressStats['updated'];
@@ -890,6 +894,33 @@ class CourseActivitySyncService
         Log::info('Полная синхронизация завершена', $stats);
 
         return $stats;
+    }
+
+    /**
+     * Нормализовать тип активности из Moodle
+     * 
+     * @param string $rawType Тип из Moodle
+     * @return string Нормализованный тип
+     */
+    protected function normalizeActivityType(string $rawType): string
+    {
+        // Поддерживаемые типы из Moodle
+        $supportedTypes = [
+            'assign', 'quiz', 'forum', 'resource', 
+            'page', 'file', 'folder', 'url', 'book',
+            'label', 'text', 'video', 'audio', 'scorm',
+            'hvp', 'lti', 'workshop', 'choice', 'feedback'
+        ];
+        
+        $normalizedType = strtolower(trim($rawType));
+        
+        // Если тип поддерживается, возвращаем его
+        if (in_array($normalizedType, $supportedTypes)) {
+            return $normalizedType;
+        }
+        
+        // Для неизвестных типов возвращаем 'other'
+        return 'other';
     }
 
     /**
@@ -918,7 +949,7 @@ class CourseActivitySyncService
 
     /**
      * Создать запись в истории действий
-     * 
+     *
      * @param User $user Студент
      * @param Course $course Курс
      * @param CourseActivity $activity Элемент курса
@@ -929,7 +960,7 @@ class CourseActivitySyncService
     protected function createHistoryRecord(User $user, Course $course, CourseActivity $activity, string $status, array $activityData): void
     {
         $actionType = $this->mapStatusToActionType($status, $activityData);
-        
+
         StudentActivityHistory::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
@@ -944,7 +975,7 @@ class CourseActivitySyncService
 
     /**
      * Преобразовать статус в тип действия для истории
-     * 
+     *
      * @param string $status Статус
      * @param array $activityData Данные активности
      * @return string Тип действия
@@ -954,25 +985,25 @@ class CourseActivitySyncService
         if ($status === 'graded' && isset($activityData['graded_at'])) {
             return 'graded';
         }
-        
+
         if ($status === 'submitted' && isset($activityData['submitted_at'])) {
             return 'submitted';
         }
-        
+
         if ($status === 'completed') {
             return 'completed';
         }
-        
+
         if ($status === 'in_progress') {
             return 'started';
         }
-        
+
         return 'updated';
     }
 
     /**
      * Сгенерировать описание для записи истории
-     * 
+     *
      * @param string $actionType Тип действия
      * @param array $activityData Данные активности
      * @return string Описание
