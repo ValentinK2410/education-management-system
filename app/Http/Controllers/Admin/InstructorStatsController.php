@@ -160,9 +160,9 @@ class InstructorStatsController extends Controller
             ->get();
 
         // Получаем все прогрессы студентов одним запросом
+        // Не загружаем связи activity и user для экономии памяти - они не нужны в этом контексте
         $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereIn('user_id', $allStudents->pluck('id'))
-            ->with(['activity', 'user'])
             ->get();
 
         // Группируем прогрессы по course_id -> user_id -> activity_id
@@ -258,6 +258,29 @@ class InstructorStatsController extends Controller
                             $statusClass = 'info';
                         }
 
+                        // Форматируем даты заранее для экономии памяти
+                        $submittedAtFormatted = null;
+                        if ($progress->submitted_at) {
+                            try {
+                                $submittedAtFormatted = $progress->submitted_at instanceof \Carbon\Carbon 
+                                    ? $progress->submitted_at->format('d.m.Y H:i')
+                                    : \Carbon\Carbon::parse($progress->submitted_at)->format('d.m.Y H:i');
+                            } catch (\Exception $e) {
+                                $submittedAtFormatted = null;
+                            }
+                        }
+                        
+                        $gradedAtFormatted = null;
+                        if ($progress->graded_at) {
+                            try {
+                                $gradedAtFormatted = $progress->graded_at instanceof \Carbon\Carbon 
+                                    ? $progress->graded_at->format('d.m.Y H:i')
+                                    : \Carbon\Carbon::parse($progress->graded_at)->format('d.m.Y H:i');
+                            } catch (\Exception $e) {
+                                $gradedAtFormatted = null;
+                            }
+                        }
+
                         $studentActivities[] = [
                             'activity' => $activity,
                             'progress' => $progress,
@@ -268,18 +291,25 @@ class InstructorStatsController extends Controller
                             'grade' => $progress->grade,
                             'max_grade' => $progress->max_grade ?? $activity->max_grade,
                             'submitted_at' => $progress->submitted_at,
+                            'submitted_at_formatted' => $submittedAtFormatted,
                             'graded_at' => $progress->graded_at,
+                            'graded_at_formatted' => $gradedAtFormatted,
                             'is_forum' => $isForum,
                             'needs_response' => $needsResponse,
                         ];
                     }
                 }
 
+                // Ограничиваем количество активностей для предотвращения исчерпания памяти
+                // Показываем только последние 50 активностей на студента
+                $limitedActivities = array_slice($studentActivities, 0, 50);
+                
                 // Добавляем всех студентов, даже если у них нет активности
                 $studentsWithActivity[] = [
                     'student' => $student,
-                    'activities' => $studentActivities,
+                    'activities' => $limitedActivities,
                     'total_activities' => count($studentActivities),
+                    'displayed_activities' => count($limitedActivities),
                     'graded_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'graded')),
                     'submitted_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'submitted')),
                     'pending_count' => count(array_filter($studentActivities, fn($a) => $a['status'] === 'needs_grading' || $a['status'] === 'needs_response')),

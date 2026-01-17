@@ -700,6 +700,12 @@
                                                 </div>
 
                                                 @if($hasActivity && !empty($activities))
+                                                    @if($studentData['total_activities'] > $studentData['displayed_activities'])
+                                                        <div class="alert alert-info mb-2">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            Показано {{ $studentData['displayed_activities'] }} из {{ $studentData['total_activities'] }} активностей
+                                                        </div>
+                                                    @endif
                                                     <div class="row g-2">
                                                         @foreach($activities as $item)
                                                         @php
@@ -743,21 +749,21 @@
                                                                                 <i class="fas {{ $item['status_icon'] }} me-1"></i>{{ $item['status_text'] }}
                                                                             </span>
                                                                         </div>
-                                                                        @if($item['submitted_at'])
+                                                                        @if(!empty($item['submitted_at_formatted']))
                                                                             <div class="small text-info">
                                                                                 @if($item['is_forum'] && $item['needs_response'])
                                                                                     <i class="fas fa-comments me-1"></i>
-                                                                                    Ответил: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                    Ответил: {{ $item['submitted_at_formatted'] }}
                                                                                 @else
                                                                                     <i class="fas fa-paper-plane me-1"></i>
-                                                                                    Сдано: {{ \Carbon\Carbon::parse($item['submitted_at'])->format('d.m.Y H:i') }}
+                                                                                    Сдано: {{ $item['submitted_at_formatted'] }}
                                                                                 @endif
                                                                             </div>
                                                                         @endif
-                                                                        @if($item['graded_at'])
+                                                                        @if(!empty($item['graded_at_formatted']))
                                                                             <div class="small text-success">
                                                                                 <i class="fas fa-check-double me-1"></i>
-                                                                                Проверено: {{ \Carbon\Carbon::parse($item['graded_at'])->format('d.m.Y H:i') }}
+                                                                                Проверено: {{ $item['graded_at_formatted'] }}
                                                                             </div>
                                                                         @endif
                                                                         @if($item['grade'] !== null && $item['max_grade'])
