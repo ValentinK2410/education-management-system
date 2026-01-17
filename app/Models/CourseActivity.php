@@ -188,40 +188,10 @@ class CourseActivity extends Model
 
             $moodleUrl = rtrim($moodleUrl, '/');
 
-            // Если cmid отсутствует, пытаемся получить его через API для тестов
-            if (!$cmid && $this->activity_type === 'quiz' && $this->moodle_activity_id && $course->moodle_course_id) {
-                try {
-                    $moodleApiService = new \App\Services\MoodleApiService();
-                    $cmResult = $moodleApiService->call('core_course_get_course_module_by_instance', [
-                        'module' => 'quiz',
-                        'instance' => $this->moodle_activity_id
-                    ]);
-
-                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
-                        $cmid = $cmResult['cm']['id'];
-                        // Сохраняем cmid для будущего использования
-                        $updateData = [];
-                        // Проверяем, есть ли поле cmid в таблице (проверяем через attributes)
-                        if (array_key_exists('cmid', $this->attributes)) {
-                            $updateData['cmid'] = $cmid;
-                        }
-                        // Всегда сохраняем в meta для надежности
-                        $meta = $this->meta ?? [];
-                        $meta['cmid'] = $cmid;
-                        $updateData['meta'] = $meta;
-
-                        if (!empty($updateData)) {
-                            $this->update($updateData);
-                        }
-                    }
-                } catch (\Exception $e) {
-                    \Log::debug('Не удалось получить cmid через API для теста', [
-                        'activity_id' => $this->id,
-                        'moodle_activity_id' => $this->moodle_activity_id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
+            // Если cmid отсутствует, НЕ пытаемся получить его через API в представлении
+            // Это может привести к множественным запросам и таймаутам
+            // Вместо этого cmid должен быть получен при синхронизации из Moodle
+            // Если cmid отсутствует, просто возвращаем null
 
             if (!$cmid) {
                 \Log::debug('Не удалось получить URL Moodle: отсутствует cmid', [
