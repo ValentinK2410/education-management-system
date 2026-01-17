@@ -1,3 +1,7 @@
+# Увеличение лимита памяти PHP для обработки больших объемов данных
+php_value memory_limit 512M
+php_value max_execution_time 300
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

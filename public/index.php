@@ -3,6 +3,10 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
+// Увеличение лимита памяти PHP для обработки больших объемов данных
+ini_set('memory_limit', '512M');
+ini_set('max_execution_time', '300');
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...

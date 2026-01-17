@@ -97,6 +97,10 @@ class InstructorStatsController extends Controller
      */
     public function show(User $instructor, Request $request)
     {
+        // Увеличение памяти для этого конкретного запроса (на случай, если другие методы не работают)
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '300');
+        
         try {
             // Проверяем, что пользователь является преподавателем
             if (!$instructor->hasRole('instructor')) {
@@ -176,8 +180,8 @@ class InstructorStatsController extends Controller
             // Загружаем только необходимые поля
             $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
                 ->whereIn('user_id', $studentIds)
-                ->select('id', 'user_id', 'course_id', 'activity_id', 'status', 'grade', 'max_grade', 
-                         'submitted_at', 'graded_at', 'is_viewed', 'is_read', 'started_at', 
+                ->select('id', 'user_id', 'course_id', 'activity_id', 'status', 'grade', 'max_grade',
+                         'submitted_at', 'graded_at', 'is_viewed', 'is_read', 'started_at',
                          'is_graded', 'has_draft', 'needs_grading', 'needs_response')
                 ->limit(2000) // Радикальное ограничение: максимум 2000 прогрессов
                 ->get();
