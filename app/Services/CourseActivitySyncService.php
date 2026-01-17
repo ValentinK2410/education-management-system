@@ -901,7 +901,7 @@ class CourseActivitySyncService
 
     /**
      * Преобразовать timestamp в Carbon объект с валидацией
-     * 
+     *
      * @param mixed $timestamp Timestamp (число или строка) или уже готовый datetime
      * @return \Carbon\Carbon|null Carbon объект или null если timestamp некорректен
      */
@@ -910,12 +910,12 @@ class CourseActivitySyncService
         if (!$timestamp) {
             return null;
         }
-        
+
         // Если это уже Carbon объект или DateTime, возвращаем как есть
         if ($timestamp instanceof \Carbon\Carbon || $timestamp instanceof \DateTime) {
             return $timestamp instanceof \Carbon\Carbon ? $timestamp : \Carbon\Carbon::instance($timestamp);
         }
-        
+
         // Если это строка, пытаемся распарсить как дату
         if (is_string($timestamp)) {
             try {
@@ -928,19 +928,19 @@ class CourseActivitySyncService
                 // Если не удалось распарсить, пробуем как timestamp
             }
         }
-        
+
         // Если это число, обрабатываем как timestamp
         if (is_numeric($timestamp)) {
             $timestampValue = (int)$timestamp;
-            
+
             // Проверяем, что timestamp разумный (не меньше 2000-01-01)
             // Timestamp для 2000-01-01 00:00:00 UTC = 946684800
             $minTimestamp = 946684800; // 2000-01-01 00:00:00 UTC
-            
+
             // Также проверяем, что это не слишком большое значение (не больше 2100 года)
             // Timestamp для 2100-01-01 00:00:00 UTC = 4102444800
             $maxTimestamp = 4102444800; // 2100-01-01 00:00:00 UTC
-            
+
             if ($timestampValue >= $minTimestamp && $timestampValue <= $maxTimestamp) {
                 try {
                     return \Carbon\Carbon::createFromTimestamp($timestampValue);
@@ -958,7 +958,7 @@ class CourseActivitySyncService
                 ]);
             }
         }
-        
+
         return null;
     }
 
