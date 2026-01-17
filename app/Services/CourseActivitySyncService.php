@@ -207,6 +207,9 @@ class CourseActivitySyncService
         // Добавляем новые поля только если они существуют в схеме БД
         $tableName = (new CourseActivity())->getTable();
         
+        if ($this->hasColumn($tableName, 'cmid')) {
+            $activityDataToSave['cmid'] = $activityData['cmid'] ?? $activityData['moodle_id'] ?? null;
+        }
         if ($this->hasColumn($tableName, 'week_number')) {
             $activityDataToSave['week_number'] = $activityData['week_number'] ?? null;
         }
@@ -220,14 +223,42 @@ class CourseActivitySyncService
             $activityDataToSave['section_type'] = $activityData['section_type'] ?? 'week';
         }
 
-        if ($activity) {
-            // Обновляем существующий элемент
-            $activity->update($activityDataToSave);
-            return ['created' => false, 'updated' => true, 'activity' => $activity];
-        } else {
-            // Создаем новый элемент
-            $activity = CourseActivity::create($activityDataToSave);
-            return ['created' => true, 'updated' => false, 'activity' => $activity];
+        try {
+            if ($activity) {
+                // Обновляем существующий элемент
+                $activity->update($activityDataToSave);
+                return ['created' => false, 'updated' => true, 'activity' => $activity];
+            } else {
+                // Создаем новый элемент
+                $activity = CourseActivity::create($activityDataToSave);
+                return ['created' => true, 'updated' => false, 'activity' => $activity];
+            }
+        } catch (\Illuminate\Database\QueryException $dbException) {
+            $errorMessage = $dbException->getMessage();
+            
+            // Если ошибка связана с отсутствующим полем, пытаемся сохранить без него
+            if (strpos($errorMessage, 'Unknown column') !== false) {
+                preg_match("/Unknown column '([^']+)'/", $errorMessage, $matches);
+                $missingColumn = $matches[1] ?? 'unknown';
+                
+                // Удаляем проблемное поле
+                unset($activityDataToSave[$missingColumn]);
+                
+                // Пытаемся сохранить снова
+                try {
+                    if ($activity) {
+                        $activity->update($activityDataToSave);
+                        return ['created' => false, 'updated' => true, 'activity' => $activity];
+                    } else {
+                        $activity = CourseActivity::create($activityDataToSave);
+                        return ['created' => true, 'updated' => false, 'activity' => $activity];
+                    }
+                } catch (\Exception $retryException) {
+                    throw new \Exception('Ошибка сохранения элемента курса: ' . $retryException->getMessage() . ' (отсутствует поле: ' . $missingColumn . ')');
+                }
+            }
+            
+            throw new \Exception('Ошибка сохранения элемента курса: ' . $errorMessage);
         }
     }
 
@@ -331,8 +362,32 @@ class CourseActivitySyncService
 
                     if (!$activity) {
                         // Если элемента нет, создаем его
-                        $activity = $this->syncActivity($course, $activityData);
-                        $activity = $activity['activity'];
+                        try {
+                            $syncResult = $this->syncActivity($course, $activityData);
+                            $activity = $syncResult['activity'];
+                            Log::info('Создан элемент курса при синхронизации прогресса', [
+                                'course_id' => $course->id,
+                                'activity_id' => $activity->id,
+                                'activity_type' => $activityType,
+                                'moodle_id' => $moodleActivityId
+                            ]);
+                        } catch (\Exception $syncException) {
+                            Log::error('Ошибка создания элемента курса при синхронизации прогресса', [
+                                'course_id' => $course->id,
+                                'activity_type' => $activityType,
+                                'moodle_id' => $moodleActivityId,
+                                'error' => $syncException->getMessage()
+                            ]);
+                            // Продолжаем обработку, но пропускаем этот элемент
+                            $stats['errors']++;
+                            $stats['errors_list'][] = [
+                                'activity_type' => $activityType,
+                                'moodle_id' => $moodleActivityId,
+                                'activity_name' => $activityData['name'] ?? 'Неизвестно',
+                                'error' => 'Не удалось создать элемент курса: ' . $syncException->getMessage()
+                            ];
+                            continue;
+                        }
                     }
 
                     // Преобразуем timestamp в datetime для submitted_at и graded_at
@@ -532,115 +587,158 @@ class CourseActivitySyncService
                         $progressData['completion_percentage'] = $completionPercentage;
                     }
 
+                    // Фильтруем данные перед сохранением - удаляем поля, которых нет в БД
+                    $filteredProgressData = [];
+                    $tableName = (new StudentActivityProgress())->getTable();
+                    
+                    foreach ($progressData as $key => $value) {
+                        // Проверяем наличие колонки перед добавлением
+                        if ($this->hasColumn($tableName, $key)) {
+                            $filteredProgressData[$key] = $value;
+                        } else {
+                            // Логируем только один раз для каждого отсутствующего поля
+                            $errorKey = 'missing_column_' . $key;
+                            if (!isset($stats['_seen_errors'][$errorKey])) {
+                                Log::debug('Поле отсутствует в БД, пропускаем', [
+                                    'missing_column' => $key,
+                                    'table' => $tableName,
+                                    'course_id' => $courseId,
+                                    'user_id' => $userId
+                                ]);
+                                $stats['_seen_errors'][$errorKey] = true;
+                            }
+                        }
+                    }
+                    
                     try {
                         if ($progress) {
                             // Сохраняем существующие данные, если новые не переданы
-                            if (!$submittedAt && $progress->submitted_at) {
-                                $progressData['submitted_at'] = $progress->submitted_at;
+                            if (!isset($filteredProgressData['submitted_at']) && $progress->submitted_at) {
+                                $filteredProgressData['submitted_at'] = $progress->submitted_at;
                             }
-                            if (isset($progressData['last_viewed_at']) && !$lastViewedAt && isset($progress->last_viewed_at) && $progress->last_viewed_at) {
-                                $progressData['last_viewed_at'] = $progress->last_viewed_at;
+                            if (isset($filteredProgressData['last_viewed_at']) && !$lastViewedAt && isset($progress->last_viewed_at) && $progress->last_viewed_at) {
+                                $filteredProgressData['last_viewed_at'] = $progress->last_viewed_at;
                             }
-                            if (isset($progressData['view_count']) && $viewCount == 0 && isset($progress->view_count) && $progress->view_count > 0) {
-                                $progressData['view_count'] = $progress->view_count;
+                            if (isset($filteredProgressData['view_count']) && $viewCount == 0 && isset($progress->view_count) && $progress->view_count > 0) {
+                                $filteredProgressData['view_count'] = $progress->view_count;
                             }
                             
                             // Обновляем счетчик просмотров, если материал был просмотрен
-                            if (isset($progressData['is_viewed']) && isset($progressData['view_count']) && $isViewed && isset($progress->is_viewed) && !$progress->is_viewed) {
-                                $progressData['view_count'] = (isset($progress->view_count) ? $progress->view_count : 0) + 1;
+                            if (isset($filteredProgressData['is_viewed']) && isset($filteredProgressData['view_count']) && $isViewed && isset($progress->is_viewed) && !$progress->is_viewed) {
+                                $filteredProgressData['view_count'] = (isset($progress->view_count) ? $progress->view_count : 0) + 1;
                             }
                             
                             // Обновляем существующий прогресс
-                            $progress->update($progressData);
+                            $progress->update($filteredProgressData);
                             $stats['updated']++;
                             
                             // Создаем запись в истории, если статус изменился или появились новые данные
                             $statusChanged = $progress->status !== $status;
-                            $draftChanged = isset($progress->has_draft) && isset($progressData['has_draft']) && $progress->has_draft !== $hasDraft;
-                            $gradingChanged = isset($progress->needs_grading) && isset($progressData['needs_grading']) && $progress->needs_grading !== $needsGrading;
+                            $draftChanged = isset($progress->has_draft) && isset($filteredProgressData['has_draft']) && $progress->has_draft !== $hasDraft;
+                            $gradingChanged = isset($progress->needs_grading) && isset($filteredProgressData['needs_grading']) && $progress->needs_grading !== $needsGrading;
                             
                             if ($statusChanged || $draftChanged || $gradingChanged) {
-                                $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                                try {
+                                    $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                                } catch (\Exception $historyException) {
+                                    // История не критична, просто логируем
+                                    Log::debug('Ошибка создания записи истории (не критично)', [
+                                        'error' => $historyException->getMessage()
+                                    ]);
+                                }
                             }
                         } else {
                             // Создаем новый прогресс
-                            $progressData['started_at'] = $activityData['submitted_at'] ?? (isset($progressData['last_viewed_at']) ? $lastViewedAt : null) ?? now();
-                            StudentActivityProgress::create($progressData);
+                            if (!isset($filteredProgressData['started_at'])) {
+                                $filteredProgressData['started_at'] = $activityData['submitted_at'] ?? (isset($filteredProgressData['last_viewed_at']) ? $lastViewedAt : null) ?? now();
+                            }
+                            StudentActivityProgress::create($filteredProgressData);
                             $stats['created']++;
                             
                             // Создаем запись в истории
-                            $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                            try {
+                                $this->createHistoryRecord($user, $course, $activity, $status, $activityData);
+                            } catch (\Exception $historyException) {
+                                // История не критична, просто логируем
+                                Log::debug('Ошибка создания записи истории (не критично)', [
+                                    'error' => $historyException->getMessage()
+                                ]);
+                            }
                         }
                     } catch (\Illuminate\Database\QueryException $dbException) {
-                        // Обрабатываем ошибки базы данных (например, отсутствие полей)
+                        // Обрабатываем ошибки базы данных
                         $errorMessage = $dbException->getMessage();
+                        
+                        // Определяем тип ошибки
+                        $errorType = 'unknown';
+                        $errorDetails = '';
+                        
                         if (strpos($errorMessage, 'Unknown column') !== false) {
-                            // Поле не существует в БД - определяем какое поле отсутствует
                             preg_match("/Unknown column '([^']+)'/", $errorMessage, $matches);
                             $missingColumn = $matches[1] ?? 'unknown';
-                            
-                            Log::warning('Поле не существует в БД, пропускаем', [
-                                'missing_column' => $missingColumn,
-                                'error' => $errorMessage,
-                                'course_id' => $courseId,
-                                'user_id' => $userId,
-                                'activity_id' => $activity->id ?? null,
-                                'hint' => 'Выполните миграции базы данных: php artisan migrate'
-                            ]);
+                            $errorType = 'missing_column';
+                            $errorDetails = "Отсутствует поле БД: {$missingColumn}. Выполните миграции: php artisan migrate";
                             
                             // Добавляем ошибку в список только один раз для каждого отсутствующего поля
                             $errorKey = 'missing_column_' . $missingColumn;
                             if (!isset($stats['_seen_errors'][$errorKey])) {
                                 $stats['errors']++;
                                 $stats['errors_list'][] = [
-                                    'activity_type' => $activityData['type'] ?? 'unknown',
+                                    'activity_type' => $activityType,
                                     'moodle_id' => $moodleActivityId,
-                                    'error' => 'Отсутствует поле БД: ' . $missingColumn . '. Выполните миграции: php artisan migrate'
+                                    'activity_name' => $activityData['name'] ?? 'Неизвестно',
+                                    'error' => $errorDetails
                                 ];
                                 $stats['_seen_errors'][$errorKey] = true;
                             }
                             
-                            // Удаляем проблемное поле из данных
-                            unset($progressData[$missingColumn]);
-                            
-                            // Пытаемся сохранить без проблемных полей
-                            try {
-                                if ($progress) {
-                                    $progress->update($progressData);
-                                    $stats['updated']++;
-                                    // Не считаем это ошибкой, если данные сохранены успешно
-                                } else {
-                                    StudentActivityProgress::create($progressData);
-                                    $stats['created']++;
-                                    // Не считаем это ошибкой, если данные сохранены успешно
-                                }
-                            } catch (\Exception $retryException) {
-                                // Только если повторная попытка тоже не удалась, считаем ошибкой
-                                $stats['errors']++;
-                                $stats['errors_list'][] = [
-                                    'activity_type' => $activityData['type'] ?? 'unknown',
-                                    'moodle_id' => $moodleActivityId,
-                                    'error' => 'Отсутствует поле БД: ' . $missingColumn . '. ' . $retryException->getMessage()
-                                ];
-                                Log::error('Ошибка сохранения прогресса после удаления проблемных полей', [
-                                    'missing_column' => $missingColumn,
-                                    'error' => $retryException->getMessage()
-                                ]);
-                            }
+                            Log::warning('Поле не существует в БД', [
+                                'missing_column' => $missingColumn,
+                                'error' => $errorMessage,
+                                'course_id' => $courseId,
+                                'user_id' => $userId,
+                                'activity_id' => $activity->id ?? null
+                            ]);
                         } else {
                             // Другая ошибка БД
+                            $errorType = 'database_error';
+                            $errorDetails = 'Ошибка БД: ' . $errorMessage;
+                            
                             $stats['errors']++;
                             $stats['errors_list'][] = [
-                                'activity_type' => $activityData['type'] ?? 'unknown',
+                                'activity_type' => $activityType,
                                 'moodle_id' => $moodleActivityId,
-                                'error' => 'Ошибка БД: ' . $errorMessage
+                                'activity_name' => $activityData['name'] ?? 'Неизвестно',
+                                'error' => $errorDetails
                             ];
+                            
                             Log::error('Ошибка базы данных при сохранении прогресса', [
                                 'error' => $errorMessage,
                                 'course_id' => $courseId,
-                                'user_id' => $userId
+                                'user_id' => $userId,
+                                'activity_id' => $activity->id ?? null,
+                                'activity_type' => $activityType,
+                                'moodle_id' => $moodleActivityId
                             ]);
                         }
+                    } catch (\Exception $e) {
+                        // Общая ошибка
+                        $errorMessage = $e->getMessage();
+                        $stats['errors']++;
+                        $stats['errors_list'][] = [
+                            'activity_type' => $activityType,
+                            'moodle_id' => $moodleActivityId,
+                            'activity_name' => $activityData['name'] ?? 'Неизвестно',
+                            'error' => 'Ошибка сохранения: ' . $errorMessage
+                        ];
+                        
+                        Log::error('Ошибка при сохранении прогресса', [
+                            'error' => $errorMessage,
+                            'course_id' => $courseId,
+                            'user_id' => $userId,
+                            'activity_id' => $activity->id ?? null,
+                            'trace' => $e->getTraceAsString()
+                        ]);
                     }
                 } catch (\Exception $e) {
                     $errorMessage = $e->getMessage();

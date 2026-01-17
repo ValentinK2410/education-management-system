@@ -282,10 +282,33 @@ class MoodleSyncController extends Controller
             ];
             
             if ($request->expectsJson()) {
+                // Формируем детальное сообщение об ошибках
+                $errorDetails = [];
+                if (isset($totalProgressStats['errors_list']) && !empty($totalProgressStats['errors_list'])) {
+                    // Группируем ошибки по типам
+                    $errorGroups = [];
+                    foreach ($totalProgressStats['errors_list'] as $error) {
+                        $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
+                        $errorType = $this->categorizeError($errorMsg);
+                        if (!isset($errorGroups[$errorType])) {
+                            $errorGroups[$errorType] = [];
+                        }
+                        $errorGroups[$errorType][] = [
+                            'activity_type' => $error['activity_type'] ?? 'unknown',
+                            'moodle_id' => $error['moodle_id'] ?? null,
+                            'activity_name' => $error['activity_name'] ?? null,
+                            'error' => $errorMsg
+                        ];
+                    }
+                    $errorDetails['groups'] = $errorGroups;
+                    $errorDetails['total_unique'] = count($totalProgressStats['errors_list']);
+                }
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Синхронизация активности студентов завершена',
-                    'stats' => $stats
+                    'stats' => $stats,
+                    'errors' => $errorDetails
                 ]);
             }
             
@@ -349,20 +372,51 @@ class MoodleSyncController extends Controller
                 
                 // Группируем ошибки по типам для более понятного отображения
                 $errorGroups = [];
+                $errorDetails = [];
                 foreach ($allErrors as $error) {
                     $errorMsg = $error['error'] ?? (is_string($error) ? $error : 'Неизвестная ошибка');
                     $errorType = $this->categorizeError($errorMsg);
                     if (!isset($errorGroups[$errorType])) {
                         $errorGroups[$errorType] = [];
+                        $errorDetails[$errorType] = [];
                     }
                     $errorGroups[$errorType][] = $errorMsg;
+                    
+                    // Сохраняем детальную информацию об ошибке
+                    $errorDetails[$errorType][] = [
+                        'activity_type' => $error['activity_type'] ?? 'unknown',
+                        'moodle_id' => $error['moodle_id'] ?? null,
+                        'activity_name' => $error['activity_name'] ?? null,
+                        'student_name' => $error['student_name'] ?? null,
+                        'error' => $errorMsg
+                    ];
+                }
+                
+                // Формируем детальное сообщение об ошибках
+                $detailedMessage = $message . "\n\nДетали ошибок:\n";
+                foreach ($errorDetails as $type => $errors) {
+                    $detailedMessage .= "\n" . $type . " (" . count($errors) . "):\n";
+                    foreach (array_slice($errors, 0, 10) as $errorDetail) {
+                        $activityInfo = '';
+                        if (isset($errorDetail['activity_name'])) {
+                            $activityInfo = " - " . $errorDetail['activity_name'];
+                        }
+                        if (isset($errorDetail['student_name'])) {
+                            $activityInfo .= " (студент: " . $errorDetail['student_name'] . ")";
+                        }
+                        $detailedMessage .= "  • " . $errorDetail['error'] . $activityInfo . "\n";
+                    }
+                    if (count($errors) > 10) {
+                        $detailedMessage .= "  ... и еще " . (count($errors) - 10) . " ошибок этого типа\n";
+                    }
                 }
                 
                 // Сохраняем детали ошибок в сессию для отображения
                 session()->flash('sync_errors', [
                     'total' => $totalErrors,
                     'groups' => $errorGroups,
-                    'details' => array_slice($allErrors, 0, 20) // Первые 20 ошибок для детального просмотра
+                    'details' => $errorDetails,
+                    'message' => $detailedMessage
                 ]);
             }
             

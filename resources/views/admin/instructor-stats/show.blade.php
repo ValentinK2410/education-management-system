@@ -105,8 +105,8 @@
     <div class="instructor-header">
         <div class="d-flex align-items-center gap-4">
             @if($instructor->photo)
-                <img src="{{ asset('storage/' . $instructor->photo) }}" 
-                     alt="{{ $instructor->name }}" 
+                <img src="{{ asset('storage/' . $instructor->photo) }}"
+                     alt="{{ $instructor->name }}"
                      class="instructor-avatar-large">
             @else
                 <div class="instructor-avatar-placeholder-large">
@@ -149,18 +149,18 @@
                     <form method="GET" action="{{ route('admin.instructor-stats.show', $instructor->id) }}" class="row g-3">
                         <div class="col-md-4">
                             <label for="date_from" class="form-label">Дата начала</label>
-                            <input type="date" 
-                                   class="form-control" 
-                                   id="date_from" 
-                                   name="date_from" 
+                            <input type="date"
+                                   class="form-control"
+                                   id="date_from"
+                                   name="date_from"
                                    value="{{ $dateFrom ?? '' }}">
                         </div>
                         <div class="col-md-4">
                             <label for="date_to" class="form-label">Дата окончания</label>
-                            <input type="date" 
-                                   class="form-control" 
-                                   id="date_to" 
-                                   name="date_to" 
+                            <input type="date"
+                                   class="form-control"
+                                   id="date_to"
+                                   name="date_to"
                                    value="{{ $dateTo ?? '' }}">
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
@@ -180,9 +180,9 @@
                     <div class="mt-3">
                         <div class="alert alert-info mb-0">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Период:</strong> 
-                            {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d.m.Y') : 'с начала' }} 
-                            - 
+                            <strong>Период:</strong>
+                            {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d.m.Y') : 'с начала' }}
+                            -
                             {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d.m.Y') : 'до конца' }}
                         </div>
                     </div>
@@ -252,7 +252,7 @@
                                                             <i class="fas fa-eye"></i> Проверить
                                                         </a>
                                                     @else
-                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}"
                                                            class="btn btn-sm btn-primary mt-1">
                                                             <i class="fas fa-eye"></i> Проверить
                                                         </a>
@@ -321,7 +321,7 @@
                                                             <i class="fas fa-reply"></i> Ответить
                                                         </a>
                                                     @else
-                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}"
                                                            class="btn btn-sm btn-warning mt-1">
                                                             <i class="fas fa-reply"></i> Ответить
                                                         </a>
@@ -395,7 +395,7 @@
                                                             <i class="fas fa-check-circle"></i> Оценить
                                                         </a>
                                                     @else
-                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}"
                                                            class="btn btn-sm btn-danger mt-1">
                                                             <i class="fas fa-check-circle"></i> Оценить
                                                         </a>
@@ -471,7 +471,7 @@
                                                                 <i class="fas fa-eye"></i> Проверить
                                                             </a>
                                                         @else
-                                                            <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                            <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}"
                                                                class="btn btn-sm btn-success mt-1">
                                                                 <i class="fas fa-eye"></i> Проверить
                                                             </a>
@@ -650,8 +650,8 @@
                                                 <span class="badge bg-success">Активных: {{ count($coursesWithStudents[$course->id]) }}</span>
                                             @endif
                                             @if($course->moodle_course_id)
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-success ms-2 sync-course-btn" 
+                                                <button type="button"
+                                                        class="btn btn-sm btn-success ms-2 sync-course-btn"
                                                         data-course-id="{{ $course->id }}"
                                                         data-course-name="{{ $course->name }}"
                                                         title="Синхронизировать данные из Moodle">
@@ -659,7 +659,7 @@
                                                     <span class="sync-btn-text">Синхронизировать</span>
                                                 </button>
                                             @endif
-                                            <a href="{{ route('admin.courses.show', $course->id) }}" 
+                                            <a href="{{ route('admin.courses.show', $course->id) }}"
                                                class="btn btn-sm btn-outline-primary ms-2">
                                                 <i class="fas fa-eye"></i>
                                             </a>
@@ -678,7 +678,7 @@
                                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                                     <div class="flex-grow-1">
                                                         <h6 class="mb-1">
-                                                            <a href="{{ route('admin.users.show', $student->id) }}" 
+                                                            <a href="{{ route('admin.users.show', $student->id) }}"
                                                                class="text-decoration-none">
                                                                 <i class="fas fa-user me-2"></i>{{ $student->name }}
                                                             </a>
@@ -698,7 +698,7 @@
                                                         @endif
                                                     </div>
                                                 </div>
-                                                
+
                                                 @if($hasActivity && !empty($activities))
                                                     <div class="row g-2">
                                                         @foreach($activities as $item)
@@ -797,11 +797,11 @@
                                                             @endif
                                                             @if($studentData['can_sync'])
                                                                 <br><br>
-                                                                <strong>Рекомендация:</strong> Выполните синхронизацию данных из Moodle на странице 
+                                                                <strong>Рекомендация:</strong> Выполните синхронизацию данных из Moodle на странице
                                                                 <a href="{{ route('admin.analytics.index', ['course_id' => $course->id, 'user_id' => $student->id]) }}" target="_blank">
                                                                     <i class="fas fa-external-link-alt me-1"></i>Аналитика курсов
                                                                 </a>
-                                                                или используйте 
+                                                                или используйте
                                                                 <a href="{{ route('admin.moodle-sync.index') }}" target="_blank">
                                                                     <i class="fas fa-external-link-alt me-1"></i>Полную синхронизацию Moodle
                                                                 </a>.
@@ -863,7 +863,7 @@
                                     @foreach($gradedActivities as $activity)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('admin.users.show', $activity->user_id) }}" 
+                                            <a href="{{ route('admin.users.show', $activity->user_id) }}"
                                                class="text-decoration-none">
                                                 {{ $activity->user->name ?? 'Неизвестно' }}
                                             </a>
@@ -877,7 +877,7 @@
                                                 if ($type === 'quiz') $badgeClass = 'activity-badge-quiz';
                                                 elseif ($type === 'forum') $badgeClass = 'activity-badge-forum';
                                                 elseif ($type === 'resource') $badgeClass = 'activity-badge-resource';
-                                                
+
                                                 $typeNames = [
                                                     'assign' => 'Задание',
                                                     'quiz' => 'Тест',
@@ -939,7 +939,7 @@
                                     @foreach($pendingActivities as $activity)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('admin.users.show', $activity->user_id) }}" 
+                                            <a href="{{ route('admin.users.show', $activity->user_id) }}"
                                                class="text-decoration-none">
                                                 {{ $activity->user->name ?? 'Неизвестно' }}
                                             </a>
@@ -953,7 +953,7 @@
                                                 if ($type === 'quiz') $badgeClass = 'activity-badge-quiz';
                                                 elseif ($type === 'forum') $badgeClass = 'activity-badge-forum';
                                                 elseif ($type === 'resource') $badgeClass = 'activity-badge-resource';
-                                                
+
                                                 $typeNames = [
                                                     'assign' => 'Задание',
                                                     'quiz' => 'Тест',
@@ -1025,7 +1025,7 @@
                                                     {{ $needsResponse ? 'Ответить' : 'Проверить' }}
                                                 </a>
                                             @else
-                                                <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}"
                                                    class="btn btn-sm btn-warning">
                                                     <i class="fas fa-eye"></i>
                                                     {{ $needsResponse ? 'Ответить' : 'Проверить' }}
@@ -1054,21 +1054,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const courseName = this.getAttribute('data-course-name');
             const btnText = this.querySelector('.sync-btn-text');
             const btnIcon = this.querySelector('i');
-            
+
             if (this.disabled) {
                 return;
             }
-            
+
             // Подтверждение
             if (!confirm('Синхронизировать данные из Moodle для курса «' + courseName + '»?\n\nЭто может занять некоторое время.')) {
                 return;
             }
-            
+
             // Блокируем кнопку
             this.disabled = true;
             btnText.textContent = 'Синхронизация...';
             btnIcon.classList.add('fa-spin');
-            
+
             // Показываем индикатор прогресса
             const progressAlert = document.createElement('div');
             progressAlert.className = 'alert alert-info alert-dismissible fade show mt-2';
@@ -1078,17 +1078,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <strong>Синхронизация курса «${courseName}»...</strong>
                 <div class="mt-2">
                     <div class="progress" style="height: 20px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
                              role="progressbar" style="width: 100%"></div>
                     </div>
                 </div>
             `;
-            
+
             // Вставляем индикатор после заголовка курса
             const courseCard = this.closest('.card');
             const cardBody = courseCard.querySelector('.card-body');
             cardBody.insertBefore(progressAlert, cardBody.firstChild);
-            
+
             // Получаем CSRF токен
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
             if (!csrfToken) {
@@ -1096,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetButton();
                 return;
             }
-            
+
             // Отправляем AJAX запрос
             fetch('{{ route("admin.moodle-sync.sync-activities", ":courseId") }}'.replace(':courseId', courseId), {
                 method: 'POST',
@@ -1111,40 +1111,67 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(async response => {
                 const contentType = response.headers.get('content-type') || '';
                 const isJson = contentType.includes('application/json');
-                
+
                 if (!isJson) {
                     const text = await response.text();
                     throw new Error('Сервер вернул неверный формат ответа');
                 }
-                
+
                 if (!response.ok) {
                     const data = await response.json();
                     throw new Error(data.message || 'Ошибка синхронизации');
                 }
-                
+
                 return response.json();
             })
             .then(data => {
                 if (data.success) {
-                    // Успешная синхронизация
-                    progressAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                    const hasErrors = (data.stats?.progress?.errors || 0) > 0 || (data.errors?.total_unique || 0) > 0;
+                    const alertClass = hasErrors ? 'alert-warning' : 'alert-success';
+                    const alertIcon = hasErrors ? 'fa-exclamation-triangle' : 'fa-check-circle';
+                    
+                    // Формируем детальную информацию об ошибках
+                    let errorsHtml = '';
+                    if (hasErrors && data.errors && data.errors.groups) {
+                        errorsHtml = '<div class="mt-3"><strong class="text-danger">Детали ошибок:</strong><ul class="mb-0 mt-2">';
+                        for (const [errorType, errors] of Object.entries(data.errors.groups)) {
+                            errorsHtml += `<li><strong>${errorType}</strong> (${errors.length}):<ul>`;
+                            // Показываем первые 5 ошибок каждого типа
+                            const errorsToShow = errors.slice(0, 5);
+                            errorsToShow.forEach(error => {
+                                const errorInfo = typeof error === 'object' ? error.error : error;
+                                const activityName = error.activity_name ? ` - ${error.activity_name}` : '';
+                                const studentName = error.student_name ? ` (студент: ${error.student_name})` : '';
+                                errorsHtml += `<li class="small">${errorInfo}${activityName}${studentName}</li>`;
+                            });
+                            if (errors.length > 5) {
+                                errorsHtml += `<li class="small text-muted">... и еще ${errors.length - 5} ошибок этого типа</li>`;
+                            }
+                            errorsHtml += '</ul></li>';
+                        }
+                        errorsHtml += '</ul></div>';
+                    }
+                    
+                    // Успешная синхронизация (с возможными ошибками)
+                    progressAlert.className = `alert ${alertClass} alert-dismissible fade show mt-2`;
                     progressAlert.innerHTML = `
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>Синхронизация завершена успешно!</strong>
+                        <i class="fas ${alertIcon} me-2"></i>
+                        <strong>Синхронизация завершена${hasErrors ? ' с ошибками' : ' успешно'}!</strong>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         <div class="mt-2 small">
                             <strong>Результаты:</strong><br>
                             Элементы курса: создано ${data.stats?.activities?.created || 0}, обновлено ${data.stats?.activities?.updated || 0}<br>
                             Прогресс студентов: создано ${data.stats?.progress?.created || 0}, обновлено ${data.stats?.progress?.updated || 0}<br>
                             Обработано студентов: ${data.stats?.students_processed || 0}
-                            ${(data.stats?.progress?.errors || 0) > 0 ? '<br><span class="text-warning">Ошибок: ' + data.stats.progress.errors + '</span>' : ''}
+                            ${hasErrors ? '<br><span class="text-warning fw-bold">Ошибок: ' + (data.stats?.progress?.errors || data.errors?.total_unique || 0) + '</span>' : ''}
+                            ${errorsHtml}
                         </div>
                     `;
-                    
-                    // Обновляем страницу через 3 секунды
+
+                    // Обновляем страницу через 5 секунд (больше времени для чтения ошибок)
                     setTimeout(() => {
                         window.location.reload();
-                    }, 3000);
+                    }, hasErrors ? 10000 : 3000);
                 } else {
                     throw new Error(data.message || 'Ошибка синхронизации');
                 }
@@ -1159,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 resetButton();
             });
-            
+
             function resetButton() {
                 btn.disabled = false;
                 btnText.textContent = 'Синхронизировать';
