@@ -629,6 +629,13 @@
                     @if($courses->isEmpty())
                         <p class="text-muted text-center py-4">У преподавателя нет курсов</p>
                     @else
+                        @if(isset($hasMoreStudents) && $hasMoreStudents)
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Внимание:</strong> Показаны только первые {{ $maxStudentsToProcess ?? 100 }} студентов из {{ $totalStudentsProcessed ?? 0 }} для предотвращения перегрузки системы.
+                                Для просмотра всех студентов используйте фильтры или просматривайте данные по отдельным курсам.
+                            </div>
+                        @endif
                         @foreach($courses as $course)
                             <div class="card mb-4 border">
                                 <div class="card-header bg-light">

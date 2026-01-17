@@ -150,6 +150,7 @@ class InstructorStatsController extends Controller
         $coursesWithStudents = [];
 
         // Получаем всех студентов всех курсов одним запросом с ролями
+        // Ограничиваем количество для предотвращения исчерпания памяти
         $allStudents = \App\Models\User::whereHas('courses', function ($query) use ($courseIds) {
                 $query->whereIn('courses.id', $courseIds);
             })
@@ -157,13 +158,21 @@ class InstructorStatsController extends Controller
                 $q->where('slug', 'student');
             })
             ->with('roles')
+            ->limit(150) // Ограничиваем общее количество студентов
             ->get();
 
         // Получаем все прогрессы студентов одним запросом
         // Не загружаем связи activity и user для экономии памяти - они не нужны в этом контексте
-        $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
-            ->whereIn('user_id', $allStudents->pluck('id'))
-            ->get();
+        // Ограничиваем количество прогрессов для предотвращения исчерпания памяти
+        $studentIds = $allStudents->pluck('id');
+        if ($studentIds->isNotEmpty()) {
+            $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
+                ->whereIn('user_id', $studentIds)
+                ->limit(5000) // Ограничиваем общее количество прогрессов
+                ->get();
+        } else {
+            $allProgresses = collect();
+        }
 
         // Группируем прогрессы по course_id -> user_id -> activity_id
         $progressesByCourseAndUser = [];
@@ -178,14 +187,28 @@ class InstructorStatsController extends Controller
             ->get()
             ->groupBy('course_id');
 
+        // Ограничиваем общее количество обрабатываемых студентов для предотвращения исчерпания памяти
+        // Максимум 100 студентов на всех курсах
+        $maxStudentsToProcess = 100;
+        $totalStudentsProcessed = 0;
+
         foreach ($courses as $course) {
             // Получаем студентов этого курса
             $courseUserIds = $userCourseRelations->get($course->id, collect())->pluck('user_id');
             $students = $allStudents->whereIn('id', $courseUserIds);
 
+            // Если уже обработали максимальное количество студентов, пропускаем остальные курсы
+            if ($totalStudentsProcessed >= $maxStudentsToProcess) {
+                break;
+            }
+
             $studentsWithActivity = [];
 
             foreach ($students as $student) {
+                // Если достигли лимита, прекращаем обработку
+                if ($totalStudentsProcessed >= $maxStudentsToProcess) {
+                    break;
+                }
                 // Проверяем наличие настроек для синхронизации
                 $canSync = !empty($course->moodle_course_id) && !empty($student->moodle_user_id);
 
@@ -262,18 +285,18 @@ class InstructorStatsController extends Controller
                         $submittedAtFormatted = null;
                         if ($progress->submitted_at) {
                             try {
-                                $submittedAtFormatted = $progress->submitted_at instanceof \Carbon\Carbon 
+                                $submittedAtFormatted = $progress->submitted_at instanceof \Carbon\Carbon
                                     ? $progress->submitted_at->format('d.m.Y H:i')
                                     : \Carbon\Carbon::parse($progress->submitted_at)->format('d.m.Y H:i');
                             } catch (\Exception $e) {
                                 $submittedAtFormatted = null;
                             }
                         }
-                        
+
                         $gradedAtFormatted = null;
                         if ($progress->graded_at) {
                             try {
-                                $gradedAtFormatted = $progress->graded_at instanceof \Carbon\Carbon 
+                                $gradedAtFormatted = $progress->graded_at instanceof \Carbon\Carbon
                                     ? $progress->graded_at->format('d.m.Y H:i')
                                     : \Carbon\Carbon::parse($progress->graded_at)->format('d.m.Y H:i');
                             } catch (\Exception $e) {
@@ -301,9 +324,9 @@ class InstructorStatsController extends Controller
                 }
 
                 // Ограничиваем количество активностей для предотвращения исчерпания памяти
-                // Показываем только последние 50 активностей на студента
-                $limitedActivities = array_slice($studentActivities, 0, 50);
-                
+                // Показываем только последние 20 активностей на студента (уменьшено с 50)
+                $limitedActivities = array_slice($studentActivities, 0, 20);
+
                 // Добавляем всех студентов, даже если у них нет активности
                 $studentsWithActivity[] = [
                     'student' => $student,
@@ -318,10 +341,15 @@ class InstructorStatsController extends Controller
                     'missing_moodle_course_id' => empty($course->moodle_course_id),
                     'missing_moodle_user_id' => empty($student->moodle_user_id),
                 ];
+
+                $totalStudentsProcessed++;
             }
 
             $coursesWithStudents[$course->id] = $studentsWithActivity;
         }
+
+        // Добавляем информацию о лимитах для отображения в представлении
+        $hasMoreStudents = $totalStudentsProcessed >= $maxStudentsToProcess;
 
         // Получаем все проверенные работы преподавателя
         // Если graded_by_user_id заполнен, проверяем его
@@ -493,6 +521,9 @@ class InstructorStatsController extends Controller
         ];
 
             return view('admin.instructor-stats.show', compact(
+                'hasMoreStudents',
+                'maxStudentsToProcess',
+                'totalStudentsProcessed',
                 'instructor',
                 'courses',
                 'coursesWithStudents',
