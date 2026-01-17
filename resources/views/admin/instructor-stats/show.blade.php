@@ -711,6 +711,9 @@
                                                                 'resource' => 'fa-file',
                                                                 'page' => 'fa-file-alt',
                                                                 'url' => 'fa-link',
+                                                                'folder' => 'fa-folder',
+                                                                'file' => 'fa-file',
+                                                                'book' => 'fa-book',
                                                             ];
                                                             $activityTypeLabels = [
                                                                 'assign' => 'Задание',
@@ -719,6 +722,9 @@
                                                                 'resource' => 'Ресурс',
                                                                 'page' => 'Страница',
                                                                 'url' => 'Ссылка',
+                                                                'folder' => 'Folder',
+                                                                'file' => 'Файл',
+                                                                'book' => 'Книга',
                                                             ];
                                                             $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
                                                             $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
@@ -769,6 +775,19 @@
                                                                         @elseif($item['status'] === 'needs_grading' || $item['status'] === 'submitted')
                                                                             <div class="small text-warning">
                                                                                 <i class="fas fa-clock me-1"></i>Ожидает оценки
+                                                                            </div>
+                                                                        @endif
+                                                                        @php
+                                                                            $moodleUrl = $activity->moodle_url;
+                                                                        @endphp
+                                                                        @if($moodleUrl)
+                                                                            <div class="mt-2">
+                                                                                <a href="{{ $moodleUrl }}" 
+                                                                                   target="_blank" 
+                                                                                   class="btn btn-sm btn-success w-100">
+                                                                                    <i class="fas fa-external-link-alt me-1"></i>
+                                                                                    Перейти в Moodle
+                                                                                </a>
                                                                             </div>
                                                                         @endif
                                                                     </div>
@@ -832,6 +851,96 @@
             </div>
         </div>
     </div>
+
+    <!-- Элементы курсов -->
+    @if(isset($coursesWithActivities) && !empty($coursesWithActivities))
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Элементы курсов
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @foreach($courses as $course)
+                        @if(isset($coursesWithActivities[$course->id]) && $coursesWithActivities[$course->id]->isNotEmpty())
+                            <div class="mb-4">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-book me-2"></i>
+                                    <strong>{{ $course->name }}</strong>
+                                    @if($course->code)
+                                        <small class="text-muted">({{ $course->code }})</small>
+                                    @endif
+                                </h6>
+                                <div class="row g-3">
+                                    @foreach($coursesWithActivities[$course->id] as $activity)
+                                        @php
+                                            $activityTypeIcons = [
+                                                'assign' => 'fa-file-alt',
+                                                'quiz' => 'fa-question-circle',
+                                                'forum' => 'fa-comments',
+                                                'resource' => 'fa-file',
+                                                'page' => 'fa-file-alt',
+                                                'url' => 'fa-link',
+                                                'folder' => 'fa-folder',
+                                                'file' => 'fa-file',
+                                                'book' => 'fa-book',
+                                            ];
+                                            $activityTypeLabels = [
+                                                'assign' => 'Задание',
+                                                'quiz' => 'Тест',
+                                                'forum' => 'Форум',
+                                                'resource' => 'Ресурс',
+                                                'page' => 'Страница',
+                                                'url' => 'Ссылка',
+                                                'folder' => 'Folder',
+                                                'file' => 'Файл',
+                                                'book' => 'Книга',
+                                            ];
+                                            $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
+                                            $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
+                                            $moodleUrl = $activity->moodle_url;
+                                        @endphp
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="border rounded p-3 bg-light h-100 d-flex flex-column">
+                                                <div class="d-flex align-items-start mb-2">
+                                                    <i class="fas {{ $icon }} me-2 text-primary mt-1"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-bold mb-1">
+                                                            {{ \Illuminate\Support\Str::limit($activity->name, 50) }}
+                                                        </div>
+                                                        <div class="d-flex flex-wrap gap-1 mb-2">
+                                                            <span class="badge bg-secondary small">{{ $typeLabel }}</span>
+                                                        </div>
+                                                        @if($moodleUrl)
+                                                            <a href="{{ $moodleUrl }}" 
+                                                               target="_blank" 
+                                                               class="btn btn-sm btn-success w-100">
+                                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                                Перейти в Moodle
+                                                            </a>
+                                                        @else
+                                                            <button class="btn btn-sm btn-secondary w-100" disabled>
+                                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                                Ссылка недоступна
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Проверенные работы -->
     <div class="row mb-4">

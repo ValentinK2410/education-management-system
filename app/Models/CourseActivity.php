@@ -88,5 +88,68 @@ class CourseActivity extends Model
             ->where('course_id', $this->course_id)
             ->first();
     }
+
+    /**
+     * Получить Course Module ID (cmid) из метаданных
+     *
+     * @return int|null
+     */
+    public function getCmidAttribute(): ?int
+    {
+        // Проверяем, есть ли поле cmid в таблице
+        if (isset($this->attributes['cmid'])) {
+            return $this->attributes['cmid'];
+        }
+
+        // Если нет, пытаемся получить из meta
+        if ($this->meta && is_array($this->meta)) {
+            return $this->meta['cmid'] ?? $this->meta['moodle_id'] ?? null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Получить URL для перехода к элементу в Moodle
+     *
+     * @return string|null
+     */
+    public function getMoodleUrlAttribute(): ?string
+    {
+        $cmid = $this->cmid;
+        $course = $this->course;
+
+        if (!$cmid || !$course || !$course->moodle_course_id) {
+            return null;
+        }
+
+        $moodleUrl = config('services.moodle.url');
+        if (!$moodleUrl) {
+            return null;
+        }
+
+        $moodleUrl = rtrim($moodleUrl, '/');
+
+        // Формируем URL в зависимости от типа элемента
+        switch ($this->activity_type) {
+            case 'assign':
+                return $moodleUrl . "/mod/assign/view.php?id={$cmid}";
+            case 'quiz':
+                return $moodleUrl . "/mod/quiz/view.php?id={$cmid}";
+            case 'forum':
+                return $moodleUrl . "/mod/forum/view.php?id={$cmid}";
+            case 'resource':
+            case 'file':
+            case 'url':
+            case 'page':
+            case 'book':
+                return $moodleUrl . "/mod/{$this->activity_type}/view.php?id={$cmid}";
+            case 'folder':
+                return $moodleUrl . "/mod/folder/view.php?id={$cmid}";
+            default:
+                // Для других типов - общая ссылка на курс
+                return $moodleUrl . "/course/view.php?id={$course->moodle_course_id}";
+        }
+    }
 }
 

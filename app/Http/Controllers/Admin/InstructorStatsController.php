@@ -116,6 +116,16 @@ class InstructorStatsController extends Controller
             }])
             ->get();
 
+        // Получаем все элементы курса для каждого курса
+        $coursesWithActivities = [];
+        foreach ($courses as $course) {
+            $activities = \App\Models\CourseActivity::where('course_id', $course->id)
+                ->orderBy('section_number')
+                ->orderBy('section_order')
+                ->get();
+            $coursesWithActivities[$course->id] = $activities;
+        }
+
         // Получаем данные о студентах и их активности по каждому курсу
         $coursesWithStudents = [];
 
@@ -410,6 +420,7 @@ class InstructorStatsController extends Controller
             'instructor',
             'courses',
             'coursesWithStudents',
+            'coursesWithActivities',
             'gradedActivities',
             'pendingActivities',
             'stats',
