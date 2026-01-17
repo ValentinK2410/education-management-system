@@ -1192,7 +1192,7 @@ class MoodleApiService
 
                 // Получаем cmid из courseContents (если доступен) или через Moodle API
                 $cmid = null;
-                
+
                 // Сначала пытаемся найти cmid в courseContents
                 foreach ($sectionsMap as $section) {
                     foreach ($section['modules'] as $module) {
@@ -1202,7 +1202,7 @@ class MoodleApiService
                         }
                     }
                 }
-                
+
                 // Если не нашли в courseContents, пытаемся через API
                 if (!$cmid) {
                     try {
@@ -1500,7 +1500,7 @@ class MoodleApiService
 
                 // Получаем cmid из courseContents (если доступен) или через Moodle API
                 $cmid = null;
-                
+
                 // Сначала пытаемся найти cmid в courseContents
                 foreach ($sectionsMap as $section) {
                     foreach ($section['modules'] as $module) {
@@ -1510,7 +1510,7 @@ class MoodleApiService
                         }
                     }
                 }
-                
+
                 // Если не нашли в courseContents, пытаемся через API
                 if (!$cmid) {
                     try {
