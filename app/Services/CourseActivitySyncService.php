@@ -428,9 +428,26 @@ class CourseActivitySyncService
                     $isRead = $activityData['is_read'] ?? false;
                     $lastViewedAt = null;
                     if (isset($activityData['last_viewed_at']) && $activityData['last_viewed_at']) {
-                        $lastViewedAt = is_numeric($activityData['last_viewed_at'])
-                            ? \Carbon\Carbon::createFromTimestamp($activityData['last_viewed_at'])
-                            : $activityData['last_viewed_at'];
+                        $timestamp = $activityData['last_viewed_at'];
+                        // Проверяем, что это валидный timestamp (больше чем минимальная дата)
+                        // Минимальная валидная дата для MySQL: 1970-01-01 00:00:01 (timestamp = 1)
+                        // Но лучше использовать более разумную дату, например, 2000-01-01 (timestamp = 946684800)
+                        if (is_numeric($timestamp) && $timestamp > 946684800) {
+                            try {
+                                $lastViewedAt = \Carbon\Carbon::createFromTimestamp($timestamp);
+                            } catch (\Exception $e) {
+                                // Если не удалось создать дату, оставляем null
+                                $lastViewedAt = null;
+                            }
+                        } elseif (!is_numeric($timestamp)) {
+                            // Если это строка, пытаемся преобразовать
+                            try {
+                                $lastViewedAt = \Carbon\Carbon::parse($timestamp);
+                            } catch (\Exception $e) {
+                                $lastViewedAt = null;
+                            }
+                        }
+                        // Если timestamp слишком маленький или невалидный, оставляем null
                     }
                     $viewCount = $activityData['view_count'] ?? 0;
 
@@ -533,7 +550,11 @@ class CourseActivitySyncService
                         $progressData['is_read'] = $isRead;
                     }
                     if ($this->hasColumn($tableName, 'last_viewed_at')) {
-                        $progressData['last_viewed_at'] = $lastViewedAt;
+                        // Устанавливаем last_viewed_at только если значение валидно (не null и не маленькое число)
+                        if ($lastViewedAt !== null && ($lastViewedAt instanceof \Carbon\Carbon || $lastViewedAt instanceof \DateTime)) {
+                            $progressData['last_viewed_at'] = $lastViewedAt;
+                        }
+                        // Если значение невалидно, не устанавливаем поле (оно останется null или существующим значением)
                     }
                     if ($this->hasColumn($tableName, 'view_count')) {
                         $progressData['view_count'] = $viewCount;

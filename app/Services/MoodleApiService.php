@@ -1606,8 +1606,14 @@ class MoodleApiService
                         if (isset($module['completion']) && $module['completion'] > 0) {
                             $isViewed = true;
                             $isRead = true;
-                            $lastViewedAt = $module['completion'] ?? null;
                             $viewCount = 1;
+                            
+                            // Получаем timestamp из completiondata, если доступен
+                            if (isset($module['completiondata']['timecompleted']) && $module['completiondata']['timecompleted'] > 0) {
+                                $lastViewedAt = $module['completiondata']['timecompleted'];
+                            }
+                            // Если timecompleted нет, но есть другие данные о времени, используем их
+                            // Но не используем completion как timestamp, так как это статус (0, 1, 2)
                         }
                         
                         $activities[] = [
