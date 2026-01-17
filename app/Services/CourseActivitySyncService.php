@@ -352,8 +352,9 @@ class CourseActivitySyncService
             foreach ($activities as $activityData) {
                 try {
                     $moodleActivityId = $activityData['moodle_id'] ?? null;
-                    $activityType = $activityData['type'] ?? 'other';
-
+                    $rawActivityType = $activityData['type'] ?? 'other';
+                    $activityType = $this->normalizeActivityType($rawActivityType);
+                    
                     if (!$moodleActivityId) {
                         continue;
                     }
