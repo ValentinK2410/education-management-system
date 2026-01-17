@@ -96,20 +96,30 @@ class CourseActivity extends Model
      */
     public function getCmidAttribute(): ?int
     {
-        // Проверяем, есть ли поле cmid в таблице
-        if (isset($this->attributes['cmid'])) {
-            return $this->attributes['cmid'] ? (int)$this->attributes['cmid'] : null;
-        }
-
-        // Если нет, пытаемся получить из meta (только реальный cmid, не moodle_id)
-        if ($this->meta && is_array($this->meta)) {
-            // Используем только cmid из meta, не используем moodle_id (это instance ID, а не cmid)
-            if (isset($this->meta['cmid'])) {
-                return (int)$this->meta['cmid'];
+        try {
+            // Проверяем, есть ли поле cmid в таблице
+            if (isset($this->attributes['cmid'])) {
+                $cmid = $this->attributes['cmid'];
+                return $cmid ? (int)$cmid : null;
             }
-        }
 
-        return null;
+            // Если нет, пытаемся получить из meta (только реальный cmid, не moodle_id)
+            $meta = $this->meta;
+            if ($meta && is_array($meta)) {
+                // Используем только cmid из meta, не используем moodle_id (это instance ID, а не cmid)
+                if (isset($meta['cmid']) && $meta['cmid']) {
+                    return (int)$meta['cmid'];
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            \Log::warning('Ошибка при получении cmid для элемента курса', [
+                'activity_id' => $this->id ?? null,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**
@@ -121,11 +131,19 @@ class CourseActivity extends Model
     {
         try {
             $cmid = $this->cmid;
-            
-            // Пытаемся получить курс, если связь не загружена - загружаем её
-            $course = $this->relationLoaded('course') ? $this->course : $this->course()->first();
+            if (!$cmid) {
+                return null;
+            }
 
-            if (!$cmid || !$course || !$course->moodle_course_id) {
+            // Получаем курс безопасным способом
+            try {
+                $course = $this->course;
+            } catch (\Exception $e) {
+                // Если связь не загружена, пытаемся загрузить
+                $course = $this->course()->first();
+            }
+
+            if (!$course || !$course->moodle_course_id) {
                 return null;
             }
 
@@ -161,7 +179,8 @@ class CourseActivity extends Model
             // В случае ошибки возвращаем null вместо исключения
             \Log::warning('Ошибка при формировании URL Moodle для элемента курса', [
                 'activity_id' => $this->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return null;
         }
