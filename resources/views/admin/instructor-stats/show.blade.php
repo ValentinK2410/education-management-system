@@ -778,7 +778,15 @@
                                                                             </div>
                                                                         @endif
                                                                         @php
-                                                                            $moodleUrl = $activity->moodle_url;
+                                                                            try {
+                                                                                $moodleUrl = $activity->moodle_url;
+                                                                            } catch (\Exception $e) {
+                                                                                $moodleUrl = null;
+                                                                                \Log::warning('Ошибка при получении moodle_url в представлении', [
+                                                                                    'activity_id' => $activity->id ?? null,
+                                                                                    'error' => $e->getMessage()
+                                                                                ]);
+                                                                            }
                                                                         @endphp
                                                                         @if($moodleUrl)
                                                                             <div class="mt-2">
@@ -901,7 +909,15 @@
                                             ];
                                             $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
                                             $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
-                                            $moodleUrl = $activity->moodle_url;
+                                            try {
+                                                $moodleUrl = $activity->moodle_url;
+                                            } catch (\Exception $e) {
+                                                $moodleUrl = null;
+                                                \Log::warning('Ошибка при получении moodle_url в представлении', [
+                                                    'activity_id' => $activity->id ?? null,
+                                                    'error' => $e->getMessage()
+                                                ]);
+                                            }
                                         @endphp
                                         <div class="col-md-6 col-lg-4">
                                             <div class="border rounded p-3 bg-light h-100 d-flex flex-column">

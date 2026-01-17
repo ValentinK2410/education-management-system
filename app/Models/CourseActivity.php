@@ -131,13 +131,38 @@ class CourseActivity extends Model
     {
         try {
             $cmid = $this->cmid;
-            
+
             // Получаем курс безопасным способом
+            $course = null;
             try {
-                $course = $this->course;
+                // Пытаемся получить курс через связь
+                if (isset($this->relations['course'])) {
+                    $course = $this->relations['course'];
+                } elseif (method_exists($this, 'getRelation') && $this->getRelation('course')) {
+                    $course = $this->getRelation('course');
+                } else {
+                    // Если связь не загружена, пытаемся загрузить
+                    $course = $this->course()->first();
+                }
             } catch (\Exception $e) {
-                // Если связь не загружена, пытаемся загрузить
-                $course = $this->course()->first();
+                // Если произошла ошибка, логируем и пытаемся загрузить напрямую
+                \Log::debug('Ошибка при получении курса для активности через связь', [
+                    'activity_id' => $this->id ?? null,
+                    'course_id' => $this->course_id ?? null,
+                    'error' => $e->getMessage()
+                ]);
+                // Пытаемся загрузить напрямую через курс
+                try {
+                    if ($this->course_id) {
+                        $course = \App\Models\Course::find($this->course_id);
+                    }
+                } catch (\Exception $e2) {
+                    \Log::warning('Не удалось загрузить курс для активности', [
+                        'activity_id' => $this->id ?? null,
+                        'course_id' => $this->course_id ?? null,
+                        'error' => $e2->getMessage()
+                    ]);
+                }
             }
 
             if (!$course || !$course->moodle_course_id) {
@@ -171,7 +196,7 @@ class CourseActivity extends Model
                         'module' => 'quiz',
                         'instance' => $this->moodle_activity_id
                     ]);
-                    
+
                     if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
                         $cmid = $cmResult['cm']['id'];
                         // Сохраняем cmid для будущего использования
@@ -184,7 +209,7 @@ class CourseActivity extends Model
                         $meta = $this->meta ?? [];
                         $meta['cmid'] = $cmid;
                         $updateData['meta'] = $meta;
-                        
+
                         if (!empty($updateData)) {
                             $this->update($updateData);
                         }
@@ -242,7 +267,7 @@ class CourseActivity extends Model
             return null;
         }
     }
-    
+
     /**
      * Проверить, есть ли колонка в таблице
      */
