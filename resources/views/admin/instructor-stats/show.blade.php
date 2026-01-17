@@ -192,6 +192,314 @@
         </div>
     </div>
 
+    <!-- Важные уведомления -->
+    @if($submittedAssignments->isNotEmpty() || $forumsNeedingResponse->isNotEmpty() || $activitiesNeedingGrading->isNotEmpty() || $submittedQuizzes->isNotEmpty())
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Требуется ваше внимание
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Сданные задания -->
+                    @if($submittedAssignments->isNotEmpty())
+                    <div class="alert alert-info mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-file-alt fa-2x text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Сдано заданий: {{ $submittedAssignments->count() }}
+                                </h6>
+                                <div class="row g-2">
+                                    @foreach($submittedAssignments->take(5) as $activity)
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-2 bg-white">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <strong class="small">{{ $activity->user->name ?? 'Неизвестно' }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $activity->course->name ?? 'Неизвестно' }}</small>
+                                                    <br>
+                                                    <small class="text-primary">{{ $activity->activity->name ?? 'Неизвестно' }}</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted d-block">
+                                                        {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : '' }}
+                                                    </small>
+                                                    @php
+                                                        $gradingUrl = null;
+                                                        if ($activity->user && $activity->user->moodle_user_id && $activity->course && $activity->course->moodle_course_id && $activity->activity && $activity->activity->cmid) {
+                                                            try {
+                                                                $moodleApiService = new \App\Services\MoodleApiService();
+                                                                $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                    $activity->activity->activity_type,
+                                                                    $activity->activity->cmid,
+                                                                    $activity->user->moodle_user_id,
+                                                                    $activity->course->moodle_course_id
+                                                                );
+                                                            } catch (\Exception $e) {
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($gradingUrl)
+                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-primary mt-1">
+                                                            <i class="fas fa-eye"></i> Проверить
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                           class="btn btn-sm btn-primary mt-1">
+                                                            <i class="fas fa-eye"></i> Проверить
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @if($submittedAssignments->count() > 5)
+                                <div class="mt-2">
+                                    <small class="text-muted">И еще {{ $submittedAssignments->count() - 5 }} заданий...</small>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Форумы, ожидающие ответа -->
+                    @if($forumsNeedingResponse->isNotEmpty())
+                    <div class="alert alert-warning mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-comments fa-2x text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-comments me-2"></i>
+                                    Ожидают ответа на форуме: {{ $forumsNeedingResponse->count() }}
+                                </h6>
+                                <div class="row g-2">
+                                    @foreach($forumsNeedingResponse->take(5) as $activity)
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-2 bg-white">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <strong class="small">{{ $activity->user->name ?? 'Неизвестно' }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $activity->course->name ?? 'Неизвестно' }}</small>
+                                                    <br>
+                                                    <small class="text-primary">{{ $activity->activity->name ?? 'Неизвестно' }}</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted d-block">
+                                                        {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : '' }}
+                                                    </small>
+                                                    @php
+                                                        $gradingUrl = null;
+                                                        if ($activity->user && $activity->user->moodle_user_id && $activity->course && $activity->course->moodle_course_id && $activity->activity && $activity->activity->cmid) {
+                                                            try {
+                                                                $moodleApiService = new \App\Services\MoodleApiService();
+                                                                $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                    $activity->activity->activity_type,
+                                                                    $activity->activity->cmid,
+                                                                    $activity->user->moodle_user_id,
+                                                                    $activity->course->moodle_course_id
+                                                                );
+                                                            } catch (\Exception $e) {
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($gradingUrl)
+                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-warning mt-1">
+                                                            <i class="fas fa-reply"></i> Ответить
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                           class="btn btn-sm btn-warning mt-1">
+                                                            <i class="fas fa-reply"></i> Ответить
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @if($forumsNeedingResponse->count() > 5)
+                                <div class="mt-2">
+                                    <small class="text-muted">И еще {{ $forumsNeedingResponse->count() - 5 }} форумов...</small>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Работы, ожидающие оценки -->
+                    @if($activitiesNeedingGrading->isNotEmpty())
+                    <div class="alert alert-danger mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-clock fa-2x text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Ожидают оценки: {{ $activitiesNeedingGrading->count() }}
+                                </h6>
+                                <div class="row g-2">
+                                    @foreach($activitiesNeedingGrading->take(5) as $activity)
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-2 bg-white">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <strong class="small">{{ $activity->user->name ?? 'Неизвестно' }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $activity->course->name ?? 'Неизвестно' }}</small>
+                                                    <br>
+                                                    <small class="text-primary">
+                                                        {{ $activity->activity->name ?? 'Неизвестно' }}
+                                                        <span class="badge bg-secondary ms-1">
+                                                            {{ $activity->activity->activity_type === 'assign' ? 'Задание' : 'Тест' }}
+                                                        </span>
+                                                    </small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted d-block">
+                                                        {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : '' }}
+                                                    </small>
+                                                    @php
+                                                        $gradingUrl = null;
+                                                        if ($activity->user && $activity->user->moodle_user_id && $activity->course && $activity->course->moodle_course_id && $activity->activity && $activity->activity->cmid) {
+                                                            try {
+                                                                $moodleApiService = new \App\Services\MoodleApiService();
+                                                                $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                    $activity->activity->activity_type,
+                                                                    $activity->activity->cmid,
+                                                                    $activity->user->moodle_user_id,
+                                                                    $activity->course->moodle_course_id
+                                                                );
+                                                            } catch (\Exception $e) {
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($gradingUrl)
+                                                        <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-danger mt-1">
+                                                            <i class="fas fa-check-circle"></i> Оценить
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                           class="btn btn-sm btn-danger mt-1">
+                                                            <i class="fas fa-check-circle"></i> Оценить
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @if($activitiesNeedingGrading->count() > 5)
+                                <div class="mt-2">
+                                    <small class="text-muted">И еще {{ $activitiesNeedingGrading->count() - 5 }} работ...</small>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Сданные тесты и экзамены -->
+                    @if($submittedQuizzes->isNotEmpty())
+                    <div class="alert alert-success mb-0">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-question-circle fa-2x text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Сдано тестов/экзаменов: {{ $submittedQuizzes->count() }}
+                                </h6>
+                                <div class="row g-2">
+                                    @foreach($submittedQuizzes->take(5) as $activity)
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-2 bg-white">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <strong class="small">{{ $activity->user->name ?? 'Неизвестно' }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $activity->course->name ?? 'Неизвестно' }}</small>
+                                                    <br>
+                                                    <small class="text-primary">{{ $activity->activity->name ?? 'Неизвестно' }}</small>
+                                                    @if($activity->grade !== null)
+                                                        <br>
+                                                        <small class="text-success fw-bold">
+                                                            Оценка: {{ number_format($activity->grade, 1) }} / {{ number_format($activity->max_grade ?? 0, 1) }}
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted d-block">
+                                                        {{ $activity->submitted_at ? $activity->submitted_at->format('d.m.Y H:i') : '' }}
+                                                    </small>
+                                                    @if($activity->grade === null)
+                                                        @php
+                                                            $gradingUrl = null;
+                                                            if ($activity->user && $activity->user->moodle_user_id && $activity->course && $activity->course->moodle_course_id && $activity->activity && $activity->activity->cmid) {
+                                                                try {
+                                                                    $moodleApiService = new \App\Services\MoodleApiService();
+                                                                    $gradingUrl = $moodleApiService->getGradingUrl(
+                                                                        $activity->activity->activity_type,
+                                                                        $activity->activity->cmid,
+                                                                        $activity->user->moodle_user_id,
+                                                                        $activity->course->moodle_course_id
+                                                                    );
+                                                                } catch (\Exception $e) {
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        @if($gradingUrl)
+                                                            <a href="{{ $gradingUrl }}" target="_blank" class="btn btn-sm btn-success mt-1">
+                                                                <i class="fas fa-eye"></i> Проверить
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('admin.analytics.index', ['user_id' => $activity->user_id, 'course_id' => $activity->course_id]) }}" 
+                                                               class="btn btn-sm btn-success mt-1">
+                                                                <i class="fas fa-eye"></i> Проверить
+                                                            </a>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge bg-success mt-1">Проверено</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @if($submittedQuizzes->count() > 5)
+                                <div class="mt-2">
+                                    <small class="text-muted">И еще {{ $submittedQuizzes->count() - 5 }} тестов...</small>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Статистика -->
     <div class="row mb-4">
         <div class="col-md-2">

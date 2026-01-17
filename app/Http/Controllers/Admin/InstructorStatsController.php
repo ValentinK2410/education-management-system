@@ -323,6 +323,77 @@ class InstructorStatsController extends Controller
                 ->count('user_courses.user_id');
         }
         
+        // Получаем важные уведомления для преподавателя
+        // 1. Сданные задания (ожидают проверки)
+        $submittedAssignments = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->whereHas('activity', function ($query) {
+            $query->where('activity_type', 'assign');
+        })
+        ->where('submitted_at', '!=', null)
+        ->where(function ($query) {
+            $query->where('status', 'submitted')
+                  ->orWhere('needs_grading', true)
+                  ->orWhere(function ($q) {
+                      $q->where('submitted_at', '!=', null)
+                        ->where(function ($subQ) {
+                            $subQ->where('is_graded', false)
+                                 ->orWhereNull('is_graded');
+                        });
+                  });
+        })
+        ->with(['user', 'course', 'activity'])
+        ->orderBy('submitted_at', 'desc')
+        ->get();
+        
+        // 2. Форумы, ожидающие ответа преподавателя
+        $forumsNeedingResponse = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->whereHas('activity', function ($query) {
+            $query->where('activity_type', 'forum');
+        })
+        ->where('needs_response', true)
+        ->where('submitted_at', '!=', null)
+        ->with(['user', 'course', 'activity'])
+        ->orderBy('submitted_at', 'desc')
+        ->get();
+        
+        // 3. Работы, ожидающие оценки (задания и тесты)
+        $activitiesNeedingGrading = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->whereHas('activity', function ($query) {
+            $query->whereIn('activity_type', ['assign', 'quiz']);
+        })
+        ->where(function ($query) {
+            $query->where('needs_grading', true)
+                  ->orWhere(function ($q) {
+                      $q->where('status', 'submitted')
+                        ->where(function ($subQ) {
+                            $subQ->where('is_graded', false)
+                                 ->orWhereNull('is_graded');
+                        });
+                  });
+        })
+        ->where('submitted_at', '!=', null)
+        ->with(['user', 'course', 'activity'])
+        ->orderBy('submitted_at', 'desc')
+        ->get();
+        
+        // 4. Сданные тесты и экзамены (показываем все сданные, но особо выделяем непроверенные)
+        $submittedQuizzes = StudentActivityProgress::whereHas('course', function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        })
+        ->whereHas('activity', function ($query) {
+            $query->where('activity_type', 'quiz');
+        })
+        ->where('submitted_at', '!=', null)
+        ->with(['user', 'course', 'activity'])
+        ->orderBy('submitted_at', 'desc')
+        ->get();
+        
         // Общая статистика
         $stats = [
             'total_courses' => $courses->count(),
@@ -335,7 +406,20 @@ class InstructorStatsController extends Controller
             'forums_graded' => $activityStats->get('forum', 0),
         ];
         
-        return view('admin.instructor-stats.show', compact('instructor', 'courses', 'coursesWithStudents', 'gradedActivities', 'pendingActivities', 'stats', 'dateFrom', 'dateTo'));
+        return view('admin.instructor-stats.show', compact(
+            'instructor', 
+            'courses', 
+            'coursesWithStudents', 
+            'gradedActivities', 
+            'pendingActivities', 
+            'stats', 
+            'dateFrom', 
+            'dateTo',
+            'submittedAssignments',
+            'forumsNeedingResponse',
+            'activitiesNeedingGrading',
+            'submittedQuizzes'
+        ));
     }
 }
 
