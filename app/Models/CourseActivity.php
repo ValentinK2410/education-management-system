@@ -138,7 +138,8 @@ class CourseActivity extends Model
             case 'assign':
                 return $moodleUrl . "/mod/assign/view.php?id={$cmid}";
             case 'quiz':
-                return $moodleUrl . "/mod/quiz/view.php?id={$cmid}";
+                // Для тестов направляем на страницу отчета для просмотра ответов
+                return $moodleUrl . "/mod/quiz/report.php?id={$cmid}&mode=overview";
             case 'forum':
                 return $moodleUrl . "/mod/forum/view.php?id={$cmid}";
             case 'resource':
