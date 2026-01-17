@@ -124,7 +124,9 @@ class InstructorStatsController extends Controller
         $coursesById = $courses->keyBy('id');
 
         // Получаем все элементы курса для всех курсов одним запросом
+        // Загружаем только необходимые поля для экономии памяти
         $allActivities = \App\Models\CourseActivity::whereIn('course_id', $courseIds)
+            ->select('id', 'course_id', 'name', 'activity_type', 'cmid', 'max_grade')
             ->orderBy('section_number')
             ->orderBy('section_order')
             ->get();
@@ -150,8 +152,8 @@ class InstructorStatsController extends Controller
         $coursesWithStudents = [];
 
         // Ограничиваем общее количество обрабатываемых студентов для предотвращения исчерпания памяти
-        // Максимум 100 студентов на всех курсах
-        $maxStudentsToProcess = 100;
+        // Максимум 30 студентов на всех курсах (радикальное уменьшение для больших объемов данных)
+        $maxStudentsToProcess = 30;
         $totalStudentsProcessed = 0;
 
         // Получаем всех студентов всех курсов одним запросом с ролями
@@ -162,8 +164,8 @@ class InstructorStatsController extends Controller
             ->whereHas('roles', function ($q) {
                 $q->where('slug', 'student');
             })
-            ->with('roles')
-            ->limit(150) // Ограничиваем общее количество студентов
+            ->select('id', 'name', 'email', 'moodle_user_id') // Загружаем только необходимые поля
+            ->limit(50) // Радикальное ограничение: максимум 50 студентов
             ->get();
 
         // Получаем все прогрессы студентов одним запросом
@@ -171,9 +173,13 @@ class InstructorStatsController extends Controller
         // Ограничиваем количество прогрессов для предотвращения исчерпания памяти
         $studentIds = $allStudents->pluck('id');
         if ($studentIds->isNotEmpty()) {
+            // Загружаем только необходимые поля
             $allProgresses = \App\Models\StudentActivityProgress::whereIn('course_id', $courseIds)
                 ->whereIn('user_id', $studentIds)
-                ->limit(5000) // Ограничиваем общее количество прогрессов
+                ->select('id', 'user_id', 'course_id', 'activity_id', 'status', 'grade', 'max_grade', 
+                         'submitted_at', 'graded_at', 'is_viewed', 'is_read', 'started_at', 
+                         'is_graded', 'has_draft', 'needs_grading', 'needs_response')
+                ->limit(2000) // Радикальное ограничение: максимум 2000 прогрессов
                 ->get();
         } else {
             $allProgresses = collect();
@@ -304,18 +310,20 @@ class InstructorStatsController extends Controller
                             }
                         }
 
+                        // Сохраняем только необходимые данные вместо полных объектов для экономии памяти
                         $studentActivities[] = [
-                            'activity' => $activity,
-                            'progress' => $progress,
+                            'activity_id' => $activity->id,
+                            'activity_name' => $activity->name,
+                            'activity_type' => $activity->activity_type,
+                            'activity_cmid' => $activity->cmid,
+                            'activity_max_grade' => $activity->max_grade,
                             'status' => $status,
                             'status_text' => $statusText,
                             'status_icon' => $statusIcon,
                             'status_class' => $statusClass,
                             'grade' => $progress->grade,
                             'max_grade' => $progress->max_grade ?? $activity->max_grade,
-                            'submitted_at' => $progress->submitted_at,
                             'submitted_at_formatted' => $submittedAtFormatted,
-                            'graded_at' => $progress->graded_at,
                             'graded_at_formatted' => $gradedAtFormatted,
                             'is_forum' => $isForum,
                             'needs_response' => $needsResponse,
@@ -324,8 +332,8 @@ class InstructorStatsController extends Controller
                 }
 
                 // Ограничиваем количество активностей для предотвращения исчерпания памяти
-                // Показываем только последние 20 активностей на студента (уменьшено с 50)
-                $limitedActivities = array_slice($studentActivities, 0, 20);
+                // Показываем только последние 10 активностей на студента (радикальное уменьшение)
+                $limitedActivities = array_slice($studentActivities, 0, 10);
 
                 // Добавляем всех студентов, даже если у них нет активности
                 $studentsWithActivity[] = [

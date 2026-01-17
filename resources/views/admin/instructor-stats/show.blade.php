@@ -716,7 +716,8 @@
                                                     <div class="row g-2">
                                                         @foreach($activities as $item)
                                                         @php
-                                                            $activity = $item['activity'];
+                                                            // Используем данные из массива вместо объекта для экономии памяти
+                                                            $activityType = $item['activity_type'];
                                                             $activityTypeIcons = [
                                                                 'assign' => 'fa-file-alt',
                                                                 'quiz' => 'fa-question-circle',
@@ -739,8 +740,37 @@
                                                                 'file' => 'Файл',
                                                                 'book' => 'Книга',
                                                             ];
-                                                            $icon = $activityTypeIcons[$activity->activity_type] ?? 'fa-circle';
-                                                            $typeLabel = $activityTypeLabels[$activity->activity_type] ?? ucfirst($activity->activity_type);
+                                                            $icon = $activityTypeIcons[$activityType] ?? 'fa-circle';
+                                                            $typeLabel = $activityTypeLabels[$activityType] ?? ucfirst($activityType);
+                                                            
+                                                            // Формируем URL Moodle напрямую без создания объекта
+                                                            $moodleUrl = null;
+                                                            if (!empty($item['activity_cmid']) && !empty($course->moodle_course_id)) {
+                                                                $moodleBaseUrl = rtrim(config('services.moodle.url'), '/');
+                                                                if ($moodleBaseUrl) {
+                                                                    switch ($activityType) {
+                                                                        case 'assign':
+                                                                            $moodleUrl = $moodleBaseUrl . "/mod/assign/view.php?id=" . $item['activity_cmid'];
+                                                                            break;
+                                                                        case 'quiz':
+                                                                            $moodleUrl = $moodleBaseUrl . "/mod/quiz/report.php?id=" . $item['activity_cmid'] . "&mode=overview";
+                                                                            break;
+                                                                        case 'forum':
+                                                                            $moodleUrl = $moodleBaseUrl . "/mod/forum/view.php?id=" . $item['activity_cmid'];
+                                                                            break;
+                                                                        case 'resource':
+                                                                        case 'file':
+                                                                        case 'url':
+                                                                        case 'page':
+                                                                        case 'book':
+                                                                            $moodleUrl = $moodleBaseUrl . "/mod/{$activityType}/view.php?id=" . $item['activity_cmid'];
+                                                                            break;
+                                                                        case 'folder':
+                                                                            $moodleUrl = $moodleBaseUrl . "/mod/folder/view.php?id=" . $item['activity_cmid'];
+                                                                            break;
+                                                                    }
+                                                                }
+                                                            }
                                                         @endphp
                                                         <div class="col-md-6 col-lg-4">
                                                             <div class="border rounded p-2 bg-light">
@@ -748,7 +778,7 @@
                                                                     <i class="fas {{ $icon }} me-2 text-primary mt-1"></i>
                                                                     <div class="flex-grow-1">
                                                                         <div class="small fw-bold mb-1">
-                                                                            {{ \Illuminate\Support\Str::limit($activity->name, 40) }}
+                                                                            {{ \Illuminate\Support\Str::limit($item['activity_name'], 40) }}
                                                                         </div>
                                                                         <div class="d-flex flex-wrap gap-1 mb-1">
                                                                             <span class="badge bg-secondary small">{{ $typeLabel }}</span>
@@ -790,14 +820,6 @@
                                                                                 <i class="fas fa-clock me-1"></i>Ожидает оценки
                                                                             </div>
                                                                         @endif
-                                                                        @php
-                                                                            // Используем try-catch без логирования для предотвращения исчерпания памяти
-                                                                            try {
-                                                                                $moodleUrl = $activity->moodle_url;
-                                                                            } catch (\Exception $e) {
-                                                                                $moodleUrl = null;
-                                                                            }
-                                                                        @endphp
                                                                         @if($moodleUrl)
                                                                             <div class="mt-2">
                                                                                 <a href="{{ $moodleUrl }}"
@@ -806,6 +828,13 @@
                                                                                     <i class="fas fa-external-link-alt me-1"></i>
                                                                                     Перейти в Moodle
                                                                                 </a>
+                                                                            </div>
+                                                                        @else
+                                                                            <div class="mt-2">
+                                                                                <button class="btn btn-sm btn-secondary w-100" disabled>
+                                                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                                                    Ссылка недоступна
+                                                                                </button>
                                                                             </div>
                                                                         @endif
                                                                     </div>
