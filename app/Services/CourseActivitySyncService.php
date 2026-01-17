@@ -398,9 +398,7 @@ class CourseActivitySyncService
                     // Преобразуем timestamp в datetime для submitted_at и graded_at
                     $submittedAt = null;
                     if (isset($activityData['submitted_at']) && $activityData['submitted_at']) {
-                        $submittedAt = is_numeric($activityData['submitted_at'])
-                            ? \Carbon\Carbon::createFromTimestamp($activityData['submitted_at'])
-                            : $activityData['submitted_at'];
+                        $submittedAt = $this->parseTimestamp($activityData['submitted_at']);
                     }
 
                     // Определяем статус прогресса
@@ -478,9 +476,7 @@ class CourseActivitySyncService
                     $maxAttempts = $activityData['max_attempts'] ?? null;
                     $lastAttemptAt = null;
                     if (isset($activityData['last_attempt_at']) && $activityData['last_attempt_at']) {
-                        $lastAttemptAt = is_numeric($activityData['last_attempt_at'])
-                            ? \Carbon\Carbon::createFromTimestamp($activityData['last_attempt_at'])
-                            : $activityData['last_attempt_at'];
+                        $lastAttemptAt = $this->parseTimestamp($activityData['last_attempt_at']);
                     }
 
                     // Информация о вопросах и ответах (для тестов)
@@ -655,7 +651,13 @@ class CourseActivitySyncService
                         } else {
                             // Создаем новый прогресс
                             if (!isset($filteredProgressData['started_at'])) {
-                                $filteredProgressData['started_at'] = $activityData['submitted_at'] ?? (isset($filteredProgressData['last_viewed_at']) ? $lastViewedAt : null) ?? now();
+                                // Используем submitted_at, last_viewed_at или текущее время
+                                $startedAt = $submittedAt ?? $lastViewedAt ?? now();
+                                // Валидируем started_at через parseTimestamp, если это не Carbon
+                                if (!($startedAt instanceof \Carbon\Carbon)) {
+                                    $startedAt = $this->parseTimestamp($startedAt) ?? now();
+                                }
+                                $filteredProgressData['started_at'] = $startedAt;
                             }
                             StudentActivityProgress::create($filteredProgressData);
                             $stats['created']++;
@@ -895,6 +897,69 @@ class CourseActivitySyncService
         Log::info('Полная синхронизация завершена', $stats);
 
         return $stats;
+    }
+
+    /**
+     * Преобразовать timestamp в Carbon объект с валидацией
+     * 
+     * @param mixed $timestamp Timestamp (число или строка) или уже готовый datetime
+     * @return \Carbon\Carbon|null Carbon объект или null если timestamp некорректен
+     */
+    protected function parseTimestamp($timestamp): ?\Carbon\Carbon
+    {
+        if (!$timestamp) {
+            return null;
+        }
+        
+        // Если это уже Carbon объект или DateTime, возвращаем как есть
+        if ($timestamp instanceof \Carbon\Carbon || $timestamp instanceof \DateTime) {
+            return $timestamp instanceof \Carbon\Carbon ? $timestamp : \Carbon\Carbon::instance($timestamp);
+        }
+        
+        // Если это строка, пытаемся распарсить как дату
+        if (is_string($timestamp)) {
+            try {
+                $parsed = \Carbon\Carbon::parse($timestamp);
+                // Проверяем, что дата разумная (не раньше 2000 года)
+                if ($parsed->year >= 2000 && $parsed->year <= 2100) {
+                    return $parsed;
+                }
+            } catch (\Exception $e) {
+                // Если не удалось распарсить, пробуем как timestamp
+            }
+        }
+        
+        // Если это число, обрабатываем как timestamp
+        if (is_numeric($timestamp)) {
+            $timestampValue = (int)$timestamp;
+            
+            // Проверяем, что timestamp разумный (не меньше 2000-01-01)
+            // Timestamp для 2000-01-01 00:00:00 UTC = 946684800
+            $minTimestamp = 946684800; // 2000-01-01 00:00:00 UTC
+            
+            // Также проверяем, что это не слишком большое значение (не больше 2100 года)
+            // Timestamp для 2100-01-01 00:00:00 UTC = 4102444800
+            $maxTimestamp = 4102444800; // 2100-01-01 00:00:00 UTC
+            
+            if ($timestampValue >= $minTimestamp && $timestampValue <= $maxTimestamp) {
+                try {
+                    return \Carbon\Carbon::createFromTimestamp($timestampValue);
+                } catch (\Exception $e) {
+                    Log::warning('Ошибка создания Carbon из timestamp', [
+                        'timestamp' => $timestampValue,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } else {
+                Log::debug('Некорректный timestamp, пропускаем', [
+                    'timestamp' => $timestampValue,
+                    'min_allowed' => $minTimestamp,
+                    'max_allowed' => $maxTimestamp
+                ]);
+            }
+        }
+        
+        return null;
     }
 
     /**
