@@ -130,7 +130,9 @@ class InstructorStatsController extends Controller
         // Получаем все элементы курса для всех курсов одним запросом
         // Загружаем только необходимые поля для экономии памяти
         // Не включаем cmid в select, так как колонка может отсутствовать - получаем через accessor
+        // Фильтруем только задания, тесты и форумы для экономии памяти и улучшения производительности
         $allActivities = \App\Models\CourseActivity::whereIn('course_id', $courseIds)
+            ->whereIn('activity_type', ['assign', 'quiz', 'forum'])
             ->select('id', 'course_id', 'name', 'activity_type', 'max_grade', 'meta')
             ->orderBy('section_number')
             ->orderBy('section_order')
