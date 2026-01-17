@@ -135,18 +135,18 @@ class CourseActivity extends Model
             // Получаем курс безопасным способом
             $course = null;
             try {
-                // Пытаемся получить курс через связь
-                if (isset($this->relations['course'])) {
+                // Сначала пытаемся получить через свойство (если связь загружена)
+                if (property_exists($this, 'relations') && isset($this->relations['course'])) {
                     $course = $this->relations['course'];
-                } elseif (method_exists($this, 'getRelation') && $this->getRelation('course')) {
-                    $course = $this->getRelation('course');
                 } else {
-                    // Если связь не загружена, пытаемся загрузить
-                    $course = $this->course()->first();
+                    // Если связь не загружена, пытаемся загрузить напрямую через ID
+                    if ($this->course_id) {
+                        $course = \App\Models\Course::find($this->course_id);
+                    }
                 }
             } catch (\Exception $e) {
                 // Если произошла ошибка, логируем и пытаемся загрузить напрямую
-                \Log::debug('Ошибка при получении курса для активности через связь', [
+                \Log::debug('Ошибка при получении курса для активности', [
                     'activity_id' => $this->id ?? null,
                     'course_id' => $this->course_id ?? null,
                     'error' => $e->getMessage()

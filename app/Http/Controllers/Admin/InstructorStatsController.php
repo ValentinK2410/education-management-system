@@ -97,24 +97,25 @@ class InstructorStatsController extends Controller
      */
     public function show(User $instructor, Request $request)
     {
-        // Проверяем, что пользователь является преподавателем
-        if (!$instructor->hasRole('instructor')) {
-            abort(404, 'Пользователь не является преподавателем');
-        }
+        try {
+            // Проверяем, что пользователь является преподавателем
+            if (!$instructor->hasRole('instructor')) {
+                abort(404, 'Пользователь не является преподавателем');
+            }
 
-        // Получаем фильтры по дате
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
+            // Получаем фильтры по дате
+            $dateFrom = $request->input('date_from');
+            $dateTo = $request->input('date_to');
 
-        // Получаем все курсы преподавателя с количеством студентов и активными студентами
-        $courses = Course::where('instructor_id', $instructor->id)
-            ->with(['program', 'instructor'])
-            ->withCount(['users' => function ($query) {
-                $query->whereHas('roles', function ($q) {
-                    $q->where('slug', 'student');
-                });
-            }])
-            ->get();
+            // Получаем все курсы преподавателя с количеством студентов и активными студентами
+            $courses = Course::where('instructor_id', $instructor->id)
+                ->with(['program', 'instructor'])
+                ->withCount(['users' => function ($query) {
+                    $query->whereHas('roles', function ($q) {
+                        $q->where('slug', 'student');
+                    });
+                }])
+                ->get();
 
         // Получаем все ID курсов для оптимизации запросов
         $courseIds = $courses->pluck('id');
@@ -452,21 +453,36 @@ class InstructorStatsController extends Controller
             'forums_graded' => $activityStats->get('forum', 0),
         ];
 
-        return view('admin.instructor-stats.show', compact(
-            'instructor',
-            'courses',
-            'coursesWithStudents',
-            'coursesWithActivities',
-            'gradedActivities',
-            'pendingActivities',
-            'stats',
-            'dateFrom',
-            'dateTo',
-            'submittedAssignments',
-            'forumsNeedingResponse',
-            'activitiesNeedingGrading',
-            'submittedQuizzes'
-        ));
+            return view('admin.instructor-stats.show', compact(
+                'instructor',
+                'courses',
+                'coursesWithStudents',
+                'coursesWithActivities',
+                'gradedActivities',
+                'pendingActivities',
+                'stats',
+                'dateFrom',
+                'dateTo',
+                'submittedAssignments',
+                'forumsNeedingResponse',
+                'activitiesNeedingGrading',
+                'submittedQuizzes'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Ошибка в InstructorStatsController::show', [
+                'instructor_id' => $instructor->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            // Возвращаем ошибку пользователю
+            return response()->view('errors.500', [
+                'message' => 'Произошла ошибка при загрузке статистики преподавателя. Пожалуйста, попробуйте позже или обратитесь к администратору.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }
 
