@@ -478,10 +478,19 @@ class InstructorStatsController extends Controller
             ]);
 
             // Возвращаем ошибку пользователю
-            return response()->view('errors.500', [
-                'message' => 'Произошла ошибка при загрузке статистики преподавателя. Пожалуйста, попробуйте позже или обратитесь к администратору.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            if (config('app.debug')) {
+                // В режиме отладки показываем детали ошибки
+                return response()->json([
+                    'error' => 'Ошибка при загрузке статистики преподавателя',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ], 500);
+            } else {
+                // В продакшене показываем общее сообщение
+                abort(500, 'Произошла ошибка при загрузке статистики преподавателя. Пожалуйста, попробуйте позже или обратитесь к администратору.');
+            }
         }
     }
 }
