@@ -431,12 +431,15 @@ class MoodleApiService
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
+     * @param array|null $assignments Массив заданий (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с сдачами или false в случае ошибки
      */
-    public function getStudentSubmissions(int $courseId, int $studentMoodleId)
+    public function getStudentSubmissions(int $courseId, int $studentMoodleId, ?array $assignments = null)
     {
-        // Сначала получаем список заданий курса
-        $assignments = $this->getCourseAssignments($courseId);
+        // Если задания не переданы, получаем их
+        if ($assignments === null) {
+            $assignments = $this->getCourseAssignments($courseId);
+        }
 
         if ($assignments === false || empty($assignments)) {
             return [];
@@ -478,12 +481,15 @@ class MoodleApiService
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
+     * @param array|null $assignments Массив заданий (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с оценками или false в случае ошибки
      */
-    public function getStudentGrades(int $courseId, int $studentMoodleId)
+    public function getStudentGrades(int $courseId, int $studentMoodleId, ?array $assignments = null)
     {
-        // Сначала получаем список заданий курса
-        $assignments = $this->getCourseAssignments($courseId);
+        // Если задания не переданы, получаем их
+        if ($assignments === null) {
+            $assignments = $this->getCourseAssignments($courseId);
+        }
 
         if ($assignments === false || empty($assignments)) {
             return [];
@@ -752,12 +758,15 @@ class MoodleApiService
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
+     * @param array|null $quizzes Массив тестов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с попытками или false в случае ошибки
      */
-    public function getStudentQuizAttempts(int $courseId, int $studentMoodleId)
+    public function getStudentQuizAttempts(int $courseId, int $studentMoodleId, ?array $quizzes = null)
     {
-        // Сначала получаем список тестов курса
-        $quizzes = $this->getCourseQuizzes($courseId);
+        // Если тесты не переданы, получаем их
+        if ($quizzes === null) {
+            $quizzes = $this->getCourseQuizzes($courseId);
+        }
 
         if ($quizzes === false || empty($quizzes)) {
             return [];
@@ -808,12 +817,15 @@ class MoodleApiService
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
+     * @param array|null $quizzes Массив тестов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с оценками или false в случае ошибки
      */
-    public function getStudentQuizGrades(int $courseId, int $studentMoodleId)
+    public function getStudentQuizGrades(int $courseId, int $studentMoodleId, ?array $quizzes = null)
     {
-        // Сначала получаем список тестов курса
-        $quizzes = $this->getCourseQuizzes($courseId);
+        // Если тесты не переданы, получаем их
+        if ($quizzes === null) {
+            $quizzes = $this->getCourseQuizzes($courseId);
+        }
 
         if ($quizzes === false || empty($quizzes)) {
             return [];
@@ -890,12 +902,15 @@ class MoodleApiService
      *
      * @param int $courseId ID курса в Moodle
      * @param int $studentMoodleId ID студента в Moodle
+     * @param array|null $forums Массив форумов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с постами и информацией об ответах преподавателя или false в случае ошибки
      */
-    public function getStudentForumPosts(int $courseId, int $studentMoodleId)
+    public function getStudentForumPosts(int $courseId, int $studentMoodleId, ?array $forums = null)
     {
-        // Сначала получаем список форумов курса
-        $forums = $this->getCourseForums($courseId);
+        // Если форумы не переданы, получаем их
+        if ($forums === null) {
+            $forums = $this->getCourseForums($courseId);
+        }
 
         if ($forums === false || empty($forums)) {
             return [];
@@ -955,7 +970,7 @@ class MoodleApiService
                             // Ответ преподавателя (если есть parent, значит это ответ на чей-то пост)
                             // Проверяем, является ли родительский пост постом студента
                             foreach ($allDiscussionPosts as $parentPost) {
-                                if (($parentPost['id'] ?? null) == $parentId && 
+                                if (($parentPost['id'] ?? null) == $parentId &&
                                     ($parentPost['author']['id'] ?? null) == $studentMoodleId) {
                                     $teacherReplies[$parentId] = true;
                                     break;
@@ -968,11 +983,11 @@ class MoodleApiService
                     foreach ($studentPosts as $post) {
                         $postId = $post['id'] ?? null;
                         $hasTeacherReply = isset($teacherReplies[$postId]);
-                        
+
                         // Добавляем флаг о наличии ответа преподавателя
                         $post['has_teacher_reply'] = $hasTeacherReply;
                         $post['needs_response'] = !$hasTeacherReply; // Если нет ответа преподавателя, требуется ответ
-                        
+
                         if (!isset($allPosts[$forumId])) {
                             $allPosts[$forumId] = [];
                         }
@@ -1067,17 +1082,17 @@ class MoodleApiService
     public function getCourseContentsWithSections(int $courseId)
     {
         $contents = $this->getCourseContents($courseId);
-        
+
         if ($contents === false) {
             return false;
         }
-        
+
         // Обрабатываем разделы для определения недель
         $sections = [];
         foreach ($contents as $section) {
             $sectionNumber = $section['section'] ?? null;
             $sectionName = $section['name'] ?? '';
-            
+
             // Определяем номер недели из названия раздела (если есть паттерн "Неделя 1", "Week 1" и т.д.)
             $weekNumber = null;
             if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
@@ -1086,7 +1101,7 @@ class MoodleApiService
                 // Если номер недели не найден в названии, используем номер раздела
                 $weekNumber = $sectionNumber;
             }
-            
+
             $sections[] = [
                 'id' => $section['id'] ?? null,
                 'section' => $sectionNumber,
@@ -1096,7 +1111,7 @@ class MoodleApiService
                 'modules' => $section['modules'] ?? [],
             ];
         }
-        
+
         return $sections;
     }
 
@@ -1124,7 +1139,7 @@ class MoodleApiService
                 $sectionId = $section['id'] ?? null;
                 $sectionNumber = $section['section'] ?? null;
                 $sectionName = $section['name'] ?? '';
-                
+
                 // Определяем номер недели из названия раздела
                 $weekNumber = null;
                 if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
@@ -1132,7 +1147,7 @@ class MoodleApiService
                 } elseif ($sectionNumber !== null && $sectionNumber > 0) {
                     $weekNumber = $sectionNumber;
                 }
-                
+
                 $sectionsMap[$sectionId] = [
                     'id' => $sectionId,
                     'section' => $sectionNumber,
@@ -1144,6 +1159,7 @@ class MoodleApiService
         }
 
         // Получаем задания курса напрямую (без использования getCourseContents)
+        // Кэшируем assignments, чтобы не запрашивать их повторно в getStudentSubmissions и getStudentGrades
         $assignments = $this->getCourseAssignments($courseId);
 
         Log::info('getAllCourseActivities: получены задания курса', [
@@ -1152,7 +1168,8 @@ class MoodleApiService
             'assignments_data' => $assignments !== false ? $assignments : 'false'
         ]);
 
-        $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId);
+        // Передаем уже полученные assignments, чтобы избежать повторных запросов
+        $submissions = $this->getStudentSubmissions($courseId, $studentMoodleId, $assignments);
 
         Log::info('getAllCourseActivities: получены сдачи студента', [
             'course_id' => $courseId,
@@ -1160,7 +1177,8 @@ class MoodleApiService
             'submissions' => $submissions !== false ? count($submissions) : 'false'
         ]);
 
-        $grades = $this->getStudentGrades($courseId, $studentMoodleId);
+        // Передаем уже полученные assignments, чтобы избежать повторных запросов
+        $grades = $this->getStudentGrades($courseId, $studentMoodleId, $assignments);
 
         Log::info('getAllCourseActivities: получены оценки студента', [
             'course_id' => $courseId,
@@ -1172,22 +1190,36 @@ class MoodleApiService
             foreach ($assignments as $assignment) {
                 $assignmentId = $assignment['id'];
 
-                // Получаем cmid через Moodle API
+                // Получаем cmid из courseContents (если доступен) или через Moodle API
                 $cmid = null;
-                try {
-                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
-                        'module' => 'assign',
-                        'instance' => $assignmentId
-                    ]);
-
-                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
-                        $cmid = $cmResult['cm']['id'];
+                
+                // Сначала пытаемся найти cmid в courseContents
+                foreach ($sectionsMap as $section) {
+                    foreach ($section['modules'] as $module) {
+                        if (($module['modname'] ?? '') === 'assign' && ($module['instance'] ?? null) == $assignmentId) {
+                            $cmid = $module['id'] ?? null;
+                            break 2;
+                        }
                     }
-                } catch (\Exception $e) {
-                    Log::warning('Не удалось получить cmid для задания', [
-                        'assignment_id' => $assignmentId,
-                        'error' => $e->getMessage()
-                    ]);
+                }
+                
+                // Если не нашли в courseContents, пытаемся через API
+                if (!$cmid) {
+                    try {
+                        $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                            'module' => 'assign',
+                            'instance' => $assignmentId
+                        ]);
+
+                        if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                            $cmid = $cmResult['cm']['id'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Не удалось получить cmid для задания', [
+                            'assignment_id' => $assignmentId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
                 }
 
                 $submission = $submissions[$assignmentId] ?? null;
@@ -1199,7 +1231,7 @@ class MoodleApiService
                 $sectionNumber = null;
                 $sectionName = '';
                 $sectionOrder = null;
-                
+
                 foreach ($sectionsMap as $section) {
                     foreach ($section['modules'] as $order => $module) {
                         if (($module['modname'] ?? '') === 'assign' && ($module['instance'] ?? null) == $assignmentId) {
@@ -1236,7 +1268,7 @@ class MoodleApiService
 
                     $submissionStatus = $submission['status'] ?? null;
                     $submissionSubmitted = isset($submission['status']) && $submission['status'] === 'submitted';
-                    
+
                     // Определяем наличие черновика
                     if ($submissionStatus === 'draft' || (!$submissionSubmitted && (isset($submission['filesubmissions']) || isset($submission['onlinetext'])))) {
                         $hasDraft = true;
@@ -1293,34 +1325,40 @@ class MoodleApiService
 
         // Получаем тесты с попытками и оценками
         $quizzes = $this->getCourseQuizzes($courseId);
-        $quizAttempts = $this->getStudentQuizAttempts($courseId, $studentMoodleId);
-        $quizGrades = $this->getStudentQuizGrades($courseId, $studentMoodleId);
+        // Передаем уже полученные тесты, чтобы избежать повторных запросов
+        $quizAttempts = $this->getStudentQuizAttempts($courseId, $studentMoodleId, $quizzes);
+        $quizGrades = $this->getStudentQuizGrades($courseId, $studentMoodleId, $quizzes);
 
         if ($quizzes !== false) {
             foreach ($quizzes as $quiz) {
                 $quizId = $quiz['id'];
 
-                // Получаем cmid через Moodle API
-                $cmid = null;
-                try {
-                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
-                        'module' => 'quiz',
-                        'instance' => $quizId
-                    ]);
+                // Используем coursemodule из ответа Moodle API (это и есть cmid)
+                // В ответе mod_quiz_get_quizzes_by_courses поле coursemodule содержит cmid
+                $cmid = $quiz['coursemodule'] ?? null;
 
-                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
-                        $cmid = $cmResult['cm']['id'];
-                    } elseif (isset($cmResult['exception']) && isset($cmResult['errorcode']) && $cmResult['errorcode'] === 'accessexception') {
-                        // Игнорируем ошибки доступа при получении cmid - это нормально
-                        Log::debug('Не удалось получить cmid для теста (ошибка доступа, игнорируется)', [
-                            'quiz_id' => $quizId
+                // Если coursemodule отсутствует, пытаемся получить через API (fallback)
+                if (!$cmid) {
+                    try {
+                        $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                            'module' => 'quiz',
+                            'instance' => $quizId
+                        ]);
+
+                        if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                            $cmid = $cmResult['cm']['id'];
+                        } elseif (isset($cmResult['exception']) && isset($cmResult['errorcode']) && $cmResult['errorcode'] === 'accessexception') {
+                            // Игнорируем ошибки доступа при получении cmid - это нормально
+                            Log::debug('Не удалось получить cmid для теста (ошибка доступа, игнорируется)', [
+                                'quiz_id' => $quizId
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Не удалось получить cmid для теста', [
+                            'quiz_id' => $quizId,
+                            'error' => $e->getMessage()
                         ]);
                     }
-                } catch (\Exception $e) {
-                    Log::warning('Не удалось получить cmid для теста', [
-                        'quiz_id' => $quizId,
-                        'error' => $e->getMessage()
-                    ]);
                 }
 
                 // Находим раздел для этого теста
@@ -1329,7 +1367,7 @@ class MoodleApiService
                 $sectionNumber = null;
                 $sectionName = '';
                 $sectionOrder = null;
-                
+
                 foreach ($sectionsMap as $section) {
                     foreach ($section['modules'] as $order => $module) {
                         if (($module['modname'] ?? '') === 'quiz' && ($module['instance'] ?? null) == $quizId) {
@@ -1380,7 +1418,7 @@ class MoodleApiService
                         $status = 'in_progress';
                         $statusText = 'В процессе';
                     }
-                    
+
                     // Собираем данные о вопросах и ответах
                     if (isset($latestAttempt['questions'])) {
                         $questionsData = $latestAttempt['questions'];
@@ -1441,7 +1479,8 @@ class MoodleApiService
         // Получаем форумы с постами студента (пропускаем, если есть ошибки доступа)
         try {
             $forums = $this->getCourseForums($courseId);
-            $forumPosts = $this->getStudentForumPosts($courseId, $studentMoodleId);
+            // Передаем уже полученные форумы, чтобы избежать повторного запроса
+            $forumPosts = $this->getStudentForumPosts($courseId, $studentMoodleId, $forums);
         } catch (\Exception $e) {
             try {
                 Log::warning('getAllCourseActivities: ошибка получения форумов, пропускаем', [
@@ -1459,22 +1498,36 @@ class MoodleApiService
             foreach ($forums as $forum) {
                 $forumId = $forum['id'];
 
-                // Получаем cmid через Moodle API
+                // Получаем cmid из courseContents (если доступен) или через Moodle API
                 $cmid = null;
-                try {
-                    $cmResult = $this->call('core_course_get_course_module_by_instance', [
-                        'module' => 'forum',
-                        'instance' => $forumId
-                    ]);
-
-                    if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
-                        $cmid = $cmResult['cm']['id'];
+                
+                // Сначала пытаемся найти cmid в courseContents
+                foreach ($sectionsMap as $section) {
+                    foreach ($section['modules'] as $module) {
+                        if (($module['modname'] ?? '') === 'forum' && ($module['instance'] ?? null) == $forumId) {
+                            $cmid = $module['id'] ?? null;
+                            break 2;
+                        }
                     }
-                } catch (\Exception $e) {
-                    Log::warning('Не удалось получить cmid для форума', [
-                        'forum_id' => $forumId,
-                        'error' => $e->getMessage()
-                    ]);
+                }
+                
+                // Если не нашли в courseContents, пытаемся через API
+                if (!$cmid) {
+                    try {
+                        $cmResult = $this->call('core_course_get_course_module_by_instance', [
+                            'module' => 'forum',
+                            'instance' => $forumId
+                        ]);
+
+                        if ($cmResult !== false && !isset($cmResult['exception']) && isset($cmResult['cm']['id'])) {
+                            $cmid = $cmResult['cm']['id'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Не удалось получить cmid для форума', [
+                            'forum_id' => $forumId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
                 }
 
                 // Находим раздел для этого форума
@@ -1483,7 +1536,7 @@ class MoodleApiService
                 $sectionNumber = null;
                 $sectionName = '';
                 $sectionOrder = null;
-                
+
                 foreach ($sectionsMap as $section) {
                     foreach ($section['modules'] as $order => $module) {
                         if (($module['modname'] ?? '') === 'forum' && ($module['instance'] ?? null) == $forumId) {
@@ -1506,7 +1559,7 @@ class MoodleApiService
                 $status = empty($posts) ? 'not_started' : 'completed';
                 $statusText = empty($posts) ? 'Не участвовал' : 'Участвовал';
                 $submittedAt = !empty($posts) ? max(array_column($posts, 'timecreated')) : null;
-                
+
                 // Проверяем посты студента
                 if (!empty($posts)) {
                     foreach ($posts as $post) {
@@ -1514,12 +1567,12 @@ class MoodleApiService
                         if (isset($post['needs_response']) && $post['needs_response']) {
                             $needsResponse = true;
                         }
-                        
+
                         // Проверяем, есть ли ответ преподавателя
                         if (isset($post['has_teacher_reply']) && $post['has_teacher_reply']) {
                             $hasTeacherReply = true;
                         }
-                        
+
                         // Проверяем, есть ли непроверенные посты (если форум оценивается)
                         if (isset($forum['grade'])) {
                             // Если пост не оценен, требуется проверка
@@ -1530,7 +1583,7 @@ class MoodleApiService
                             }
                         }
                     }
-                    
+
                     // Если студент ответил, но преподаватель не ответил, устанавливаем статус
                     if ($needsResponse && !$hasTeacherReply) {
                         $status = 'needs_response';
@@ -1572,11 +1625,11 @@ class MoodleApiService
                 if (!isset($section['modules'])) {
                     continue;
                 }
-                
+
                 $sectionId = $section['id'] ?? null;
                 $sectionNumber = $section['section'] ?? null;
                 $sectionName = $section['name'] ?? '';
-                
+
                 // Определяем номер недели
                 $weekNumber = null;
                 if (preg_match('/(?:неделя|week|week_|седмица)\s*(\d+)/i', $sectionName, $matches)) {
@@ -1584,30 +1637,30 @@ class MoodleApiService
                 } elseif ($sectionNumber !== null && $sectionNumber > 0) {
                     $weekNumber = $sectionNumber;
                 }
-                
+
                 foreach ($section['modules'] as $order => $module) {
                     $modname = $module['modname'] ?? '';
                     $resourceTypes = ['resource', 'file', 'folder', 'page', 'url', 'book'];
-                    
+
                     if (in_array($modname, $resourceTypes)) {
                         $instanceId = $module['instance'] ?? null;
                         $cmid = $module['id'] ?? null;
-                        
+
                         if (!$instanceId && !$cmid) {
                             continue;
                         }
-                        
+
                         // Определяем, просмотрен ли материал (используем completion, если доступен)
                         $isViewed = false;
                         $isRead = false;
                         $lastViewedAt = null;
                         $viewCount = 0;
-                        
+
                         if (isset($module['completion']) && $module['completion'] > 0) {
                             $isViewed = true;
                             $isRead = true;
                             $viewCount = 1;
-                            
+
                             // Получаем timestamp из completiondata, если доступен
                             if (isset($module['completiondata']['timecompleted']) && $module['completiondata']['timecompleted'] > 0) {
                                 $lastViewedAt = $module['completiondata']['timecompleted'];
@@ -1615,7 +1668,7 @@ class MoodleApiService
                             // Если timecompleted нет, но есть другие данные о времени, используем их
                             // Но не используем completion как timestamp, так как это статус (0, 1, 2)
                         }
-                        
+
                         $activities[] = [
                             'type' => $modname,
                             'moodle_id' => $instanceId ?? $cmid,
@@ -1695,7 +1748,7 @@ class MoodleApiService
         if (is_array($result)) {
             $totalCourses = count($result);
             $systemCourse = null;
-            
+
             // Находим системный курс для логирования
             foreach ($result as $course) {
                 if (isset($course['id']) && $course['id'] == 1) {
@@ -1703,7 +1756,7 @@ class MoodleApiService
                     break;
                 }
             }
-            
+
             $courses = array_values(array_filter($result, function($course) {
                 return isset($course['id']) && $course['id'] > 1;
             }));
