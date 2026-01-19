@@ -117,13 +117,32 @@ class StudentReviewController extends Controller
                 }
 
                 // Определяем статус на основе данных из базы
-                $hasAnswered = $progress->submitted_at !== null || $progress->attempts_count > 0;
-
-                if ($hasAnswered) {
+                // Проверяем, есть ли оценка (тест проверен)
+                if ($progress->grade !== null && $progress->grade !== '' && $progress->is_graded) {
+                    $progress->status = 'graded';
+                    $progress->status_text = 'Выполнено';
+                    $progress->status_class = 'success';
+                }
+                // Проверяем, сдан ли тест (есть попытки и завершены)
+                elseif ($progress->submitted_at !== null || ($progress->attempts_count > 0 && $progress->needs_grading)) {
+                    $progress->status = 'submitted';
+                    $progress->status_text = 'Сдано';
+                    $progress->status_class = 'warning';
+                }
+                // Проверяем, начат ли тест (есть попытки, но не завершены)
+                elseif ($progress->attempts_count > 0 && !$progress->submitted_at) {
+                    $progress->status = 'in_progress';
+                    $progress->status_text = 'В процессе';
+                    $progress->status_class = 'info';
+                }
+                // Проверяем, есть ли попытки (старый статус для обратной совместимости)
+                elseif ($progress->attempts_count > 0) {
                     $progress->status = 'answered';
                     $progress->status_text = 'Ответил';
                     $progress->status_class = 'success';
-                } else {
+                }
+                // Тест не начат
+                else {
                     $progress->status = 'not_answered';
                     $progress->status_text = 'Не ответил';
                     $progress->status_class = 'warning';
