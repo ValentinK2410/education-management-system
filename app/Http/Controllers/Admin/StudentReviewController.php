@@ -15,12 +15,15 @@ class StudentReviewController extends Controller
      */
     public function index()
     {
-        $instructor = auth()->user();
+        $user = auth()->user();
 
-        // Проверяем, что пользователь является преподавателем
-        if (!$instructor->hasRole('instructor')) {
-            abort(403, 'Доступ разрешен только преподавателям');
+        // Проверяем, что пользователь является преподавателем или администратором
+        // Пользователь может иметь несколько ролей, поэтому проверяем наличие роли instructor
+        if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
+            abort(403, 'Доступ разрешен только преподавателям и администраторам');
         }
+        
+        $instructor = $user;
 
         // Получаем все курсы преподавателя для присвоения к активностям
         $courses = \App\Models\Course::where('instructor_id', $instructor->id)->get();

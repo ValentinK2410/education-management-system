@@ -444,6 +444,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/role-switch/back', [UserSwitchController::class, 'switchRoleBack'])->name('role-switch.back');
     });
 
+    // Маршруты для преподавателей и администраторов - требуют роль instructor или admin
+    // Используем кастомную проверку в контроллере, так как пользователь может иметь несколько ролей
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        // Проверка студентов (для преподавателей и администраторов с ролью instructor)
+        Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
+    });
+
     // Административные маршруты - требуют роль администратора
     // ВАЖНО: Конкретные маршруты (create, edit) должны быть определены ПЕРЕД параметрическими ({user})
     Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -517,9 +524,6 @@ Route::middleware(['auth'])->group(function () {
         // Статистика преподавателей (только для администраторов)
         Route::get('instructor-stats', [InstructorStatsController::class, 'index'])->name('instructor-stats.index');
         Route::get('instructor-stats/{instructor}', [InstructorStatsController::class, 'show'])->name('instructor-stats.show');
-
-        // Проверка студентов (для преподавателей)
-        Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
 
         // Синхронизация с Moodle (требует право sync_moodle)
         Route::middleware(['check.permission:sync_moodle'])->group(function () {
