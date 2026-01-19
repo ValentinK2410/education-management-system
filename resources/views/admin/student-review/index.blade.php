@@ -713,6 +713,11 @@ function filterTableRows(tabName) {
         return;
     }
 
+    // Инициализируем состояние фильтров, если его нет
+    if (!filterState[tabName]) {
+        filterState[tabName] = { name: '', student: '', course: '' };
+    }
+
     const filters = filterState[tabName];
     const rows = Array.from(tbody.getElementsByTagName('tr'));
 
@@ -730,17 +735,22 @@ function filterTableRows(tabName) {
 
         if (matchName && matchStudent && matchCourse) {
             row.style.display = '';
+            row.style.visibility = 'visible';
             visibleCount++;
         } else {
             row.style.display = 'none';
+            row.style.visibility = 'hidden';
         }
     }
 
     console.log('Visible rows after filtering:', visibleCount);
 
     // Применяем сортировку после фильтрации только если есть активная сортировка
+    // Используем requestAnimationFrame для правильного обновления DOM
     if (sortState[tabName] && sortState[tabName].direction !== 'none') {
-        sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
+        requestAnimationFrame(() => {
+            sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
+        });
     }
 }
 
@@ -754,10 +764,14 @@ function sortTable(tabName, column, direction) {
     const rows = Array.from(tbody.getElementsByTagName('tr'));
 
     // Сохраняем display стили перед сортировкой
-    const displayStates = rows.map(row => row.style.display);
+    const displayStates = rows.map(row => ({
+        element: row,
+        display: row.style.display || '',
+        visibility: row.style.visibility || ''
+    }));
 
-    const visibleRows = rows.filter((row, index) => displayStates[index] !== 'none');
-    const hiddenRows = rows.filter((row, index) => displayStates[index] === 'none');
+    const visibleRows = displayStates.filter(state => state.display !== 'none').map(state => state.element);
+    const hiddenRows = displayStates.filter(state => state.display === 'none').map(state => state.element);
 
     visibleRows.sort((a, b) => {
         let aVal, bVal;
@@ -809,17 +823,28 @@ function sortTable(tabName, column, direction) {
         return direction === 'asc' ? comparison : -comparison;
     });
 
-    // Перемещаем отсортированные видимые строки
+    // Создаем фрагмент документа для эффективного перемещения
+    const fragment = document.createDocumentFragment();
+    
+    // Добавляем отсортированные видимые строки
     visibleRows.forEach(row => {
         row.style.display = '';
-        tbody.appendChild(row);
+        row.style.visibility = 'visible';
+        fragment.appendChild(row);
     });
-
-    // Перемещаем скрытые строки и сохраняем их display стиль
+    
+    // Добавляем скрытые строки
     hiddenRows.forEach(row => {
         row.style.display = 'none';
-        tbody.appendChild(row);
+        row.style.visibility = 'hidden';
+        fragment.appendChild(row);
     });
+    
+    // Очищаем tbody и добавляем все строки
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
+    tbody.appendChild(fragment);
 }
 
 // Обработчик клика на заголовок для сортировки
