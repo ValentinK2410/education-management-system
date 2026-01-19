@@ -25,7 +25,23 @@ class SettingsController extends Controller
         
         $settings = Setting::orderBy('group')->orderBy('key')->get()->groupBy('group');
         
-        return view('admin.settings.index', compact('settings', 'groups'));
+        // Получаем информацию о токене Moodle для отображения
+        $moodleToken = config('services.moodle.token', '');
+        $moodleUrl = config('services.moodle.url', '');
+        $moodleEnabled = config('services.moodle.enabled', true);
+        
+        // Маскируем токен для безопасности (показываем первые 8 и последние 4 символа)
+        $maskedToken = '';
+        if (!empty($moodleToken)) {
+            $tokenLength = strlen($moodleToken);
+            if ($tokenLength > 12) {
+                $maskedToken = substr($moodleToken, 0, 8) . str_repeat('*', $tokenLength - 12) . substr($moodleToken, -4);
+            } else {
+                $maskedToken = str_repeat('*', $tokenLength);
+            }
+        }
+        
+        return view('admin.settings.index', compact('settings', 'groups', 'moodleToken', 'maskedToken', 'moodleUrl', 'moodleEnabled'));
     }
 
     /**
