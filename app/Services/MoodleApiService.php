@@ -424,8 +424,8 @@ class MoodleApiService
                 'warnings' => $result['warnings'] ?? [],
                 'result_keys' => array_keys($result ?? []),
                 'first_course_keys' => isset($result['courses'][0]) ? array_keys($result['courses'][0]) : null,
-                'has_assignments' => isset($result['courses'][0]['assignments'] ?? null),
-                'assignments_count' => isset($result['courses'][0]['assignments']) ? count($result['courses'][0]['assignments']) : 0
+                'has_assignments' => isset($result['courses'][0]) && isset($result['courses'][0]['assignments']),
+                'assignments_count' => isset($result['courses'][0]) && isset($result['courses'][0]['assignments']) ? count($result['courses'][0]['assignments']) : 0
             ]);
 
             // Возвращаем задания из первого курса
