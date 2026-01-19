@@ -467,77 +467,138 @@
                             @endif
                         @endforeach
 
+                        <!-- Секция настроек Moodle (всегда отображается) -->
+                        <div class="settings-group">
+                            <div class="settings-group-header">
+                                <i class="fas fa-graduation-cap me-2"></i>
+                                Настройки Moodle
+                            </div>
+                            <div class="settings-group-body">
+                                <!-- Информация о токене Moodle -->
+                                <div class="setting-item">
+                                    <label class="setting-label">
+                                        <i class="fas fa-key me-2"></i>
+                                        Токен Moodle API
+                                    </label>
+                                    <div class="setting-description">
+                                        Текущий токен, используемый для подключения к Moodle API
+                                    </div>
+                                    <div class="card bg-light border">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-8">
+                                                    <div class="mb-2">
+                                                        <strong>Токен:</strong>
+                                                        <code class="ms-2" id="moodleTokenDisplay" style="font-size: 0.9rem; word-break: break-all;">
+                                                            @if(!empty($maskedToken))
+                                                                {{ $maskedToken }}
+                                                            @else
+                                                                <span class="text-danger">Не настроен</span>
+                                                            @endif
+                                                        </code>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <strong>URL Moodle:</strong>
+                                                        <span class="ms-2">
+                                                            @if(!empty($moodleUrl))
+                                                                <a href="{{ $moodleUrl }}" target="_blank">{{ $moodleUrl }}</a>
+                                                            @else
+                                                                <span class="text-danger">Не настроен</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <strong>Статус:</strong>
+                                                        <span class="ms-2">
+                                                            @if($moodleEnabled)
+                                                                <span class="badge bg-success">Включен</span>
+                                                            @else
+                                                                <span class="badge bg-danger">Отключен</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 text-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleMoodleToken()" id="toggleTokenBtn">
+                                                        <i class="fas fa-eye me-1"></i>
+                                                        Показать полный токен
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Токен хранится в файле <code>.env</code> в переменной <code>MOODLE_TOKEN</code>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                @if(isset($settings['moodle']) && $settings['moodle']->count() > 0)
+                                    @foreach($settings['moodle'] as $setting)
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                {{ $setting->label ?? $setting->key }}
+                                            </label>
+                                            @if($setting->description)
+                                            <div class="setting-description">
+                                                {{ $setting->description }}
+                                            </div>
+                                            @endif
+                                            
+                                            @if($setting->type === 'text')
+                                                <textarea 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    rows="3"
+                                                    placeholder="Введите значение">{{ old('settings.' . $setting->key, $setting->value) }}</textarea>
+                                            @elseif($setting->type === 'boolean')
+                                                <div class="form-check form-switch">
+                                                    <input 
+                                                        class="form-check-input" 
+                                                        type="checkbox" 
+                                                        name="settings[{{ $setting->key }}]" 
+                                                        value="1"
+                                                        id="setting_{{ $setting->key }}"
+                                                        {{ old('settings.' . $setting->key, $setting->value) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="setting_{{ $setting->key }}">
+                                                        {{ $setting->value ? 'Включено' : 'Выключено' }}
+                                                    </label>
+                                                </div>
+                                            @elseif($setting->type === 'integer')
+                                                <input 
+                                                    type="number" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                    placeholder="Введите число">
+                                            @else
+                                                <input 
+                                                    type="text" 
+                                                    name="settings[{{ $setting->key }}]" 
+                                                    class="form-control" 
+                                                    value="{{ old('settings.' . $setting->key, $setting->value) }}"
+                                                    placeholder="Введите значение">
+                                            @endif
+                                            
+                                            @error('settings.' . $setting->key)
+                                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+
                         @foreach($groups as $groupKey => $groupName)
-                            @if($groupKey !== 'general' && isset($settings[$groupKey]) && $settings[$groupKey]->count() > 0)
+                            @if($groupKey !== 'general' && $groupKey !== 'moodle' && isset($settings[$groupKey]) && $settings[$groupKey]->count() > 0)
                                 <div class="settings-group">
                                     <div class="settings-group-header">
-                                        <i class="fas fa-{{ $groupKey === 'moodle' ? 'graduation-cap' : ($groupKey === 'sso' ? 'key' : 'cog') }} me-2"></i>
+                                        <i class="fas fa-{{ $groupKey === 'sso' ? 'key' : 'cog' }} me-2"></i>
                                         {{ $groupName }}
                                     </div>
                                     <div class="settings-group-body">
-                                        @if($groupKey === 'moodle')
-                                            <!-- Информация о токене Moodle -->
-                                            <div class="setting-item">
-                                                <label class="setting-label">
-                                                    <i class="fas fa-key me-2"></i>
-                                                    Токен Moodle API
-                                                </label>
-                                                <div class="setting-description">
-                                                    Текущий токен, используемый для подключения к Moodle API
-                                                </div>
-                                                <div class="card bg-light border">
-                                                    <div class="card-body">
-                                                        <div class="row align-items-center">
-                                                            <div class="col-md-8">
-                                                                <div class="mb-2">
-                                                                    <strong>Токен:</strong>
-                                                                    <code class="ms-2" id="moodleTokenDisplay" style="font-size: 0.9rem; word-break: break-all;">
-                                                                        @if(!empty($maskedToken))
-                                                                            {{ $maskedToken }}
-                                                                        @else
-                                                                            <span class="text-danger">Не настроен</span>
-                                                                        @endif
-                                                                    </code>
-                                                                </div>
-                                                                <div class="mb-2">
-                                                                    <strong>URL Moodle:</strong>
-                                                                    <span class="ms-2">
-                                                                        @if(!empty($moodleUrl))
-                                                                            <a href="{{ $moodleUrl }}" target="_blank">{{ $moodleUrl }}</a>
-                                                                        @else
-                                                                            <span class="text-danger">Не настроен</span>
-                                                                        @endif
-                                                                    </span>
-                                                                </div>
-                                                                <div class="mb-2">
-                                                                    <strong>Статус:</strong>
-                                                                    <span class="ms-2">
-                                                                        @if($moodleEnabled)
-                                                                            <span class="badge bg-success">Включен</span>
-                                                                        @else
-                                                                            <span class="badge bg-danger">Отключен</span>
-                                                                        @endif
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-4 text-end">
-                                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleMoodleToken()" id="toggleTokenBtn">
-                                                                    <i class="fas fa-eye me-1"></i>
-                                                                    Показать полный токен
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div class="mt-3">
-                                                            <small class="text-muted">
-                                                                <i class="fas fa-info-circle me-1"></i>
-                                                                Токен хранится в файле <code>.env</code> в переменной <code>MOODLE_TOKEN</code>
-                                                            </small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        
                                         @foreach($settings[$groupKey] as $setting)
                                         <div class="setting-item">
                                             <label class="setting-label">
