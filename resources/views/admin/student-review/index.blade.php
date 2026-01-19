@@ -219,7 +219,7 @@
                                     <input type="text" class="form-control" id="search-assignment-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('assignments')">
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <button class="btn btn-primary w-100" onclick="applyFilters('assignments')">
+                                    <button class="btn btn-primary w-100" data-search-tab="assignments" onclick="applyFilters('assignments')">
                                         <i class="fas fa-search me-1"></i>
                                         Найти
                                     </button>
@@ -358,7 +358,7 @@
                                     <input type="text" class="form-control" id="search-quiz-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('quizzes')">
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <button class="btn btn-primary w-100" onclick="applyFilters('quizzes')">
+                                    <button class="btn btn-primary w-100" data-search-tab="quizzes" onclick="applyFilters('quizzes')">
                                         <i class="fas fa-search me-1"></i>
                                         Найти
                                     </button>
@@ -528,7 +528,7 @@
                                     <input type="text" class="form-control" id="search-forum-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('forums')">
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <button class="btn btn-primary w-100" onclick="applyFilters('forums')">
+                                    <button class="btn btn-primary w-100" data-search-tab="forums" onclick="applyFilters('forums')">
                                         <i class="fas fa-search me-1"></i>
                                         Найти
                                     </button>
@@ -666,7 +666,7 @@ const sortState = {
     forums: { column: 'date', direction: 'desc' }
 };
 
-function switchTab(evt, tabName) {
+window.switchTab = function(evt, tabName) {
     if (evt) {
         evt.preventDefault();
     }
@@ -701,16 +701,24 @@ function switchTab(evt, tabName) {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
     window.history.pushState({}, '', url);
-}
+};
 
 // Функция фильтрации строк таблицы
 function filterTableRows(tabName) {
+    console.log('filterTableRows called for:', tabName);
+    
     const tbody = document.getElementById(tabName + '-tbody');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('Table body not found for:', tabName);
+        return;
+    }
 
     const filters = filterState[tabName];
     const rows = tbody.getElementsByTagName('tr');
+    
+    console.log('Total rows:', rows.length, 'Filters:', filters);
 
+    let visibleCount = 0;
     for (let row of rows) {
         const student = (row.getAttribute('data-student') || '').toLowerCase();
         const course = (row.getAttribute('data-course') || '').toLowerCase();
@@ -722,10 +730,13 @@ function filterTableRows(tabName) {
 
         if (matchName && matchStudent && matchCourse) {
             row.style.display = '';
+            visibleCount++;
         } else {
             row.style.display = 'none';
         }
     }
+    
+    console.log('Visible rows after filtering:', visibleCount);
 
     // Применяем сортировку после фильтрации
     sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
@@ -831,13 +842,26 @@ function handleSortClick(tabName, column) {
 }
 
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
-function applyFilters(tabName) {
+window.applyFilters = function(tabName) {
+    console.log('applyFilters called for:', tabName);
+    
+    if (!tabName) {
+        console.error('tabName is required');
+        return;
+    }
+    
     const prefix = tabName.slice(0, -1); // assignments -> assignment
 
     // Получаем значения из полей ввода
     const nameInput = document.getElementById(`search-${prefix}-name`);
     const studentInput = document.getElementById(`search-${prefix}-student`);
     const courseInput = document.getElementById(`search-${prefix}-course`);
+
+    console.log('Inputs found:', {
+        name: nameInput ? nameInput.value : 'not found',
+        student: studentInput ? studentInput.value : 'not found',
+        course: courseInput ? courseInput.value : 'not found'
+    });
 
     // Обновляем состояние фильтров
     filterState[tabName] = {
@@ -846,12 +870,14 @@ function applyFilters(tabName) {
         course: courseInput ? courseInput.value : ''
     };
 
+    console.log('Filter state updated:', filterState[tabName]);
+
     // Применяем фильтрацию
     filterTableRows(tabName);
-}
+};
 
 // Сброс фильтров
-function resetFilters(tabName) {
+window.resetFilters = function(tabName) {
     filterState[tabName] = { name: '', student: '', course: '' };
 
     // Очищаем поля ввода
@@ -866,11 +892,13 @@ function resetFilters(tabName) {
 
     // Применяем фильтрацию
     filterTableRows(tabName);
-}
+};
 
 // При загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация обработчиков сортировки для каждой вкладки
+    console.log('DOM loaded, initializing...');
+    
+    // Инициализация обработчиков сортировки и кнопок поиска для каждой вкладки
     ['assignments', 'quizzes', 'forums'].forEach(tabName => {
         // Обработчики сортировки
         const table = document.getElementById(tabName + '-table');
@@ -883,6 +911,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
+        
+        // Добавляем обработчики для кнопок "Найти" через addEventListener
+        const searchButton = document.querySelector(`button[data-search-tab="${tabName}"]`);
+        if (searchButton) {
+            // Удаляем старый onclick и добавляем новый обработчик
+            searchButton.removeAttribute('onclick');
+            searchButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Search button clicked for:', tabName);
+                applyFilters(tabName);
+                return false;
+            });
+            console.log('Search button handler added for:', tabName);
+        } else {
+            console.warn('Search button not found for:', tabName);
+        }
     });
 
     // Проверяем параметр tab в URL
@@ -893,6 +938,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tabElement) {
         switchTab(null, tabParam);
     }
+    
+    console.log('Initialization complete');
 });
 </script>
 @endsection
