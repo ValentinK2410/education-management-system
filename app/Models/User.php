@@ -48,6 +48,7 @@ class User extends Authenticatable
         'education',               // Образование
         'about_me',                // Кратко о себе
         'moodle_user_id',          // ID пользователя в Moodle
+        'moodle_token',            // Токен Moodle API для пользователя
     ];
 
     /**
@@ -58,6 +59,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',        // Пароль
         'remember_token',  // Токен "запомнить меня"
+        'moodle_token',    // Токен Moodle API (скрыт для безопасности)
     ];
 
     /**
@@ -282,6 +284,33 @@ class User extends Authenticatable
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * Получить токен Moodle API для пользователя
+     * Если у пользователя нет токена, возвращает общий токен из конфига
+     * 
+     * @return string|null Токен Moodle API или null если не настроен
+     */
+    public function getMoodleToken(): ?string
+    {
+        // Сначала проверяем токен пользователя (для преподавателей и администраторов)
+        if (!empty($this->moodle_token)) {
+            return $this->moodle_token;
+        }
+        
+        // Если у пользователя нет токена, используем общий токен из конфига
+        return config('services.moodle.token', '');
+    }
+
+    /**
+     * Проверить, имеет ли пользователь настроенный токен Moodle
+     * 
+     * @return bool
+     */
+    public function hasMoodleToken(): bool
+    {
+        return !empty($this->moodle_token);
     }
 
     /**

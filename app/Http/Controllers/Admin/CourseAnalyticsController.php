@@ -148,7 +148,10 @@ class CourseAnalyticsController extends Controller
             // Инициализируем MoodleApiService для генерации URL и получения cmid
             $moodleApiService = null;
             try {
-                $moodleApiService = new MoodleApiService();
+                // Используем токен текущего пользователя
+                $user = auth()->user();
+                $userToken = $user ? $user->getMoodleToken() : null;
+                $moodleApiService = new MoodleApiService(null, $userToken);
             } catch (\Exception $e) {
                 Log::warning('Не удалось инициализировать MoodleApiService', [
                     'error' => $e->getMessage()

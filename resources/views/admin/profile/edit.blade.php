@@ -198,6 +198,55 @@
                             </div>
                         </div>
 
+                        @if($user->hasRole('instructor') || $user->hasRole('admin'))
+                        <!-- Настройки Moodle API -->
+                        <h5 class="mb-3 mt-4">
+                            <i class="fas fa-graduation-cap me-2"></i>Настройки Moodle API
+                        </h5>
+                        <div class="mb-3">
+                            <label for="moodle_token" class="form-label">
+                                Токен Moodle API
+                                <button type="button" class="btn btn-sm btn-link p-0 ms-2" data-bs-toggle="tooltip" 
+                                        title="Токен для доступа к Moodle API. Если не указан, будет использоваться общий токен из настроек системы.">
+                                    <i class="fas fa-question-circle text-muted"></i>
+                                </button>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" 
+                                       class="form-control @error('moodle_token') is-invalid @enderror"
+                                       id="moodle_token" 
+                                       name="moodle_token" 
+                                       value="{{ old('moodle_token', $user->moodle_token) }}"
+                                       placeholder="Введите токен Moodle API">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleTokenBtn">
+                                    <i class="fas fa-eye" id="toggleTokenIcon"></i>
+                                </button>
+                            </div>
+                            @error('moodle_token')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Токен используется для запросов к Moodle API от вашего имени. 
+                                Если токен не указан, будет использоваться общий токен системы.
+                                <a href="{{ route('admin.settings.index') }}" target="_blank" class="ms-1">
+                                    Инструкция по созданию токена
+                                </a>
+                            </div>
+                            @if($user->moodle_token)
+                                <div class="alert alert-info mt-2 mb-0">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    <strong>Токен настроен.</strong> Запросы к Moodle API будут выполняться с использованием вашего токена.
+                                </div>
+                            @else
+                                <div class="alert alert-warning mt-2 mb-0">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    <strong>Токен не настроен.</strong> Будет использоваться общий токен системы.
+                                </div>
+                            @endif
+                        </div>
+                        @endif
+
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('admin.profile.show') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Назад к профилю
@@ -290,4 +339,35 @@
     font-size: 2.5rem;
 }
 </style>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleTokenBtn = document.getElementById('toggleTokenBtn');
+    const toggleTokenIcon = document.getElementById('toggleTokenIcon');
+    const moodleTokenInput = document.getElementById('moodle_token');
+    
+    if (toggleTokenBtn && moodleTokenInput) {
+        toggleTokenBtn.addEventListener('click', function() {
+            const type = moodleTokenInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            moodleTokenInput.setAttribute('type', type);
+            
+            if (type === 'text') {
+                toggleTokenIcon.classList.remove('fa-eye');
+                toggleTokenIcon.classList.add('fa-eye-slash');
+            } else {
+                toggleTokenIcon.classList.remove('fa-eye-slash');
+                toggleTokenIcon.classList.add('fa-eye');
+            }
+        });
+    }
+    
+    // Инициализация tooltips Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+@endpush
 @endsection

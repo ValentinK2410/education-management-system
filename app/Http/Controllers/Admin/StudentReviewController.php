@@ -200,7 +200,10 @@ class StudentReviewController extends Controller
         }
 
         try {
-            $moodleApi = new MoodleApiService();
+            // Используем токен текущего пользователя (преподавателя/администратора)
+            $user = auth()->user();
+            $userToken = $user ? $user->getMoodleToken() : null;
+            $moodleApi = new MoodleApiService(null, $userToken);
             $tab = $request->get('tab', 'quizzes'); // quizzes, forums
             
             // Получаем студентов курса
@@ -407,7 +410,10 @@ class StudentReviewController extends Controller
 
         $results = [];
         
-        $moodleApi = new MoodleApiService();
+        // Используем токен текущего пользователя (преподавателя/администратора)
+        $user = auth()->user();
+        $userToken = $user ? $user->getMoodleToken() : null;
+        $moodleApi = new MoodleApiService(null, $userToken);
         
         foreach ($courses as $course) {
                 if (!$course->moodle_course_id) {

@@ -43,7 +43,9 @@ class ProfileController extends Controller
         
         if ($user->moodle_user_id) {
             try {
-                $moodleApiService = new MoodleApiService();
+                // Используем токен пользователя, если он есть
+                $userToken = $user->getMoodleToken();
+                $moodleApiService = new MoodleApiService(null, $userToken);
             } catch (\Exception $e) {
                 Log::error('Ошибка инициализации MoodleApiService в ProfileController', [
                     'error' => $e->getMessage()
@@ -108,7 +110,9 @@ class ProfileController extends Controller
 
         try {
             $syncService = new MoodleSyncService();
-            $moodleApi = new MoodleApiService();
+            // Используем токен пользователя, если он есть
+            $userToken = $user->getMoodleToken();
+            $moodleApi = new MoodleApiService(null, $userToken);
             
             // Пытаемся получить курсы пользователя из Moodle напрямую
             $userMoodleCourses = $moodleApi->call('core_enrol_get_users_courses', [
@@ -257,6 +261,7 @@ class ProfileController extends Controller
             'education' => 'nullable|string|max:100',
             'about_me' => 'nullable|string|max:1000',
             'bio' => 'nullable|string|max:2000',
+            'moodle_token' => 'nullable|string|max:500',
             'photo' => [
                 'nullable',
                 File::image()
@@ -268,8 +273,13 @@ class ProfileController extends Controller
 
         $data = $request->only([
             'name', 'email', 'phone', 'city', 'religion', 'church',
-            'marital_status', 'education', 'about_me', 'bio', 'is_active'
+            'marital_status', 'education', 'about_me', 'bio', 'is_active', 'moodle_token'
         ]);
+        
+        // Очищаем токен, если передан пустой
+        if (isset($data['moodle_token']) && empty(trim($data['moodle_token']))) {
+            $data['moodle_token'] = null;
+        }
 
         // Обработка загрузки фото
         if ($request->hasFile('photo')) {

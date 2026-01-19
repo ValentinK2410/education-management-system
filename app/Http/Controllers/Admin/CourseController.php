@@ -70,7 +70,9 @@ class CourseController extends Controller
         
         if ($user->moodle_user_id) {
             try {
-                $moodleApiService = new MoodleApiService();
+                // Используем токен текущего пользователя
+                $userToken = $user->getMoodleToken();
+                $moodleApiService = new MoodleApiService(null, $userToken);
             } catch (\Exception $e) {
                 Log::error('Ошибка инициализации MoodleApiService', [
                     'error' => $e->getMessage()
