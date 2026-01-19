@@ -1122,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Initialization complete');
     
     // Асинхронная синхронизация данных из Moodle
-    const courses = @json($courses ?? []);
+    const courses = @json(($courses ?? collect())->toArray());
     const currentTab = urlParams.get('tab') || 'assignments';
     
     // Функция для синхронизации данных курса

@@ -37,6 +37,7 @@ class StudentReviewController extends Controller
                 'assignments' => collect(),
                 'quizzes' => collect(),
                 'forums' => collect(),
+                'courses' => collect(), // Добавляем пустую коллекцию курсов
             ]);
         }
 
@@ -473,8 +474,8 @@ class StudentReviewController extends Controller
                     continue;
                 }
 
-                $courseResult['assignments'] = $assignments;
-                $courseResult['assignments_count'] = count($assignments);
+                        $courseResult['assignments'] = $assignments;
+                        $courseResult['assignments_count'] = is_array($assignments) ? count($assignments) : 0;
 
                 // Получаем студентов курса
                 $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
@@ -486,7 +487,7 @@ class StudentReviewController extends Controller
                 ->whereNotNull('moodle_user_id')
                 ->get();
 
-                $courseResult['students_count'] = $students->count();
+                $courseResult['students_count'] = $students ? $students->count() : 0;
 
                 // Для каждого студента получаем сдачи
                 foreach ($students as $student) {
