@@ -56,6 +56,9 @@
             z-index: 1000;
             transition: all 0.3s ease;
             box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .sidebar.collapsed {
@@ -98,6 +101,29 @@
 
         .sidebar-nav {
             padding: 1rem 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            /* Кастомный скроллбар для лучшего внешнего вида */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.5);
         }
 
         .nav-item {
@@ -601,7 +627,7 @@
     </style>
 
     @stack('styles')
-    
+
     <!-- Компактная пагинация - переопределение после Bootstrap -->
     <style>
         /* Компактная пагинация для админ-панели - переопределение Bootstrap */
@@ -691,7 +717,7 @@
             max-width: 1rem !important;
             max-height: 1rem !important;
         }
-        
+
         /* Исправление размера стрелок в пагинации Laravel */
         .pagination .page-link svg,
         nav[role="navigation"] .page-link svg,
@@ -733,7 +759,7 @@
         nav[role="navigation"] .h-5 {
             height: 1rem !important;
         }
-        
+
         /* Исправление размера стрелок (chevrons) в пагинации Laravel */
         .pagination .page-link svg,
         nav[role="navigation"] .page-link svg,
@@ -747,7 +773,7 @@
             max-height: 0.875rem !important;
             vertical-align: middle !important;
         }
-        
+
         /* Дополнительные стили для элементов пагинации со стрелками */
         .pagination .page-link,
         nav[role="navigation"] .page-link,
@@ -757,7 +783,7 @@
             align-items: center !important;
             justify-content: center !important;
         }
-        
+
         .pagination .page-link svg,
         nav[role="navigation"] .page-link svg,
         nav[role="navigation"] a svg,
@@ -1043,7 +1069,7 @@
                     <span>Перейти в виртуальный класс</span>
                 </a>
                 @endif
-                
+
                 <!-- Language Switcher -->
                 <div class="language-switcher">
                     <div class="dropdown">

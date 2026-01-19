@@ -95,7 +95,7 @@ class StudentReviewController extends Controller
 
                 // Определяем статус: ответил или нет
                 $hasAnswered = $progress->submitted_at !== null || $progress->attempts_count > 0;
-                
+
                 if ($hasAnswered) {
                     $progress->status = 'answered';
                     $progress->status_text = 'Ответил';
@@ -150,7 +150,7 @@ class StudentReviewController extends Controller
         if ($progress->progress_data && is_array($progress->progress_data)) {
             // Ищем различные возможные ключи для сообщения
             $possibleKeys = ['message', 'post_message', 'last_message', 'content', 'text', 'subject'];
-            
+
             foreach ($possibleKeys as $key) {
                 if (isset($progress->progress_data[$key]) && !empty($progress->progress_data[$key])) {
                     $message = $progress->progress_data[$key];

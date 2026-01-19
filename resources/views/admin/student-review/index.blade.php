@@ -425,7 +425,7 @@ function switchTab(evt, tabName) {
     if (evt) {
         evt.preventDefault();
     }
-    
+
     // Hide all tab contents
     const tabContents = document.getElementsByClassName('tab-content');
     for (let i = 0; i < tabContents.length; i++) {
@@ -451,7 +451,7 @@ function switchTab(evt, tabName) {
             targetButton.classList.add('active');
         }
     }
-    
+
     // Обновляем URL без перезагрузки страницы
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
@@ -462,7 +462,7 @@ function switchTab(evt, tabName) {
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    
+
     if (tabParam) {
         // Проверяем, что такая вкладка существует
         const tabElement = document.getElementById('tab-' + tabParam);
