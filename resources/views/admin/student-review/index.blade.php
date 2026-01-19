@@ -175,6 +175,22 @@
 
 @section('content')
 <div class="container-fluid">
+    <!-- Индикатор синхронизации -->
+    <div id="sync-progress" class="alert alert-info d-none mb-3" role="alert">
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <div class="flex-grow-1">
+                <strong>Синхронизация данных...</strong>
+                <div id="sync-progress-text" class="small mt-1">Подготовка к синхронизации</div>
+            </div>
+            <div id="sync-progress-bar" class="progress flex-grow-1 ms-3" style="max-width: 300px; height: 20px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
@@ -1061,6 +1077,124 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('Initialization complete');
+    
+    // Асинхронная синхронизация данных из Moodle
+    const courses = @json($courses ?? []);
+    const currentTab = urlParams.get('tab') || 'assignments';
+    
+    // Функция для синхронизации данных курса
+    async function syncCourseData(courseId, courseName, tab) {
+        const progressDiv = document.getElementById('sync-progress');
+        const progressText = document.getElementById('sync-progress-text');
+        const progressBar = document.getElementById('sync-progress-bar').querySelector('.progress-bar');
+        
+        try {
+            progressText.textContent = `Синхронизация курса: ${courseName}...`;
+            
+            const response = await fetch(`/admin/student-review/sync-course/${courseId}?tab=${tab}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                progressText.textContent = `✓ ${courseName}: синхронизировано ${data.updated_count} записей`;
+                if (data.errors && data.errors.length > 0) {
+                    console.warn('Ошибки синхронизации:', data.errors);
+                }
+                return true;
+            } else {
+                progressText.textContent = `✗ ${courseName}: ${data.error || 'Ошибка синхронизации'}`;
+                console.error('Ошибка синхронизации:', data.error);
+                return false;
+            }
+        } catch (error) {
+            progressText.textContent = `✗ ${courseName}: Ошибка подключения`;
+            console.error('Ошибка синхронизации курса:', error);
+            return false;
+        }
+    }
+    
+    // Функция для синхронизации всех курсов
+    async function syncAllCourses(tab) {
+        if (courses.length === 0) {
+            return;
+        }
+        
+        const progressDiv = document.getElementById('sync-progress');
+        const progressText = document.getElementById('sync-progress-text');
+        const progressBar = document.getElementById('sync-progress-bar').querySelector('.progress-bar');
+        
+        progressDiv.classList.remove('d-none');
+        progressText.textContent = `Найдено курсов: ${courses.length}`;
+        progressBar.style.width = '0%';
+        
+        let syncedCount = 0;
+        
+        for (let i = 0; i < courses.length; i++) {
+            const course = courses[i];
+            const success = await syncCourseData(course.id, course.name, tab);
+            
+            if (success) {
+                syncedCount++;
+            }
+            
+            // Обновляем прогресс-бар
+            const progress = ((i + 1) / courses.length) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Небольшая задержка между запросами, чтобы не перегружать сервер
+            if (i < courses.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+        
+        // Завершение синхронизации
+        progressText.textContent = `Синхронизация завершена: ${syncedCount} из ${courses.length} курсов`;
+        progressBar.classList.remove('progress-bar-animated');
+        progressBar.classList.add('bg-success');
+        
+        // Скрываем индикатор через 3 секунды и перезагружаем страницу
+        setTimeout(() => {
+            progressDiv.classList.add('d-none');
+            // Перезагружаем страницу для отображения обновленных данных
+            window.location.reload();
+        }, 3000);
+    }
+    
+    // Автоматическая синхронизация при загрузке страницы (только для тестов и форумов)
+    // Можно отключить, если нужна ручная синхронизация
+    const autoSync = false; // Установите в true для автоматической синхронизации
+    
+    if (autoSync && (currentTab === 'quizzes' || currentTab === 'forums')) {
+        // Запускаем синхронизацию через 1 секунду после загрузки страницы
+        setTimeout(() => {
+            syncAllCourses(currentTab);
+        }, 1000);
+    }
+    
+    // Добавляем кнопку для ручной синхронизации
+    const syncButton = document.createElement('button');
+    syncButton.className = 'btn btn-sm btn-primary ms-2';
+    syncButton.innerHTML = '<i class="fas fa-sync me-1"></i>Обновить данные из Moodle';
+    syncButton.onclick = function() {
+        const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || currentTab;
+        if (activeTab === 'quizzes' || activeTab === 'forums') {
+            syncAllCourses(activeTab);
+        } else {
+            alert('Синхронизация доступна только для вкладок "Тесты" и "Форумы"');
+        }
+    };
+    
+    // Добавляем кнопку рядом с заголовком страницы
+    const pageTitle = document.querySelector('.page-title');
+    if (pageTitle && pageTitle.parentElement) {
+        pageTitle.parentElement.appendChild(syncButton);
+    }
 });
 </script>
 @endsection
