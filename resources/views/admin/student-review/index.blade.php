@@ -195,13 +195,56 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header bg-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-clipboard-check me-2"></i>
-                        Проверка студентов
-                    </h4>
-                    <p class="text-muted mb-0 mt-2">
-                        Просмотр и проверка заданий, тестов и форумов студентов со всех ваших курсов
-                    </p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-0">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                Проверка студентов
+                            </h4>
+                            <p class="text-muted mb-0 mt-2">
+                                Просмотр и проверка заданий, тестов и форумов студентов со всех ваших курсов
+                            </p>
+                        </div>
+                        <div>
+                            <button id="check-moodle-btn" class="btn btn-sm btn-info" onclick="checkMoodleAssignments()">
+                                <i class="fas fa-search me-1"></i>
+                                Проверить данные в Moodle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Модальное окно для отображения результатов проверки Moodle -->
+            <div class="modal fade" id="moodleCheckModal" tabindex="-1" aria-labelledby="moodleCheckModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="moodleCheckModalLabel">
+                                <i class="fas fa-database me-2"></i>
+                                Результаты проверки данных в Moodle
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="moodle-check-loading" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                                <p class="mt-3">Проверка данных в Moodle...</p>
+                            </div>
+                            <div id="moodle-check-results" style="display: none;">
+                                <!-- Результаты будут вставлены сюда -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            <button type="button" class="btn btn-primary" onclick="copyMoodleCheckResults()">
+                                <i class="fas fa-copy me-1"></i>
+                                Копировать результаты
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1196,5 +1239,150 @@ document.addEventListener('DOMContentLoaded', function() {
         pageTitle.parentElement.appendChild(syncButton);
     }
 });
+
+// Функция для проверки данных в Moodle
+async function checkMoodleAssignments() {
+    const modal = new bootstrap.Modal(document.getElementById('moodleCheckModal'));
+    const loadingDiv = document.getElementById('moodle-check-loading');
+    const resultsDiv = document.getElementById('moodle-check-results');
+    
+    modal.show();
+    loadingDiv.style.display = 'block';
+    resultsDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/admin/student-review/check-moodle-assignments', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+        
+        const data = await response.json();
+        
+        loadingDiv.style.display = 'none';
+        resultsDiv.style.display = 'block';
+        
+        if (data.success) {
+            let html = '<div class="alert alert-success"><strong>Проверка завершена успешно</strong></div>';
+            
+            html += '<div class="mb-3"><h6>Сводка:</h6>';
+            html += `<ul><li>Всего курсов: ${data.total_courses}</li>`;
+            html += `<li>Всего заданий: ${data.summary.total_assignments}</li>`;
+            html += `<li>Всего студентов: ${data.summary.total_students}</li>`;
+            html += `<li>Курсов с заданиями: ${data.summary.courses_with_assignments}</li></ul></div>`;
+            
+            html += '<div class="accordion" id="moodleCheckAccordion">';
+            
+            data.courses.forEach((course, index) => {
+                const accordionId = `course-${index}`;
+                html += `<div class="accordion-item">`;
+                html += `<h2 class="accordion-header" id="heading-${index}">`;
+                html += `<button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#${accordionId}">`;
+                html += `<strong>${course.course_name}</strong>`;
+                if (course.moodle_course_id) {
+                    html += ` <span class="badge bg-info ms-2">Moodle ID: ${course.moodle_course_id}</span>`;
+                }
+                if (course.assignments_count !== undefined) {
+                    html += ` <span class="badge bg-primary ms-2">Заданий: ${course.assignments_count}</span>`;
+                }
+                if (course.students_count !== undefined) {
+                    html += ` <span class="badge bg-success ms-2">Студентов: ${course.students_count}</span>`;
+                }
+                if (course.error) {
+                    html += ` <span class="badge bg-danger ms-2">Ошибка</span>`;
+                }
+                html += `</button></h2>`;
+                html += `<div id="${accordionId}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#moodleCheckAccordion">`;
+                html += `<div class="accordion-body">`;
+                
+                if (course.error) {
+                    html += `<div class="alert alert-danger">${course.error}</div>`;
+                }
+                
+                if (course.api_request) {
+                    html += `<h6>Запрос к Moodle API:</h6>`;
+                    html += `<pre class="bg-light p-3 rounded"><code>${JSON.stringify(course.api_request, null, 2)}</code></pre>`;
+                }
+                
+                if (course.api_response) {
+                    html += `<h6>Ответ Moodle API:</h6>`;
+                    html += `<pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>${JSON.stringify(course.api_response, null, 2)}</code></pre>`;
+                }
+                
+                if (course.assignments && course.assignments.length > 0) {
+                    html += `<h6>Задания (${course.assignments.length}):</h6>`;
+                    html += `<ul>`;
+                    course.assignments.forEach(assignment => {
+                        html += `<li><strong>${assignment.name}</strong> (ID: ${assignment.id})</li>`;
+                    });
+                    html += `</ul>`;
+                } else if (course.assignments_count === 0) {
+                    html += `<div class="alert alert-warning">Заданий не найдено в Moodle</div>`;
+                }
+                
+                if (course.students && course.students.length > 0) {
+                    html += `<h6>Студенты и их сдачи:</h6>`;
+                    course.students.forEach(student => {
+                        html += `<div class="card mb-2">`;
+                        html += `<div class="card-header"><strong>${student.student_name}</strong> (${student.student_email})`;
+                        html += ` <span class="badge bg-info">Moodle ID: ${student.moodle_user_id}</span>`;
+                        html += `</div>`;
+                        html += `<div class="card-body">`;
+                        if (student.submissions_count !== undefined) {
+                            html += `<p>Сдач: ${student.submissions_count}</p>`;
+                            if (student.submissions && Object.keys(student.submissions).length > 0) {
+                                html += `<pre class="bg-light p-2 rounded small" style="max-height: 200px; overflow-y: auto;"><code>${JSON.stringify(student.submissions, null, 2)}</code></pre>`;
+                            }
+                        }
+                        if (student.grades_count !== undefined) {
+                            html += `<p>Оценок: ${student.grades_count}</p>`;
+                            if (student.grades && Object.keys(student.grades).length > 0) {
+                                html += `<pre class="bg-light p-2 rounded small" style="max-height: 200px; overflow-y: auto;"><code>${JSON.stringify(student.grades, null, 2)}</code></pre>`;
+                            }
+                        }
+                        html += `</div></div>`;
+                    });
+                }
+                
+                html += `</div></div></div>`;
+            });
+            
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+            
+            // Сохраняем данные для копирования
+            window.moodleCheckData = data;
+        } else {
+            resultsDiv.innerHTML = `<div class="alert alert-danger"><strong>Ошибка:</strong> ${data.error || 'Неизвестная ошибка'}</div>`;
+        }
+    } catch (error) {
+        loadingDiv.style.display = 'none';
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `<div class="alert alert-danger"><strong>Ошибка подключения:</strong> ${error.message}</div>`;
+    }
+}
+
+// Функция для копирования результатов
+function copyMoodleCheckResults() {
+    if (window.moodleCheckData) {
+        const text = JSON.stringify(window.moodleCheckData, null, 2);
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Результаты скопированы в буфер обмена');
+        }).catch(err => {
+            console.error('Ошибка копирования:', err);
+            // Fallback: создаем текстовую область
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Результаты скопированы в буфер обмена');
+        });
+    }
+}
 </script>
 @endsection

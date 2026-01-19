@@ -450,6 +450,7 @@ Route::middleware(['auth'])->group(function () {
         // Проверка студентов (для преподавателей и администраторов с ролью instructor)
         Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
         Route::post('student-review/sync-course/{course}', [StudentReviewController::class, 'syncCourseData'])->name('student-review.sync-course');
+        Route::get('student-review/check-moodle-assignments', [StudentReviewController::class, 'checkMoodleAssignments'])->name('student-review.check-moodle-assignments');
         
         // Аналитика (для преподавателей и администраторов)
         Route::get('analytics', [CourseAnalyticsController::class, 'index'])->name('analytics.index');

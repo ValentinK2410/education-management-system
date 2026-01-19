@@ -368,6 +368,166 @@ class StudentReviewController extends Controller
     }
 
     /**
+     * Проверить данные о заданиях напрямую из Moodle API
+     * Возвращает детальную информацию о запросах и ответах
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkMoodleAssignments()
+    {
+        $user = auth()->user();
+        
+        // Проверяем права доступа
+        if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
+            return response()->json(['error' => 'Доступ запрещен'], 403);
+        }
+
+        $instructor = $user;
+        $courses = \App\Models\Course::where('instructor_id', $instructor->id)->get();
+        
+        if ($courses->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'У вас нет курсов',
+                'courses' => []
+            ]);
+        }
+
+        $results = [];
+        
+        try {
+            $moodleApi = new MoodleApiService();
+            
+            foreach ($courses as $course) {
+                if (!$course->moodle_course_id) {
+                    $results[] = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'moodle_course_id' => null,
+                        'error' => 'Курс не синхронизирован с Moodle (нет moodle_course_id)',
+                        'assignments' => [],
+                        'submissions' => []
+                    ];
+                    continue;
+                }
+
+                $courseResult = [
+                    'course_id' => $course->id,
+                    'course_name' => $course->name,
+                    'moodle_course_id' => $course->moodle_course_id,
+                    'api_request' => [
+                        'function' => 'mod_assign_get_assignments',
+                        'url' => config('services.moodle.url') . '/webservice/rest/server.php',
+                        'params' => [
+                            'courseids' => [$course->moodle_course_id],
+                            'wstoken' => '***скрыто***',
+                            'wsfunction' => 'mod_assign_get_assignments',
+                            'moodlewsrestformat' => 'json'
+                        ]
+                    ],
+                    'assignments' => [],
+                    'submissions' => [],
+                    'students' => []
+                ];
+
+                // Получаем задания курса
+                $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
+                
+                if ($assignments === false) {
+                    $courseResult['error'] = 'Не удалось получить задания из Moodle API';
+                    $results[] = $courseResult;
+                    continue;
+                }
+
+                $courseResult['assignments'] = $assignments;
+                $courseResult['assignments_count'] = count($assignments);
+
+                // Получаем студентов курса
+                $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
+                    $query->where('courses.id', $course->id);
+                })
+                ->whereHas('roles', function ($query) {
+                    $query->where('slug', 'student');
+                })
+                ->whereNotNull('moodle_user_id')
+                ->get();
+
+                $courseResult['students_count'] = $students->count();
+
+                // Для каждого студента получаем сдачи
+                foreach ($students as $student) {
+                    $studentResult = [
+                        'student_id' => $student->id,
+                        'student_name' => $student->name,
+                        'student_email' => $student->email,
+                        'moodle_user_id' => $student->moodle_user_id,
+                        'submissions' => []
+                    ];
+
+                    // Получаем сдачи студента
+                    $submissions = $moodleApi->getStudentSubmissions(
+                        $course->moodle_course_id,
+                        $student->moodle_user_id,
+                        $assignments
+                    );
+
+                    if ($submissions !== false) {
+                        $studentResult['submissions'] = $submissions;
+                        $studentResult['submissions_count'] = count($submissions);
+                        
+                        // Получаем оценки студента
+                        $grades = $moodleApi->getStudentGrades(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $assignments
+                        );
+                        
+                        if ($grades !== false) {
+                            $studentResult['grades'] = $grades;
+                            $studentResult['grades_count'] = count($grades);
+                        }
+                    }
+
+                    $courseResult['students'][] = $studentResult;
+                }
+
+                // Получаем полный ответ API для логирования
+                $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
+                    'courseids' => [$course->moodle_course_id]
+                ]);
+                
+                $courseResult['api_response'] = $apiResponse;
+                
+                $results[] = $courseResult;
+            }
+
+            return response()->json([
+                'success' => true,
+                'total_courses' => $courses->count(),
+                'courses' => $results,
+                'summary' => [
+                    'total_assignments' => array_sum(array_column($results, 'assignments_count')),
+                    'total_students' => array_sum(array_column($results, 'students_count')),
+                    'courses_with_assignments' => count(array_filter($results, function($r) {
+                        return isset($r['assignments_count']) && $r['assignments_count'] > 0;
+                    }))
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ошибка проверки заданий из Moodle', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Ошибка проверки: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
+    }
+
+    /**
      * Извлечь текст сообщения форума из данных прогресса
      *
      * @param StudentActivityProgress $progress
