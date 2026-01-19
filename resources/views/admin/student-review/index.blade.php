@@ -206,17 +206,23 @@
                         <!-- Панель поиска для заданий -->
                         <div class="search-panel mb-3 p-3 bg-light rounded">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по названию</label>
-                                    <input type="text" class="form-control" id="search-assignment-name" placeholder="Название задания...">
+                                    <input type="text" class="form-control" id="search-assignment-name" placeholder="Название задания..." onkeypress="if(event.key==='Enter') applyFilters('assignments')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по студенту</label>
-                                    <input type="text" class="form-control" id="search-assignment-student" placeholder="Имя или email студента...">
+                                    <input type="text" class="form-control" id="search-assignment-student" placeholder="Имя или email студента..." onkeypress="if(event.key==='Enter') applyFilters('assignments')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по курсу</label>
-                                    <input type="text" class="form-control" id="search-assignment-course" placeholder="Название курса...">
+                                    <input type="text" class="form-control" id="search-assignment-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('assignments')">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="applyFilters('assignments')">
+                                        <i class="fas fa-search me-1"></i>
+                                        Найти
+                                    </button>
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -262,8 +268,8 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr data-student="{{ strtolower($assignment->user->name . ' ' . $assignment->user->email) }}" 
-                                            data-course="{{ strtolower($assignment->course->name) }}" 
+                                        <tr data-student="{{ strtolower($assignment->user->name . ' ' . $assignment->user->email) }}"
+                                            data-course="{{ strtolower($assignment->course->name) }}"
                                             data-activity="{{ strtolower($assignment->activity->name ?? '') }}"
                                             data-status="{{ $assignment->status }}"
                                             data-date="{{ $assignment->display_date ? \Carbon\Carbon::parse($assignment->display_date)->timestamp : 0 }}">
@@ -326,17 +332,23 @@
                         <!-- Панель поиска для тестов -->
                         <div class="search-panel mb-3 p-3 bg-light rounded">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по названию</label>
-                                    <input type="text" class="form-control" id="search-quiz-name" placeholder="Название теста...">
+                                    <input type="text" class="form-control" id="search-quiz-name" placeholder="Название теста..." onkeypress="if(event.key==='Enter') applyFilters('quizzes')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по студенту</label>
-                                    <input type="text" class="form-control" id="search-quiz-student" placeholder="Имя или email студента...">
+                                    <input type="text" class="form-control" id="search-quiz-student" placeholder="Имя или email студента..." onkeypress="if(event.key==='Enter') applyFilters('quizzes')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по курсу</label>
-                                    <input type="text" class="form-control" id="search-quiz-course" placeholder="Название курса...">
+                                    <input type="text" class="form-control" id="search-quiz-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('quizzes')">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="applyFilters('quizzes')">
+                                        <i class="fas fa-search me-1"></i>
+                                        Найти
+                                    </button>
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -388,8 +400,8 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr data-student="{{ strtolower($quiz->user->name . ' ' . $quiz->user->email) }}" 
-                                            data-course="{{ strtolower($quiz->course->name) }}" 
+                                        <tr data-student="{{ strtolower($quiz->user->name . ' ' . $quiz->user->email) }}"
+                                            data-course="{{ strtolower($quiz->course->name) }}"
                                             data-activity="{{ strtolower($quiz->activity->name ?? '') }}"
                                             data-status="{{ $quiz->status }}"
                                             data-attempts="{{ $quiz->attempts_count ?? 0 }}"
@@ -477,17 +489,23 @@
                         <!-- Панель поиска для форумов -->
                         <div class="search-panel mb-3 p-3 bg-light rounded">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по названию</label>
-                                    <input type="text" class="form-control" id="search-forum-name" placeholder="Название форума...">
+                                    <input type="text" class="form-control" id="search-forum-name" placeholder="Название форума..." onkeypress="if(event.key==='Enter') applyFilters('forums')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по студенту</label>
-                                    <input type="text" class="form-control" id="search-forum-student" placeholder="Имя или email студента...">
+                                    <input type="text" class="form-control" id="search-forum-student" placeholder="Имя или email студента..." onkeypress="if(event.key==='Enter') applyFilters('forums')">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small text-muted">Поиск по курсу</label>
-                                    <input type="text" class="form-control" id="search-forum-course" placeholder="Название курса...">
+                                    <input type="text" class="form-control" id="search-forum-course" placeholder="Название курса..." onkeypress="if(event.key==='Enter') applyFilters('forums')">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="applyFilters('forums')">
+                                        <i class="fas fa-search me-1"></i>
+                                        Найти
+                                    </button>
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -532,8 +550,8 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr data-student="{{ strtolower($forum->user->name . ' ' . $forum->user->email) }}" 
-                                            data-course="{{ strtolower($forum->course->name) }}" 
+                                        <tr data-student="{{ strtolower($forum->user->name . ' ' . $forum->user->email) }}"
+                                            data-course="{{ strtolower($forum->course->name) }}"
                                             data-activity="{{ strtolower($forum->activity->name ?? '') }}"
                                             data-date="{{ $forum->submitted_at ? \Carbon\Carbon::parse($forum->submitted_at)->timestamp : 0 }}">
                                             <td>
@@ -737,7 +755,7 @@ function sortTable(tabName, column, direction) {
 // Обработчик клика на заголовок для сортировки
 function handleSortClick(tabName, column) {
     const currentSort = sortState[tabName];
-    
+
     // Определяем новое направление сортировки
     let newDirection = 'asc';
     if (currentSort.column === column) {
@@ -769,52 +787,48 @@ function handleSortClick(tabName, column) {
     sortTable(tabName, column, newDirection);
 }
 
+// Применение фильтров (вызывается по кнопке "Найти" или Enter)
+function applyFilters(tabName) {
+    const prefix = tabName.slice(0, -1); // assignments -> assignment
+    
+    // Получаем значения из полей ввода
+    const nameInput = document.getElementById(`search-${prefix}-name`);
+    const studentInput = document.getElementById(`search-${prefix}-student`);
+    const courseInput = document.getElementById(`search-${prefix}-course`);
+    
+    // Обновляем состояние фильтров
+    filterState[tabName] = {
+        name: nameInput ? nameInput.value : '',
+        student: studentInput ? studentInput.value : '',
+        course: courseInput ? courseInput.value : ''
+    };
+    
+    // Применяем фильтрацию
+    filterTableRows(tabName);
+}
+
 // Сброс фильтров
 function resetFilters(tabName) {
     filterState[tabName] = { name: '', student: '', course: '' };
-    
+
     // Очищаем поля ввода
-    document.getElementById(`search-${tabName.slice(0, -1)}-name`).value = '';
-    document.getElementById(`search-${tabName.slice(0, -1)}-student`).value = '';
-    document.getElementById(`search-${tabName.slice(0, -1)}-course`).value = '';
+    const prefix = tabName.slice(0, -1);
+    const nameInput = document.getElementById(`search-${prefix}-name`);
+    const studentInput = document.getElementById(`search-${prefix}-student`);
+    const courseInput = document.getElementById(`search-${prefix}-course`);
     
+    if (nameInput) nameInput.value = '';
+    if (studentInput) studentInput.value = '';
+    if (courseInput) courseInput.value = '';
+
     // Применяем фильтрацию
     filterTableRows(tabName);
 }
 
 // При загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация обработчиков поиска для каждой вкладки
+    // Инициализация обработчиков сортировки для каждой вкладки
     ['assignments', 'quizzes', 'forums'].forEach(tabName => {
-        const prefix = tabName.slice(0, -1); // assignments -> assignment
-        
-        // Поиск по названию
-        const nameInput = document.getElementById(`search-${prefix}-name`);
-        if (nameInput) {
-            nameInput.addEventListener('input', function() {
-                filterState[tabName].name = this.value;
-                filterTableRows(tabName);
-            });
-        }
-
-        // Поиск по студенту
-        const studentInput = document.getElementById(`search-${prefix}-student`);
-        if (studentInput) {
-            studentInput.addEventListener('input', function() {
-                filterState[tabName].student = this.value;
-                filterTableRows(tabName);
-            });
-        }
-
-        // Поиск по курсу
-        const courseInput = document.getElementById(`search-${prefix}-course`);
-        if (courseInput) {
-            courseInput.addEventListener('input', function() {
-                filterState[tabName].course = this.value;
-                filterTableRows(tabName);
-            });
-        }
-
         // Обработчики сортировки
         const table = document.getElementById(tabName + '-table');
         if (table) {
