@@ -45,7 +45,7 @@ class StudentReviewController extends Controller
                       ->orWhereNotNull('submitted_at')
                       ->orWhere('has_draft', true);
             })
-            ->with(['user', 'course', 'activity'])
+            ->with(['user', 'course', 'activity.course'])
             ->orderBy('submitted_at', 'desc')
             ->orderBy('draft_created_at', 'desc')
             ->get()
@@ -85,7 +85,7 @@ class StudentReviewController extends Controller
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'quiz');
             })
-            ->with(['user', 'course', 'activity'])
+            ->with(['user', 'course', 'activity.course'])
             ->get()
             ->map(function ($progress) use ($coursesById) {
                 // Присваиваем курс к активности для корректной работы moodle_url
@@ -121,7 +121,7 @@ class StudentReviewController extends Controller
             })
             ->where('needs_response', true)
             ->whereNotNull('submitted_at')
-            ->with(['user', 'course', 'activity'])
+            ->with(['user', 'course', 'activity.course'])
             ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($progress) use ($coursesById) {

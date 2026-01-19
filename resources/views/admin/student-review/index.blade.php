@@ -105,6 +105,60 @@
             border-left: 3px solid #667eea;
         }
     }
+
+    /* Панель поиска */
+    .search-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Сортировка */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .sortable:hover {
+        background-color: #f1f5f9;
+    }
+
+    .sortable i {
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+
+    .sortable:hover i {
+        opacity: 1;
+    }
+
+    .sortable[data-sort="asc"] i::before {
+        content: "\f0de";
+        opacity: 1;
+        color: #667eea;
+    }
+
+    .sortable[data-sort="desc"] i::before {
+        content: "\f0dd";
+        opacity: 1;
+        color: #667eea;
+    }
+
+    /* Темная тема */
+    [data-theme="dark"] .search-panel {
+        background: var(--card-bg);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .search-panel .form-control {
+        background-color: var(--card-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+
+    [data-theme="dark"] .sortable:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+    }
 </style>
 @endpush
 
@@ -149,19 +203,54 @@
                             <p class="text-muted">Нет заданий, ожидающих проверки</p>
                         </div>
                     @else
+                        <!-- Панель поиска для заданий -->
+                        <div class="search-panel mb-3 p-3 bg-light rounded">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по названию</label>
+                                    <input type="text" class="form-control" id="search-assignment-name" placeholder="Название задания...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по студенту</label>
+                                    <input type="text" class="form-control" id="search-assignment-student" placeholder="Имя или email студента...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по курсу</label>
+                                    <input type="text" class="form-control" id="search-assignment-course" placeholder="Название курса...">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters('assignments')">
+                                        <i class="fas fa-refresh me-1"></i>
+                                        Сбросить фильтры
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
+                            <table class="table table-hover table-striped" id="assignments-table">
                                 <thead>
                                     <tr>
-                                        <th>Студент</th>
-                                        <th>Курс</th>
-                                        <th>Название задания</th>
-                                        <th>Статус</th>
-                                        <th>Дата</th>
+                                        <th class="sortable" data-column="student" data-sort="none">
+                                            Студент <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="course" data-sort="none">
+                                            Курс <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="activity" data-sort="none">
+                                            Название задания <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="status" data-sort="none">
+                                            Статус <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="date" data-sort="desc">
+                                            Дата <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th>Действия</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="assignments-tbody">
                                     @foreach($assignments as $assignment)
                                         @php
                                             $moodleUrl = null;
@@ -173,7 +262,11 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr>
+                                        <tr data-student="{{ strtolower($assignment->user->name . ' ' . $assignment->user->email) }}" 
+                                            data-course="{{ strtolower($assignment->course->name) }}" 
+                                            data-activity="{{ strtolower($assignment->activity->name ?? '') }}"
+                                            data-status="{{ $assignment->status }}"
+                                            data-date="{{ $assignment->display_date ? \Carbon\Carbon::parse($assignment->display_date)->timestamp : 0 }}">
                                             <td>
                                                 <div>
                                                     <strong>{{ $assignment->user->name }}</strong><br>
@@ -230,21 +323,60 @@
                             <p class="text-muted">Нет тестов для отображения</p>
                         </div>
                     @else
+                        <!-- Панель поиска для тестов -->
+                        <div class="search-panel mb-3 p-3 bg-light rounded">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по названию</label>
+                                    <input type="text" class="form-control" id="search-quiz-name" placeholder="Название теста...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по студенту</label>
+                                    <input type="text" class="form-control" id="search-quiz-student" placeholder="Имя или email студента...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по курсу</label>
+                                    <input type="text" class="form-control" id="search-quiz-course" placeholder="Название курса...">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters('quizzes')">
+                                        <i class="fas fa-refresh me-1"></i>
+                                        Сбросить фильтры
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
+                            <table class="table table-hover table-striped" id="quizzes-table">
                                 <thead>
                                     <tr>
-                                        <th>Студент</th>
-                                        <th>Курс</th>
-                                        <th>Название теста</th>
-                                        <th>Статус</th>
-                                        <th>Попытки</th>
-                                        <th>Оценка</th>
-                                        <th>Дата последней попытки</th>
+                                        <th class="sortable" data-column="student" data-sort="none">
+                                            Студент <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="course" data-sort="none">
+                                            Курс <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="activity" data-sort="none">
+                                            Название теста <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="status" data-sort="none">
+                                            Статус <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="attempts" data-sort="none">
+                                            Попытки <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="grade" data-sort="none">
+                                            Оценка <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="date" data-sort="none">
+                                            Дата последней попытки <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th>Действия</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="quizzes-tbody">
                                     @foreach($quizzes as $quiz)
                                         @php
                                             $moodleUrl = null;
@@ -256,7 +388,13 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr>
+                                        <tr data-student="{{ strtolower($quiz->user->name . ' ' . $quiz->user->email) }}" 
+                                            data-course="{{ strtolower($quiz->course->name) }}" 
+                                            data-activity="{{ strtolower($quiz->activity->name ?? '') }}"
+                                            data-status="{{ $quiz->status }}"
+                                            data-attempts="{{ $quiz->attempts_count ?? 0 }}"
+                                            data-grade="{{ $quiz->grade ?? 0 }}"
+                                            data-date="{{ ($quiz->last_attempt_at ? \Carbon\Carbon::parse($quiz->last_attempt_at)->timestamp : ($quiz->submitted_at ? \Carbon\Carbon::parse($quiz->submitted_at)->timestamp : 0)) }}">
                                             <td>
                                                 <div>
                                                     <strong>{{ $quiz->user->name }}</strong><br>
@@ -336,20 +474,53 @@
                             <p class="text-muted">Нет форумов, ожидающих ответа</p>
                         </div>
                     @else
+                        <!-- Панель поиска для форумов -->
+                        <div class="search-panel mb-3 p-3 bg-light rounded">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по названию</label>
+                                    <input type="text" class="form-control" id="search-forum-name" placeholder="Название форума...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по студенту</label>
+                                    <input type="text" class="form-control" id="search-forum-student" placeholder="Имя или email студента...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Поиск по курсу</label>
+                                    <input type="text" class="form-control" id="search-forum-course" placeholder="Название курса...">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters('forums')">
+                                        <i class="fas fa-refresh me-1"></i>
+                                        Сбросить фильтры
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
+                            <table class="table table-hover table-striped" id="forums-table">
                                 <thead>
                                     <tr>
-                                        <th>Студент</th>
-                                        <th>Курс</th>
-                                        <th>Название форума</th>
+                                        <th class="sortable" data-column="student" data-sort="none">
+                                            Студент <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="course" data-sort="none">
+                                            Курс <i class="fas fa-sort ms-1"></i>
+                                        </th>
+                                        <th class="sortable" data-column="activity" data-sort="none">
+                                            Название форума <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th>Последнее сообщение</th>
-                                        <th>Дата сообщения</th>
+                                        <th class="sortable" data-column="date" data-sort="desc">
+                                            Дата сообщения <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th>Статус</th>
                                         <th>Действия</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="forums-tbody">
                                     @foreach($forums as $forum)
                                         @php
                                             $moodleUrl = null;
@@ -361,7 +532,10 @@
                                                 $moodleUrl = null;
                                             }
                                         @endphp
-                                        <tr>
+                                        <tr data-student="{{ strtolower($forum->user->name . ' ' . $forum->user->email) }}" 
+                                            data-course="{{ strtolower($forum->course->name) }}" 
+                                            data-activity="{{ strtolower($forum->activity->name ?? '') }}"
+                                            data-date="{{ $forum->submitted_at ? \Carbon\Carbon::parse($forum->submitted_at)->timestamp : 0 }}">
                                             <td>
                                                 <div>
                                                     <strong>{{ $forum->user->name }}</strong><br>
@@ -421,6 +595,20 @@
 </div>
 
 <script>
+// Состояние фильтров для каждой вкладки
+const filterState = {
+    assignments: { name: '', student: '', course: '' },
+    quizzes: { name: '', student: '', course: '' },
+    forums: { name: '', student: '', course: '' }
+};
+
+// Состояние сортировки
+const sortState = {
+    assignments: { column: 'date', direction: 'desc' },
+    quizzes: { column: 'date', direction: 'none' },
+    forums: { column: 'date', direction: 'desc' }
+};
+
 function switchTab(evt, tabName) {
     if (evt) {
         evt.preventDefault();
@@ -458,17 +646,195 @@ function switchTab(evt, tabName) {
     window.history.pushState({}, '', url);
 }
 
-// При загрузке страницы проверяем параметр tab в URL
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get('tab');
+// Функция фильтрации строк таблицы
+function filterTableRows(tabName) {
+    const tbody = document.getElementById(tabName + '-tbody');
+    if (!tbody) return;
 
-    if (tabParam) {
-        // Проверяем, что такая вкладка существует
-        const tabElement = document.getElementById('tab-' + tabParam);
-        if (tabElement) {
-            switchTab(null, tabParam);
+    const filters = filterState[tabName];
+    const rows = tbody.getElementsByTagName('tr');
+
+    for (let row of rows) {
+        const student = (row.getAttribute('data-student') || '').toLowerCase();
+        const course = (row.getAttribute('data-course') || '').toLowerCase();
+        const activity = (row.getAttribute('data-activity') || '').toLowerCase();
+
+        const matchName = !filters.name || activity.includes(filters.name.toLowerCase());
+        const matchStudent = !filters.student || student.includes(filters.student.toLowerCase());
+        const matchCourse = !filters.course || course.includes(filters.course.toLowerCase());
+
+        if (matchName && matchStudent && matchCourse) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
         }
+    }
+
+    // Применяем сортировку после фильтрации
+    sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
+}
+
+// Функция сортировки таблицы
+function sortTable(tabName, column, direction) {
+    if (direction === 'none') return;
+
+    const tbody = document.getElementById(tabName + '-tbody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.getElementsByTagName('tr'));
+    const visibleRows = rows.filter(row => row.style.display !== 'none');
+
+    visibleRows.sort((a, b) => {
+        let aVal, bVal;
+
+        switch(column) {
+            case 'student':
+                aVal = (a.getAttribute('data-student') || '').toLowerCase();
+                bVal = (b.getAttribute('data-student') || '').toLowerCase();
+                break;
+            case 'course':
+                aVal = (a.getAttribute('data-course') || '').toLowerCase();
+                bVal = (b.getAttribute('data-course') || '').toLowerCase();
+                break;
+            case 'activity':
+                aVal = (a.getAttribute('data-activity') || '').toLowerCase();
+                bVal = (b.getAttribute('data-activity') || '').toLowerCase();
+                break;
+            case 'status':
+                aVal = a.getAttribute('data-status') || '';
+                bVal = b.getAttribute('data-status') || '';
+                break;
+            case 'attempts':
+                aVal = parseInt(a.getAttribute('data-attempts') || 0);
+                bVal = parseInt(b.getAttribute('data-attempts') || 0);
+                break;
+            case 'grade':
+                aVal = parseFloat(a.getAttribute('data-grade') || 0);
+                bVal = parseFloat(b.getAttribute('data-grade') || 0);
+                break;
+            case 'date':
+                aVal = parseInt(a.getAttribute('data-date') || 0);
+                bVal = parseInt(b.getAttribute('data-date') || 0);
+                break;
+            default:
+                return 0;
+        }
+
+        let comparison = 0;
+        if (typeof aVal === 'string') {
+            comparison = aVal.localeCompare(bVal);
+        } else {
+            comparison = aVal - bVal;
+        }
+
+        return direction === 'asc' ? comparison : -comparison;
+    });
+
+    // Перемещаем отсортированные видимые строки
+    visibleRows.forEach(row => tbody.appendChild(row));
+}
+
+// Обработчик клика на заголовок для сортировки
+function handleSortClick(tabName, column) {
+    const currentSort = sortState[tabName];
+    
+    // Определяем новое направление сортировки
+    let newDirection = 'asc';
+    if (currentSort.column === column) {
+        if (currentSort.direction === 'asc') {
+            newDirection = 'desc';
+        } else if (currentSort.direction === 'desc') {
+            newDirection = 'none';
+        }
+    }
+
+    // Обновляем состояние
+    sortState[tabName] = { column, direction: newDirection };
+
+    // Обновляем индикаторы сортировки
+    const table = document.getElementById(tabName + '-table');
+    if (table) {
+        const headers = table.querySelectorAll('.sortable');
+        headers.forEach(header => {
+            const headerColumn = header.getAttribute('data-column');
+            if (headerColumn === column) {
+                header.setAttribute('data-sort', newDirection);
+            } else {
+                header.setAttribute('data-sort', 'none');
+            }
+        });
+    }
+
+    // Применяем сортировку
+    sortTable(tabName, column, newDirection);
+}
+
+// Сброс фильтров
+function resetFilters(tabName) {
+    filterState[tabName] = { name: '', student: '', course: '' };
+    
+    // Очищаем поля ввода
+    document.getElementById(`search-${tabName.slice(0, -1)}-name`).value = '';
+    document.getElementById(`search-${tabName.slice(0, -1)}-student`).value = '';
+    document.getElementById(`search-${tabName.slice(0, -1)}-course`).value = '';
+    
+    // Применяем фильтрацию
+    filterTableRows(tabName);
+}
+
+// При загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация обработчиков поиска для каждой вкладки
+    ['assignments', 'quizzes', 'forums'].forEach(tabName => {
+        const prefix = tabName.slice(0, -1); // assignments -> assignment
+        
+        // Поиск по названию
+        const nameInput = document.getElementById(`search-${prefix}-name`);
+        if (nameInput) {
+            nameInput.addEventListener('input', function() {
+                filterState[tabName].name = this.value;
+                filterTableRows(tabName);
+            });
+        }
+
+        // Поиск по студенту
+        const studentInput = document.getElementById(`search-${prefix}-student`);
+        if (studentInput) {
+            studentInput.addEventListener('input', function() {
+                filterState[tabName].student = this.value;
+                filterTableRows(tabName);
+            });
+        }
+
+        // Поиск по курсу
+        const courseInput = document.getElementById(`search-${prefix}-course`);
+        if (courseInput) {
+            courseInput.addEventListener('input', function() {
+                filterState[tabName].course = this.value;
+                filterTableRows(tabName);
+            });
+        }
+
+        // Обработчики сортировки
+        const table = document.getElementById(tabName + '-table');
+        if (table) {
+            const sortableHeaders = table.querySelectorAll('.sortable');
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-column');
+                    handleSortClick(tabName, column);
+                });
+            });
+        }
+    });
+
+    // Проверяем параметр tab в URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab') || 'assignments';
+
+    const tabElement = document.getElementById('tab-' + tabParam);
+    if (tabElement) {
+        switchTab(null, tabParam);
     }
 });
 </script>
