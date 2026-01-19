@@ -280,6 +280,7 @@ class StudentReviewController extends Controller
         ->values();
 
         // Вкладка "Форумы" - форумы, ожидающие ответа преподавателя
+        // Получаем данные из базы
         $forums = StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'forum');
@@ -292,10 +293,7 @@ class StudentReviewController extends Controller
                     $roleQuery->whereIn('slug', ['instructor', 'admin']);
                 });
             })
-            ->where('needs_response', true)
-            ->whereNotNull('submitted_at')
             ->with(['user.roles', 'course', 'activity.course'])
-            ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($progress) use ($coursesById) {
                 // Присваиваем курс к активности для корректной работы moodle_url
@@ -303,10 +301,160 @@ class StudentReviewController extends Controller
                     $progress->activity->setRelation('course', $coursesById[$progress->course_id]);
                 }
 
-                // Извлекаем текст сообщения из progress_data или draft_data
-                $progress->message_text = $this->extractForumMessage($progress);
                 return $progress;
             });
+
+        // Получаем актуальные данные из Moodle API для каждого форума
+        try {
+            $moodleApi = new MoodleApiService();
+            
+            // Группируем форумы по курсу и студенту для оптимизации запросов
+            $forumsByCourseAndStudent = [];
+            foreach ($forums as $forum) {
+                $courseId = $forum->course_id;
+                $studentId = $forum->user_id;
+                $key = "{$courseId}_{$studentId}";
+                
+                if (!isset($forumsByCourseAndStudent[$key])) {
+                    $forumsByCourseAndStudent[$key] = [
+                        'course' => $forum->course,
+                        'student' => $forum->user,
+                        'forums' => []
+                    ];
+                }
+                $forumsByCourseAndStudent[$key]['forums'][] = $forum;
+            }
+
+            // Получаем актуальные данные из Moodle для каждой группы
+            foreach ($forumsByCourseAndStudent as $key => $group) {
+                $course = $group['course'];
+                $student = $group['student'];
+                
+                if (!$course->moodle_course_id || !$student->moodle_user_id) {
+                    continue;
+                }
+
+                try {
+                    // Получаем форумы курса
+                    $moodleForums = $moodleApi->getCourseForums($course->moodle_course_id);
+                    if ($moodleForums === false) {
+                        continue;
+                    }
+
+                    // Получаем посты студента в форумах
+                    $forumPosts = $moodleApi->getStudentForumPosts(
+                        $course->moodle_course_id,
+                        $student->moodle_user_id,
+                        $moodleForums
+                    );
+
+                    // Обновляем данные для каждого форума в группе
+                    foreach ($group['forums'] as $forum) {
+                        $activity = $forum->activity;
+                        if (!$activity || !$activity->moodle_activity_id) {
+                            continue;
+                        }
+
+                        // Находим соответствующий форум в Moodle
+                        $moodleForum = null;
+                        foreach ($moodleForums as $mf) {
+                            if ($mf['id'] == $activity->moodle_activity_id) {
+                                $moodleForum = $mf;
+                                break;
+                            }
+                        }
+
+                        if (!$moodleForum) {
+                            continue;
+                        }
+
+                        $forumId = $moodleForum['id'];
+                        $posts = $forumPosts[$forumId] ?? [];
+
+                        // Обновляем статус на основе актуальных данных
+                        if (!empty($posts)) {
+                            $needsResponse = false;
+                            $hasTeacherReply = false;
+                            $latestPost = null;
+                            $latestPostTime = 0;
+
+                            foreach ($posts as $post) {
+                                // Проверяем, нужен ли ответ преподавателя
+                                if (isset($post['needs_response']) && $post['needs_response']) {
+                                    $needsResponse = true;
+                                }
+
+                                // Проверяем, есть ли ответ преподавателя
+                                if (isset($post['has_teacher_reply']) && $post['has_teacher_reply']) {
+                                    $hasTeacherReply = true;
+                                }
+
+                                // Находим последний пост
+                                $postTime = $post['timecreated'] ?? 0;
+                                if ($postTime > $latestPostTime) {
+                                    $latestPostTime = $postTime;
+                                    $latestPost = $post;
+                                }
+                            }
+
+                            // Если студент ответил, но преподаватель не ответил, требуется ответ
+                            if ($needsResponse && !$hasTeacherReply) {
+                                $forum->needs_response = true;
+                                $forum->status = 'needs_response';
+                                $forum->status_text = 'Ожидает ответа преподавателя';
+                                $forum->status_class = 'warning';
+                            } else {
+                                $forum->needs_response = false;
+                                $forum->status = 'completed';
+                                $forum->status_text = 'Ответ получен';
+                                $forum->status_class = 'success';
+                            }
+
+                            $forum->submitted_at = $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null;
+                            
+                            // Сохраняем данные постов в progress_data
+                            $forum->progress_data = [
+                                'posts' => $posts,
+                                'posts_count' => count($posts),
+                                'needs_response' => $needsResponse,
+                                'has_teacher_reply' => $hasTeacherReply
+                            ];
+                        } else {
+                            // Нет постов - форум не начат
+                            $forum->needs_response = false;
+                            $forum->status = 'not_started';
+                            $forum->status_text = 'Не участвовал';
+                            $forum->status_class = 'secondary';
+                            $forum->submitted_at = null;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Ошибка при получении данных о форумах из Moodle', [
+                        'course_id' => $course->id,
+                        'student_id' => $student->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка при инициализации Moodle API для получения данных о форумах', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Фильтруем только форумы, ожидающие ответа преподавателя
+        $forums = $forums->filter(function ($forum) {
+            return $forum->needs_response === true && $forum->submitted_at !== null;
+        })
+        ->map(function ($progress) {
+            // Извлекаем текст сообщения из progress_data или draft_data
+            $progress->message_text = $this->extractForumMessage($progress);
+            return $progress;
+        })
+        ->sortByDesc(function ($progress) {
+            return $progress->submitted_at ? strtotime($progress->submitted_at) : 0;
+        })
+        ->values();
 
         return view('admin.student-review.index', compact('assignments', 'quizzes', 'forums'));
     }
