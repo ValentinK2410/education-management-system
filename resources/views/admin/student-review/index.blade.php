@@ -714,7 +714,7 @@ function filterTableRows(tabName) {
     }
 
     const filters = filterState[tabName];
-    const rows = tbody.getElementsByTagName('tr');
+    const rows = Array.from(tbody.getElementsByTagName('tr'));
 
     console.log('Total rows:', rows.length, 'Filters:', filters);
 
@@ -738,8 +738,10 @@ function filterTableRows(tabName) {
 
     console.log('Visible rows after filtering:', visibleCount);
 
-    // Применяем сортировку после фильтрации
-    sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
+    // Применяем сортировку после фильтрации только если есть активная сортировка
+    if (sortState[tabName] && sortState[tabName].direction !== 'none') {
+        sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
+    }
 }
 
 // Функция сортировки таблицы
@@ -750,7 +752,12 @@ function sortTable(tabName, column, direction) {
     if (!tbody) return;
 
     const rows = Array.from(tbody.getElementsByTagName('tr'));
-    const visibleRows = rows.filter(row => row.style.display !== 'none');
+    
+    // Сохраняем display стили перед сортировкой
+    const displayStates = rows.map(row => row.style.display);
+    
+    const visibleRows = rows.filter((row, index) => displayStates[index] !== 'none');
+    const hiddenRows = rows.filter((row, index) => displayStates[index] === 'none');
 
     visibleRows.sort((a, b) => {
         let aVal, bVal;
@@ -803,7 +810,16 @@ function sortTable(tabName, column, direction) {
     });
 
     // Перемещаем отсортированные видимые строки
-    visibleRows.forEach(row => tbody.appendChild(row));
+    visibleRows.forEach(row => {
+        row.style.display = '';
+        tbody.appendChild(row);
+    });
+    
+    // Перемещаем скрытые строки и сохраняем их display стиль
+    hiddenRows.forEach(row => {
+        row.style.display = 'none';
+        tbody.appendChild(row);
+    });
 }
 
 // Обработчик клика на заголовок для сортировки
@@ -878,6 +894,8 @@ window.applyFilters = function(tabName) {
 
 // Сброс фильтров
 window.resetFilters = function(tabName) {
+    console.log('resetFilters called for:', tabName);
+    
     filterState[tabName] = { name: '', student: '', course: '' };
 
     // Очищаем поля ввода
@@ -890,7 +908,9 @@ window.resetFilters = function(tabName) {
     if (studentInput) studentInput.value = '';
     if (courseInput) courseInput.value = '';
 
-    // Применяем фильтрацию
+    console.log('Filters reset, applying filterTableRows...');
+
+    // Применяем фильтрацию (которая покажет все строки, так как фильтры пустые)
     filterTableRows(tabName);
 };
 
