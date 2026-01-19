@@ -241,6 +241,9 @@
                                         <th class="sortable" data-column="student" data-sort="none">
                                             Студент <i class="fas fa-sort ms-1"></i>
                                         </th>
+                                        <th class="sortable" data-column="role" data-sort="none">
+                                            Роль <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th class="sortable" data-column="course" data-sort="none">
                                             Курс <i class="fas fa-sort ms-1"></i>
                                         </th>
@@ -272,12 +275,22 @@
                                             data-course="{{ strtolower($assignment->course->name) }}"
                                             data-activity="{{ strtolower($assignment->activity->name ?? '') }}"
                                             data-status="{{ $assignment->status }}"
+                                            data-role="{{ strtolower($assignment->user->roles->pluck('name')->join(', ')) }}"
                                             data-date="{{ $assignment->display_date ? \Carbon\Carbon::parse($assignment->display_date)->timestamp : 0 }}">
                                             <td>
                                                 <div>
                                                     <strong>{{ $assignment->user->name }}</strong><br>
                                                     <small class="text-muted">{{ $assignment->user->email }}</small>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                @if($assignment->user->roles->count() > 0)
+                                                    @foreach($assignment->user->roles as $role)
+                                                        <span class="badge bg-info me-1">{{ $role->name }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 <strong>{{ $assignment->course->name }}</strong>
@@ -367,6 +380,9 @@
                                         <th class="sortable" data-column="student" data-sort="none">
                                             Студент <i class="fas fa-sort ms-1"></i>
                                         </th>
+                                        <th class="sortable" data-column="role" data-sort="none">
+                                            Роль <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th class="sortable" data-column="course" data-sort="none">
                                             Курс <i class="fas fa-sort ms-1"></i>
                                         </th>
@@ -404,6 +420,7 @@
                                             data-course="{{ strtolower($quiz->course->name) }}"
                                             data-activity="{{ strtolower($quiz->activity->name ?? '') }}"
                                             data-status="{{ $quiz->status }}"
+                                            data-role="{{ strtolower($quiz->user->roles->pluck('name')->join(', ')) }}"
                                             data-attempts="{{ $quiz->attempts_count ?? 0 }}"
                                             data-grade="{{ $quiz->grade ?? 0 }}"
                                             data-date="{{ ($quiz->last_attempt_at ? \Carbon\Carbon::parse($quiz->last_attempt_at)->timestamp : ($quiz->submitted_at ? \Carbon\Carbon::parse($quiz->submitted_at)->timestamp : 0)) }}">
@@ -412,6 +429,15 @@
                                                     <strong>{{ $quiz->user->name }}</strong><br>
                                                     <small class="text-muted">{{ $quiz->user->email }}</small>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                @if($quiz->user->roles->count() > 0)
+                                                    @foreach($quiz->user->roles as $role)
+                                                        <span class="badge bg-info me-1">{{ $role->name }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 <strong>{{ $quiz->course->name }}</strong>
@@ -524,6 +550,9 @@
                                         <th class="sortable" data-column="student" data-sort="none">
                                             Студент <i class="fas fa-sort ms-1"></i>
                                         </th>
+                                        <th class="sortable" data-column="role" data-sort="none">
+                                            Роль <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th class="sortable" data-column="course" data-sort="none">
                                             Курс <i class="fas fa-sort ms-1"></i>
                                         </th>
@@ -553,12 +582,22 @@
                                         <tr data-student="{{ strtolower($forum->user->name . ' ' . $forum->user->email) }}"
                                             data-course="{{ strtolower($forum->course->name) }}"
                                             data-activity="{{ strtolower($forum->activity->name ?? '') }}"
+                                            data-role="{{ strtolower($forum->user->roles->pluck('name')->join(', ')) }}"
                                             data-date="{{ $forum->submitted_at ? \Carbon\Carbon::parse($forum->submitted_at)->timestamp : 0 }}">
                                             <td>
                                                 <div>
                                                     <strong>{{ $forum->user->name }}</strong><br>
                                                     <small class="text-muted">{{ $forum->user->email }}</small>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                @if($forum->user->roles->count() > 0)
+                                                    @foreach($forum->user->roles as $role)
+                                                        <span class="badge bg-info me-1">{{ $role->name }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 <strong>{{ $forum->course->name }}</strong>
@@ -710,6 +749,10 @@ function sortTable(tabName, column, direction) {
                 aVal = (a.getAttribute('data-student') || '').toLowerCase();
                 bVal = (b.getAttribute('data-student') || '').toLowerCase();
                 break;
+            case 'role':
+                aVal = (a.getAttribute('data-role') || '').toLowerCase();
+                bVal = (b.getAttribute('data-role') || '').toLowerCase();
+                break;
             case 'course':
                 aVal = (a.getAttribute('data-course') || '').toLowerCase();
                 bVal = (b.getAttribute('data-course') || '').toLowerCase();
@@ -790,19 +833,19 @@ function handleSortClick(tabName, column) {
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
 function applyFilters(tabName) {
     const prefix = tabName.slice(0, -1); // assignments -> assignment
-    
+
     // Получаем значения из полей ввода
     const nameInput = document.getElementById(`search-${prefix}-name`);
     const studentInput = document.getElementById(`search-${prefix}-student`);
     const courseInput = document.getElementById(`search-${prefix}-course`);
-    
+
     // Обновляем состояние фильтров
     filterState[tabName] = {
         name: nameInput ? nameInput.value : '',
         student: studentInput ? studentInput.value : '',
         course: courseInput ? courseInput.value : ''
     };
-    
+
     // Применяем фильтрацию
     filterTableRows(tabName);
 }
@@ -816,7 +859,7 @@ function resetFilters(tabName) {
     const nameInput = document.getElementById(`search-${prefix}-name`);
     const studentInput = document.getElementById(`search-${prefix}-student`);
     const courseInput = document.getElementById(`search-${prefix}-course`);
-    
+
     if (nameInput) nameInput.value = '';
     if (studentInput) studentInput.value = '';
     if (courseInput) courseInput.value = '';
