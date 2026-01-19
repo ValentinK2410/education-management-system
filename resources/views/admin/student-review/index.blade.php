@@ -144,6 +144,17 @@
         color: #667eea;
     }
 
+    /* Оранжевый крестик для не сданных тестов */
+    .quiz-not-submitted {
+        color: #ff8c00;
+        font-size: 1.2rem;
+        margin-left: 0.5rem;
+    }
+
+    .quiz-not-submitted:hover {
+        color: #ff6b00;
+    }
+
     /* Темная тема */
     [data-theme="dark"] .search-panel {
         background: var(--card-bg);
@@ -410,11 +421,31 @@
                                             $moodleUrl = null;
                                             try {
                                                 if ($quiz->activity) {
-                                                    $moodleUrl = $quiz->activity->moodle_url;
+                                                    $cmid = $quiz->activity->cmid;
+                                                    $moodleCourseId = $quiz->course->moodle_course_id ?? null;
+                                                    $moodleUserId = $quiz->user->moodle_user_id ?? null;
+                                                    
+                                                    if ($cmid) {
+                                                        $moodleBaseUrl = rtrim(config('services.moodle.url', ''), '/');
+                                                        if ($moodleBaseUrl) {
+                                                            // Формируем ссылку на отчет о попытках студента
+                                                            if ($moodleUserId && $moodleCourseId) {
+                                                                // Ссылка на отчет с фильтром по студенту
+                                                                $moodleUrl = $moodleBaseUrl . "/mod/quiz/report.php?id={$cmid}&mode=overview&course={$moodleCourseId}";
+                                                            } else {
+                                                                // Общая ссылка на тест
+                                                                $moodleUrl = $moodleBaseUrl . "/mod/quiz/view.php?id={$cmid}";
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             } catch (\Exception $e) {
                                                 $moodleUrl = null;
                                             }
+                                            
+                                            // Определяем, не сдан ли тест
+                                            $isNotSubmitted = in_array($quiz->status, ['not_answered', 'not_started']) || 
+                                                             ($quiz->attempts_count === 0 && !$quiz->submitted_at);
                                         @endphp
                                         <tr data-student="{{ strtolower($quiz->user->name . ' ' . $quiz->user->email) }}"
                                             data-course="{{ strtolower($quiz->course->name) }}"
@@ -447,16 +478,36 @@
                                             </td>
                                             <td>
                                                 <strong>{{ $quiz->activity->name ?? 'Неизвестно' }}</strong>
+                                                @if($isNotSubmitted)
+                                                    <span class="ms-2" style="color: #ff8c00;" title="Тест не сдан">
+                                                        <i class="fas fa-times-circle"></i>
+                                                    </span>
+                                                @endif
                                             </td>
                                             <td>
-                                                @if($quiz->status === 'answered')
+                                                @if($quiz->status === 'graded')
+                                                    <span class="badge bg-success status-badge">
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                        {{ $quiz->status_text }}
+                                                    </span>
+                                                @elseif($quiz->status === 'submitted')
+                                                    <span class="badge bg-warning status-badge">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        {{ $quiz->status_text }}
+                                                    </span>
+                                                @elseif($quiz->status === 'in_progress')
+                                                    <span class="badge bg-info status-badge">
+                                                        <i class="fas fa-spinner me-1"></i>
+                                                        {{ $quiz->status_text }}
+                                                    </span>
+                                                @elseif($quiz->status === 'answered')
                                                     <span class="badge bg-success status-badge">
                                                         <i class="fas fa-check-circle me-1"></i>
                                                         {{ $quiz->status_text }}
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-warning status-badge">
-                                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                                    <span class="badge bg-danger status-badge">
+                                                        <i class="fas fa-times-circle me-1"></i>
                                                         {{ $quiz->status_text }}
                                                     </span>
                                                 @endif
@@ -470,6 +521,8 @@
                                                     @if($quiz->max_grade > 0)
                                                         <br><small class="text-muted">({{ number_format(($quiz->grade / $quiz->max_grade) * 100, 1) }}%)</small>
                                                     @endif
+                                                @elseif($quiz->max_grade)
+                                                    <span class="text-muted">— / {{ number_format($quiz->max_grade, 1) }}</span>
                                                 @else
                                                     <span class="text-muted">—</span>
                                                 @endif

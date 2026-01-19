@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\StudentActivityProgress;
+use App\Services\MoodleApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class StudentReviewController extends Controller
 {
@@ -92,6 +94,7 @@ class StudentReviewController extends Controller
             });
 
         // Вкладка "Тесты" - все тесты со статусом ответил/не ответил
+        // Получаем данные из базы
         $quizzes = StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'quiz');
@@ -112,6 +115,148 @@ class StudentReviewController extends Controller
                     $progress->activity->setRelation('course', $coursesById[$progress->course_id]);
                 }
 
+                return $progress;
+            });
+
+        // Получаем актуальные данные из Moodle API для каждого теста
+        try {
+            $moodleApi = new MoodleApiService();
+            
+            // Группируем тесты по курсу и студенту для оптимизации запросов
+            $quizzesByCourseAndStudent = [];
+            foreach ($quizzes as $quiz) {
+                $courseId = $quiz->course_id;
+                $studentId = $quiz->user_id;
+                $key = "{$courseId}_{$studentId}";
+                
+                if (!isset($quizzesByCourseAndStudent[$key])) {
+                    $quizzesByCourseAndStudent[$key] = [
+                        'course' => $quiz->course,
+                        'student' => $quiz->user,
+                        'quizzes' => []
+                    ];
+                }
+                $quizzesByCourseAndStudent[$key]['quizzes'][] = $quiz;
+            }
+
+            // Получаем актуальные данные из Moodle для каждой группы
+            foreach ($quizzesByCourseAndStudent as $key => $group) {
+                $course = $group['course'];
+                $student = $group['student'];
+                
+                if (!$course->moodle_course_id || !$student->moodle_user_id) {
+                    continue;
+                }
+
+                try {
+                    // Получаем тесты курса
+                    $moodleQuizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
+                    if ($moodleQuizzes === false) {
+                        continue;
+                    }
+
+                    // Получаем попытки студента
+                    $quizAttempts = $moodleApi->getStudentQuizAttempts(
+                        $course->moodle_course_id,
+                        $student->moodle_user_id,
+                        $moodleQuizzes
+                    );
+
+                    // Получаем оценки студента
+                    $quizGrades = $moodleApi->getStudentQuizGrades(
+                        $course->moodle_course_id,
+                        $student->moodle_user_id,
+                        $moodleQuizzes
+                    );
+
+                    // Обновляем данные для каждого теста в группе
+                    foreach ($group['quizzes'] as $quiz) {
+                        $activity = $quiz->activity;
+                        if (!$activity || !$activity->moodle_activity_id) {
+                            continue;
+                        }
+
+                        // Находим соответствующий тест в Moodle
+                        $moodleQuiz = null;
+                        foreach ($moodleQuizzes as $mq) {
+                            if ($mq['id'] == $activity->moodle_activity_id) {
+                                $moodleQuiz = $mq;
+                                break;
+                            }
+                        }
+
+                        if (!$moodleQuiz) {
+                            continue;
+                        }
+
+                        $quizId = $moodleQuiz['id'];
+                        $attempts = $quizAttempts[$quizId] ?? [];
+                        $grade = $quizGrades[$quizId] ?? null;
+
+                        // Обновляем статус на основе актуальных данных
+                        if (!empty($attempts)) {
+                            $latestAttempt = end($attempts);
+                            $attemptStatus = $latestAttempt['state'] ?? '';
+                            
+                            if ($attemptStatus === 'finished') {
+                                // Тест завершен
+                                if ($grade && isset($grade['grade']) && $grade['grade'] !== null) {
+                                    // Есть оценка
+                                    $quiz->status = 'graded';
+                                    $quiz->status_text = 'Оценен';
+                                    $quiz->status_class = 'success';
+                                    $quiz->grade = (float)$grade['grade'];
+                                    $quiz->max_grade = $moodleQuiz['grade'] ?? null;
+                                    $quiz->submitted_at = $latestAttempt['timefinish'] ?? null;
+                                    $quiz->graded_at = $quiz->submitted_at;
+                                } else {
+                                    // Сдан, но ждет оценки
+                                    $quiz->status = 'submitted';
+                                    $quiz->status_text = 'Ждет оценки';
+                                    $quiz->status_class = 'warning';
+                                    $quiz->submitted_at = $latestAttempt['timefinish'] ?? null;
+                                    $quiz->grade = null;
+                                    $quiz->max_grade = $moodleQuiz['grade'] ?? null;
+                                }
+                            } else {
+                                // Тест в процессе
+                                $quiz->status = 'in_progress';
+                                $quiz->status_text = 'В процессе';
+                                $quiz->status_class = 'info';
+                                $quiz->submitted_at = null;
+                            }
+                            
+                            $quiz->attempts_count = count($attempts);
+                            $quiz->last_attempt_at = $latestAttempt['timestart'] ?? null;
+                        } else {
+                            // Нет попыток - тест не сдан
+                            $quiz->status = 'not_answered';
+                            $quiz->status_text = 'Не сдан';
+                            $quiz->status_class = 'danger';
+                            $quiz->attempts_count = 0;
+                            $quiz->submitted_at = null;
+                            $quiz->last_attempt_at = null;
+                            $quiz->grade = null;
+                            $quiz->max_grade = $moodleQuiz['grade'] ?? null;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Ошибка при получении данных о тестах из Moodle', [
+                        'course_id' => $course->id,
+                        'student_id' => $student->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Ошибка при инициализации Moodle API для получения данных о тестах', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Если данные не были обновлены из Moodle, используем данные из базы
+        $quizzes = $quizzes->map(function ($progress) {
+            if (!isset($progress->status)) {
                 // Определяем статус: ответил или нет
                 $hasAnswered = $progress->submitted_at !== null || $progress->attempts_count > 0;
 
@@ -124,14 +269,15 @@ class StudentReviewController extends Controller
                     $progress->status_text = 'Не ответил';
                     $progress->status_class = 'warning';
                 }
+            }
 
-                return $progress;
-            })
-            ->sortByDesc(function ($progress) {
-                // Сортируем: сначала отвеченные, потом неотвеченные
-                return $progress->status === 'answered' ? 1 : 0;
-            })
-            ->values();
+            return $progress;
+        })
+        ->sortByDesc(function ($progress) {
+            // Сортируем: сначала отвеченные, потом неотвеченные
+            return in_array($progress->status, ['answered', 'graded', 'submitted']) ? 1 : 0;
+        })
+        ->values();
 
         // Вкладка "Форумы" - форумы, ожидающие ответа преподавателя
         $forums = StudentActivityProgress::whereIn('course_id', $courseIds)
