@@ -1254,12 +1254,38 @@ async function checkMoodleAssignments() {
         const response = await fetch('/admin/student-review/check-moodle-assignments', {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             }
         });
         
-        const data = await response.json();
+        // Проверяем статус ответа
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${response.statusText}. Ответ: ${text.substring(0, 200)}`);
+        }
+        
+        // Проверяем Content-Type
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Ожидался JSON, получен: ${contentType}. Ответ: ${text.substring(0, 500)}`);
+        }
+        
+        // Парсим JSON
+        let data;
+        try {
+            const text = await response.text();
+            if (!text || text.trim() === '') {
+                throw new Error('Пустой ответ от сервера');
+            }
+            data = JSON.parse(text);
+        } catch (parseError) {
+            const text = await response.text();
+            console.error('Ошибка парсинга JSON:', parseError);
+            console.error('Ответ сервера:', text);
+            throw new Error(`Ошибка парсинга JSON: ${parseError.message}. Ответ сервера: ${text.substring(0, 500)}`);
+        }
         
         loadingDiv.style.display = 'none';
         resultsDiv.style.display = 'block';
@@ -1361,7 +1387,38 @@ async function checkMoodleAssignments() {
     } catch (error) {
         loadingDiv.style.display = 'none';
         resultsDiv.style.display = 'block';
-        resultsDiv.innerHTML = `<div class="alert alert-danger"><strong>Ошибка подключения:</strong> ${error.message}</div>`;
+        
+        let errorMessage = error.message || 'Неизвестная ошибка';
+        let errorDetails = '';
+        
+        // Если это ошибка парсинга, показываем больше деталей
+        if (error.message && error.message.includes('JSON')) {
+            errorDetails = '<p class="mt-2"><small>Возможные причины:</small></p>';
+            errorDetails += '<ul class="small">';
+            errorDetails += '<li>Сервер вернул HTML страницу вместо JSON (возможно, ошибка авторизации или редирект)</li>';
+            errorDetails += '<li>Сервер вернул пустой ответ</li>';
+            errorDetails += '<li>Проблема с кодировкой ответа</li>';
+            errorDetails += '</ul>';
+            errorDetails += '<p class="mt-2"><small>Проверьте консоль браузера (F12) для деталей.</small></p>';
+        }
+        
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Ошибка подключения:</strong> ${errorMessage}
+                ${errorDetails}
+            </div>
+            <div class="mt-3">
+                <h6>Рекомендации:</h6>
+                <ul>
+                    <li>Проверьте, что вы авторизованы в системе</li>
+                    <li>Проверьте консоль браузера (F12) для деталей ошибки</li>
+                    <li>Проверьте логи сервера Laravel</li>
+                    <li>Убедитесь, что маршрут /admin/student-review/check-moodle-assignments доступен</li>
+                </ul>
+            </div>
+        `;
+        
+        console.error('Полная ошибка:', error);
     }
 }
 

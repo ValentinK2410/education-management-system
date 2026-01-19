@@ -375,12 +375,23 @@ class StudentReviewController extends Controller
      */
     public function checkMoodleAssignments()
     {
-        $user = auth()->user();
-        
-        // Проверяем права доступа
-        if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
-            return response()->json(['error' => 'Доступ запрещен'], 403);
-        }
+        try {
+            $user = auth()->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Пользователь не авторизован'
+                ], 401)->header('Content-Type', 'application/json');
+            }
+            
+            // Проверяем права доступа
+            if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Доступ запрещен. Требуется роль преподавателя или администратора.'
+                ], 403)->header('Content-Type', 'application/json');
+            }
 
         $instructor = $user;
         $courses = \App\Models\Course::where('instructor_id', $instructor->id)->get();
@@ -535,7 +546,7 @@ class StudentReviewController extends Controller
                         return isset($r['assignments_count']) && $r['assignments_count'] > 0;
                     }))
                 ]
-            ]);
+            ])->header('Content-Type', 'application/json; charset=utf-8');
         } catch (\Exception $e) {
             Log::error('Ошибка проверки заданий из Moodle', [
                 'error' => $e->getMessage(),
@@ -546,7 +557,7 @@ class StudentReviewController extends Controller
                 'success' => false,
                 'error' => 'Ошибка проверки: ' . $e->getMessage(),
                 'trace' => config('app.debug') ? $e->getTraceAsString() : null
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
         }
     }
 
