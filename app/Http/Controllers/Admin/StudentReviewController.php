@@ -40,6 +40,14 @@ class StudentReviewController extends Controller
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'assign');
             })
+            ->whereHas('user', function ($query) {
+                // Показываем только студентов, исключаем преподавателей и администраторов
+                $query->whereHas('roles', function ($roleQuery) {
+                    $roleQuery->where('slug', 'student');
+                })->whereDoesntHave('roles', function ($roleQuery) {
+                    $roleQuery->whereIn('slug', ['instructor', 'admin']);
+                });
+            })
             ->where(function ($query) {
                 $query->where('needs_grading', true)
                       ->orWhereNotNull('submitted_at')
@@ -85,6 +93,14 @@ class StudentReviewController extends Controller
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'quiz');
             })
+            ->whereHas('user', function ($query) {
+                // Показываем только студентов, исключаем преподавателей и администраторов
+                $query->whereHas('roles', function ($roleQuery) {
+                    $roleQuery->where('slug', 'student');
+                })->whereDoesntHave('roles', function ($roleQuery) {
+                    $roleQuery->whereIn('slug', ['instructor', 'admin']);
+                });
+            })
             ->with(['user.roles', 'course', 'activity.course'])
             ->get()
             ->map(function ($progress) use ($coursesById) {
@@ -118,6 +134,14 @@ class StudentReviewController extends Controller
         $forums = StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'forum');
+            })
+            ->whereHas('user', function ($query) {
+                // Показываем только студентов, исключаем преподавателей и администраторов
+                $query->whereHas('roles', function ($roleQuery) {
+                    $roleQuery->where('slug', 'student');
+                })->whereDoesntHave('roles', function ($roleQuery) {
+                    $roleQuery->whereIn('slug', ['instructor', 'admin']);
+                });
             })
             ->where('needs_response', true)
             ->whereNotNull('submitted_at')
