@@ -389,14 +389,42 @@ class MoodleApiService
                 return false;
             }
 
+            // Проверяем наличие предупреждений о правах доступа
+            if (isset($result['warnings']) && is_array($result['warnings'])) {
+                foreach ($result['warnings'] as $warning) {
+                    if (isset($warning['warningcode']) && $warning['warningcode'] == '2') {
+                        Log::error('getCourseAssignments: ОШИБКА ПРАВ ДОСТУПА', [
+                            'course_id' => $courseId,
+                            'warning' => $warning,
+                            'message' => 'Токен Moodle API не имеет прав доступа к курсу. ' .
+                                        'Пользователь токена должен быть зачислен на курс и иметь права mod/assign:view. ' .
+                                        'Проверьте настройки токена в Moodle: ' .
+                                        'Site administration → Server → Web services → Manage tokens → ' .
+                                        'найдите ваш токен и убедитесь, что пользователь зачислен на курс ' . $courseId,
+                            'solution' => [
+                                '1. Зайдите в Moodle как администратор',
+                                '2. Перейдите: Site administration → Server → Web services → Manage tokens',
+                                '3. Найдите токен, используемый в системе',
+                                '4. Убедитесь, что пользователь токена зачислен на курс ' . $courseId,
+                                '5. Убедитесь, что пользователь имеет роль с правами mod/assign:view',
+                                '6. Или создайте токен для пользователя с ролью "Преподаватель" или "Менеджер"',
+                            ]
+                        ]);
+                    }
+                }
+            }
+
             // Логируем структуру ответа для отладки
             Log::info('getCourseAssignments: структура ответа Moodle', [
                 'course_id' => $courseId,
                 'has_courses' => isset($result['courses']),
                 'courses_count' => isset($result['courses']) ? count($result['courses']) : 0,
+                'has_warnings' => isset($result['warnings']),
+                'warnings_count' => isset($result['warnings']) ? count($result['warnings']) : 0,
+                'warnings' => $result['warnings'] ?? [],
                 'result_keys' => array_keys($result ?? []),
                 'first_course_keys' => isset($result['courses'][0]) ? array_keys($result['courses'][0]) : null,
-                'has_assignments' => isset($result['courses'][0]['assignments']),
+                'has_assignments' => isset($result['courses'][0]['assignments'] ?? null),
                 'assignments_count' => isset($result['courses'][0]['assignments']) ? count($result['courses'][0]['assignments']) : 0
             ]);
 

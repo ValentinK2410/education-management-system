@@ -434,7 +434,30 @@ class StudentReviewController extends Controller
                 $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
                 
                 if ($assignments === false) {
+                    // Получаем полный ответ API для детального анализа ошибки
+                    $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
+                        'courseids' => [$course->moodle_course_id]
+                    ]);
+                    
                     $courseResult['error'] = 'Не удалось получить задания из Moodle API';
+                    $courseResult['api_response'] = $apiResponse;
+                    
+                    // Проверяем наличие предупреждений о правах доступа
+                    if (isset($apiResponse['warnings']) && is_array($apiResponse['warnings'])) {
+                        foreach ($apiResponse['warnings'] as $warning) {
+                            if (isset($warning['warningcode']) && $warning['warningcode'] == '2') {
+                                $courseResult['permission_error'] = true;
+                                $courseResult['error_details'] = [
+                                    'message' => $warning['message'] ?? 'Нет прав доступа',
+                                    'item' => $warning['item'] ?? 'course',
+                                    'itemid' => $warning['itemid'] ?? $course->moodle_course_id,
+                                    'solution' => 'Пользователь токена должен быть зачислен на курс и иметь права mod/assign:view. ' .
+                                                 'См. файл MOODLE_TOKEN_PERMISSIONS_FIX.md для инструкций по исправлению.'
+                                ];
+                            }
+                        }
+                    }
+                    
                     $results[] = $courseResult;
                     continue;
                 }
