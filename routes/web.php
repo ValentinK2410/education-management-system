@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserArchiveController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserSwitchController;
 use App\Http\Controllers\Admin\InstructorStatsController;
+use App\Http\Controllers\Admin\StudentReviewController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CourseAnalyticsController;
 use App\Http\Controllers\CertificateController;
@@ -516,6 +517,9 @@ Route::middleware(['auth'])->group(function () {
         // Статистика преподавателей (только для администраторов)
         Route::get('instructor-stats', [InstructorStatsController::class, 'index'])->name('instructor-stats.index');
         Route::get('instructor-stats/{instructor}', [InstructorStatsController::class, 'show'])->name('instructor-stats.show');
+
+        // Проверка студентов (для преподавателей)
+        Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
 
         // Синхронизация с Moodle (требует право sync_moodle)
         Route::middleware(['check.permission:sync_moodle'])->group(function () {

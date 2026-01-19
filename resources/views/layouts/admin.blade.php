@@ -911,6 +911,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasRole('instructor'))
+            <div class="nav-item">
+                <a href="{{ route('admin.student-review.index') }}" class="nav-link {{ request()->routeIs('admin.student-review.*') ? 'active' : '' }}">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Проверка студентов</span>
+                </a>
+            </div>
+            @endif
+
             @if(auth()->user()->hasRole('admin'))
             <div class="nav-item">
                 <a href="{{ route('admin.instructor-stats.index') }}" class="nav-link {{ request()->routeIs('admin.instructor-stats.*') ? 'active' : '' }}">
