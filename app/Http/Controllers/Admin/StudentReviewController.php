@@ -407,10 +407,9 @@ class StudentReviewController extends Controller
 
         $results = [];
         
-        try {
-            $moodleApi = new MoodleApiService();
-            
-            foreach ($courses as $course) {
+        $moodleApi = new MoodleApiService();
+        
+        foreach ($courses as $course) {
                 if (!$course->moodle_course_id) {
                     $results[] = [
                         'course_id' => $course->id,
@@ -536,16 +535,26 @@ class StudentReviewController extends Controller
                 $results[] = $courseResult;
             }
 
+            // Безопасно вычисляем суммы с проверкой на существование ключей
+            $totalAssignments = 0;
+            $totalStudents = 0;
+            foreach ($results as $result) {
+                $totalAssignments += $result['assignments_count'] ?? 0;
+                $totalStudents += $result['students_count'] ?? 0;
+            }
+            
+            $coursesWithAssignments = count(array_filter($results, function($r) {
+                return isset($r['assignments_count']) && $r['assignments_count'] > 0;
+            }));
+            
             return response()->json([
                 'success' => true,
                 'total_courses' => $courses->count(),
                 'courses' => $results,
                 'summary' => [
-                    'total_assignments' => array_sum(array_column($results, 'assignments_count')),
-                    'total_students' => array_sum(array_column($results, 'students_count')),
-                    'courses_with_assignments' => count(array_filter($results, function($r) {
-                        return isset($r['assignments_count']) && $r['assignments_count'] > 0;
-                    }))
+                    'total_assignments' => $totalAssignments,
+                    'total_students' => $totalStudents,
+                    'courses_with_assignments' => $coursesWithAssignments
                 ]
             ])->header('Content-Type', 'application/json; charset=utf-8');
         } catch (\Exception $e) {
