@@ -41,7 +41,42 @@ class SettingsController extends Controller
             }
         }
         
-        return view('admin.settings.index', compact('settings', 'groups', 'moodleToken', 'maskedToken', 'moodleUrl', 'moodleEnabled'));
+        // Получаем информацию о пользователе токена из Moodle (если возможно)
+        $moodleUserInfo = null;
+        $tokenTestResult = null;
+        if (!empty($moodleToken) && !empty($moodleUrl)) {
+            try {
+                $moodleApi = new \App\Services\MoodleApiService();
+                // Пытаемся получить информацию о пользователе через core_webservice_get_site_info
+                $siteInfo = $moodleApi->call('core_webservice_get_site_info', []);
+                if ($siteInfo && !isset($siteInfo['exception'])) {
+                    $moodleUserInfo = [
+                        'userid' => $siteInfo['userid'] ?? null,
+                        'username' => $siteInfo['username'] ?? null,
+                        'fullname' => $siteInfo['fullname'] ?? null,
+                        'firstname' => $siteInfo['firstname'] ?? null,
+                        'lastname' => $siteInfo['lastname'] ?? null,
+                    ];
+                    $tokenTestResult = [
+                        'success' => true,
+                        'message' => 'Токен работает корректно'
+                    ];
+                } else {
+                    $tokenTestResult = [
+                        'success' => false,
+                        'message' => $siteInfo['message'] ?? 'Ошибка подключения к Moodle',
+                        'errorcode' => $siteInfo['errorcode'] ?? null
+                    ];
+                }
+            } catch (\Exception $e) {
+                $tokenTestResult = [
+                    'success' => false,
+                    'message' => 'Ошибка: ' . $e->getMessage()
+                ];
+            }
+        }
+        
+        return view('admin.settings.index', compact('settings', 'groups', 'moodleToken', 'maskedToken', 'moodleUrl', 'moodleEnabled', 'moodleUserInfo', 'tokenTestResult'));
     }
 
     /**

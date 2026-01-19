@@ -507,17 +507,59 @@
                                                             @endif
                                                         </span>
                                                     </div>
-                                                    <div class="mb-2">
-                                                        <strong>Статус:</strong>
-                                                        <span class="ms-2">
-                                                            @if($moodleEnabled)
-                                                                <span class="badge bg-success">Включен</span>
-                                                            @else
-                                                                <span class="badge bg-danger">Отключен</span>
-                                                            @endif
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>Статус:</strong>
+                                                                    <span class="ms-2">
+                                                                        @if($moodleEnabled)
+                                                                            <span class="badge bg-success">Включен</span>
+                                                                        @else
+                                                                            <span class="badge bg-danger">Отключен</span>
+                                                                        @endif
+                                                                    </span>
+                                                                </div>
+                                                                @if(isset($tokenTestResult))
+                                                                    <div class="mb-2">
+                                                                        <strong>Проверка подключения:</strong>
+                                                                        <span class="ms-2">
+                                                                            @if($tokenTestResult['success'] ?? false)
+                                                                                <span class="badge bg-success">
+                                                                                    <i class="fas fa-check-circle me-1"></i>
+                                                                                    {{ $tokenTestResult['message'] ?? 'Работает' }}
+                                                                                </span>
+                                                                            @else
+                                                                                <span class="badge bg-danger">
+                                                                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                                                                    {{ $tokenTestResult['message'] ?? 'Ошибка' }}
+                                                                                </span>
+                                                                            @endif
+                                                                        </span>
+                                                                    </div>
+                                                                @endif
+                                                                @if(isset($moodleUserInfo) && $moodleUserInfo)
+                                                                    <div class="mb-2">
+                                                                        <strong>Пользователь токена:</strong>
+                                                                        <span class="ms-2">
+                                                                            @if($moodleUserInfo['fullname'] ?? null)
+                                                                                {{ $moodleUserInfo['fullname'] }}
+                                                                                <small class="text-muted">(ID: {{ $moodleUserInfo['userid'] ?? 'N/A' }})</small>
+                                                                            @elseif($moodleUserInfo['username'] ?? null)
+                                                                                {{ $moodleUserInfo['username'] }}
+                                                                                <small class="text-muted">(ID: {{ $moodleUserInfo['userid'] ?? 'N/A' }})</small>
+                                                                            @else
+                                                                                <span class="text-muted">Не удалось определить</span>
+                                                                            @endif
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="alert alert-info mt-2 mb-0">
+                                                                        <small>
+                                                                            <i class="fas fa-info-circle me-1"></i>
+                                                                            <strong>Важно:</strong> Этот пользователь должен быть зачислен на все курсы, к которым нужен доступ через API. 
+                                                                            Если вы видите ошибку "User is not enrolled or does not have requested capability", 
+                                                                            зайдите в Moodle и зачислите пользователя токена на нужный курс с ролью "Преподаватель" или "Менеджер".
+                                                                        </small>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
                                                 <div class="col-md-4 text-end">
                                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleMoodleToken()" id="toggleTokenBtn">
                                                         <i class="fas fa-eye me-1"></i>
