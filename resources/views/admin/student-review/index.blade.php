@@ -888,14 +888,16 @@ function handleSortClick(tabName, column) {
 }
 
 // Функция для получения правильного префикса из имени вкладки
-function getSearchPrefix(tabName) {
+window.getSearchPrefix = function(tabName) {
     const prefixMap = {
         'assignments': 'assignment',
         'quizzes': 'quiz',
         'forums': 'forum'
     };
-    return prefixMap[tabName] || tabName.slice(0, -1);
-}
+    const prefix = prefixMap[tabName] || tabName.slice(0, -1);
+    console.log('getSearchPrefix:', tabName, '->', prefix);
+    return prefix;
+};
 
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
 window.applyFilters = function(tabName) {
