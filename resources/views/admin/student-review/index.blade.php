@@ -706,7 +706,7 @@ window.switchTab = function(evt, tabName) {
 // Функция фильтрации строк таблицы
 function filterTableRows(tabName) {
     console.log('filterTableRows called for:', tabName);
-    
+
     const tbody = document.getElementById(tabName + '-tbody');
     if (!tbody) {
         console.error('Table body not found for:', tabName);
@@ -715,7 +715,7 @@ function filterTableRows(tabName) {
 
     const filters = filterState[tabName];
     const rows = tbody.getElementsByTagName('tr');
-    
+
     console.log('Total rows:', rows.length, 'Filters:', filters);
 
     let visibleCount = 0;
@@ -735,7 +735,7 @@ function filterTableRows(tabName) {
             row.style.display = 'none';
         }
     }
-    
+
     console.log('Visible rows after filtering:', visibleCount);
 
     // Применяем сортировку после фильтрации
@@ -844,12 +844,12 @@ function handleSortClick(tabName, column) {
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
 window.applyFilters = function(tabName) {
     console.log('applyFilters called for:', tabName);
-    
+
     if (!tabName) {
         console.error('tabName is required');
         return;
     }
-    
+
     const prefix = tabName.slice(0, -1); // assignments -> assignment
 
     // Получаем значения из полей ввода
@@ -897,7 +897,7 @@ window.resetFilters = function(tabName) {
 // При загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
-    
+
     // Инициализация обработчиков сортировки и кнопок поиска для каждой вкладки
     ['assignments', 'quizzes', 'forums'].forEach(tabName => {
         // Обработчики сортировки
@@ -911,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
-        
+
         // Добавляем обработчики для кнопок "Найти" через addEventListener
         const searchButton = document.querySelector(`button[data-search-tab="${tabName}"]`);
         if (searchButton) {
@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tabElement) {
         switchTab(null, tabParam);
     }
-    
+
     console.log('Initialization complete');
 });
 </script>
