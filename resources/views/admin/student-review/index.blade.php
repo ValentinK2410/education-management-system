@@ -887,18 +887,27 @@ function handleSortClick(tabName, column) {
     sortTable(tabName, column, newDirection);
 }
 
+// Функция для получения правильного префикса из имени вкладки
+function getSearchPrefix(tabName) {
+    const prefixMap = {
+        'assignments': 'assignment',
+        'quizzes': 'quiz',
+        'forums': 'forum'
+    };
+    return prefixMap[tabName] || tabName.slice(0, -1);
+}
+
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
 window.applyFilters = function(tabName) {
     console.log('=== applyFilters called for:', tabName);
-    console.trace('Stack trace');
 
     if (!tabName) {
         console.error('tabName is required');
         return;
     }
 
-    const prefix = tabName.slice(0, -1); // assignments -> assignment
-    console.log('Prefix:', prefix);
+    const prefix = getSearchPrefix(tabName);
+    console.log('Prefix:', prefix, 'for tabName:', tabName);
 
     // Получаем значения из полей ввода
     const nameInput = document.getElementById(`search-${prefix}-name`);
