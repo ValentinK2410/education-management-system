@@ -258,6 +258,22 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">
+                                    <i class="fas fa-list-ol me-1"></i>Элементов на странице
+                                </label>
+                                <div class="input-group">
+                                    <select name="per_page" id="per_page_select" class="form-select" onchange="updatePerPage(this.value)">
+                                        <option value="10" {{ (request('per_page', auth()->user()->users_per_page ?? 50) == 10) ? 'selected' : '' }}>10</option>
+                                        <option value="25" {{ (request('per_page', auth()->user()->users_per_page ?? 50) == 25) ? 'selected' : '' }}>25</option>
+                                        <option value="50" {{ (request('per_page', auth()->user()->users_per_page ?? 50) == 50) ? 'selected' : '' }}>50</option>
+                                        <option value="100" {{ (request('per_page', auth()->user()->users_per_page ?? 50) == 100) ? 'selected' : '' }}>100</option>
+                                        <option value="200" {{ (request('per_page', auth()->user()->users_per_page ?? 50) == 200) ? 'selected' : '' }}>200</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         @if($search || ($roleFilter ?? '') || ($statusFilter ?? ''))
                         <div class="row mt-2">
                             <div class="col-12">
@@ -367,9 +383,14 @@
                         </table>
                     </div>
 
-                    @if($users->hasPages())
-                        <div class="d-flex justify-content-center mt-4">
-                            {{ $users->links() }}
+                    @if($users->hasPages() || $users->total() > 0)
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted small">
+                                Показано {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} из {{ $users->total() }} пользователей
+                            </div>
+                            <div>
+                                {{ $users->links() }}
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -397,6 +418,48 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Функция для обновления количества элементов на странице
+    function updatePerPage(value) {
+        // Сохраняем настройку в базе данных
+        fetch('{{ route("admin.users.update-per-page") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                per_page: parseInt(value)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Обновляем URL с новым параметром per_page и перезагружаем страницу
+                const url = new URL(window.location.href);
+                url.searchParams.set('per_page', value);
+                // Убираем параметр page, чтобы начать с первой страницы
+                url.searchParams.delete('page');
+                window.location.href = url.toString();
+            } else {
+                console.error('Ошибка сохранения настройки:', data.message);
+                // Все равно обновляем страницу с новым параметром
+                const url = new URL(window.location.href);
+                url.searchParams.set('per_page', value);
+                url.searchParams.delete('page');
+                window.location.href = url.toString();
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            // Все равно обновляем страницу с новым параметром
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', value);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    }
+
     // Translations for JavaScript
     const userTranslations = {
         delete_selected: '{{ __('messages.delete_selected') }}',

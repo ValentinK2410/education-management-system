@@ -93,10 +93,16 @@ class UserController extends Controller
             $query->where('is_active', $statusFilter === 'active');
         }
 
+        // Получаем настройку пользователя о количестве элементов на странице (по умолчанию 50)
+        $perPage = $request->input('per_page', $currentUser->users_per_page ?? 50);
+        
+        // Ограничиваем максимальное значение для безопасности
+        $perPage = min(max((int)$perPage, 10), 200);
+        
         // Сортировка по имени с использованием индекса
         $users = $query->orderBy('name')
             ->orderBy('id') // Дополнительная сортировка для стабильности
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
 
         // Получаем список ролей для фильтра
@@ -474,6 +480,37 @@ class UserController extends Controller
         return response()->json([
             'success' => $deletedCount > 0,
             'message' => $message
+        ]);
+    }
+
+    /**
+     * Обновить настройку количества пользователей на странице
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePerPage(Request $request)
+    {
+        $request->validate([
+            'per_page' => 'required|integer|min:10|max:200',
+        ]);
+
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Необходима авторизация'
+            ], 401);
+        }
+
+        $perPage = (int)$request->input('per_page');
+        $user->users_per_page = $perPage;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Настройка сохранена',
+            'per_page' => $perPage
         ]);
     }
 

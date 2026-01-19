@@ -49,6 +49,7 @@ class User extends Authenticatable
         'about_me',                // Кратко о себе
         'moodle_user_id',          // ID пользователя в Moodle
         'moodle_token',            // Токен Moodle API для пользователя
+        'users_per_page',          // Количество пользователей на странице
     ];
 
     /**
@@ -75,6 +76,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',          // Статус активности как булево значение
             'sidebar_collapsed' => 'boolean',  // Состояние боковой панели
             'notifications_enabled' => 'boolean', // Включены ли уведомления
+            'users_per_page' => 'integer',     // Количество пользователей на странице
         ];
     }
 
