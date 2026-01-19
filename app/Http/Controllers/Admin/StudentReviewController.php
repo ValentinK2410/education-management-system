@@ -274,6 +274,11 @@ class StudentReviewController extends Controller
                             $attempts = $quizAttempts[$moodleQuiz['id']] ?? [];
                             $grade = $quizGrades[$moodleQuiz['id'] ?? null] ?? null;
 
+                            // Определяем, завершена ли последняя попытка
+                            $latestAttempt = !empty($attempts) ? end($attempts) : null;
+                            $isFinished = $latestAttempt && ($latestAttempt['state'] ?? '') === 'finished';
+                            $hasGrade = $grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '';
+                            
                             $progress = StudentActivityProgress::updateOrCreate(
                                 [
                                     'user_id' => $student->id,
@@ -282,12 +287,14 @@ class StudentReviewController extends Controller
                                 ],
                                 [
                                     'attempts_count' => count($attempts),
-                                    'last_attempt_at' => !empty($attempts) ? date('Y-m-d H:i:s', end($attempts)['timestart'] ?? time()) : null,
-                                    'submitted_at' => !empty($attempts) && (end($attempts)['state'] ?? '') === 'finished' 
-                                        ? date('Y-m-d H:i:s', end($attempts)['timefinish'] ?? time()) 
+                                    'last_attempt_at' => !empty($attempts) ? date('Y-m-d H:i:s', $latestAttempt['timestart'] ?? time()) : null,
+                                    'submitted_at' => $isFinished 
+                                        ? date('Y-m-d H:i:s', $latestAttempt['timefinish'] ?? time()) 
                                         : null,
-                                    'grade' => $grade && isset($grade['grade']) ? (float)$grade['grade'] : null,
+                                    'grade' => $hasGrade ? (float)$grade['grade'] : null,
                                     'max_grade' => $moodleQuiz['grade'] ?? null,
+                                    'is_graded' => $hasGrade, // Тест проверен, если есть оценка
+                                    'needs_grading' => $isFinished && !$hasGrade, // Нужна проверка, если завершен, но нет оценки
                                 ]
                             );
                             
