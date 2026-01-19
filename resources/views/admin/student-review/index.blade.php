@@ -705,11 +705,11 @@ window.switchTab = function(evt, tabName) {
 
 // Функция фильтрации строк таблицы
 function filterTableRows(tabName) {
-    console.log('filterTableRows called for:', tabName);
+    console.log('=== filterTableRows called for:', tabName);
 
     const tbody = document.getElementById(tabName + '-tbody');
     if (!tbody) {
-        console.error('Table body not found for:', tabName);
+        console.error('Table body not found for:', tabName, 'Looking for:', tabName + '-tbody');
         return;
     }
 
@@ -722,9 +722,17 @@ function filterTableRows(tabName) {
     const rows = Array.from(tbody.getElementsByTagName('tr'));
 
     console.log('Total rows:', rows.length, 'Filters:', filters);
+    console.log('Filter values:', {
+        name: filters.name,
+        student: filters.student,
+        course: filters.course
+    });
 
     let visibleCount = 0;
-    for (let row of rows) {
+    let hiddenCount = 0;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         const student = (row.getAttribute('data-student') || '').toLowerCase();
         const course = (row.getAttribute('data-course') || '').toLowerCase();
         const activity = (row.getAttribute('data-activity') || '').toLowerCase();
@@ -740,18 +748,15 @@ function filterTableRows(tabName) {
         } else {
             row.style.display = 'none';
             row.style.visibility = 'hidden';
+            hiddenCount++;
         }
     }
 
-    console.log('Visible rows after filtering:', visibleCount);
+    console.log('Filtering results - Visible:', visibleCount, 'Hidden:', hiddenCount);
+    console.log('=== filterTableRows completed');
 
-    // Применяем сортировку после фильтрации только если есть активная сортировка
-    // Используем requestAnimationFrame для правильного обновления DOM
-    if (sortState[tabName] && sortState[tabName].direction !== 'none') {
-        requestAnimationFrame(() => {
-            sortTable(tabName, sortState[tabName].column, sortState[tabName].direction);
-        });
-    }
+    // НЕ применяем сортировку автоматически после фильтрации
+    // Сортировка должна применяться отдельно при клике на заголовок
 }
 
 // Функция сортировки таблицы
@@ -825,21 +830,21 @@ function sortTable(tabName, column, direction) {
 
     // Создаем фрагмент документа для эффективного перемещения
     const fragment = document.createDocumentFragment();
-    
+
     // Добавляем отсортированные видимые строки
     visibleRows.forEach(row => {
         row.style.display = '';
         row.style.visibility = 'visible';
         fragment.appendChild(row);
     });
-    
+
     // Добавляем скрытые строки
     hiddenRows.forEach(row => {
         row.style.display = 'none';
         row.style.visibility = 'hidden';
         fragment.appendChild(row);
     });
-    
+
     // Очищаем tbody и добавляем все строки
     while (tbody.firstChild) {
         tbody.removeChild(tbody.firstChild);
@@ -884,7 +889,8 @@ function handleSortClick(tabName, column) {
 
 // Применение фильтров (вызывается по кнопке "Найти" или Enter)
 window.applyFilters = function(tabName) {
-    console.log('applyFilters called for:', tabName);
+    console.log('=== applyFilters called for:', tabName);
+    console.trace('Stack trace');
 
     if (!tabName) {
         console.error('tabName is required');
@@ -892,6 +898,7 @@ window.applyFilters = function(tabName) {
     }
 
     const prefix = tabName.slice(0, -1); // assignments -> assignment
+    console.log('Prefix:', prefix);
 
     // Получаем значения из полей ввода
     const nameInput = document.getElementById(`search-${prefix}-name`);
@@ -899,22 +906,27 @@ window.applyFilters = function(tabName) {
     const courseInput = document.getElementById(`search-${prefix}-course`);
 
     console.log('Inputs found:', {
-        name: nameInput ? nameInput.value : 'not found',
-        student: studentInput ? studentInput.value : 'not found',
-        course: courseInput ? courseInput.value : 'not found'
+        nameId: `search-${prefix}-name`,
+        name: nameInput ? nameInput.value : 'NOT FOUND',
+        studentId: `search-${prefix}-student`,
+        student: studentInput ? studentInput.value : 'NOT FOUND',
+        courseId: `search-${prefix}-course`,
+        course: courseInput ? courseInput.value : 'NOT FOUND'
     });
 
     // Обновляем состояние фильтров
     filterState[tabName] = {
-        name: nameInput ? nameInput.value : '',
-        student: studentInput ? studentInput.value : '',
-        course: courseInput ? courseInput.value : ''
+        name: nameInput ? nameInput.value.trim() : '',
+        student: studentInput ? studentInput.value.trim() : '',
+        course: courseInput ? courseInput.value.trim() : ''
     };
 
     console.log('Filter state updated:', filterState[tabName]);
 
     // Применяем фильтрацию
     filterTableRows(tabName);
+    
+    console.log('=== applyFilters completed');
 };
 
 // Сброс фильтров
@@ -924,7 +936,7 @@ window.resetFilters = function(tabName) {
     filterState[tabName] = { name: '', student: '', course: '' };
 
     // Очищаем поля ввода
-    const prefix = tabName.slice(0, -1);
+    const prefix = getSearchPrefix(tabName);
     const nameInput = document.getElementById(`search-${prefix}-name`);
     const studentInput = document.getElementById(`search-${prefix}-student`);
     const courseInput = document.getElementById(`search-${prefix}-course`);
