@@ -752,10 +752,10 @@ function sortTable(tabName, column, direction) {
     if (!tbody) return;
 
     const rows = Array.from(tbody.getElementsByTagName('tr'));
-    
+
     // Сохраняем display стили перед сортировкой
     const displayStates = rows.map(row => row.style.display);
-    
+
     const visibleRows = rows.filter((row, index) => displayStates[index] !== 'none');
     const hiddenRows = rows.filter((row, index) => displayStates[index] === 'none');
 
@@ -814,7 +814,7 @@ function sortTable(tabName, column, direction) {
         row.style.display = '';
         tbody.appendChild(row);
     });
-    
+
     // Перемещаем скрытые строки и сохраняем их display стиль
     hiddenRows.forEach(row => {
         row.style.display = 'none';
@@ -895,7 +895,7 @@ window.applyFilters = function(tabName) {
 // Сброс фильтров
 window.resetFilters = function(tabName) {
     console.log('resetFilters called for:', tabName);
-    
+
     filterState[tabName] = { name: '', student: '', course: '' };
 
     // Очищаем поля ввода

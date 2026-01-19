@@ -22,7 +22,7 @@ class StudentReviewController extends Controller
         if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
             abort(403, 'Доступ разрешен только преподавателям и администраторам');
         }
-        
+
         $instructor = $user;
 
         // Получаем все курсы преподавателя для присвоения к активностям
