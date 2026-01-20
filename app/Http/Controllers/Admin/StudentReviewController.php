@@ -722,9 +722,8 @@ class StudentReviewController extends Controller
                                     'activity_type' => 'forum',
                                 ],
                                 [
-                                    'title' => $moodleForum['name'] ?? 'Форум',
+                                    'name' => $moodleForum['name'] ?? 'Форум',
                                     'description' => $moodleForum['intro'] ?? null,
-                                    'is_active' => true,
                                 ]
                             );
 
