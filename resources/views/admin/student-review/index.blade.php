@@ -789,7 +789,8 @@ const sortState = {
     forums: { column: 'date', direction: 'desc' }
 };
 
-window.switchTab = function(evt, tabName) {
+// Определяем функцию switchTab глобально, чтобы она была доступна из onclick
+function switchTab(evt, tabName) {
     if (evt) {
         evt.preventDefault();
     }
@@ -1127,8 +1128,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentTab = tabParam;
 
     const tabElement = document.getElementById('tab-' + tabParam);
-    if (tabElement && typeof window.switchTab === 'function') {
-        window.switchTab(null, tabParam);
+    if (tabElement && typeof switchTab === 'function') {
+        switchTab(null, tabParam);
     }
 
     console.log('Initialization complete');
