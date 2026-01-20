@@ -1210,13 +1210,50 @@ class CourseAnalyticsController extends Controller
             Log::info('Применен поиск по ID студента', ['student_id_search' => $filters['student_id_search']]);
         }
         
+        // Фильтрация по типу активности и статусу для отображения только нужных данных
+        // Показываем только:
+        // 1. Форумы, на которые не ответили преподаватели (needs_response = true)
+        // 2. Тесты, которые сдали студенты (status = submitted или graded)
+        // 3. Задания, которые студенты сдали, но не получили оценку (status = submitted и is_graded = false)
+        
+        $query->where(function($q) {
+            // Форумы: показываем только те, где студент ответил, но преподаватель не ответил
+            $q->where(function($forumQuery) {
+                $forumQuery->where('course_activities.activity_type', 'forum')
+                    ->where('student_activity_progress.needs_response', true)
+                    ->whereNotNull('student_activity_progress.submitted_at');
+            })
+            // Тесты: показываем только сданные тесты (submitted или graded)
+            ->orWhere(function($quizQuery) {
+                $quizQuery->where('course_activities.activity_type', 'quiz')
+                    ->whereIn('student_activity_progress.status', ['submitted', 'graded'])
+                    ->where(function($subQuery) {
+                        $subQuery->whereNotNull('student_activity_progress.submitted_at')
+                            ->orWhere('student_activity_progress.attempts_count', '>', 0);
+                    });
+            })
+            // Задания: показываем только сданные, но не проверенные (submitted без оценки)
+            ->orWhere(function($assignQuery) {
+                $assignQuery->where('course_activities.activity_type', 'assign')
+                    ->where('student_activity_progress.status', 'submitted')
+                    ->where(function($subQuery) {
+                        $subQuery->where('student_activity_progress.is_graded', false)
+                            ->orWhereNull('student_activity_progress.is_graded')
+                            ->orWhereNull('student_activity_progress.grade');
+                    })
+                    ->whereNotNull('student_activity_progress.submitted_at');
+            });
+        });
+        
+        // Если пользователь выбрал конкретный тип активности, применяем дополнительный фильтр
         if (!empty($filters['activity_type'])) {
             $query->where('course_activities.activity_type', $filters['activity_type']);
         }
         
-        if (!empty($filters['status'])) {
-            $query->where('student_activity_progress.status', $filters['status']);
-        }
+        // Статус фильтр не применяем, так как уже фильтруем по конкретным условиям выше
+        // if (!empty($filters['status'])) {
+        //     $query->where('student_activity_progress.status', $filters['status']);
+        // }
         
         if (!empty($filters['date_from'])) {
             $query->where('student_activity_progress.submitted_at', '>=', $filters['date_from']);
@@ -1402,13 +1439,45 @@ class CourseAnalyticsController extends Controller
             $statsQuery->where('student_activity_progress.user_id', (int)$filters['user_id']);
         }
         
+        // Применяем те же фильтры к статистике
+        $statsQuery->where(function($q) {
+            // Форумы с needs_response
+            $q->where(function($forumQuery) {
+                $forumQuery->where('course_activities.activity_type', 'forum')
+                    ->where('student_activity_progress.needs_response', true)
+                    ->whereNotNull('student_activity_progress.submitted_at');
+            })
+            // Тесты сданные
+            ->orWhere(function($quizQuery) {
+                $quizQuery->where('course_activities.activity_type', 'quiz')
+                    ->whereIn('student_activity_progress.status', ['submitted', 'graded'])
+                    ->where(function($subQuery) {
+                        $subQuery->whereNotNull('student_activity_progress.submitted_at')
+                            ->orWhere('student_activity_progress.attempts_count', '>', 0);
+                    });
+            })
+            // Задания сданные без оценки
+            ->orWhere(function($assignQuery) {
+                $assignQuery->where('course_activities.activity_type', 'assign')
+                    ->where('student_activity_progress.status', 'submitted')
+                    ->where(function($subQuery) {
+                        $subQuery->where('student_activity_progress.is_graded', false)
+                            ->orWhereNull('student_activity_progress.is_graded')
+                            ->orWhereNull('student_activity_progress.grade');
+                    })
+                    ->whereNotNull('student_activity_progress.submitted_at');
+            });
+        });
+        
+        // Если пользователь выбрал конкретный тип активности, применяем дополнительный фильтр
         if (!empty($filters['activity_type'])) {
             $statsQuery->where('course_activities.activity_type', $filters['activity_type']);
         }
         
-        if (!empty($filters['status'])) {
-            $statsQuery->where('student_activity_progress.status', $filters['status']);
-        }
+        // Статус фильтр не применяем для статистики тоже
+        // if (!empty($filters['status'])) {
+        //     $statsQuery->where('student_activity_progress.status', $filters['status']);
+        // }
         
         if (!empty($filters['date_from'])) {
             $statsQuery->where('student_activity_progress.submitted_at', '>=', $filters['date_from']);
