@@ -79,7 +79,7 @@ class StudentReviewController extends Controller
                     $progress->status_text = 'Сдано';
                     $progress->status_class = 'info';
                 } elseif ($progress->has_draft) {
-                    $progress->status = 'draft';
+                    $progress->status = 'in_progress';
                     $progress->status_text = 'Есть черновик';
                     $progress->status_class = 'secondary';
                 } else {
@@ -402,7 +402,7 @@ class StudentReviewController extends Controller
                                 $status = 'submitted';
                                 $needsGrading = true;
                             } elseif ($submission) {
-                                $status = 'draft';
+                                $status = 'in_progress';
                             }
 
                             Log::info('Синхронизация задания для студента', [
