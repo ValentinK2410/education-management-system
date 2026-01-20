@@ -193,8 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         // Скрываем предыдущие результаты
-        results.style.display = 'none';
-        error.style.display = 'none';
+        if (results) results.style.display = 'none';
+        if (error) error.style.display = 'none';
         
         // Показываем загрузку
         loading.classList.add('active');
@@ -237,44 +237,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    function displayResults(results) {
+    function displayResults(resultsData) {
+        const resultsEl = document.getElementById('results');
+        const resultsContentEl = document.getElementById('results-content');
+        
+        if (!resultsEl || !resultsContentEl) {
+            console.error('Results elements not found');
+            showError('Ошибка: элементы результатов не найдены');
+            return;
+        }
+        
         let html = '';
         
         // Общая информация
         html += '<div class="mb-4">';
         html += '<h6><i class="fas fa-info-circle me-2"></i>Информация о тесте</h6>';
         html += '<ul class="list-unstyled">';
-        html += `<li><strong>ID курса:</strong> ${results.course_id}</li>`;
-        if (results.student_id) {
-            html += `<li><strong>ID студента:</strong> ${results.student_id}</li>`;
-            if (results.student_info) {
-                html += `<li><strong>Имя студента:</strong> ${results.student_info.name}</li>`;
-                html += `<li><strong>Email:</strong> ${results.student_info.email}</li>`;
-                html += `<li><strong>Moodle User ID:</strong> ${results.student_info.moodle_user_id || 'не установлен'}</li>`;
+        html += `<li><strong>ID курса:</strong> ${resultsData.course_id}</li>`;
+        if (resultsData.student_id) {
+            html += `<li><strong>ID студента:</strong> ${resultsData.student_id}</li>`;
+            if (resultsData.student_info) {
+                html += `<li><strong>Имя студента:</strong> ${resultsData.student_info.name}</li>`;
+                html += `<li><strong>Email:</strong> ${resultsData.student_info.email}</li>`;
+                html += `<li><strong>Moodle User ID:</strong> ${resultsData.student_info.moodle_user_id || 'не установлен'}</li>`;
             }
         } else {
             html += '<li><strong>ID студента:</strong> не указан (будут показаны только общие данные курса)</li>';
         }
-        html += `<li><strong>Тип теста:</strong> ${results.test_type}</li>`;
-        html += `<li><strong>Время выполнения:</strong> ${results.timestamp}</li>`;
+        html += `<li><strong>Тип теста:</strong> ${resultsData.test_type}</li>`;
+        html += `<li><strong>Время выполнения:</strong> ${resultsData.timestamp}</li>`;
         html += '</ul>';
         html += '</div>';
         
         // Данные по типам
-        if (results.data.assignments) {
-            html += displayAssignmentsData(results.data.assignments);
+        if (resultsData.data.assignments) {
+            html += displayAssignmentsData(resultsData.data.assignments);
         }
         
-        if (results.data.quizzes) {
-            html += displayQuizzesData(results.data.quizzes);
+        if (resultsData.data.quizzes) {
+            html += displayQuizzesData(resultsData.data.quizzes);
         }
         
-        if (results.data.forums) {
-            html += displayForumsData(results.data.forums);
+        if (resultsData.data.forums) {
+            html += displayForumsData(resultsData.data.forums);
         }
         
-        resultsContent.innerHTML = html;
-        results.style.display = 'block';
+        resultsContentEl.innerHTML = html;
+        resultsEl.style.display = 'block';
     }
     
     function displayAssignmentsData(data) {
@@ -473,16 +482,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function showError(message) {
-        errorContent.textContent = message;
-        error.style.display = 'block';
+        if (error && errorContent) {
+            errorContent.textContent = message;
+            error.style.display = 'block';
+        } else {
+            console.error('Error elements not found:', message);
+        }
     }
     
-    function clearResults() {
-        results.style.display = 'none';
-        error.style.display = 'none';
-        resultsContent.innerHTML = '';
-        errorContent.textContent = '';
-    }
+    // Делаем функцию глобальной для вызова из onclick
+    window.clearResults = function() {
+        const resultsEl = document.getElementById('results');
+        const errorEl = document.getElementById('error');
+        const resultsContentEl = document.getElementById('results-content');
+        const errorContentEl = document.getElementById('error-content');
+        
+        if (resultsEl) resultsEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'none';
+        if (resultsContentEl) resultsContentEl.innerHTML = '';
+        if (errorContentEl) errorContentEl.textContent = '';
+    };
 });
 </script>
 @endpush
