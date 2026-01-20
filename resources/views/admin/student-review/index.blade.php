@@ -1284,12 +1284,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || currentTab;
-        if (activeTab === 'quizzes' || activeTab === 'forums') {
+        if (activeTab === 'assignments' || activeTab === 'quizzes' || activeTab === 'forums') {
             // Очищаем флаг перед ручной синхронизацией
             sessionStorage.removeItem('justSynced');
             syncAllCourses(activeTab);
         } else {
-            alert('Синхронизация доступна только для вкладок "Тесты" и "Форумы"');
+            alert('Синхронизация доступна только для вкладок "Задания", "Тесты" и "Форумы"');
         }
     };
 });

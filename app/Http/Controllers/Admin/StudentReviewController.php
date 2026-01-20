@@ -301,7 +301,7 @@ class StudentReviewController extends Controller
             $user = auth()->user();
             $userToken = $user ? $user->getMoodleToken() : null;
             $moodleApi = new MoodleApiService(null, $userToken);
-            $tab = $request->get('tab', 'quizzes'); // quizzes, forums
+            $tab = $request->get('tab', 'quizzes'); // assignments, quizzes, forums
             
             // Получаем студентов курса
             $students = \App\Models\User::whereHas('courses', function ($query) use ($courseId) {
@@ -316,7 +316,137 @@ class StudentReviewController extends Controller
             $updatedCount = 0;
             $errors = [];
 
-            if ($tab === 'quizzes') {
+            if ($tab === 'assignments') {
+                // Синхронизация заданий
+                $moodleAssignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
+                
+                if ($moodleAssignments === false) {
+                    return response()->json(['error' => 'Не удалось получить задания из Moodle'], 500);
+                }
+
+                foreach ($students as $student) {
+                    try {
+                        $submissions = $moodleApi->getStudentSubmissions(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $moodleAssignments
+                        );
+                        
+                        $grades = $moodleApi->getStudentGrades(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $moodleAssignments
+                        );
+
+                        Log::info('Получены данные о заданиях студента из Moodle', [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_moodle_id' => $student->moodle_user_id,
+                            'course_id' => $courseId,
+                            'assignments_count' => count($moodleAssignments),
+                            'submissions_keys' => array_keys($submissions !== false ? $submissions : []),
+                            'grades_keys' => array_keys($grades !== false ? $grades : []),
+                        ]);
+
+                        // Обновляем данные в базе
+                        foreach ($moodleAssignments as $moodleAssignment) {
+                            // Ищем или создаем CourseActivity для задания
+                            $activity = \App\Models\CourseActivity::firstOrCreate(
+                                [
+                                    'course_id' => $courseId,
+                                    'moodle_activity_id' => $moodleAssignment['id'],
+                                    'activity_type' => 'assign',
+                                ],
+                                [
+                                    'title' => $moodleAssignment['name'] ?? 'Задание',
+                                    'description' => $moodleAssignment['intro'] ?? null,
+                                    'is_active' => true,
+                                ]
+                            );
+
+                            $submission = ($submissions !== false) ? ($submissions[$moodleAssignment['id']] ?? null) : null;
+                            $grade = ($grades !== false) ? ($grades[$moodleAssignment['id']] ?? null) : null;
+
+                            // Определяем дату сдачи
+                            $submittedAt = null;
+                            if ($submission) {
+                                if (isset($submission['timesubmitted']) && $submission['timesubmitted'] > 0) {
+                                    $submittedAt = date('Y-m-d H:i:s', $submission['timesubmitted']);
+                                } elseif (isset($submission['timemodified']) && $submission['timemodified'] > 0) {
+                                    $submittedAt = date('Y-m-d H:i:s', $submission['timemodified']);
+                                } elseif (isset($submission['timecreated']) && $submission['timecreated'] > 0) {
+                                    $submittedAt = date('Y-m-d H:i:s', $submission['timecreated']);
+                                }
+                            }
+
+                            // Проверяем наличие оценки
+                            $hasGrade = false;
+                            $gradeValue = null;
+                            $gradedAt = null;
+                            
+                            if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '') {
+                                $gradeValue = (float)$grade['grade'];
+                                $hasGrade = true;
+                                if (isset($grade['timecreated'])) {
+                                    $gradedAt = date('Y-m-d H:i:s', $grade['timecreated']);
+                                }
+                            }
+
+                            // Определяем статус
+                            $status = 'not_submitted';
+                            $needsGrading = false;
+                            
+                            if ($hasGrade) {
+                                $status = 'graded';
+                            } elseif ($submission && ($submission['status'] ?? '') === 'submitted') {
+                                $status = 'submitted';
+                                $needsGrading = true;
+                            } elseif ($submission) {
+                                $status = 'draft';
+                            }
+
+                            Log::info('Синхронизация задания для студента', [
+                                'student_id' => $student->id,
+                                'student_name' => $student->name,
+                                'assignment_id' => $moodleAssignment['id'],
+                                'assignment_name' => $moodleAssignment['name'] ?? 'Unknown',
+                                'has_submission' => $submission !== null,
+                                'has_grade' => $hasGrade,
+                                'grade_value' => $gradeValue,
+                                'status' => $status,
+                            ]);
+                            
+                            StudentActivityProgress::updateOrCreate(
+                                [
+                                    'user_id' => $student->id,
+                                    'course_id' => $courseId,
+                                    'activity_id' => $activity->id,
+                                ],
+                                [
+                                    'submitted_at' => $submittedAt,
+                                    'grade' => $hasGrade ? $gradeValue : null,
+                                    'max_grade' => isset($moodleAssignment['grade']) && $moodleAssignment['grade'] > 0 
+                                        ? (float)$moodleAssignment['grade'] 
+                                        : null,
+                                    'is_graded' => $hasGrade,
+                                    'needs_grading' => $needsGrading,
+                                    'status' => $status,
+                                    'graded_at' => $gradedAt,
+                                ]
+                            );
+                            
+                            $updatedCount++;
+                        }
+                    } catch (\Exception $e) {
+                        $errors[] = "Ошибка для студента {$student->name}: " . $e->getMessage();
+                        Log::warning('Ошибка синхронизации заданий для студента', [
+                            'student_id' => $student->id,
+                            'course_id' => $courseId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            } elseif ($tab === 'quizzes') {
                 // Синхронизация тестов
                 $moodleQuizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
                 
