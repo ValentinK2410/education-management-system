@@ -504,9 +504,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (data.student_data && Object.keys(data.student_data).length > 0) {
-            html += '<h6 class="mt-3">Данные студента:</h6>';
+            html += '<h6 class="mt-3"><i class="fas fa-user-graduate me-2"></i>Данные студента:</h6>';
             html += `<div class="field-info"><strong>Сдач:</strong> ${data.student_data.submissions_count || 0}</div>`;
             html += `<div class="field-info"><strong>Оценок:</strong> ${data.student_data.grades_count || 0}</div>`;
+            
+            // Показываем задания с оценками в структурированном виде
+            if (data.student_data.assignments_with_grades && data.student_data.assignments_with_grades.length > 0) {
+                html += '<div class="mt-3"><h6><i class="fas fa-star me-2"></i>Оценки за задания:</h6>';
+                html += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                html += '<thead><tr><th>Задание</th><th>Статус</th><th>Оценка</th><th>Макс. оценка</th><th>Дата сдачи</th><th>Дата оценки</th></tr></thead>';
+                html += '<tbody>';
+                
+                data.student_data.assignments_with_grades.forEach(assignment => {
+                    html += '<tr>';
+                    html += `<td><strong>${assignment.name || 'Без названия'}</strong><br><small class="text-muted">ID: ${assignment.id}</small></td>`;
+                    
+                    if (assignment.has_grade) {
+                        html += '<td><span class="badge bg-success">Оценено</span></td>';
+                        html += `<td><strong class="text-success">${assignment.grade}</strong></td>`;
+                    } else if (assignment.submitted) {
+                        html += '<td><span class="badge bg-warning">Ожидает оценки</span></td>';
+                        html += '<td>-</td>';
+                    } else {
+                        html += '<td><span class="badge bg-secondary">Не сдано</span></td>';
+                        html += '<td>-</td>';
+                    }
+                    
+                    html += `<td>${assignment.max_grade ? assignment.max_grade : '-'}</td>`;
+                    html += `<td>${assignment.submitted_at ? new Date(assignment.submitted_at * 1000).toLocaleString('ru-RU') : '-'}</td>`;
+                    html += `<td>${assignment.graded_at ? new Date(assignment.graded_at * 1000).toLocaleString('ru-RU') : '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div></div>';
+            }
             
             if (data.student_data.submissions && Object.keys(data.student_data.submissions).length > 0) {
                 html += '<details class="mt-3">';
@@ -557,9 +588,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (data.student_data && Object.keys(data.student_data).length > 0) {
-            html += '<h6 class="mt-3">Данные студента:</h6>';
+            html += '<h6 class="mt-3"><i class="fas fa-user-graduate me-2"></i>Данные студента:</h6>';
             html += `<div class="field-info"><strong>Всего попыток:</strong> ${data.student_data.total_attempts || 0}</div>`;
             html += `<div class="field-info"><strong>Оценок:</strong> ${data.student_data.grades_count || 0}</div>`;
+            
+            // Показываем тесты с оценками в структурированном виде
+            if (data.student_data.quizzes_with_grades && data.student_data.quizzes_with_grades.length > 0) {
+                html += '<div class="mt-3"><h6><i class="fas fa-star me-2"></i>Оценки за тесты:</h6>';
+                html += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                html += '<thead><tr><th>Тест</th><th>Статус</th><th>Оценка</th><th>Макс. оценка</th><th>Попыток</th><th>Дата завершения</th></tr></thead>';
+                html += '<tbody>';
+                
+                data.student_data.quizzes_with_grades.forEach(quiz => {
+                    html += '<tr>';
+                    html += `<td><strong>${quiz.name || 'Без названия'}</strong><br><small class="text-muted">ID: ${quiz.id}</small></td>`;
+                    
+                    if (quiz.has_grade) {
+                        html += '<td><span class="badge bg-success">Оценено</span></td>';
+                        html += `<td><strong class="text-success">${quiz.grade}</strong></td>`;
+                    } else if (quiz.finished) {
+                        html += '<td><span class="badge bg-warning">Сдан, ожидает оценки</span></td>';
+                        html += '<td>-</td>';
+                    } else if (quiz.attempts_count > 0) {
+                        html += '<td><span class="badge bg-info">В процессе</span></td>';
+                        html += '<td>-</td>';
+                    } else {
+                        html += '<td><span class="badge bg-secondary">Не начато</span></td>';
+                        html += '<td>-</td>';
+                    }
+                    
+                    html += `<td>${quiz.max_grade ? quiz.max_grade : '-'}</td>`;
+                    html += `<td>${quiz.attempts_count || 0}</td>`;
+                    html += `<td>${quiz.finished_at ? new Date(quiz.finished_at * 1000).toLocaleString('ru-RU') : '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div></div>';
+            }
             
             if (data.student_data.attempts && Object.keys(data.student_data.attempts).length > 0) {
                 html += '<details class="mt-3">';
@@ -604,16 +669,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (data.student_data && Object.keys(data.student_data).length > 0) {
-            html += '<h6 class="mt-3">Данные студента:</h6>';
+            html += '<h6 class="mt-3"><i class="fas fa-user-graduate me-2"></i>Данные студента:</h6>';
             html += `<div class="field-info"><strong>Всего постов:</strong> ${data.student_data.total_posts || 0}</div>`;
             html += `<div class="field-info"><strong>Неотвеченных постов:</strong> <span class="text-danger">${data.student_data.unanswered_posts || 0}</span></div>`;
+            
+            // Показываем последнее неотвеченное сообщение
+            if (data.student_data.last_unanswered_post) {
+                const post = data.student_data.last_unanswered_post;
+                html += '<div class="mt-3 alert alert-warning">';
+                html += '<h6><i class="fas fa-exclamation-triangle me-2"></i>Последнее неотвеченное сообщение студента:</h6>';
+                html += '<div class="card">';
+                html += '<div class="card-body">';
+                html += `<h6 class="card-title">${post.subject || 'Без темы'}</h6>`;
+                html += `<p class="card-text"><small class="text-muted">Форум: ${post.forum_name || 'Неизвестно'} (ID: ${post.forum_id})</small></p>`;
+                if (post.timecreated) {
+                    const postDate = new Date(post.timecreated * 1000);
+                    html += `<p class="card-text"><small class="text-muted">Дата: ${postDate.toLocaleString('ru-RU')}</small></p>`;
+                }
+                if (post.message) {
+                    html += '<div class="card-text mt-2 p-2 bg-light rounded">';
+                    html += `<p>${post.message}</p>`;
+                    html += '</div>';
+                }
+                html += `<p class="card-text mt-2"><span class="badge bg-danger">Требует ответа преподавателя</span></p>`;
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
             
             if (data.student_data.posts_by_forum && Object.keys(data.student_data.posts_by_forum).length > 0) {
                 html += '<h6 class="mt-3">Посты по форумам:</h6>';
                 Object.keys(data.student_data.posts_by_forum).forEach(forumId => {
                     const forumData = data.student_data.posts_by_forum[forumId];
                     html += `<div class="mb-3 p-3 border rounded">`;
-                    html += `<strong>Форум ID: ${forumId}</strong> - Постов: ${forumData.posts_count}, Неотвеченных: <span class="text-danger">${forumData.unanswered_count}</span>`;
+                    html += `<strong>${forumData.forum_name || 'Форум ID: ' + forumId}</strong> - Постов: ${forumData.posts_count}, Неотвеченных: <span class="text-danger">${forumData.unanswered_count}</span>`;
                     
                     if (forumData.posts && forumData.posts.length > 0) {
                         html += '<ul class="mt-2">';
@@ -626,8 +715,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 html += ` - ${postDate.toLocaleString('ru-RU')}`;
                             }
                             html += ` - <span class="${post.needs_response ? 'text-danger' : 'text-success'}">${post.needs_response ? 'Требует ответа' : 'Есть ответ'}</span>`;
-                            if (post.message) {
-                                html += `<br><small class="text-muted">${post.message}...</small>`;
+                            if (post.message_short) {
+                                html += `<br><small class="text-muted">${post.message_short}...</small>`;
                             }
                             html += '</li>';
                         });

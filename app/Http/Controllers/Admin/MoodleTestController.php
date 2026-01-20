@@ -269,11 +269,47 @@ class MoodleTestController extends Controller
             $submissions = $moodleApi->getStudentSubmissions($courseId, $studentMoodleId, $assignments);
             $grades = $moodleApi->getStudentGrades($courseId, $studentMoodleId, $assignments);
 
+            // Структурируем данные по заданиям с оценками
+            $assignmentsWithGrades = [];
+            foreach ($assignments as $assignment) {
+                $assignmentId = $assignment['id'] ?? null;
+                if (!$assignmentId) continue;
+
+                $submission = $submissions[$assignmentId] ?? null;
+                $grade = $grades[$assignmentId] ?? null;
+
+                $assignmentData = [
+                    'id' => $assignmentId,
+                    'name' => $assignment['name'] ?? 'Без названия',
+                    'max_grade' => $assignment['grade'] ?? null,
+                    'submission' => $submission,
+                    'grade' => null,
+                    'has_grade' => false,
+                    'submitted' => false,
+                    'submitted_at' => null,
+                    'graded_at' => null
+                ];
+
+                if ($submission) {
+                    $assignmentData['submitted'] = true;
+                    $assignmentData['submitted_at'] = $submission['timesubmitted'] ?? $submission['timemodified'] ?? $submission['timecreated'] ?? null;
+                }
+
+                if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '') {
+                    $assignmentData['grade'] = (float)$grade['grade'];
+                    $assignmentData['has_grade'] = true;
+                    $assignmentData['graded_at'] = $grade['timecreated'] ?? null;
+                }
+
+                $assignmentsWithGrades[] = $assignmentData;
+            }
+
             $result['student_data'] = [
                 'submissions' => $submissions !== false ? $submissions : [],
                 'grades' => $grades !== false ? $grades : [],
                 'submissions_count' => is_array($submissions) ? count($submissions) : 0,
-                'grades_count' => is_array($grades) ? count($grades) : 0
+                'grades_count' => is_array($grades) ? count($grades) : 0,
+                'assignments_with_grades' => $assignmentsWithGrades
             ];
         }
 
@@ -307,11 +343,54 @@ class MoodleTestController extends Controller
             $attempts = $moodleApi->getStudentQuizAttempts($courseId, $studentMoodleId, $quizzes);
             $grades = $moodleApi->getStudentQuizGrades($courseId, $studentMoodleId, $quizzes);
 
+            // Структурируем данные по тестам с оценками
+            $quizzesWithGrades = [];
+            foreach ($quizzes as $quiz) {
+                $quizId = $quiz['id'] ?? null;
+                if (!$quizId) continue;
+
+                $quizAttempts = $attempts[$quizId] ?? [];
+                $grade = $grades[$quizId] ?? null;
+
+                $quizData = [
+                    'id' => $quizId,
+                    'name' => $quiz['name'] ?? 'Без названия',
+                    'max_grade' => $quiz['grade'] ?? null,
+                    'attempts' => $quizAttempts,
+                    'attempts_count' => count($quizAttempts),
+                    'grade' => null,
+                    'has_grade' => false,
+                    'finished' => false,
+                    'finished_at' => null,
+                    'last_attempt_at' => null
+                ];
+
+                // Проверяем, есть ли завершенные попытки
+                if (!empty($quizAttempts)) {
+                    $latestAttempt = end($quizAttempts);
+                    $quizData['last_attempt_at'] = $latestAttempt['timestart'] ?? null;
+                    
+                    if (($latestAttempt['state'] ?? '') === 'finished') {
+                        $quizData['finished'] = true;
+                        $quizData['finished_at'] = $latestAttempt['timefinish'] ?? null;
+                    }
+                }
+
+                // Проверяем наличие оценки
+                if ($grade && isset($grade['hasgrade']) && $grade['hasgrade'] && isset($grade['grade'])) {
+                    $quizData['grade'] = (float)$grade['grade'];
+                    $quizData['has_grade'] = true;
+                }
+
+                $quizzesWithGrades[] = $quizData;
+            }
+
             $result['student_data'] = [
                 'attempts' => $attempts !== false ? $attempts : [],
                 'grades' => $grades !== false ? $grades : [],
                 'total_attempts' => 0,
-                'grades_count' => is_array($grades) ? count($grades) : 0
+                'grades_count' => is_array($grades) ? count($grades) : 0,
+                'quizzes_with_grades' => $quizzesWithGrades
             ];
 
             // Подсчитываем общее количество попыток
@@ -351,17 +430,32 @@ class MoodleTestController extends Controller
         if ($studentMoodleId) {
             $forumPosts = $moodleApi->getStudentForumPosts($courseId, $studentMoodleId, $forums);
 
+            // Находим последнее неотвеченное сообщение
+            $lastUnansweredPost = null;
+            $lastUnansweredPostTime = 0;
+
             $result['student_data'] = [
                 'posts' => $forumPosts !== false ? $forumPosts : [],
                 'total_posts' => 0,
                 'unanswered_posts' => 0,
-                'posts_by_forum' => []
+                'posts_by_forum' => [],
+                'last_unanswered_post' => null
             ];
 
-            // Подсчитываем посты
+            // Подсчитываем посты и находим последнее неотвеченное
             if (is_array($forumPosts) && !empty($forumPosts)) {
                 foreach ($forumPosts as $forumId => $posts) {
+                    $forumName = null;
+                    foreach ($forums as $forum) {
+                        if (($forum['id'] ?? null) == $forumId) {
+                            $forumName = $forum['name'] ?? 'Без названия';
+                            break;
+                        }
+                    }
+
                     $result['student_data']['posts_by_forum'][$forumId] = [
+                        'forum_id' => $forumId,
+                        'forum_name' => $forumName,
                         'posts_count' => count($posts),
                         'unanswered_count' => 0,
                         'posts' => []
@@ -372,22 +466,35 @@ class MoodleTestController extends Controller
                         $postData = [
                             'id' => $post['id'] ?? null,
                             'subject' => $post['subject'] ?? null,
-                            'message' => isset($post['message']) ? strip_tags(substr($post['message'], 0, 200)) : null,
+                            'message' => isset($post['message']) ? strip_tags($post['message']) : null,
+                            'message_short' => isset($post['message']) ? strip_tags(substr($post['message'], 0, 200)) : null,
                             'timecreated' => $post['timecreated'] ?? null,
                             'has_teacher_reply' => $post['has_teacher_reply'] ?? false,
                             'needs_response' => $post['needs_response'] ?? false,
-                            'author' => $post['author'] ?? null
+                            'author' => $post['author'] ?? null,
+                            'forum_id' => $forumId,
+                            'forum_name' => $forumName
                         ];
 
                         if ($postData['needs_response']) {
                             $result['student_data']['unanswered_posts']++;
                             $result['student_data']['posts_by_forum'][$forumId]['unanswered_count']++;
+                            
+                            // Находим последнее неотвеченное сообщение
+                            $postTime = $postData['timecreated'] ?? 0;
+                            if ($postTime > $lastUnansweredPostTime) {
+                                $lastUnansweredPostTime = $postTime;
+                                $lastUnansweredPost = $postData;
+                            }
                         }
 
                         $result['student_data']['posts_by_forum'][$forumId]['posts'][] = $postData;
                     }
                 }
             }
+
+            // Сохраняем последнее неотвеченное сообщение
+            $result['student_data']['last_unanswered_post'] = $lastUnansweredPost;
         }
 
         return $result;
