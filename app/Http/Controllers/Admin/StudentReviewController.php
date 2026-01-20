@@ -118,10 +118,21 @@ class StudentReviewController extends Controller
 
                 // Определяем статус на основе данных из базы
                 // Проверяем, есть ли оценка (тест проверен)
-                if ($progress->grade !== null && $progress->grade !== '' && $progress->is_graded) {
+                // Учитываем, что grade может быть 0 (ноль), что тоже является валидной оценкой
+                $hasGrade = $progress->grade !== null && $progress->grade !== '' && 
+                           (is_numeric($progress->grade) || $progress->grade !== '');
+                
+                // Если есть оценка (даже если is_graded не установлен), считаем тест выполненным
+                if ($hasGrade) {
                     $progress->status = 'graded';
                     $progress->status_text = 'Выполнено';
                     $progress->status_class = 'success';
+                    // Убеждаемся, что is_graded установлен, если есть оценка
+                    if (!$progress->is_graded) {
+                        $progress->is_graded = true;
+                        // Сохраняем в базу для будущих запросов
+                        $progress->save();
+                    }
                 }
                 // Проверяем, сдан ли тест (есть попытки и завершены)
                 elseif ($progress->submitted_at !== null || ($progress->attempts_count > 0 && $progress->needs_grading)) {
@@ -329,7 +340,31 @@ class StudentReviewController extends Controller
                             // Определяем, завершена ли последняя попытка
                             $latestAttempt = !empty($attempts) ? end($attempts) : null;
                             $isFinished = $latestAttempt && ($latestAttempt['state'] ?? '') === 'finished';
-                            $hasGrade = $grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '';
+                            
+                            // Улучшенная проверка наличия оценки
+                            // Оценка может быть 0 (ноль), что тоже является валидной оценкой
+                            $hasGrade = false;
+                            $gradeValue = null;
+                            
+                            if ($grade && isset($grade['grade'])) {
+                                $gradeValue = $grade['grade'];
+                                // Проверяем, что оценка не null и не пустая строка
+                                // Но 0 (ноль) является валидной оценкой!
+                                if ($gradeValue !== null && $gradeValue !== '') {
+                                    $hasGrade = true;
+                                }
+                            }
+                            
+                            Log::info('Синхронизация теста для студента', [
+                                'student_id' => $student->id,
+                                'quiz_id' => $moodleQuiz['id'],
+                                'quiz_name' => $moodleQuiz['name'] ?? 'Unknown',
+                                'attempts_count' => count($attempts),
+                                'has_grade' => $hasGrade,
+                                'grade_value' => $gradeValue,
+                                'is_finished' => $isFinished,
+                                'latest_attempt_state' => $latestAttempt['state'] ?? null
+                            ]);
                             
                             $progress = StudentActivityProgress::updateOrCreate(
                                 [
@@ -343,10 +378,11 @@ class StudentReviewController extends Controller
                                     'submitted_at' => $isFinished 
                                         ? date('Y-m-d H:i:s', $latestAttempt['timefinish'] ?? time()) 
                                         : null,
-                                    'grade' => $hasGrade ? (float)$grade['grade'] : null,
+                                    'grade' => $hasGrade ? (float)$gradeValue : null,
                                     'max_grade' => $moodleQuiz['grade'] ?? null,
-                                    'is_graded' => $hasGrade, // Тест проверен, если есть оценка
+                                    'is_graded' => $hasGrade, // Тест проверен, если есть оценка (включая 0)
                                     'needs_grading' => $isFinished && !$hasGrade, // Нужна проверка, если завершен, но нет оценки
+                                    'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : ($attempts ? 'in_progress' : null)),
                                 ]
                             );
                             
