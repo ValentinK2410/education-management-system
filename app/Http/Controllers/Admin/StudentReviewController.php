@@ -843,96 +843,97 @@ class StudentReviewController extends Controller
 
                     // Получаем задания курса
                     $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
-                
-                if ($assignments === false) {
-                    // Получаем полный ответ API для детального анализа ошибки
-                    $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
-                        'courseids' => [$course->moodle_course_id]
-                    ]);
                     
-                    $courseResult['error'] = 'Не удалось получить задания из Moodle API';
-                    $courseResult['api_response'] = $apiResponse;
-                    
-                    // Проверяем наличие предупреждений о правах доступа
-                    if (isset($apiResponse['warnings']) && is_array($apiResponse['warnings'])) {
-                        foreach ($apiResponse['warnings'] as $warning) {
-                            if (isset($warning['warningcode']) && $warning['warningcode'] == '2') {
-                                $courseResult['permission_error'] = true;
-                                $courseResult['error_details'] = [
-                                    'message' => $warning['message'] ?? 'Нет прав доступа',
-                                    'item' => $warning['item'] ?? 'course',
-                                    'itemid' => $warning['itemid'] ?? $course->moodle_course_id,
-                                    'solution' => 'Пользователь токена должен быть зачислен на курс и иметь права mod/assign:view. ' .
-                                                 'См. файл MOODLE_TOKEN_PERMISSIONS_FIX.md для инструкций по исправлению.'
-                                ];
+                    if ($assignments === false) {
+                        // Получаем полный ответ API для детального анализа ошибки
+                        $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
+                            'courseids' => [$course->moodle_course_id]
+                        ]);
+                        
+                        $courseResult['error'] = 'Не удалось получить задания из Moodle API';
+                        $courseResult['api_response'] = $apiResponse;
+                        
+                        // Проверяем наличие предупреждений о правах доступа
+                        if (isset($apiResponse['warnings']) && is_array($apiResponse['warnings'])) {
+                            foreach ($apiResponse['warnings'] as $warning) {
+                                if (isset($warning['warningcode']) && $warning['warningcode'] == '2') {
+                                    $courseResult['permission_error'] = true;
+                                    $courseResult['error_details'] = [
+                                        'message' => $warning['message'] ?? 'Нет прав доступа',
+                                        'item' => $warning['item'] ?? 'course',
+                                        'itemid' => $warning['itemid'] ?? $course->moodle_course_id,
+                                        'solution' => 'Пользователь токена должен быть зачислен на курс и иметь права mod/assign:view. ' .
+                                                     'См. файл MOODLE_TOKEN_PERMISSIONS_FIX.md для инструкций по исправлению.'
+                                    ];
+                                }
                             }
                         }
-                    }
-                    
-                    $results[] = $courseResult;
-                    continue;
-                }
-
-                        $courseResult['assignments'] = $assignments;
-                        $courseResult['assignments_count'] = is_array($assignments) ? count($assignments) : 0;
-
-                // Получаем студентов курса
-                $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
-                    $query->where('courses.id', $course->id);
-                })
-                ->whereHas('roles', function ($query) {
-                    $query->where('slug', 'student');
-                })
-                ->whereNotNull('moodle_user_id')
-                ->get();
-
-                $courseResult['students_count'] = $students ? $students->count() : 0;
-
-                // Для каждого студента получаем сдачи
-                foreach ($students as $student) {
-                    $studentResult = [
-                        'student_id' => $student->id,
-                        'student_name' => $student->name,
-                        'student_email' => $student->email,
-                        'moodle_user_id' => $student->moodle_user_id,
-                        'submissions' => []
-                    ];
-
-                    // Получаем сдачи студента
-                    $submissions = $moodleApi->getStudentSubmissions(
-                        $course->moodle_course_id,
-                        $student->moodle_user_id,
-                        $assignments
-                    );
-
-                    if ($submissions !== false) {
-                        $studentResult['submissions'] = $submissions;
-                        $studentResult['submissions_count'] = count($submissions);
                         
-                        // Получаем оценки студента
-                        $grades = $moodleApi->getStudentGrades(
+                        $results[] = $courseResult;
+                        continue;
+                    }
+
+                    $courseResult['assignments'] = $assignments;
+                    $courseResult['assignments_count'] = is_array($assignments) ? count($assignments) : 0;
+
+                    // Получаем студентов курса
+                    $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
+                        $query->where('courses.id', $course->id);
+                    })
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'student');
+                    })
+                    ->whereNotNull('moodle_user_id')
+                    ->get();
+
+                    $courseResult['students_count'] = $students ? $students->count() : 0;
+
+                    // Для каждого студента получаем сдачи
+                    foreach ($students as $student) {
+                        $studentResult = [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_email' => $student->email,
+                            'moodle_user_id' => $student->moodle_user_id,
+                            'submissions' => []
+                        ];
+
+                        // Получаем сдачи студента
+                        $submissions = $moodleApi->getStudentSubmissions(
                             $course->moodle_course_id,
                             $student->moodle_user_id,
                             $assignments
                         );
-                        
-                        if ($grades !== false) {
-                            $studentResult['grades'] = $grades;
-                            $studentResult['grades_count'] = count($grades);
+
+                        if ($submissions !== false) {
+                            $studentResult['submissions'] = $submissions;
+                            $studentResult['submissions_count'] = count($submissions);
+                            
+                            // Получаем оценки студента
+                            $grades = $moodleApi->getStudentGrades(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $assignments
+                            );
+                            
+                            if ($grades !== false) {
+                                $studentResult['grades'] = $grades;
+                                $studentResult['grades_count'] = count($grades);
+                            }
                         }
+
+                        $courseResult['students'][] = $studentResult;
                     }
 
-                    $courseResult['students'][] = $studentResult;
+                    // Получаем полный ответ API для логирования
+                    $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
+                        'courseids' => [$course->moodle_course_id]
+                    ]);
+                    
+                    $courseResult['api_response'] = $apiResponse;
+                    
+                    $results[] = $courseResult;
                 }
-
-                // Получаем полный ответ API для логирования
-                $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
-                    'courseids' => [$course->moodle_course_id]
-                ]);
-                
-                $courseResult['api_response'] = $apiResponse;
-                
-                $results[] = $courseResult;
             }
 
             // Безопасно вычисляем суммы с проверкой на существование ключей
