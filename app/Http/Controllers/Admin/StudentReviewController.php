@@ -119,8 +119,23 @@ class StudentReviewController extends Controller
                 // Определяем статус на основе данных из базы
                 // Проверяем, есть ли оценка (тест проверен)
                 // Учитываем, что grade может быть 0 (ноль), что тоже является валидной оценкой
-                $hasGrade = $progress->grade !== null && $progress->grade !== '' && 
-                           (is_numeric($progress->grade) || $progress->grade !== '');
+                $hasGrade = false;
+                $gradeValue = null;
+                
+                // Проверяем оценку разными способами
+                if ($progress->grade !== null && $progress->grade !== '') {
+                    // Преобразуем в число для проверки
+                    $gradeValue = is_numeric($progress->grade) ? (float)$progress->grade : null;
+                    if ($gradeValue !== null) {
+                        // Оценка может быть 0 (ноль), что тоже валидно!
+                        $hasGrade = true;
+                    }
+                }
+                
+                // Также проверяем is_graded, если оценка не найдена напрямую
+                if (!$hasGrade && $progress->is_graded) {
+                    $hasGrade = true;
+                }
                 
                 // Если есть оценка (даже если is_graded не установлен), считаем тест выполненным
                 if ($hasGrade) {
