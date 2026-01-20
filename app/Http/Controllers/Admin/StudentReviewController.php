@@ -630,8 +630,30 @@ class StudentReviewController extends Controller
                 // Синхронизация форумов
                 $moodleForums = $moodleApi->getCourseForums($course->moodle_course_id);
 
+                Log::info('Синхронизация форумов: результат getCourseForums', [
+                    'course_id' => $courseId,
+                    'moodle_course_id' => $course->moodle_course_id,
+                    'forums_result_type' => gettype($moodleForums),
+                    'forums_count' => is_array($moodleForums) ? count($moodleForums) : 0,
+                    'forums' => $moodleForums
+                ]);
+
                 if ($moodleForums === false) {
+                    Log::error('Синхронизация форумов: getCourseForums вернул false', [
+                        'course_id' => $courseId,
+                        'moodle_course_id' => $course->moodle_course_id
+                    ]);
                     return response()->json(['error' => 'Не удалось получить форумы из Moodle'], 500);
+                }
+
+                // Если форумы не найдены (пустой массив), логируем и продолжаем
+                if (empty($moodleForums)) {
+                    Log::warning('Синхронизация форумов: форумы не найдены для курса', [
+                        'course_id' => $courseId,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'message' => 'getCourseForums вернул пустой массив. Возможно, в курсе нет форумов или проблема с API.'
+                    ]);
+                    // Продолжаем выполнение, чтобы не блокировать синхронизацию других курсов
                 }
 
                         foreach ($students as $student) {
@@ -671,12 +693,32 @@ class StudentReviewController extends Controller
                         ]);
 
                         // Обновляем данные в базе
+                        // Проверяем, что форумы есть перед обработкой
+                        if (empty($moodleForums)) {
+                            Log::info('Синхронизация форумов: пропуск студента, так как форумы не найдены', [
+                                'student_id' => $student->id,
+                                'student_name' => $student->name,
+                                'course_id' => $courseId
+                            ]);
+                            continue;
+                        }
+
                         foreach ($moodleForums as $moodleForum) {
+                            // Проверяем, что у форума есть ID
+                            $forumId = $moodleForum['id'] ?? null;
+                            if (!$forumId) {
+                                Log::warning('Синхронизация форумов: форум без ID пропущен', [
+                                    'course_id' => $courseId,
+                                    'forum_data' => $moodleForum
+                                ]);
+                                continue;
+                            }
+
                             // Ищем или создаем CourseActivity для форума
                             $activity = \App\Models\CourseActivity::firstOrCreate(
                                 [
                                     'course_id' => $courseId,
-                                    'moodle_activity_id' => $moodleForum['id'],
+                                    'moodle_activity_id' => $forumId,
                                     'activity_type' => 'forum',
                                 ],
                                 [
@@ -689,13 +731,21 @@ class StudentReviewController extends Controller
                             if (!$activity) {
                                 Log::warning('Не удалось создать или найти активность форума', [
                                     'course_id' => $courseId,
-                                    'forum_id' => $moodleForum['id'],
+                                    'forum_id' => $forumId,
                                     'forum_name' => $moodleForum['name'] ?? 'Unknown'
                                 ]);
                                 continue;
                             }
 
-                            $posts = $forumPosts[$moodleForum['id']] ?? [];
+                            Log::info('Синхронизация форумов: обработка форума', [
+                                'course_id' => $courseId,
+                                'forum_id' => $forumId,
+                                'forum_name' => $moodleForum['name'] ?? 'Unknown',
+                                'activity_id' => $activity->id,
+                                'student_id' => $student->id
+                            ]);
+
+                            $posts = $forumPosts[$forumId] ?? [];
                             $needsResponse = false;
                             $latestPostTime = 0;
                             $hasStudentPosts = false;
