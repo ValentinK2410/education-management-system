@@ -23,7 +23,21 @@ class MoodleTestController extends Controller
             abort(403, 'Доступ разрешен только преподавателям и администраторам');
         }
         
-        return view('admin.moodle-test.index');
+        // Получаем список студентов для удобного выбора
+        $students = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('slug', 'student');
+        })
+        ->whereNotNull('moodle_user_id')
+        ->orderBy('name')
+        ->get(['id', 'name', 'email', 'moodle_user_id']);
+        
+        // Получаем список курсов преподавателя
+        $courses = \App\Models\Course::where('instructor_id', $user->id)
+            ->whereNotNull('moodle_course_id')
+            ->orderBy('name')
+            ->get(['id', 'name', 'moodle_course_id']);
+        
+        return view('admin.moodle-test.index', compact('students', 'courses'));
     }
 
     /**

@@ -92,27 +92,46 @@
                     <label for="course_id" class="form-label">
                         <i class="fas fa-book me-1"></i>ID курса в Moodle <span class="text-danger">*</span>
                     </label>
+                    <select class="form-select" id="course_id" name="course_id" required>
+                        <option value="">-- Выберите курс --</option>
+                        @if(isset($courses) && $courses->count() > 0)
+                            @foreach($courses as $course)
+                                <option value="{{ $course->moodle_course_id }}" data-course-name="{{ $course->name }}">
+                                    {{ $course->name }} (Moodle ID: {{ $course->moodle_course_id }})
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    <small class="form-text text-muted">Или введите ID курса вручную:</small>
                     <input type="number" 
-                           class="form-control" 
-                           id="course_id" 
-                           name="course_id" 
-                           required 
+                           class="form-control mt-1" 
+                           id="course_id_manual" 
                            min="1"
-                           placeholder="Например: 123">
-                    <small class="form-text text-muted">ID курса из Moodle (moodle_course_id)</small>
+                           placeholder="Например: 123"
+                           onchange="document.getElementById('course_id').value = this.value || document.getElementById('course_id').value;">
                 </div>
 
                 <div class="col-md-4">
                     <label for="student_id" class="form-label">
-                        <i class="fas fa-user me-1"></i>ID студента в системе
+                        <i class="fas fa-user me-1"></i>Студент
                     </label>
+                    <select class="form-select" id="student_id" name="student_id">
+                        <option value="">-- Не выбран (только общие данные курса) --</option>
+                        @if(isset($students) && $students->count() > 0)
+                            @foreach($students as $student)
+                                <option value="{{ $student->id }}" data-moodle-id="{{ $student->moodle_user_id }}">
+                                    {{ $student->name }} (ID: {{ $student->id }}, Moodle: {{ $student->moodle_user_id }})
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    <small class="form-text text-muted">Или введите ID студента вручную:</small>
                     <input type="number" 
-                           class="form-control" 
-                           id="student_id" 
-                           name="student_id" 
+                           class="form-control mt-1" 
+                           id="student_id_manual" 
                            min="1"
-                           placeholder="Например: 45">
-                    <small class="form-text text-muted">ID студента в Laravel (user_id). Если не указан, будут показаны только общие данные курса.</small>
+                           placeholder="Например: 45"
+                           onchange="document.getElementById('student_id').value = this.value || document.getElementById('student_id').value;">
                 </div>
 
                 <div class="col-md-4">
@@ -181,6 +200,17 @@ document.addEventListener('DOMContentLoaded', function() {
         loading.classList.add('active');
         
         const formData = new FormData(form);
+        
+        // Получаем значение course_id из select или manual input
+        const courseIdSelect = document.getElementById('course_id');
+        const courseIdManual = document.getElementById('course_id_manual');
+        if (courseIdManual.value) {
+            formData.set('course_id', courseIdManual.value);
+        } else if (!courseIdSelect.value) {
+            showError('Пожалуйста, выберите или введите ID курса');
+            loading.classList.remove('active');
+            return;
+        }
         
         try {
             const response = await fetch('{{ route("admin.moodle-test.test") }}', {
