@@ -418,30 +418,38 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '</ul>';
         html += '</div>';
         
-        // Данные по типам
-        if (resultsData.data.assignments) {
-            html += displayAssignmentsData(resultsData.data.assignments);
-        }
-        
-        if (resultsData.data.quizzes) {
-            html += displayQuizzesData(resultsData.data.quizzes);
-        }
-        
-        if (resultsData.data.forums) {
-            html += displayForumsData(resultsData.data.forums);
-        }
-        
-        // Детальная информация о конкретных элементах
-        if (resultsData.data.assignment_details) {
-            html += displayElementDetails(resultsData.data.assignment_details, 'assignment', 'Задание');
-        }
-        
-        if (resultsData.data.quiz_details) {
-            html += displayElementDetails(resultsData.data.quiz_details, 'quiz', 'Тест');
-        }
-        
-        if (resultsData.data.forum_details) {
-            html += displayElementDetails(resultsData.data.forum_details, 'forum', 'Форум');
+        // Проверяем, запрашивается ли детальная информация о конкретном элементе
+        if (resultsData.data.is_specific_element) {
+            // Показываем ТОЛЬКО детальную информацию о конкретном элементе
+            html += '<div class="alert alert-info mb-3">';
+            html += '<i class="fas fa-info-circle me-2"></i>';
+            html += `Показана детальная информация о конкретном ${resultsData.data.element_type === 'assignment' ? 'задании' : resultsData.data.element_type === 'quiz' ? 'тесте' : 'форуме'} (ID: ${resultsData.data.element_id})`;
+            html += '</div>';
+            
+            if (resultsData.data.assignment_details) {
+                html += displayElementDetails(resultsData.data.assignment_details, 'assignment', 'Задание');
+            }
+            
+            if (resultsData.data.quiz_details) {
+                html += displayElementDetails(resultsData.data.quiz_details, 'quiz', 'Тест');
+            }
+            
+            if (resultsData.data.forum_details) {
+                html += displayElementDetails(resultsData.data.forum_details, 'forum', 'Форум');
+            }
+        } else {
+            // Обычный режим - показываем все элементы курса
+            if (resultsData.data.assignments) {
+                html += displayAssignmentsData(resultsData.data.assignments);
+            }
+            
+            if (resultsData.data.quizzes) {
+                html += displayQuizzesData(resultsData.data.quizzes);
+            }
+            
+            if (resultsData.data.forums) {
+                html += displayForumsData(resultsData.data.forums);
+            }
         }
         
         resultsContentEl.innerHTML = html;

@@ -173,32 +173,42 @@ class MoodleTestController extends Controller
             $quizId = $request->input('quiz_id');
             $forumId = $request->input('forum_id');
 
-            // Тестируем в зависимости от типа
-            // ВАЖНО: Передаем moodle_course_id, а не локальный ID
-            if ($testType === 'assignments' || $testType === 'all') {
-                $results['data']['assignments'] = $this->testAssignments($moodleApi, $moodleCourseId, $studentMoodleId);
+            // Если указан конкретный ID элемента, показываем ТОЛЬКО детальную информацию об этом элементе
+            // Иначе показываем все элементы курса
+            if ($assignmentId) {
+                // Детальная информация о конкретном задании
+                $results['data']['assignment_details'] = $this->getAssignmentDetails($moodleApi, $assignmentId);
+                $results['data']['is_specific_element'] = true;
+                $results['data']['element_type'] = 'assignment';
+                $results['data']['element_id'] = $assignmentId;
+            } elseif ($quizId) {
+                // Детальная информация о конкретном тесте
+                $results['data']['quiz_details'] = $this->getQuizDetails($moodleApi, $quizId);
+                $results['data']['is_specific_element'] = true;
+                $results['data']['element_type'] = 'quiz';
+                $results['data']['element_id'] = $quizId;
+            } elseif ($forumId) {
+                // Детальная информация о конкретном форуме
+                $results['data']['forum_details'] = $this->getForumDetails($moodleApi, $forumId);
+                $results['data']['is_specific_element'] = true;
+                $results['data']['element_type'] = 'forum';
+                $results['data']['element_id'] = $forumId;
+            } else {
+                // Обычный режим - показываем все элементы курса
+                $results['data']['is_specific_element'] = false;
                 
-                // Если указан конкретный ID задания, получаем детальную информацию
-                if ($assignmentId) {
-                    $results['data']['assignment_details'] = $this->getAssignmentDetails($moodleApi, $assignmentId);
+                // Тестируем в зависимости от типа
+                // ВАЖНО: Передаем moodle_course_id, а не локальный ID
+                if ($testType === 'assignments' || $testType === 'all') {
+                    $results['data']['assignments'] = $this->testAssignments($moodleApi, $moodleCourseId, $studentMoodleId);
                 }
-            }
 
-            if ($testType === 'quizzes' || $testType === 'all') {
-                $results['data']['quizzes'] = $this->testQuizzes($moodleApi, $moodleCourseId, $studentMoodleId);
-                
-                // Если указан конкретный ID теста, получаем детальную информацию
-                if ($quizId) {
-                    $results['data']['quiz_details'] = $this->getQuizDetails($moodleApi, $quizId);
+                if ($testType === 'quizzes' || $testType === 'all') {
+                    $results['data']['quizzes'] = $this->testQuizzes($moodleApi, $moodleCourseId, $studentMoodleId);
                 }
-            }
 
-            if ($testType === 'forums' || $testType === 'all') {
-                $results['data']['forums'] = $this->testForums($moodleApi, $moodleCourseId, $studentMoodleId);
-                
-                // Если указан конкретный ID форума, получаем детальную информацию
-                if ($forumId) {
-                    $results['data']['forum_details'] = $this->getForumDetails($moodleApi, $forumId);
+                if ($testType === 'forums' || $testType === 'all') {
+                    $results['data']['forums'] = $this->testForums($moodleApi, $moodleCourseId, $studentMoodleId);
                 }
             }
 
