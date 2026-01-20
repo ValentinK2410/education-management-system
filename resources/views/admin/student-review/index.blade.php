@@ -705,6 +705,8 @@
                                             } catch (\Exception $e) {
                                                 $moodleUrl = null;
                                             }
+                                            // Используем ссылку на конкретное обсуждение, если она есть
+                                            $forumUrl = $forum->forum_discussion_url ?? $moodleUrl;
                                         @endphp
                                         <tr data-student="{{ strtolower($forum->user->name . ' ' . $forum->user->email) }}"
                                             data-course="{{ strtolower($forum->course->name) }}"
@@ -754,10 +756,10 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($moodleUrl)
-                                                    <a href="{{ $moodleUrl }}" target="_blank" class="btn btn-sm btn-success">
-                                                        <i class="fas fa-external-link-alt me-1"></i>
-                                                        Перейти в Moodle
+                                                @if($forumUrl)
+                                                    <a href="{{ $forumUrl }}" target="_blank" class="btn btn-sm btn-success">
+                                                        <i class="fas fa-reply me-1"></i>
+                                                        Ответить в Moodle
                                                     </a>
                                                 @else
                                                     <button class="btn btn-sm btn-secondary" disabled>
