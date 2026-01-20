@@ -1221,8 +1221,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Автоматическая синхронизация при загрузке страницы (только для тестов и форумов)
-    // Можно отключить, если нужна ручная синхронизация
-    const autoSync = false; // Установите в true для автоматической синхронизации
+    // Синхронизируем автоматически при открытии вкладки "Тесты" или "Форумы"
+    const autoSync = true; // Включена автоматическая синхронизация
     
     if (autoSync && (currentTab === 'quizzes' || currentTab === 'forums')) {
         // Запускаем синхронизацию через 1 секунду после загрузки страницы
@@ -1230,6 +1230,19 @@ document.addEventListener('DOMContentLoaded', function() {
             syncAllCourses(currentTab);
         }, 1000);
     }
+    
+    // Также синхронизируем при переключении на вкладку "Тесты" или "Форумы"
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const tab = this.getAttribute('data-tab');
+            if (autoSync && (tab === 'quizzes' || tab === 'forums')) {
+                // Небольшая задержка, чтобы вкладка успела переключиться
+                setTimeout(() => {
+                    syncAllCourses(tab);
+                }, 500);
+            }
+        });
+    });
     
     // Добавляем кнопку для ручной синхронизации
     const syncButton = document.createElement('button');

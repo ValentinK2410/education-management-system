@@ -365,20 +365,26 @@ class StudentReviewController extends Controller
                             $gradeValue = null;
                             $gradedAt = null;
                             
-                            if ($grade && isset($grade['grade'])) {
-                                $gradeValue = $grade['grade'];
-                                // Проверяем, что оценка не null и не пустая строка
-                                // Но 0 (ноль) является валидной оценкой!
-                                if ($gradeValue !== null && $gradeValue !== '') {
-                                    $hasGrade = true;
-                                    // Используем hasgrade для проверки, выставлена ли оценка
-                                    if (isset($grade['hasgrade']) && $grade['hasgrade']) {
+                            if ($grade) {
+                                // Проверяем наличие оценки разными способами
+                                if (isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '') {
+                                    $gradeValue = (float)$grade['grade'];
+                                    // Оценка может быть 0 (ноль), что тоже валидно!
+                                    // Проверяем hasgrade, но если его нет, считаем что оценка есть
+                                    if (isset($grade['hasgrade'])) {
+                                        $hasGrade = $grade['hasgrade'];
+                                    } else {
+                                        // Если hasgrade не указан, но grade есть, считаем что оценка выставлена
                                         $hasGrade = true;
                                     }
                                     // Проверяем дату оценки
                                     if (isset($grade['timecreated'])) {
                                         $gradedAt = date('Y-m-d H:i:s', $grade['timecreated']);
                                     }
+                                } elseif (isset($grade['hasgrade']) && $grade['hasgrade'] && isset($grade['grade'])) {
+                                    // Если hasgrade = true, но grade может быть null (редкий случай)
+                                    // В этом случае оценка может быть в попытках
+                                    $hasGrade = true;
                                 }
                             }
                             
