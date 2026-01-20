@@ -311,6 +311,7 @@ class StudentReviewController extends Controller
 
                 foreach ($students as $student) {
                     try {
+                        // Получаем попытки и оценки более эффективно
                         $quizAttempts = $moodleApi->getStudentQuizAttempts(
                             $course->moodle_course_id,
                             $student->moodle_user_id,
@@ -322,6 +323,17 @@ class StudentReviewController extends Controller
                             $student->moodle_user_id,
                             $moodleQuizzes
                         );
+
+                        Log::info('Получены данные о тестах студента из Moodle', [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_moodle_id' => $student->moodle_user_id,
+                            'course_id' => $courseId,
+                            'quizzes_count' => count($moodleQuizzes),
+                            'attempts_keys' => array_keys($quizAttempts),
+                            'grades_keys' => array_keys($quizGrades),
+                            'grades_data' => $quizGrades
+                        ]);
 
                         // Обновляем данные в базе
                         // ВАЖНО: Создаем записи для ВСЕХ тестов курса, даже если у студента нет попыток
@@ -348,9 +360,10 @@ class StudentReviewController extends Controller
                             $isFinished = $latestAttempt && ($latestAttempt['state'] ?? '') === 'finished';
                             
                             // Улучшенная проверка наличия оценки
-                            // Оценка может быть 0 (ноль), что тоже является валидной оценкой
+                            // Проверяем оценку из mod_quiz_get_user_best_grade
                             $hasGrade = false;
                             $gradeValue = null;
+                            $gradedAt = null;
                             
                             if ($grade && isset($grade['grade'])) {
                                 $gradeValue = $grade['grade'];
@@ -358,8 +371,40 @@ class StudentReviewController extends Controller
                                 // Но 0 (ноль) является валидной оценкой!
                                 if ($gradeValue !== null && $gradeValue !== '') {
                                     $hasGrade = true;
+                                    // Используем hasgrade для проверки, выставлена ли оценка
+                                    if (isset($grade['hasgrade']) && $grade['hasgrade']) {
+                                        $hasGrade = true;
+                                    }
+                                    // Проверяем дату оценки
+                                    if (isset($grade['timecreated'])) {
+                                        $gradedAt = date('Y-m-d H:i:s', $grade['timecreated']);
+                                    }
                                 }
                             }
+                            
+                            // Дополнительно проверяем оценки из попыток (если есть завершенные попытки)
+                            if (!$hasGrade && !empty($attempts)) {
+                                foreach ($attempts as $attempt) {
+                                    if (($attempt['state'] ?? '') === 'finished' && isset($attempt['sumgrades'])) {
+                                        // Если есть завершенная попытка с оценкой, используем её
+                                        $attemptGrade = $attempt['sumgrades'] ?? null;
+                                        if ($attemptGrade !== null && $attemptGrade !== '') {
+                                            $gradeValue = (float)$attemptGrade;
+                                            $hasGrade = true;
+                                            if (isset($attempt['timefinish'])) {
+                                                $gradedAt = date('Y-m-d H:i:s', $attempt['timefinish']);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Получаем существующую запись для проверки даты изменения
+                            $existingProgress = StudentActivityProgress::where('user_id', $student->id)
+                                ->where('course_id', $courseId)
+                                ->where('activity_id', $activity->id)
+                                ->first();
                             
                             Log::info('Синхронизация теста для студента', [
                                 'student_id' => $student->id,
@@ -375,6 +420,10 @@ class StudentReviewController extends Controller
                                 'latest_attempt_state' => $latestAttempt['state'] ?? null,
                                 'latest_attempt_timestart' => $latestAttempt['timestart'] ?? null,
                                 'latest_attempt_timefinish' => $latestAttempt['timefinish'] ?? null,
+                                'existing_progress_id' => $existingProgress ? $existingProgress->id : null,
+                                'existing_grade' => $existingProgress ? $existingProgress->grade : null,
+                                'existing_updated_at' => $existingProgress ? $existingProgress->updated_at : null,
+                                'grade_from_api' => $grade,
                             ]);
                             
                             // ВАЖНО: Создаем запись для ВСЕХ студентов и ВСЕХ тестов, даже если нет попыток
@@ -399,6 +448,7 @@ class StudentReviewController extends Controller
                                     'is_graded' => $hasGrade, // Тест проверен, если есть оценка (включая 0)
                                     'needs_grading' => $isFinished && !$hasGrade, // Нужна проверка, если завершен, но нет оценки
                                     'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : (!empty($attempts) ? 'in_progress' : 'not_answered')),
+                                    'graded_at' => $gradedAt,
                                 ]
                             );
                             
@@ -410,6 +460,8 @@ class StudentReviewController extends Controller
                                 'is_graded' => $progress->is_graded,
                                 'status' => $progress->status,
                                 'submitted_at' => $progress->submitted_at,
+                                'graded_at' => $progress->graded_at,
+                                'updated_at' => $progress->updated_at,
                             ]);
                             
                             $updatedCount++;

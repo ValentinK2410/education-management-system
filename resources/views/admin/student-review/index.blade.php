@@ -576,14 +576,25 @@
                                             </td>
                                             <td>
                                                 @if($quiz->grade !== null && $quiz->max_grade)
-                                                    <strong>{{ number_format($quiz->grade, 1) }}</strong> / {{ number_format($quiz->max_grade, 1) }}
+                                                    <strong class="text-success">{{ number_format($quiz->grade, 1) }}</strong> / {{ number_format($quiz->max_grade, 1) }}
                                                     @if($quiz->max_grade > 0)
                                                         <br><small class="text-muted">({{ number_format(($quiz->grade / $quiz->max_grade) * 100, 1) }}%)</small>
                                                     @endif
+                                                    @if($quiz->graded_at)
+                                                        <br><small class="text-muted"><i class="fas fa-calendar me-1"></i>{{ \Carbon\Carbon::parse($quiz->graded_at)->format('d.m.Y H:i') }}</small>
+                                                    @elseif($quiz->updated_at)
+                                                        <br><small class="text-muted"><i class="fas fa-sync me-1"></i>Обновлено: {{ \Carbon\Carbon::parse($quiz->updated_at)->format('d.m.Y H:i') }}</small>
+                                                    @endif
                                                 @elseif($quiz->max_grade)
                                                     <span class="text-muted">— / {{ number_format($quiz->max_grade, 1) }}</span>
+                                                    @if($quiz->updated_at)
+                                                        <br><small class="text-muted"><i class="fas fa-sync me-1"></i>Обновлено: {{ \Carbon\Carbon::parse($quiz->updated_at)->format('d.m.Y H:i') }}</small>
+                                                    @endif
                                                 @else
                                                     <span class="text-muted">—</span>
+                                                    @if($quiz->updated_at)
+                                                        <br><small class="text-muted"><i class="fas fa-sync me-1"></i>Обновлено: {{ \Carbon\Carbon::parse($quiz->updated_at)->format('d.m.Y H:i') }}</small>
+                                                    @endif
                                                 @endif
                                             </td>
                                             <td>
