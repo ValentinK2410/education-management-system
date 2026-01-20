@@ -106,11 +106,15 @@ class CourseAnalyticsController extends Controller
                 'request_params' => $request->all()
             ]);
             
-            // Автоматическая синхронизация для записей со статусом "submitted"
+            // Автоматическая синхронизация для записей со статусом "submitted" и форумов с needs_response
             // Ограничиваем количество синхронизаций для предотвращения замедления загрузки
             if ($this->syncService) {
                 try {
+                    // Синхронизируем задания со статусом submitted
                     $submittedProgress = StudentActivityProgress::where('status', 'submitted')
+                        ->whereHas('activity', function($q) {
+                            $q->where('activity_type', 'assign');
+                        })
                         ->with(['user', 'course'])
                         ->whereHas('user', function($q) {
                             $q->whereNotNull('moodle_user_id');
@@ -118,19 +122,123 @@ class CourseAnalyticsController extends Controller
                         ->whereHas('course', function($q) {
                             $q->whereNotNull('moodle_course_id');
                         })
-                        ->limit(10) // Ограничиваем до 10 синхронизаций за раз
+                        ->limit(5) // Ограничиваем до 5 синхронизаций за раз
                         ->get();
                     
-                    if ($submittedProgress->count() > 0) {
-                        Log::info('Автоматическая синхронизация прогресса для submitted записей', [
-                            'count' => $submittedProgress->count()
+                    // Синхронизируем форумы с needs_response = true
+                    $forumsNeedingResponse = StudentActivityProgress::where('needs_response', true)
+                        ->whereHas('activity', function($q) {
+                            $q->where('activity_type', 'forum');
+                        })
+                        ->with(['user', 'course'])
+                        ->whereHas('user', function($q) {
+                            $q->whereNotNull('moodle_user_id');
+                        })
+                        ->whereHas('course', function($q) {
+                            $q->whereNotNull('moodle_course_id');
+                        })
+                        ->limit(5) // Ограничиваем до 5 синхронизаций за раз
+                        ->get();
+                    
+                    $totalToSync = $submittedProgress->count() + $forumsNeedingResponse->count();
+                    
+                    if ($totalToSync > 0) {
+                        Log::info('Автоматическая синхронизация прогресса', [
+                            'submitted_count' => $submittedProgress->count(),
+                            'forums_count' => $forumsNeedingResponse->count()
                         ]);
                         
+                        // Синхронизируем задания
                         foreach ($submittedProgress as $progress) {
                             try {
                                 $this->syncService->syncStudentProgress($progress->course_id, $progress->user_id);
                             } catch (\Exception $e) {
-                                Log::warning('Ошибка синхронизации прогресса студента', [
+                                Log::warning('Ошибка синхронизации прогресса студента (assignment)', [
+                                    'course_id' => $progress->course_id,
+                                    'user_id' => $progress->user_id,
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
+                        
+                        // Синхронизируем форумы через специальный метод
+                        foreach ($forumsNeedingResponse as $progress) {
+                            try {
+                                // Используем токен текущего пользователя для синхронизации форумов
+                                $userToken = $user ? $user->getMoodleToken() : null;
+                                $moodleApi = new MoodleApiService(null, $userToken);
+                                
+                                // Получаем студентов курса
+                                $students = User::whereHas('courses', function ($query) use ($progress) {
+                                    $query->where('courses.id', $progress->course_id);
+                                })
+                                ->whereHas('roles', function ($query) {
+                                    $query->where('slug', 'student');
+                                })
+                                ->whereNotNull('moodle_user_id')
+                                ->get();
+                                
+                                // Синхронизируем форумы для всех студентов курса
+                                $moodleForums = $moodleApi->getCourseForums($progress->course->moodle_course_id);
+                                
+                                if ($moodleForums !== false) {
+                                    foreach ($students as $student) {
+                                        $forumPosts = $moodleApi->getStudentForumPosts(
+                                            $progress->course->moodle_course_id,
+                                            $student->moodle_user_id,
+                                            $moodleForums
+                                        );
+                                        
+                                        // Обновляем данные в базе для каждого форума
+                                        foreach ($moodleForums as $moodleForum) {
+                                            $activity = CourseActivity::where('course_id', $progress->course_id)
+                                                ->where('moodle_activity_id', $moodleForum['id'])
+                                                ->where('activity_type', 'forum')
+                                                ->first();
+                                            
+                                            if (!$activity) {
+                                                continue;
+                                            }
+                                            
+                                            $posts = $forumPosts[$moodleForum['id']] ?? [];
+                                            $needsResponse = false;
+                                            $latestPostTime = 0;
+                                            $hasStudentPosts = false;
+                                            
+                                            foreach ($posts as $post) {
+                                                $hasStudentPosts = true;
+                                                if (isset($post['needs_response']) && $post['needs_response']) {
+                                                    $needsResponse = true;
+                                                }
+                                                $postTime = $post['timecreated'] ?? 0;
+                                                if ($postTime > $latestPostTime) {
+                                                    $latestPostTime = $postTime;
+                                                }
+                                            }
+                                            
+                                            if ($hasStudentPosts) {
+                                                StudentActivityProgress::updateOrCreate(
+                                                    [
+                                                        'user_id' => $student->id,
+                                                        'course_id' => $progress->course_id,
+                                                        'activity_id' => $activity->id,
+                                                    ],
+                                                    [
+                                                        'needs_response' => $needsResponse,
+                                                        'submitted_at' => $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null,
+                                                        'status' => $needsResponse ? 'needs_response' : 'completed',
+                                                        'progress_data' => json_encode([
+                                                            'posts' => $posts,
+                                                            'posts_count' => count($posts),
+                                                        ]),
+                                                    ]
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('Ошибка синхронизации форумов для студента', [
                                     'course_id' => $progress->course_id,
                                     'user_id' => $progress->user_id,
                                     'error' => $e->getMessage()

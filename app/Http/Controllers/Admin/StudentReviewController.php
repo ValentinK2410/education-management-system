@@ -339,32 +339,50 @@ class StudentReviewController extends Controller
                             $posts = $forumPosts[$moodleForum['id']] ?? [];
                             $needsResponse = false;
                             $latestPostTime = 0;
+                            $hasStudentPosts = false;
 
+                            // Проверяем посты студента
                             foreach ($posts as $post) {
+                                $hasStudentPosts = true;
+                                
+                                // Если есть пост студента с needs_response = true, значит нужен ответ
                                 if (isset($post['needs_response']) && $post['needs_response']) {
                                     $needsResponse = true;
                                 }
+                                
                                 $postTime = $post['timecreated'] ?? 0;
                                 if ($postTime > $latestPostTime) {
                                     $latestPostTime = $postTime;
                                 }
                             }
 
-                            StudentActivityProgress::updateOrCreate(
-                                [
-                                    'user_id' => $student->id,
-                                    'course_id' => $courseId,
-                                    'activity_id' => $activity->id,
-                                ],
-                                [
-                                    'needs_response' => $needsResponse,
-                                    'submitted_at' => $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null,
-                                    'progress_data' => [
-                                        'posts' => $posts,
-                                        'posts_count' => count($posts),
+                            // Сохраняем данные только если студент написал хотя бы один пост
+                            if ($hasStudentPosts) {
+                                StudentActivityProgress::updateOrCreate(
+                                    [
+                                        'user_id' => $student->id,
+                                        'course_id' => $courseId,
+                                        'activity_id' => $activity->id,
                                     ],
-                                ]
-                            );
+                                    [
+                                        'needs_response' => $needsResponse,
+                                        'submitted_at' => $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null,
+                                        'status' => $needsResponse ? 'needs_response' : 'completed',
+                                        'progress_data' => json_encode([
+                                            'posts' => $posts,
+                                            'posts_count' => count($posts),
+                                        ]),
+                                    ]
+                                );
+                                
+                                $updatedCount++;
+                            } else {
+                                // Если студент не писал в форум, удаляем запись (если была)
+                                StudentActivityProgress::where('user_id', $student->id)
+                                    ->where('course_id', $courseId)
+                                    ->where('activity_id', $activity->id)
+                                    ->delete();
+                            }
                             
                             $updatedCount++;
                         }

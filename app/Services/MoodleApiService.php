@@ -992,16 +992,34 @@ class MoodleApiService
                         $parentId = $post['parent'] ?? null;
 
                         if ($authorId == $studentMoodleId) {
-                            // Пост студента
+                            // Пост студента - добавляем его
                             $studentPosts[] = $post;
                         } elseif (in_array($authorId, $teacherIds) && $parentId) {
                             // Ответ преподавателя (если есть parent, значит это ответ на чей-то пост)
                             // Проверяем, является ли родительский пост постом студента
                             foreach ($allDiscussionPosts as $parentPost) {
-                                if (($parentPost['id'] ?? null) == $parentId &&
-                                    ($parentPost['author']['id'] ?? null) == $studentMoodleId) {
+                                $parentAuthorId = $parentPost['author']['id'] ?? null;
+                                $parentPostId = $parentPost['id'] ?? null;
+                                
+                                // Проверяем прямой ответ на пост студента
+                                if ($parentPostId == $parentId && $parentAuthorId == $studentMoodleId) {
                                     $teacherReplies[$parentId] = true;
                                     break;
+                                }
+                                
+                                // Также проверяем цепочку ответов: если преподаватель ответил на ответ другого преподавателя,
+                                // но в цепочке есть пост студента, считаем что студент получил ответ
+                                if ($parentPostId == $parentId) {
+                                    $grandParentId = $parentPost['parent'] ?? null;
+                                    if ($grandParentId) {
+                                        foreach ($allDiscussionPosts as $grandParentPost) {
+                                            if (($grandParentPost['id'] ?? null) == $grandParentId &&
+                                                ($grandParentPost['author']['id'] ?? null) == $studentMoodleId) {
+                                                $teacherReplies[$grandParentId] = true;
+                                                break;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1011,6 +1029,37 @@ class MoodleApiService
                     foreach ($studentPosts as $post) {
                         $postId = $post['id'] ?? null;
                         $hasTeacherReply = isset($teacherReplies[$postId]);
+                        
+                        // Также проверяем, есть ли ответы преподавателей на этот пост в цепочке
+                        // (преподаватель может ответить на ответ другого преподавателя, но это все равно ответ студенту)
+                        if (!$hasTeacherReply && $postId) {
+                            // Проверяем все посты в обсуждении, которые могут быть ответами на этот пост
+                            foreach ($allDiscussionPosts as $replyPost) {
+                                $replyParentId = $replyPost['parent'] ?? null;
+                                $replyAuthorId = $replyPost['author']['id'] ?? null;
+                                
+                                // Если это ответ преподавателя и он отвечает на наш пост или на ответ на наш пост
+                                if (in_array($replyAuthorId, $teacherIds) && $replyParentId == $postId) {
+                                    $hasTeacherReply = true;
+                                    break;
+                                }
+                                
+                                // Проверяем цепочку: если преподаватель ответил на ответ другого преподавателя,
+                                // но в цепочке есть наш пост, считаем что есть ответ
+                                if (in_array($replyAuthorId, $teacherIds) && $replyParentId) {
+                                    // Ищем родительский пост
+                                    foreach ($allDiscussionPosts as $parentPost) {
+                                        if (($parentPost['id'] ?? null) == $replyParentId) {
+                                            $grandParentId = $parentPost['parent'] ?? null;
+                                            if ($grandParentId == $postId) {
+                                                $hasTeacherReply = true;
+                                                break 2;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         // Добавляем флаг о наличии ответа преподавателя
                         $post['has_teacher_reply'] = $hasTeacherReply;
