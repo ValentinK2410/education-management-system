@@ -1590,4 +1590,84 @@ class StudentReviewController extends Controller
         // Если ничего не найдено, возвращаем заглушку
         return 'Текст сообщения недоступен';
     }
+
+    /**
+     * Получить URL для перехода к обсуждению форума в Moodle
+     *
+     * @param StudentActivityProgress $progress
+     * @return string|null
+     */
+    private function getForumDiscussionUrl(StudentActivityProgress $progress): ?string
+    {
+        try {
+            // Проверяем, что это форум
+            if (!$progress->activity || $progress->activity->activity_type !== 'forum') {
+                return null;
+            }
+
+            // Получаем курс
+            $course = $progress->course ?? $progress->activity->course;
+            if (!$course || !$course->moodle_course_id) {
+                return null;
+            }
+
+            // Получаем базовый URL Moodle
+            $moodleBaseUrl = config('services.moodle.url');
+            if (!$moodleBaseUrl) {
+                return null;
+            }
+            $moodleBaseUrl = rtrim($moodleBaseUrl, '/');
+
+            // Получаем данные о последнем неотвеченном посте из progress_data
+            if ($progress->progress_data && is_array($progress->progress_data)) {
+                $lastUnansweredPost = $progress->progress_data['last_unanswered_post'] ?? null;
+                
+                if ($lastUnansweredPost && isset($lastUnansweredPost['discussion']) && isset($lastUnansweredPost['id'])) {
+                    $discussionId = $lastUnansweredPost['discussion'];
+                    $postId = $lastUnansweredPost['id'];
+                    
+                    // Формируем ссылку на конкретный пост в обсуждении
+                    return $moodleBaseUrl . "/mod/forum/discuss.php?d={$discussionId}#p{$postId}";
+                }
+                
+                // Если нет last_unanswered_post, ищем в массиве posts
+                if (isset($progress->progress_data['posts']) && is_array($progress->progress_data['posts'])) {
+                    $posts = $progress->progress_data['posts'];
+                    $lastUnansweredPost = null;
+                    $lastUnansweredPostTime = 0;
+                    
+                    foreach ($posts as $post) {
+                        if (isset($post['needs_response']) && $post['needs_response']) {
+                            $postTime = $post['timecreated'] ?? 0;
+                            if ($postTime > $lastUnansweredPostTime) {
+                                $lastUnansweredPostTime = $postTime;
+                                $lastUnansweredPost = $post;
+                            }
+                        }
+                    }
+                    
+                    if ($lastUnansweredPost && isset($lastUnansweredPost['discussion']) && isset($lastUnansweredPost['id'])) {
+                        $discussionId = $lastUnansweredPost['discussion'];
+                        $postId = $lastUnansweredPost['id'];
+                        
+                        return $moodleBaseUrl . "/mod/forum/discuss.php?d={$discussionId}#p{$postId}";
+                    }
+                }
+            }
+
+            // Если нет данных о конкретном обсуждении, возвращаем ссылку на форум
+            $cmid = $progress->activity->cmid;
+            if ($cmid) {
+                return $moodleBaseUrl . "/mod/forum/view.php?id={$cmid}";
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            \Log::warning('Ошибка при формировании ссылки на обсуждение форума', [
+                'progress_id' => $progress->id ?? null,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
 }
