@@ -1268,26 +1268,8 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.removeItem('justSynced');
     }
     
-    // Также синхронизируем при переключении на вкладку "Тесты" или "Форумы"
-    // Но только если синхронизация не идет
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', function() {
-            const tab = this.getAttribute('data-tab');
-            if (autoSync && !isSyncing && (tab === 'quizzes' || tab === 'forums')) {
-                // Небольшая задержка, чтобы вкладка успела переключиться
-                setTimeout(() => {
-                    if (!isSyncing) {
-                        isSyncing = true;
-                        window.autoSyncInProgress = true;
-                        syncAllCourses(tab).finally(() => {
-                            isSyncing = false;
-                            window.autoSyncInProgress = false;
-                        });
-                    }
-                }, 500);
-            }
-        });
-    });
+    // Автоматическая синхронизация при переключении вкладок отключена
+    // Синхронизацию можно запустить вручную через кнопку "Обновить данные из Moodle"
     
     // Добавляем кнопку для ручной синхронизации
     const syncButton = document.createElement('button');
