@@ -1248,7 +1248,12 @@ async function checkMoodleAssignments() {
     
     // Определяем тип проверки на основе активной вкладки
     const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || 'assignments';
-    const checkType = activeTab === 'quizzes' ? 'quizzes' : 'assignments';
+    let checkType = 'assignments';
+    if (activeTab === 'quizzes') {
+        checkType = 'quizzes';
+    } else if (activeTab === 'forums') {
+        checkType = 'forums';
+    }
     
     modal.show();
     loadingDiv.style.display = 'block';
@@ -1296,8 +1301,9 @@ async function checkMoodleAssignments() {
         
         if (data.success) {
             const isQuizzes = data.check_type === 'quizzes';
-            const itemName = isQuizzes ? 'тестов' : 'заданий';
-            const itemNameSingle = isQuizzes ? 'тест' : 'задание';
+            const isForums = data.check_type === 'forums';
+            const itemName = isQuizzes ? 'тестов' : (isForums ? 'форумов' : 'заданий');
+            const itemNameSingle = isQuizzes ? 'тест' : (isForums ? 'форум' : 'задание');
             
             let html = '<div class="alert alert-success"><strong>Проверка завершена успешно</strong></div>';
             
@@ -1306,6 +1312,10 @@ async function checkMoodleAssignments() {
             if (isQuizzes) {
                 html += `<li>Всего тестов: ${data.summary.total_quizzes}</li>`;
                 html += `<li>Курсов с тестами: ${data.summary.courses_with_quizzes}</li>`;
+            } else if (isForums) {
+                html += `<li>Всего форумов: ${data.summary.total_forums}</li>`;
+                html += `<li>Курсов с форумами: ${data.summary.courses_with_forums}</li>`;
+                html += `<li>Неотвеченных постов: <strong class="text-danger">${data.summary.total_unanswered_posts || 0}</strong></li>`;
             } else {
                 html += `<li>Всего заданий: ${data.summary.total_assignments}</li>`;
                 html += `<li>Курсов с заданиями: ${data.summary.courses_with_assignments}</li>`;
@@ -1325,7 +1335,12 @@ async function checkMoodleAssignments() {
                 }
                 if (isQuizzes && course.quizzes_count !== undefined) {
                     html += ` <span class="badge bg-primary ms-2">Тестов: ${course.quizzes_count}</span>`;
-                } else if (!isQuizzes && course.assignments_count !== undefined) {
+                } else if (isForums && course.forums_count !== undefined) {
+                    html += ` <span class="badge bg-primary ms-2">Форумов: ${course.forums_count}</span>`;
+                    if (course.total_unanswered_posts !== undefined && course.total_unanswered_posts > 0) {
+                        html += ` <span class="badge bg-danger ms-2">Неотвеченных: ${course.total_unanswered_posts}</span>`;
+                    }
+                } else if (!isQuizzes && !isForums && course.assignments_count !== undefined) {
                     html += ` <span class="badge bg-primary ms-2">Заданий: ${course.assignments_count}</span>`;
                 }
                 if (course.students_count !== undefined) {
@@ -1381,6 +1396,49 @@ async function checkMoodleAssignments() {
                                 html += ` - Оценок: ${student.quiz_grades_count}`;
                             }
                             html += `</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                } else if (isForums) {
+                    if (course.forums && course.forums.length > 0) {
+                        html += `<h6>Форумы (${course.forums.length}):</h6>`;
+                        html += `<ul>`;
+                        course.forums.forEach(forum => {
+                            html += `<li><strong>${forum.name}</strong> (ID: ${forum.id})</li>`;
+                        });
+                        html += `</ul>`;
+                    } else if (course.forums_count === 0) {
+                        html += `<div class="alert alert-warning">Форумов не найдено в Moodle</div>`;
+                    }
+                    
+                    // Показываем информацию о постах студентов и неотвеченных постах
+                    if (course.students && course.students.length > 0) {
+                        html += `<h6>Студенты и их посты на форумах:</h6>`;
+                        html += `<ul>`;
+                        course.students.forEach(student => {
+                            html += `<li><strong>${student.student_name}</strong> (Moodle ID: ${student.moodle_user_id})`;
+                            if (student.total_posts !== undefined) {
+                                html += ` - Всего постов: ${student.total_posts}`;
+                            }
+                            if (student.unanswered_posts_count !== undefined && student.unanswered_posts_count > 0) {
+                                html += ` - <span class="text-danger"><strong>Неотвеченных: ${student.unanswered_posts_count}</strong></span>`;
+                            }
+                            html += `</li>`;
+                            
+                            // Показываем детали неотвеченных постов
+                            if (student.unanswered_posts && student.unanswered_posts.length > 0) {
+                                html += `<ul style="margin-left: 20px; margin-top: 5px;">`;
+                                student.unanswered_posts.forEach(post => {
+                                    const date = post.timecreated ? new Date(post.timecreated * 1000).toLocaleString('ru-RU') : 'Дата неизвестна';
+                                    html += `<li style="margin-bottom: 5px;">`;
+                                    html += `<strong>${post.subject}</strong> (${date})`;
+                                    if (post.message) {
+                                        html += `<br><small class="text-muted">${post.message}...</small>`;
+                                    }
+                                    html += `</li>`;
+                                });
+                                html += `</ul>`;
+                            }
                         });
                         html += `</ul>`;
                     }

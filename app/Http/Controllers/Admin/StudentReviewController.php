@@ -588,8 +588,8 @@ class StudentReviewController extends Controller
             ]);
         }
 
-        // Определяем, что проверяем: assignments или quizzes
-        $checkType = $request->get('type', 'assignments'); // assignments или quizzes
+        // Определяем, что проверяем: assignments, quizzes или forums
+        $checkType = $request->get('type', 'assignments'); // assignments, quizzes или forums
         
         $results = [];
         
@@ -705,6 +705,116 @@ class StudentReviewController extends Controller
 
                     // Получаем полный ответ API для логирования
                     $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
+                        'courseids' => [$course->moodle_course_id]
+                    ]);
+                    
+                    $courseResult['api_response'] = $apiResponse;
+                    $results[] = $courseResult;
+                } elseif ($checkType === 'forums') {
+                    // Проверка форумов
+                    $courseResult = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'api_request' => [
+                            'function' => 'mod_forum_get_forums_by_courses',
+                            'url' => config('services.moodle.url') . '/webservice/rest/server.php',
+                            'params' => [
+                                'courseids' => [$course->moodle_course_id],
+                                'wstoken' => '***скрыто***',
+                                'wsfunction' => 'mod_forum_get_forums_by_courses',
+                                'moodlewsrestformat' => 'json'
+                            ]
+                        ],
+                        'forums' => [],
+                        'students' => []
+                    ];
+
+                    // Получаем форумы курса
+                    $forums = $moodleApi->getCourseForums($course->moodle_course_id);
+                    
+                    if ($forums === false) {
+                        // Получаем полный ответ API для детального анализа ошибки
+                        $apiResponse = $moodleApi->call('mod_forum_get_forums_by_courses', [
+                            'courseids' => [$course->moodle_course_id]
+                        ]);
+                        
+                        $courseResult['error'] = 'Не удалось получить форумы из Moodle API';
+                        $courseResult['api_response'] = $apiResponse;
+                        $results[] = $courseResult;
+                        continue;
+                    }
+
+                    $courseResult['forums'] = $forums;
+                    $courseResult['forums_count'] = is_array($forums) ? count($forums) : 0;
+
+                    // Получаем студентов курса
+                    $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
+                        $query->where('courses.id', $course->id);
+                    })
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'student');
+                    })
+                    ->whereNotNull('moodle_user_id')
+                    ->get();
+
+                    $courseResult['students_count'] = $students ? $students->count() : 0;
+
+                    // Для каждого студента получаем посты на форумах
+                    $totalUnansweredPosts = 0;
+                    foreach ($students as $student) {
+                        $studentResult = [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_email' => $student->email,
+                            'moodle_user_id' => $student->moodle_user_id,
+                            'forum_posts' => [],
+                            'unanswered_posts' => []
+                        ];
+
+                        // Получаем посты студента на форумах
+                        $forumPosts = $moodleApi->getStudentForumPosts(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $forums
+                        );
+
+                        if ($forumPosts !== false && !empty($forumPosts)) {
+                            $studentResult['forum_posts'] = $forumPosts;
+                            
+                            // Подсчитываем посты и неотвеченные посты
+                            $totalPosts = 0;
+                            $unansweredPosts = 0;
+                            
+                            foreach ($forumPosts as $forumId => $posts) {
+                                foreach ($posts as $post) {
+                                    $totalPosts++;
+                                    if (isset($post['needs_response']) && $post['needs_response']) {
+                                        $unansweredPosts++;
+                                        $studentResult['unanswered_posts'][] = [
+                                            'forum_id' => $forumId,
+                                            'post_id' => $post['id'] ?? null,
+                                            'subject' => $post['subject'] ?? 'Без темы',
+                                            'message' => isset($post['message']) ? strip_tags(substr($post['message'], 0, 200)) : '',
+                                            'timecreated' => $post['timecreated'] ?? null,
+                                            'has_teacher_reply' => $post['has_teacher_reply'] ?? false
+                                        ];
+                                    }
+                                }
+                            }
+                            
+                            $studentResult['total_posts'] = $totalPosts;
+                            $studentResult['unanswered_posts_count'] = $unansweredPosts;
+                            $totalUnansweredPosts += $unansweredPosts;
+                        }
+
+                        $courseResult['students'][] = $studentResult;
+                    }
+
+                    $courseResult['total_unanswered_posts'] = $totalUnansweredPosts;
+
+                    // Получаем полный ответ API для логирования
+                    $apiResponse = $moodleApi->call('mod_forum_get_forums_by_courses', [
                         'courseids' => [$course->moodle_course_id]
                     ]);
                     
@@ -831,6 +941,8 @@ class StudentReviewController extends Controller
             foreach ($results as $result) {
                 if ($checkType === 'quizzes') {
                     $totalItems += $result['quizzes_count'] ?? 0;
+                } elseif ($checkType === 'forums') {
+                    $totalItems += $result['forums_count'] ?? 0;
                 } else {
                     $totalItems += $result['assignments_count'] ?? 0;
                 }
@@ -840,6 +952,8 @@ class StudentReviewController extends Controller
             $coursesWithItems = count(array_filter($results, function($r) use ($checkType) {
                 if ($checkType === 'quizzes') {
                     return isset($r['quizzes_count']) && $r['quizzes_count'] > 0;
+                } elseif ($checkType === 'forums') {
+                    return isset($r['forums_count']) && $r['forums_count'] > 0;
                 } else {
                     return isset($r['assignments_count']) && $r['assignments_count'] > 0;
                 }
@@ -852,6 +966,15 @@ class StudentReviewController extends Controller
             if ($checkType === 'quizzes') {
                 $summary['total_quizzes'] = $totalItems;
                 $summary['courses_with_quizzes'] = $coursesWithItems;
+            } elseif ($checkType === 'forums') {
+                $summary['total_forums'] = $totalItems;
+                $summary['courses_with_forums'] = $coursesWithItems;
+                // Подсчитываем общее количество неотвеченных постов
+                $totalUnanswered = 0;
+                foreach ($results as $result) {
+                    $totalUnanswered += $result['total_unanswered_posts'] ?? 0;
+                }
+                $summary['total_unanswered_posts'] = $totalUnanswered;
             } else {
                 $summary['total_assignments'] = $totalItems;
                 $summary['courses_with_assignments'] = $coursesWithItems;
