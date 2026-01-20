@@ -2229,8 +2229,12 @@ class MoodleApiService
                 'forum_id' => $forumId
             ]);
 
-            // Используем mod_forum_get_forums_by_courses
-            // Для получения конкретного форума нужно передать courseid, но можно попробовать без него
+            // mod_forum_get_forums_by_courses требует courseids
+            // Если передать пустой массив, может вернуть все доступные форумы
+            // Или можно использовать mod_forum_get_forum_discussions_paginated для получения обсуждений
+            // Но для полной информации используем mod_forum_get_forums_by_courses
+            
+            // Получаем все доступные форумы (если courseids пустой, возвращаются все доступные форумы)
             $result = $this->call('mod_forum_get_forums_by_courses', [
                 'courseids' => []
             ]);
