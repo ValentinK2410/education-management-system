@@ -206,9 +206,13 @@
                             </p>
                         </div>
                         <div>
-                            <button id="check-moodle-btn" class="btn btn-sm btn-info" onclick="checkMoodleAssignments()">
+                            <button id="check-moodle-btn" class="btn btn-sm btn-info me-2" onclick="checkMoodleAssignments()">
                                 <i class="fas fa-search me-1"></i>
                                 Проверить данные в Moodle
+                            </button>
+                            <button id="sync-moodle-btn" class="btn btn-sm btn-primary" onclick="syncCurrentTab()">
+                                <i class="fas fa-sync me-1"></i>
+                                Обновить данные из Moodle
                             </button>
                         </div>
                     </div>
@@ -1272,11 +1276,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Автоматическая синхронизация при переключении вкладок отключена
     // Синхронизацию можно запустить вручную через кнопку "Обновить данные из Moodle"
     
-    // Добавляем кнопку для ручной синхронизации
-    const syncButton = document.createElement('button');
-    syncButton.className = 'btn btn-sm btn-primary ms-2';
-    syncButton.innerHTML = '<i class="fas fa-sync me-1"></i>Обновить данные из Moodle';
-    syncButton.onclick = function() {
+    // Функция для синхронизации текущей вкладки
+    window.syncCurrentTab = function() {
         if (isSyncing) {
             alert('Синхронизация уже выполняется. Пожалуйста, подождите...');
             return;
@@ -1292,10 +1293,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Добавляем кнопку рядом с заголовком страницы
-    const pageTitle = document.querySelector('.page-title');
-    if (pageTitle && pageTitle.parentElement) {
-        pageTitle.parentElement.appendChild(syncButton);
+    // Добавляем обработчик для кнопки синхронизации, если она уже есть в HTML
+    const syncButton = document.getElementById('sync-moodle-btn');
+    if (syncButton) {
+        syncButton.onclick = window.syncCurrentTab;
     }
 });
 
