@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\InstructorStatsController;
 use App\Http\Controllers\Admin\StudentReviewController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CourseAnalyticsController;
+use App\Http\Controllers\Admin\MoodleTestController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
@@ -451,6 +452,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
         Route::post('student-review/sync-course/{course}', [StudentReviewController::class, 'syncCourseData'])->name('student-review.sync-course');
         Route::get('student-review/check-moodle-assignments', [StudentReviewController::class, 'checkMoodleAssignments'])->name('student-review.check-moodle-assignments');
+        
+        // Тестирование Moodle API
+        Route::get('moodle-test', [MoodleTestController::class, 'index'])->name('moodle-test.index');
+        Route::post('moodle-test/test', [MoodleTestController::class, 'test'])->name('moodle-test.test');
         
         // Аналитика (для преподавателей и администраторов)
         Route::get('analytics', [CourseAnalyticsController::class, 'index'])->name('analytics.index');
