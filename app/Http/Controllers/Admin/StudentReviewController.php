@@ -324,18 +324,24 @@ class StudentReviewController extends Controller
                         );
 
                         // Обновляем данные в базе
+                        // ВАЖНО: Создаем записи для ВСЕХ тестов курса, даже если у студента нет попыток
                         foreach ($moodleQuizzes as $moodleQuiz) {
-                            $activity = \App\Models\CourseActivity::where('course_id', $courseId)
-                                ->where('moodle_activity_id', $moodleQuiz['id'])
-                                ->where('activity_type', 'quiz')
-                                ->first();
-
-                            if (!$activity) {
-                                continue;
-                            }
+                            // Ищем или создаем CourseActivity для теста
+                            $activity = \App\Models\CourseActivity::firstOrCreate(
+                                [
+                                    'course_id' => $courseId,
+                                    'moodle_activity_id' => $moodleQuiz['id'],
+                                    'activity_type' => 'quiz',
+                                ],
+                                [
+                                    'title' => $moodleQuiz['name'] ?? 'Тест',
+                                    'description' => $moodleQuiz['intro'] ?? null,
+                                    'is_active' => true,
+                                ]
+                            );
 
                             $attempts = $quizAttempts[$moodleQuiz['id']] ?? [];
-                            $grade = $quizGrades[$moodleQuiz['id'] ?? null] ?? null;
+                            $grade = $quizGrades[$moodleQuiz['id']] ?? null;
 
                             // Определяем, завершена ли последняя попытка
                             $latestAttempt = !empty($attempts) ? end($attempts) : null;
@@ -357,15 +363,21 @@ class StudentReviewController extends Controller
                             
                             Log::info('Синхронизация теста для студента', [
                                 'student_id' => $student->id,
+                                'student_name' => $student->name,
+                                'student_moodle_id' => $student->moodle_user_id,
                                 'quiz_id' => $moodleQuiz['id'],
                                 'quiz_name' => $moodleQuiz['name'] ?? 'Unknown',
+                                'activity_id' => $activity->id,
                                 'attempts_count' => count($attempts),
                                 'has_grade' => $hasGrade,
                                 'grade_value' => $gradeValue,
                                 'is_finished' => $isFinished,
-                                'latest_attempt_state' => $latestAttempt['state'] ?? null
+                                'latest_attempt_state' => $latestAttempt['state'] ?? null,
+                                'latest_attempt_timestart' => $latestAttempt['timestart'] ?? null,
+                                'latest_attempt_timefinish' => $latestAttempt['timefinish'] ?? null,
                             ]);
                             
+                            // ВАЖНО: Создаем запись для ВСЕХ студентов и ВСЕХ тестов, даже если нет попыток
                             $progress = StudentActivityProgress::updateOrCreate(
                                 [
                                     'user_id' => $student->id,
@@ -374,17 +386,31 @@ class StudentReviewController extends Controller
                                 ],
                                 [
                                     'attempts_count' => count($attempts),
-                                    'last_attempt_at' => !empty($attempts) ? date('Y-m-d H:i:s', $latestAttempt['timestart'] ?? time()) : null,
-                                    'submitted_at' => $isFinished 
-                                        ? date('Y-m-d H:i:s', $latestAttempt['timefinish'] ?? time()) 
+                                    'last_attempt_at' => !empty($attempts) && isset($latestAttempt['timestart']) 
+                                        ? date('Y-m-d H:i:s', $latestAttempt['timestart']) 
+                                        : null,
+                                    'submitted_at' => $isFinished && isset($latestAttempt['timefinish'])
+                                        ? date('Y-m-d H:i:s', $latestAttempt['timefinish']) 
                                         : null,
                                     'grade' => $hasGrade ? (float)$gradeValue : null,
-                                    'max_grade' => $moodleQuiz['grade'] ?? null,
+                                    'max_grade' => isset($moodleQuiz['grade']) && $moodleQuiz['grade'] > 0 
+                                        ? (float)$moodleQuiz['grade'] 
+                                        : null,
                                     'is_graded' => $hasGrade, // Тест проверен, если есть оценка (включая 0)
                                     'needs_grading' => $isFinished && !$hasGrade, // Нужна проверка, если завершен, но нет оценки
-                                    'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : ($attempts ? 'in_progress' : null)),
+                                    'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : (!empty($attempts) ? 'in_progress' : 'not_answered')),
                                 ]
                             );
+                            
+                            Log::info('Сохранена запись прогресса теста', [
+                                'progress_id' => $progress->id,
+                                'student_id' => $student->id,
+                                'quiz_id' => $moodleQuiz['id'],
+                                'grade' => $progress->grade,
+                                'is_graded' => $progress->is_graded,
+                                'status' => $progress->status,
+                                'submitted_at' => $progress->submitted_at,
+                            ]);
                             
                             $updatedCount++;
                         }
