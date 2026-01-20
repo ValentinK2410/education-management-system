@@ -85,6 +85,15 @@
             <i class="fas fa-flask me-2"></i>Тестирование функций Moodle API
         </h4>
 
+        <div class="alert alert-info mb-4">
+            <h6><i class="fas fa-info-circle me-2"></i>Как использовать эту страницу:</h6>
+            <ul class="mb-0">
+                <li><strong>ID курса:</strong> Выберите курс из списка <strong>ИЛИ</strong> введите ID курса в Moodle вручную в поле ниже</li>
+                <li><strong>ID студента:</strong> Выберите студента из списка <strong>ИЛИ</strong> введите ID студента в системе вручную (не Moodle ID!)</li>
+                <li>Если студент не выбран, будут показаны только общие данные курса (задания, тесты, форумы без данных конкретного студента)</li>
+            </ul>
+        </div>
+
         <form id="test-form">
             @csrf
             <div class="row mb-3">
@@ -92,8 +101,8 @@
                     <label for="course_id" class="form-label">
                         <i class="fas fa-book me-1"></i>ID курса в Moodle <span class="text-danger">*</span>
                     </label>
-                    <select class="form-select" id="course_id" name="course_id" required>
-                        <option value="">-- Выберите курс --</option>
+                    <select class="form-select" id="course_id" name="course_id">
+                        <option value="">-- Выберите курс из списка ИЛИ введите ID ниже --</option>
                         @if(isset($courses) && $courses->count() > 0)
                             @foreach($courses as $course)
                                 <option value="{{ $course->moodle_course_id }}" data-course-name="{{ $course->name }}">
@@ -102,13 +111,19 @@
                             @endforeach
                         @endif
                     </select>
-                    <small class="form-text text-muted">Или введите ID курса вручную:</small>
-                    <input type="number" 
-                           class="form-control mt-1" 
-                           id="course_id_manual" 
-                           min="1"
-                           placeholder="Например: 123"
-                           onchange="document.getElementById('course_id').value = this.value || document.getElementById('course_id').value;">
+                    <div class="mt-2">
+                        <label for="course_id_manual" class="form-label small text-muted">
+                            <i class="fas fa-keyboard me-1"></i>Или введите ID курса в Moodle вручную:
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="course_id_manual" 
+                               name="course_id_manual"
+                               min="1"
+                               step="1"
+                               placeholder="Например: 123"
+                               oninput="if(this.value) { document.getElementById('course_id').value = ''; }">
+                    </div>
                 </div>
 
                 <div class="col-md-4">
@@ -125,13 +140,19 @@
                             @endforeach
                         @endif
                     </select>
-                    <small class="form-text text-muted">Или введите ID студента вручную:</small>
-                    <input type="number" 
-                           class="form-control mt-1" 
-                           id="student_id_manual" 
-                           min="1"
-                           placeholder="Например: 45"
-                           onchange="document.getElementById('student_id').value = this.value || document.getElementById('student_id').value;">
+                    <div class="mt-2">
+                        <label for="student_id_manual" class="form-label small text-muted">
+                            <i class="fas fa-keyboard me-1"></i>Или введите ID студента вручную (ID в системе, не Moodle ID):
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="student_id_manual" 
+                               name="student_id_manual"
+                               min="1"
+                               step="1"
+                               placeholder="Например: 45"
+                               oninput="if(this.value) { document.getElementById('student_id').value = ''; }">
+                    </div>
                 </div>
 
                 <div class="col-md-4">
@@ -182,12 +203,40 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем, что все элементы существуют
     const form = document.getElementById('test-form');
+    if (!form) {
+        console.error('Форма не найдена');
+        return;
+    }
+    
     const loading = document.getElementById('loading');
     const results = document.getElementById('results');
     const resultsContent = document.getElementById('results-content');
     const error = document.getElementById('error');
     const errorContent = document.getElementById('error-content');
+    
+    // Проверяем доступность полей для ручного ввода
+    const courseIdManual = document.getElementById('course_id_manual');
+    const studentIdManual = document.getElementById('student_id_manual');
+    
+    if (courseIdManual) {
+        // Убеждаемся, что поле не заблокировано
+        courseIdManual.removeAttribute('disabled');
+        courseIdManual.removeAttribute('readonly');
+        console.log('Поле course_id_manual доступно для ввода');
+    } else {
+        console.error('Поле course_id_manual не найдено');
+    }
+    
+    if (studentIdManual) {
+        // Убеждаемся, что поле не заблокировано
+        studentIdManual.removeAttribute('disabled');
+        studentIdManual.removeAttribute('readonly');
+        console.log('Поле student_id_manual доступно для ввода');
+    } else {
+        console.error('Поле student_id_manual не найдено');
+    }
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -199,18 +248,42 @@ document.addEventListener('DOMContentLoaded', function() {
         // Показываем загрузку
         loading.classList.add('active');
         
-        const formData = new FormData(form);
-        
-        // Получаем значение course_id из select или manual input
+        // Получаем значения из select или manual input
         const courseIdSelect = document.getElementById('course_id');
         const courseIdManual = document.getElementById('course_id_manual');
-        if (courseIdManual.value) {
-            formData.set('course_id', courseIdManual.value);
-        } else if (!courseIdSelect.value) {
-            showError('Пожалуйста, выберите или введите ID курса');
+        const studentIdSelect = document.getElementById('student_id');
+        const studentIdManual = document.getElementById('student_id_manual');
+        
+        // Определяем course_id
+        let courseId = null;
+        if (courseIdManual.value && courseIdManual.value.trim() !== '') {
+            courseId = courseIdManual.value.trim();
+        } else if (courseIdSelect.value && courseIdSelect.value.trim() !== '') {
+            courseId = courseIdSelect.value.trim();
+        }
+        
+        if (!courseId || courseId === '') {
+            showError('Пожалуйста, выберите курс из списка ИЛИ введите ID курса в Moodle вручную в поле ниже');
             loading.classList.remove('active');
             return;
         }
+        
+        // Определяем student_id (опционально)
+        let studentId = null;
+        if (studentIdManual.value && studentIdManual.value.trim() !== '') {
+            studentId = studentIdManual.value.trim();
+        } else if (studentIdSelect.value && studentIdSelect.value.trim() !== '') {
+            studentId = studentIdSelect.value.trim();
+        }
+        
+        // Создаем FormData с правильными значениями
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+        formData.append('course_id', courseId);
+        if (studentId) {
+            formData.append('student_id', studentId);
+        }
+        formData.append('test_type', document.getElementById('test_type').value);
         
         try {
             const response = await fetch('{{ route("admin.moodle-test.test") }}', {
