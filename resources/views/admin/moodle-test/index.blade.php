@@ -185,6 +185,50 @@
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="alert alert-secondary">
+                        <h6><i class="fas fa-info-circle me-2"></i>Дополнительно: Детальная информация о конкретном элементе</h6>
+                        <p class="mb-2 small">Укажите ID конкретного задания, теста или форума, чтобы получить детальную информацию о нем из Moodle API:</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="assignment_id" class="form-label small">
+                                    <i class="fas fa-tasks me-1"></i>ID задания (Moodle Assignment ID)
+                                </label>
+                                <input type="number" 
+                                       class="form-control form-control-sm" 
+                                       id="assignment_id" 
+                                       name="assignment_id"
+                                       min="1"
+                                       placeholder="Например: 123">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quiz_id" class="form-label small">
+                                    <i class="fas fa-question-circle me-1"></i>ID теста (Moodle Quiz ID)
+                                </label>
+                                <input type="number" 
+                                       class="form-control form-control-sm" 
+                                       id="quiz_id" 
+                                       name="quiz_id"
+                                       min="1"
+                                       placeholder="Например: 456">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="forum_id" class="form-label small">
+                                    <i class="fas fa-comments me-1"></i>ID форума (Moodle Forum ID)
+                                </label>
+                                <input type="number" 
+                                       class="form-control form-control-sm" 
+                                       id="forum_id" 
+                                       name="forum_id"
+                                       min="1"
+                                       placeholder="Например: 789">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-play me-2"></i>Выполнить тест
@@ -385,6 +429,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (resultsData.data.forums) {
             html += displayForumsData(resultsData.data.forums);
+        }
+        
+        // Детальная информация о конкретных элементах
+        if (resultsData.data.assignment_details) {
+            html += displayElementDetails(resultsData.data.assignment_details, 'assignment', 'Задание');
+        }
+        
+        if (resultsData.data.quiz_details) {
+            html += displayElementDetails(resultsData.data.quiz_details, 'quiz', 'Тест');
+        }
+        
+        if (resultsData.data.forum_details) {
+            html += displayElementDetails(resultsData.data.forum_details, 'forum', 'Форум');
         }
         
         resultsContentEl.innerHTML = html;
@@ -593,6 +650,29 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.error('Error elements not found:', message);
         }
+    }
+    
+    function displayElementDetails(detailsData, type, typeName) {
+        let html = '<div class="mb-4 mt-4 border-top pt-4">';
+        html += `<h6><i class="fas fa-search me-2"></i>Детальная информация о ${typeName.toLowerCase()}</h6>`;
+        
+        if (detailsData.error) {
+            html += `<div class="alert alert-danger">${detailsData.error}</div>`;
+        } else if (detailsData.data) {
+            html += `<div class="field-info"><strong>API вызов:</strong> ${detailsData.api_call}</div>`;
+            html += `<div class="field-info"><strong>ID ${typeName.toLowerCase()}а:</strong> ${detailsData[type + '_id'] || detailsData.assignment_id || detailsData.quiz_id || detailsData.forum_id}</div>`;
+            html += `<div class="field-info"><strong>Параметры запроса:</strong> ${JSON.stringify(detailsData.params)}</div>`;
+            
+            html += '<details class="mt-3">';
+            html += '<summary class="btn btn-sm btn-outline-primary">Показать полные данные JSON</summary>';
+            html += '<div class="json-viewer mt-2">' + formatJSON(detailsData.data) + '</div>';
+            html += '</details>';
+        } else {
+            html += '<div class="alert alert-warning">Данные не получены</div>';
+        }
+        
+        html += '</div>';
+        return html;
     }
     
     // Делаем функцию глобальной для вызова из onclick

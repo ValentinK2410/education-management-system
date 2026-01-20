@@ -62,6 +62,9 @@ class MoodleTestController extends Controller
             'course_id' => 'required|integer|min:1',
             'student_id' => 'nullable|integer|min:1',
             'test_type' => 'required|in:assignments,quizzes,forums,all',
+            'assignment_id' => 'nullable|integer|min:1',
+            'quiz_id' => 'nullable|integer|min:1',
+            'forum_id' => 'nullable|integer|min:1',
         ]);
 
         $courseIdInput = $request->input('course_id');
@@ -165,18 +168,38 @@ class MoodleTestController extends Controller
                 }
             }
 
+            // Получаем ID конкретных элементов для детального запроса
+            $assignmentId = $request->input('assignment_id');
+            $quizId = $request->input('quiz_id');
+            $forumId = $request->input('forum_id');
+
             // Тестируем в зависимости от типа
             // ВАЖНО: Передаем moodle_course_id, а не локальный ID
             if ($testType === 'assignments' || $testType === 'all') {
                 $results['data']['assignments'] = $this->testAssignments($moodleApi, $moodleCourseId, $studentMoodleId);
+                
+                // Если указан конкретный ID задания, получаем детальную информацию
+                if ($assignmentId) {
+                    $results['data']['assignment_details'] = $this->getAssignmentDetails($moodleApi, $assignmentId);
+                }
             }
 
             if ($testType === 'quizzes' || $testType === 'all') {
                 $results['data']['quizzes'] = $this->testQuizzes($moodleApi, $moodleCourseId, $studentMoodleId);
+                
+                // Если указан конкретный ID теста, получаем детальную информацию
+                if ($quizId) {
+                    $results['data']['quiz_details'] = $this->getQuizDetails($moodleApi, $quizId);
+                }
             }
 
             if ($testType === 'forums' || $testType === 'all') {
                 $results['data']['forums'] = $this->testForums($moodleApi, $moodleCourseId, $studentMoodleId);
+                
+                // Если указан конкретный ID форума, получаем детальную информацию
+                if ($forumId) {
+                    $results['data']['forum_details'] = $this->getForumDetails($moodleApi, $forumId);
+                }
             }
 
             return response()->json([
@@ -344,6 +367,111 @@ class MoodleTestController extends Controller
                     }
                 }
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Получить детальную информацию о конкретном задании
+     *
+     * @param MoodleApiService $moodleApi
+     * @param int $assignmentId Moodle Assignment ID
+     * @return array
+     */
+    private function getAssignmentDetails(MoodleApiService $moodleApi, int $assignmentId): array
+    {
+        $result = [
+            'api_call' => 'mod_assign_get_assignments',
+            'params' => ['assignmentids' => [$assignmentId]],
+            'assignment_id' => $assignmentId,
+            'data' => null,
+            'error' => null
+        ];
+
+        try {
+            $details = $moodleApi->getAssignmentDetails($assignmentId);
+            if ($details !== false) {
+                $result['data'] = $details;
+            } else {
+                $result['error'] = 'Не удалось получить детальную информацию о задании';
+            }
+        } catch (\Exception $e) {
+            $result['error'] = 'Ошибка: ' . $e->getMessage();
+            Log::error('Ошибка получения детальной информации о задании', [
+                'assignment_id' => $assignmentId,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Получить детальную информацию о конкретном тесте
+     *
+     * @param MoodleApiService $moodleApi
+     * @param int $quizId Moodle Quiz ID
+     * @return array
+     */
+    private function getQuizDetails(MoodleApiService $moodleApi, int $quizId): array
+    {
+        $result = [
+            'api_call' => 'mod_quiz_get_quizzes_by_courses',
+            'params' => ['quizids' => [$quizId]],
+            'quiz_id' => $quizId,
+            'data' => null,
+            'error' => null
+        ];
+
+        try {
+            $details = $moodleApi->getQuizDetails($quizId);
+            if ($details !== false) {
+                $result['data'] = $details;
+            } else {
+                $result['error'] = 'Не удалось получить детальную информацию о тесте';
+            }
+        } catch (\Exception $e) {
+            $result['error'] = 'Ошибка: ' . $e->getMessage();
+            Log::error('Ошибка получения детальной информации о тесте', [
+                'quiz_id' => $quizId,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Получить детальную информацию о конкретном форуме
+     *
+     * @param MoodleApiService $moodleApi
+     * @param int $forumId Moodle Forum ID
+     * @return array
+     */
+    private function getForumDetails(MoodleApiService $moodleApi, int $forumId): array
+    {
+        $result = [
+            'api_call' => 'mod_forum_get_forums_by_courses',
+            'params' => ['forumid' => $forumId],
+            'forum_id' => $forumId,
+            'data' => null,
+            'error' => null
+        ];
+
+        try {
+            $details = $moodleApi->getForumDetails($forumId);
+            if ($details !== false) {
+                $result['data'] = $details;
+            } else {
+                $result['error'] = 'Не удалось получить детальную информацию о форуме';
+            }
+        } catch (\Exception $e) {
+            $result['error'] = 'Ошибка: ' . $e->getMessage();
+            Log::error('Ошибка получения детальной информации о форуме', [
+                'forum_id' => $forumId,
+                'error' => $e->getMessage()
+            ]);
         }
 
         return $result;

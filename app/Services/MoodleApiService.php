@@ -2099,5 +2099,158 @@ class MoodleApiService
                 return $this->url . "/mod/{$activityType}/view.php?id={$cmid}";
         }
     }
+
+    /**
+     * Получить детальную информацию о конкретном задании по его ID
+     *
+     * @param int $assignmentId Moodle Assignment ID
+     * @return array|false Массив с данными задания или false в случае ошибки
+     */
+    public function getAssignmentDetails(int $assignmentId)
+    {
+        try {
+            Log::info('getAssignmentDetails: запрос детальной информации о задании', [
+                'assignment_id' => $assignmentId
+            ]);
+
+            $result = $this->call('mod_assign_get_assignments', [
+                'courseids' => [],
+                'assignmentids' => [$assignmentId]
+            ]);
+
+            if ($result === false) {
+                Log::warning('getAssignmentDetails: запрос вернул false', [
+                    'assignment_id' => $assignmentId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getAssignmentDetails: Moodle вернул исключение', [
+                    'assignment_id' => $assignmentId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                ]);
+                return false;
+            }
+
+            // Возвращаем первое задание из результата
+            if (isset($result['courses'][0]['assignments'][0])) {
+                return $result['courses'][0]['assignments'][0];
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('getAssignmentDetails: исключение', [
+                'assignment_id' => $assignmentId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Получить детальную информацию о конкретном тесте по его ID
+     *
+     * @param int $quizId Moodle Quiz ID
+     * @return array|false Массив с данными теста или false в случае ошибки
+     */
+    public function getQuizDetails(int $quizId)
+    {
+        try {
+            Log::info('getQuizDetails: запрос детальной информации о тесте', [
+                'quiz_id' => $quizId
+            ]);
+
+            // Используем mod_quiz_get_quizzes_by_courses с пустым массивом courseids и quizids
+            $result = $this->call('mod_quiz_get_quizzes_by_courses', [
+                'courseids' => [],
+                'quizids' => [$quizId]
+            ]);
+
+            if ($result === false) {
+                Log::warning('getQuizDetails: запрос вернул false', [
+                    'quiz_id' => $quizId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getQuizDetails: Moodle вернул исключение', [
+                    'quiz_id' => $quizId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                ]);
+                return false;
+            }
+
+            // Возвращаем первый тест из результата
+            if (isset($result['quizzes'][0])) {
+                return $result['quizzes'][0];
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('getQuizDetails: исключение', [
+                'quiz_id' => $quizId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Получить детальную информацию о конкретном форуме по его ID
+     *
+     * @param int $forumId Moodle Forum ID
+     * @return array|false Массив с данными форума или false в случае ошибки
+     */
+    public function getForumDetails(int $forumId)
+    {
+        try {
+            Log::info('getForumDetails: запрос детальной информации о форуме', [
+                'forum_id' => $forumId
+            ]);
+
+            // Используем mod_forum_get_forums_by_courses
+            // Для получения конкретного форума нужно передать courseid, но можно попробовать без него
+            $result = $this->call('mod_forum_get_forums_by_courses', [
+                'courseids' => []
+            ]);
+
+            if ($result === false) {
+                Log::warning('getForumDetails: запрос вернул false', [
+                    'forum_id' => $forumId
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('getForumDetails: Moodle вернул исключение', [
+                    'forum_id' => $forumId,
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                ]);
+                return false;
+            }
+
+            // Ищем форум по ID в результате
+            if (isset($result['forums']) && is_array($result['forums'])) {
+                foreach ($result['forums'] as $forum) {
+                    if (isset($forum['id']) && $forum['id'] == $forumId) {
+                        return $forum;
+                    }
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('getForumDetails: исключение', [
+                'forum_id' => $forumId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 }
 
