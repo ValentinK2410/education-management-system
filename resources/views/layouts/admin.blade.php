@@ -944,6 +944,12 @@
                     <span>Проверка студентов</span>
                 </a>
             </div>
+            <div class="nav-item">
+                <a href="{{ route('admin.moodle-test.index') }}" class="nav-link {{ request()->routeIs('admin.moodle-test.*') ? 'active' : '' }}">
+                    <i class="fas fa-flask"></i>
+                    <span>Тест Moodle API</span>
+                </a>
+            </div>
             @endif
 
             @if(auth()->user()->hasRole('admin'))
