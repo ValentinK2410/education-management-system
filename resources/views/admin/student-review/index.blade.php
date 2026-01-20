@@ -1246,12 +1246,16 @@ async function checkMoodleAssignments() {
     const loadingDiv = document.getElementById('moodle-check-loading');
     const resultsDiv = document.getElementById('moodle-check-results');
     
+    // Определяем тип проверки на основе активной вкладки
+    const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || 'assignments';
+    const checkType = activeTab === 'quizzes' ? 'quizzes' : 'assignments';
+    
     modal.show();
     loadingDiv.style.display = 'block';
     resultsDiv.style.display = 'none';
     
     try {
-        const response = await fetch('/admin/student-review/check-moodle-assignments', {
+        const response = await fetch(`/admin/student-review/check-moodle-assignments?type=${checkType}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -1291,13 +1295,22 @@ async function checkMoodleAssignments() {
         resultsDiv.style.display = 'block';
         
         if (data.success) {
+            const isQuizzes = data.check_type === 'quizzes';
+            const itemName = isQuizzes ? 'тестов' : 'заданий';
+            const itemNameSingle = isQuizzes ? 'тест' : 'задание';
+            
             let html = '<div class="alert alert-success"><strong>Проверка завершена успешно</strong></div>';
             
             html += '<div class="mb-3"><h6>Сводка:</h6>';
             html += `<ul><li>Всего курсов: ${data.total_courses}</li>`;
-            html += `<li>Всего заданий: ${data.summary.total_assignments}</li>`;
-            html += `<li>Всего студентов: ${data.summary.total_students}</li>`;
-            html += `<li>Курсов с заданиями: ${data.summary.courses_with_assignments}</li></ul></div>`;
+            if (isQuizzes) {
+                html += `<li>Всего тестов: ${data.summary.total_quizzes}</li>`;
+                html += `<li>Курсов с тестами: ${data.summary.courses_with_quizzes}</li>`;
+            } else {
+                html += `<li>Всего заданий: ${data.summary.total_assignments}</li>`;
+                html += `<li>Курсов с заданиями: ${data.summary.courses_with_assignments}</li>`;
+            }
+            html += `<li>Всего студентов: ${data.summary.total_students}</li></ul></div>`;
             
             html += '<div class="accordion" id="moodleCheckAccordion">';
             
@@ -1310,7 +1323,9 @@ async function checkMoodleAssignments() {
                 if (course.moodle_course_id) {
                     html += ` <span class="badge bg-info ms-2">Moodle ID: ${course.moodle_course_id}</span>`;
                 }
-                if (course.assignments_count !== undefined) {
+                if (isQuizzes && course.quizzes_count !== undefined) {
+                    html += ` <span class="badge bg-primary ms-2">Тестов: ${course.quizzes_count}</span>`;
+                } else if (!isQuizzes && course.assignments_count !== undefined) {
                     html += ` <span class="badge bg-primary ms-2">Заданий: ${course.assignments_count}</span>`;
                 }
                 if (course.students_count !== undefined) {
@@ -1337,15 +1352,49 @@ async function checkMoodleAssignments() {
                     html += `<pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>${JSON.stringify(course.api_response, null, 2)}</code></pre>`;
                 }
                 
-                if (course.assignments && course.assignments.length > 0) {
-                    html += `<h6>Задания (${course.assignments.length}):</h6>`;
-                    html += `<ul>`;
-                    course.assignments.forEach(assignment => {
-                        html += `<li><strong>${assignment.name}</strong> (ID: ${assignment.id})</li>`;
-                    });
-                    html += `</ul>`;
-                } else if (course.assignments_count === 0) {
-                    html += `<div class="alert alert-warning">Заданий не найдено в Moodle</div>`;
+                if (isQuizzes) {
+                    if (course.quizzes && course.quizzes.length > 0) {
+                        html += `<h6>Тесты (${course.quizzes.length}):</h6>`;
+                        html += `<ul>`;
+                        course.quizzes.forEach(quiz => {
+                            html += `<li><strong>${quiz.name}</strong> (ID: ${quiz.id})`;
+                            if (quiz.grade) {
+                                html += ` - Макс. оценка: ${quiz.grade}`;
+                            }
+                            html += `</li>`;
+                        });
+                        html += `</ul>`;
+                    } else if (course.quizzes_count === 0) {
+                        html += `<div class="alert alert-warning">Тестов не найдено в Moodle</div>`;
+                    }
+                    
+                    // Показываем информацию о попытках и оценках студентов
+                    if (course.students && course.students.length > 0) {
+                        html += `<h6>Студенты и их результаты:</h6>`;
+                        html += `<ul>`;
+                        course.students.forEach(student => {
+                            html += `<li><strong>${student.student_name}</strong> (Moodle ID: ${student.moodle_user_id})`;
+                            if (student.quiz_attempts_count !== undefined) {
+                                html += ` - Попыток: ${student.quiz_attempts_count}`;
+                            }
+                            if (student.quiz_grades_count !== undefined && student.quiz_grades_count > 0) {
+                                html += ` - Оценок: ${student.quiz_grades_count}`;
+                            }
+                            html += `</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                } else {
+                    if (course.assignments && course.assignments.length > 0) {
+                        html += `<h6>Задания (${course.assignments.length}):</h6>`;
+                        html += `<ul>`;
+                        course.assignments.forEach(assignment => {
+                            html += `<li><strong>${assignment.name}</strong> (ID: ${assignment.id})</li>`;
+                        });
+                        html += `</ul>`;
+                    } else if (course.assignments_count === 0) {
+                        html += `<div class="alert alert-warning">Заданий не найдено в Moodle</div>`;
+                    }
                 }
                 
                 if (course.students && course.students.length > 0) {

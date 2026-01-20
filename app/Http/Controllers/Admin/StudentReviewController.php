@@ -551,12 +551,13 @@ class StudentReviewController extends Controller
     }
 
     /**
-     * Проверить данные о заданиях напрямую из Moodle API
+     * Проверить данные о заданиях и тестах напрямую из Moodle API
      * Возвращает детальную информацию о запросах и ответах
      *
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function checkMoodleAssignments()
+    public function checkMoodleAssignments(Request $request)
     {
         try {
             $user = auth()->user();
@@ -587,6 +588,9 @@ class StudentReviewController extends Controller
             ]);
         }
 
+        // Определяем, что проверяем: assignments или quizzes
+        $checkType = $request->get('type', 'assignments'); // assignments или quizzes
+        
         $results = [];
         
         // Используем токен текущего пользователя (преподавателя/администратора)
@@ -607,27 +611,128 @@ class StudentReviewController extends Controller
                     continue;
                 }
 
-                $courseResult = [
-                    'course_id' => $course->id,
-                    'course_name' => $course->name,
-                    'moodle_course_id' => $course->moodle_course_id,
-                    'api_request' => [
-                        'function' => 'mod_assign_get_assignments',
-                        'url' => config('services.moodle.url') . '/webservice/rest/server.php',
-                        'params' => [
-                            'courseids' => [$course->moodle_course_id],
-                            'wstoken' => '***скрыто***',
-                            'wsfunction' => 'mod_assign_get_assignments',
-                            'moodlewsrestformat' => 'json'
-                        ]
-                    ],
-                    'assignments' => [],
-                    'submissions' => [],
-                    'students' => []
-                ];
+                if ($checkType === 'quizzes') {
+                    // Проверка тестов
+                    $courseResult = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'api_request' => [
+                            'function' => 'mod_quiz_get_quizzes_by_courses',
+                            'url' => config('services.moodle.url') . '/webservice/rest/server.php',
+                            'params' => [
+                                'courseids' => [$course->moodle_course_id],
+                                'wstoken' => '***скрыто***',
+                                'wsfunction' => 'mod_quiz_get_quizzes_by_courses',
+                                'moodlewsrestformat' => 'json'
+                            ]
+                        ],
+                        'quizzes' => [],
+                        'students' => []
+                    ];
 
-                // Получаем задания курса
-                $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
+                    // Получаем тесты курса
+                    $quizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
+                    
+                    if ($quizzes === false) {
+                        // Получаем полный ответ API для детального анализа ошибки
+                        $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
+                            'courseids' => [$course->moodle_course_id]
+                        ]);
+                        
+                        $courseResult['error'] = 'Не удалось получить тесты из Moodle API';
+                        $courseResult['api_response'] = $apiResponse;
+                        $results[] = $courseResult;
+                        continue;
+                    }
+
+                    $courseResult['quizzes'] = $quizzes;
+                    $courseResult['quizzes_count'] = is_array($quizzes) ? count($quizzes) : 0;
+
+                    // Получаем студентов курса
+                    $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
+                        $query->where('courses.id', $course->id);
+                    })
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'student');
+                    })
+                    ->whereNotNull('moodle_user_id')
+                    ->get();
+
+                    $courseResult['students_count'] = $students ? $students->count() : 0;
+
+                    // Для каждого студента получаем попытки и оценки
+                    foreach ($students as $student) {
+                        $studentResult = [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_email' => $student->email,
+                            'moodle_user_id' => $student->moodle_user_id,
+                            'quiz_attempts' => [],
+                            'quiz_grades' => []
+                        ];
+
+                        // Получаем попытки студента
+                        $quizAttempts = $moodleApi->getStudentQuizAttempts(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $quizzes
+                        );
+
+                        if ($quizAttempts !== false) {
+                            $studentResult['quiz_attempts'] = $quizAttempts;
+                            $totalAttempts = 0;
+                            foreach ($quizAttempts as $attempts) {
+                                $totalAttempts += count($attempts);
+                            }
+                            $studentResult['quiz_attempts_count'] = $totalAttempts;
+                        }
+
+                        // Получаем оценки студента
+                        $quizGrades = $moodleApi->getStudentQuizGrades(
+                            $course->moodle_course_id,
+                            $student->moodle_user_id,
+                            $quizzes
+                        );
+
+                        if ($quizGrades !== false) {
+                            $studentResult['quiz_grades'] = $quizGrades;
+                            $studentResult['quiz_grades_count'] = count($quizGrades);
+                        }
+
+                        $courseResult['students'][] = $studentResult;
+                    }
+
+                    // Получаем полный ответ API для логирования
+                    $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
+                        'courseids' => [$course->moodle_course_id]
+                    ]);
+                    
+                    $courseResult['api_response'] = $apiResponse;
+                    $results[] = $courseResult;
+                } else {
+                    // Проверка заданий (старый код)
+                    $courseResult = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'api_request' => [
+                            'function' => 'mod_assign_get_assignments',
+                            'url' => config('services.moodle.url') . '/webservice/rest/server.php',
+                            'params' => [
+                                'courseids' => [$course->moodle_course_id],
+                                'wstoken' => '***скрыто***',
+                                'wsfunction' => 'mod_assign_get_assignments',
+                                'moodlewsrestformat' => 'json'
+                            ]
+                        ],
+                        'assignments' => [],
+                        'submissions' => [],
+                        'students' => []
+                    ];
+
+                    // Получаем задания курса
+                    $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
                 
                 if ($assignments === false) {
                     // Получаем полный ответ API для детального анализа ошибки
@@ -721,26 +826,43 @@ class StudentReviewController extends Controller
             }
 
             // Безопасно вычисляем суммы с проверкой на существование ключей
-            $totalAssignments = 0;
+            $totalItems = 0;
             $totalStudents = 0;
             foreach ($results as $result) {
-                $totalAssignments += $result['assignments_count'] ?? 0;
+                if ($checkType === 'quizzes') {
+                    $totalItems += $result['quizzes_count'] ?? 0;
+                } else {
+                    $totalItems += $result['assignments_count'] ?? 0;
+                }
                 $totalStudents += $result['students_count'] ?? 0;
             }
             
-            $coursesWithAssignments = count(array_filter($results, function($r) {
-                return isset($r['assignments_count']) && $r['assignments_count'] > 0;
+            $coursesWithItems = count(array_filter($results, function($r) use ($checkType) {
+                if ($checkType === 'quizzes') {
+                    return isset($r['quizzes_count']) && $r['quizzes_count'] > 0;
+                } else {
+                    return isset($r['assignments_count']) && $r['assignments_count'] > 0;
+                }
             }));
+            
+            $summary = [
+                'total_students' => $totalStudents,
+            ];
+            
+            if ($checkType === 'quizzes') {
+                $summary['total_quizzes'] = $totalItems;
+                $summary['courses_with_quizzes'] = $coursesWithItems;
+            } else {
+                $summary['total_assignments'] = $totalItems;
+                $summary['courses_with_assignments'] = $coursesWithItems;
+            }
             
             return response()->json([
                 'success' => true,
+                'check_type' => $checkType,
                 'total_courses' => $courses->count(),
                 'courses' => $results,
-                'summary' => [
-                    'total_assignments' => $totalAssignments,
-                    'total_students' => $totalStudents,
-                    'courses_with_assignments' => $coursesWithAssignments
-                ]
+                'summary' => $summary
             ])->header('Content-Type', 'application/json; charset=utf-8');
         } catch (\Exception $e) {
             Log::error('Ошибка проверки заданий из Moodle', [
