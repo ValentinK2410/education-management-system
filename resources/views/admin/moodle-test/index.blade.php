@@ -341,6 +341,11 @@ document.addEventListener('DOMContentLoaded', function() {
             studentId = studentIdSelect.value.trim();
         }
         
+        // Получаем значения для детальных запросов
+        const assignmentId = document.getElementById('assignment_id')?.value?.trim();
+        const quizId = document.getElementById('quiz_id')?.value?.trim();
+        const forumId = document.getElementById('forum_id')?.value?.trim();
+        
         // Создаем FormData с правильными значениями
         const formData = new FormData();
         formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
@@ -349,6 +354,17 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('student_id', studentId);
         }
         formData.append('test_type', document.getElementById('test_type').value);
+        
+        // Добавляем ID конкретных элементов, если указаны
+        if (assignmentId) {
+            formData.append('assignment_id', assignmentId);
+        }
+        if (quizId) {
+            formData.append('quiz_id', quizId);
+        }
+        if (forumId) {
+            formData.append('forum_id', forumId);
+        }
         
         try {
             const response = await fetch('{{ route("admin.moodle-test.test") }}', {

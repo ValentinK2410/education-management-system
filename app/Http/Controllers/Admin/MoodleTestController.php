@@ -169,31 +169,42 @@ class MoodleTestController extends Controller
             }
 
             // Получаем ID конкретных элементов для детального запроса
-            $assignmentId = $request->input('assignment_id');
-            $quizId = $request->input('quiz_id');
-            $forumId = $request->input('forum_id');
+            $assignmentId = $request->input('assignment_id') ? (int)$request->input('assignment_id') : null;
+            $quizId = $request->input('quiz_id') ? (int)$request->input('quiz_id') : null;
+            $forumId = $request->input('forum_id') ? (int)$request->input('forum_id') : null;
+
+            Log::info('MoodleTest: Проверка детальных запросов', [
+                'assignment_id' => $assignmentId,
+                'quiz_id' => $quizId,
+                'forum_id' => $forumId,
+                'test_type' => $testType
+            ]);
 
             // Если указан конкретный ID элемента, показываем ТОЛЬКО детальную информацию об этом элементе
             // Иначе показываем все элементы курса
             if ($assignmentId) {
                 // Детальная информация о конкретном задании
+                Log::info('MoodleTest: Запрошена детальная информация о задании', ['assignment_id' => $assignmentId]);
                 $results['data']['assignment_details'] = $this->getAssignmentDetails($moodleApi, $assignmentId);
                 $results['data']['is_specific_element'] = true;
                 $results['data']['element_type'] = 'assignment';
                 $results['data']['element_id'] = $assignmentId;
             } elseif ($quizId) {
                 // Детальная информация о конкретном тесте
+                Log::info('MoodleTest: Запрошена детальная информация о тесте', ['quiz_id' => $quizId]);
                 $results['data']['quiz_details'] = $this->getQuizDetails($moodleApi, $quizId);
                 $results['data']['is_specific_element'] = true;
                 $results['data']['element_type'] = 'quiz';
                 $results['data']['element_id'] = $quizId;
             } elseif ($forumId) {
                 // Детальная информация о конкретном форуме
+                Log::info('MoodleTest: Запрошена детальная информация о форуме', ['forum_id' => $forumId]);
                 $results['data']['forum_details'] = $this->getForumDetails($moodleApi, $forumId);
                 $results['data']['is_specific_element'] = true;
                 $results['data']['element_type'] = 'forum';
                 $results['data']['element_id'] = $forumId;
             } else {
+                Log::info('MoodleTest: Обычный режим - показываем все элементы курса');
                 // Обычный режим - показываем все элементы курса
                 $results['data']['is_specific_element'] = false;
                 
@@ -396,21 +407,30 @@ class MoodleTestController extends Controller
             'params' => ['assignmentids' => [$assignmentId]],
             'assignment_id' => $assignmentId,
             'data' => null,
-            'error' => null
+            'error' => null,
+            'found' => false
         ];
 
         try {
+            Log::info('MoodleTest: Получение детальной информации о задании', ['assignment_id' => $assignmentId]);
             $details = $moodleApi->getAssignmentDetails($assignmentId);
-            if ($details !== false) {
+            if ($details !== false && !empty($details)) {
                 $result['data'] = $details;
+                $result['found'] = true;
+                Log::info('MoodleTest: Детальная информация о задании получена', [
+                    'assignment_id' => $assignmentId,
+                    'assignment_name' => $details['name'] ?? 'неизвестно'
+                ]);
             } else {
-                $result['error'] = 'Не удалось получить детальную информацию о задании';
+                $result['error'] = 'Задание с ID ' . $assignmentId . ' не найдено. Возможно, у вас нет доступа к этому заданию или оно не существует.';
+                Log::warning('MoodleTest: Задание не найдено', ['assignment_id' => $assignmentId]);
             }
         } catch (\Exception $e) {
             $result['error'] = 'Ошибка: ' . $e->getMessage();
             Log::error('Ошибка получения детальной информации о задании', [
                 'assignment_id' => $assignmentId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
 
@@ -428,24 +448,33 @@ class MoodleTestController extends Controller
     {
         $result = [
             'api_call' => 'mod_quiz_get_quizzes_by_courses',
-            'params' => ['quizids' => [$quizId]],
+            'params' => ['courseids' => []],
             'quiz_id' => $quizId,
             'data' => null,
-            'error' => null
+            'error' => null,
+            'found' => false
         ];
 
         try {
+            Log::info('MoodleTest: Получение детальной информации о тесте', ['quiz_id' => $quizId]);
             $details = $moodleApi->getQuizDetails($quizId);
-            if ($details !== false) {
+            if ($details !== false && !empty($details)) {
                 $result['data'] = $details;
+                $result['found'] = true;
+                Log::info('MoodleTest: Детальная информация о тесте получена', [
+                    'quiz_id' => $quizId,
+                    'quiz_name' => $details['name'] ?? 'неизвестно'
+                ]);
             } else {
-                $result['error'] = 'Не удалось получить детальную информацию о тесте';
+                $result['error'] = 'Тест с ID ' . $quizId . ' не найден. Возможно, у вас нет доступа к этому тесту или он не существует.';
+                Log::warning('MoodleTest: Тест не найден', ['quiz_id' => $quizId]);
             }
         } catch (\Exception $e) {
             $result['error'] = 'Ошибка: ' . $e->getMessage();
             Log::error('Ошибка получения детальной информации о тесте', [
                 'quiz_id' => $quizId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
 
@@ -463,24 +492,33 @@ class MoodleTestController extends Controller
     {
         $result = [
             'api_call' => 'mod_forum_get_forums_by_courses',
-            'params' => ['forumid' => $forumId],
+            'params' => ['courseids' => []],
             'forum_id' => $forumId,
             'data' => null,
-            'error' => null
+            'error' => null,
+            'found' => false
         ];
 
         try {
+            Log::info('MoodleTest: Получение детальной информации о форуме', ['forum_id' => $forumId]);
             $details = $moodleApi->getForumDetails($forumId);
-            if ($details !== false) {
+            if ($details !== false && !empty($details)) {
                 $result['data'] = $details;
+                $result['found'] = true;
+                Log::info('MoodleTest: Детальная информация о форуме получена', [
+                    'forum_id' => $forumId,
+                    'forum_name' => $details['name'] ?? 'неизвестно'
+                ]);
             } else {
-                $result['error'] = 'Не удалось получить детальную информацию о форуме';
+                $result['error'] = 'Форум с ID ' . $forumId . ' не найден. Возможно, у вас нет доступа к этому форуму или он не существует.';
+                Log::warning('MoodleTest: Форум не найден', ['forum_id' => $forumId]);
             }
         } catch (\Exception $e) {
             $result['error'] = 'Ошибка: ' . $e->getMessage();
             Log::error('Ошибка получения детальной информации о форуме', [
                 'forum_id' => $forumId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
 
