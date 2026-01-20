@@ -71,7 +71,7 @@ class StudentReviewController extends Controller
 
                 // Определяем статус задания
                 if ($progress->needs_grading && $progress->submitted_at) {
-                    $progress->status = 'needs_grading';
+                    $progress->status = 'submitted';
                     $progress->status_text = 'Ожидает проверки';
                     $progress->status_class = 'warning';
                 } elseif ($progress->submitted_at) {
@@ -163,7 +163,7 @@ class StudentReviewController extends Controller
                 }
                 // Проверяем, есть ли попытки (старый статус для обратной совместимости)
                 elseif ($progress->attempts_count > 0) {
-                    $progress->status = 'answered';
+                    $progress->status = 'in_progress';
                     $progress->status_text = 'Ответил';
                     $progress->status_class = 'success';
                 }
@@ -393,7 +393,7 @@ class StudentReviewController extends Controller
                             }
 
                             // Определяем статус
-                            $status = 'not_submitted';
+                            $status = 'not_started';
                             $needsGrading = false;
 
                             if ($hasGrade) {
@@ -708,7 +708,7 @@ class StudentReviewController extends Controller
                                     [
                                         'needs_response' => $needsResponse,
                                         'submitted_at' => $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null,
-                                        'status' => $needsResponse ? 'needs_response' : 'completed',
+                                        'status' => $needsResponse ? 'submitted' : 'completed',
                                         'progress_data' => $progressData, // Laravel автоматически конвертирует в JSON через cast
                                     ]
                                 );
