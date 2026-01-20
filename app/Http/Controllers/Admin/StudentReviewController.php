@@ -158,7 +158,9 @@ class StudentReviewController extends Controller
 
         // Вкладка "Форумы" - форумы, ожидающие ответа преподавателя
         // Получаем данные из базы (быстро, без синхронизации с Moodle)
-        $forums = StudentActivityProgress::whereIn('course_id', $courseIds)
+        // Показываем все форумы, где студент написал пост (независимо от needs_response)
+        // но приоритет отдаем тем, где needs_response = true
+        $forumsQuery = StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'forum');
             })
@@ -170,11 +172,37 @@ class StudentReviewController extends Controller
                     $roleQuery->whereIn('slug', ['instructor', 'admin']);
                 });
             })
-            ->where('needs_response', true)
-            ->whereNotNull('submitted_at')
-            ->with(['user.roles', 'course', 'activity.course'])
-            ->orderBy('submitted_at', 'desc')
+            ->where(function($query) {
+                // Показываем форумы, где:
+                // 1. needs_response = true (требуется ответ преподавателя)
+                // 2. ИЛИ есть submitted_at (студент написал пост)
+                // 3. ИЛИ есть progress_data с постами
+                $query->where('needs_response', true)
+                    ->orWhereNotNull('submitted_at')
+                    ->orWhereNotNull('progress_data');
+            })
+            ->with(['user.roles', 'course', 'activity.course']);
+        
+        // Логируем запрос для отладки
+        $forumsCount = $forumsQuery->count();
+        Log::info('Запрос форумов для страницы student-review', [
+            'instructor_id' => $instructor->id,
+            'course_ids' => $courseIds->toArray(),
+            'forums_count_before_filter' => $forumsCount
+        ]);
+        
+        $forums = $forumsQuery
+            ->orderByRaw('needs_response DESC, submitted_at DESC')
             ->get()
+            ->filter(function ($progress) {
+                // Дополнительная фильтрация: проверяем, что есть реальные данные о постах
+                if ($progress->progress_data && is_array($progress->progress_data)) {
+                    $posts = $progress->progress_data['posts'] ?? [];
+                    return !empty($posts);
+                }
+                // Если нет progress_data, но есть submitted_at, показываем
+                return !is_null($progress->submitted_at);
+            })
             ->map(function ($progress) use ($coursesById) {
                 // Присваиваем курс к активности для корректной работы moodle_url
                 if ($progress->activity && isset($coursesById[$progress->course_id])) {
@@ -183,8 +211,32 @@ class StudentReviewController extends Controller
 
                 // Извлекаем текст сообщения из progress_data или draft_data
                 $progress->message_text = $this->extractForumMessage($progress);
+                
+                // Если needs_response не установлен, но есть посты, устанавливаем его
+                if (is_null($progress->needs_response) && $progress->progress_data) {
+                    $posts = $progress->progress_data['posts'] ?? [];
+                    if (!empty($posts)) {
+                        // Проверяем, есть ли посты с needs_response = true
+                        $hasNeedsResponse = false;
+                        foreach ($posts as $post) {
+                            if (isset($post['needs_response']) && $post['needs_response']) {
+                                $hasNeedsResponse = true;
+                                break;
+                            }
+                        }
+                        // Если ни один пост не имеет needs_response = true, значит все посты получили ответ
+                        $progress->needs_response = $hasNeedsResponse;
+                    }
+                }
+                
                 return $progress;
-            });
+            })
+            ->values();
+        
+        Log::info('Результат фильтрации форумов', [
+            'forums_count_after_filter' => $forums->count(),
+            'forums_with_needs_response' => $forums->where('needs_response', true)->count()
+        ]);
 
         return view('admin.student-review.index', compact('assignments', 'quizzes', 'forums', 'courses'));
     }
