@@ -83,7 +83,7 @@ class StudentReviewController extends Controller
                     $progress->status_text = 'Есть черновик';
                     $progress->status_class = 'secondary';
                 } else {
-                    $progress->status = 'unknown';
+                    $progress->status = 'not_started';
                     $progress->status_text = 'Неизвестно';
                     $progress->status_class = 'secondary';
                 }
