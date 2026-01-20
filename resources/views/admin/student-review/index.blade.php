@@ -1276,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Автоматическая синхронизация при переключении вкладок отключена
     // Синхронизацию можно запустить вручную через кнопку "Обновить данные из Moodle"
     
-    // Функция для синхронизации текущей вкладки
+    // Функция для синхронизации текущей вкладки (доступна глобально для onclick)
     window.syncCurrentTab = function() {
         if (isSyncing) {
             alert('Синхронизация уже выполняется. Пожалуйста, подождите...');
@@ -1292,12 +1292,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Синхронизация доступна только для вкладок "Тесты" и "Форумы"');
         }
     };
-    
-    // Добавляем обработчик для кнопки синхронизации, если она уже есть в HTML
-    const syncButton = document.getElementById('sync-moodle-btn');
-    if (syncButton) {
-        syncButton.onclick = window.syncCurrentTab;
-    }
 });
 
 // Функция для проверки данных в Moodle
