@@ -908,19 +908,77 @@ class MoodleApiService
             'courseids' => [$courseId]
         ]);
 
+        Log::info('getCourseForums: Ответ от Moodle API', [
+            'course_id' => $courseId,
+            'result_type' => gettype($result),
+            'result_keys' => is_array($result) ? array_keys($result) : null,
+            'has_exception' => isset($result['exception']),
+            'exception' => $result['exception'] ?? null,
+            'message' => $result['message'] ?? null,
+            'full_result' => $result
+        ]);
+
         if ($result === false || isset($result['exception'])) {
             Log::error('Ошибка получения форумов из Moodle', [
                 'course_id' => $courseId,
                 'exception' => $result['exception'] ?? null,
-                'message' => $result['message'] ?? null
+                'message' => $result['message'] ?? null,
+                'errorcode' => $result['errorcode'] ?? null,
+                'debuginfo' => $result['debuginfo'] ?? null
             ]);
             return false;
         }
 
-        // Возвращаем форумы из первого курса
-        if (isset($result['forums'])) {
+        // Проверяем разные возможные структуры ответа
+        // Структура 1: result['forums'] - массив форумов напрямую
+        if (isset($result['forums']) && is_array($result['forums'])) {
+            Log::info('getCourseForums: Найдены форумы в result[forums]', [
+                'course_id' => $courseId,
+                'forums_count' => count($result['forums'])
+            ]);
             return $result['forums'];
         }
+
+        // Структура 2: result - массив, где каждый элемент - курс с форумами
+        if (is_array($result) && !empty($result)) {
+            // Проверяем, есть ли ключ с ID курса
+            if (isset($result[$courseId]) && is_array($result[$courseId]) && isset($result[$courseId]['forums'])) {
+                Log::info('getCourseForums: Найдены форумы в result[course_id][forums]', [
+                    'course_id' => $courseId,
+                    'forums_count' => count($result[$courseId]['forums'])
+                ]);
+                return $result[$courseId]['forums'];
+            }
+            
+            // Проверяем, может быть первый элемент массива содержит форумы
+            $firstKey = array_key_first($result);
+            if ($firstKey !== null && isset($result[$firstKey]['forums']) && is_array($result[$firstKey]['forums'])) {
+                Log::info('getCourseForums: Найдены форумы в result[first_key][forums]', [
+                    'course_id' => $courseId,
+                    'first_key' => $firstKey,
+                    'forums_count' => count($result[$firstKey]['forums'])
+                ]);
+                return $result[$firstKey]['forums'];
+            }
+            
+            // Проверяем, может быть result - это массив форумов напрямую
+            if (isset($result[0]) && is_array($result[0]) && isset($result[0]['id'])) {
+                // Проверяем, похоже ли это на форум (есть поля, характерные для форума)
+                $possibleForum = $result[0];
+                if (isset($possibleForum['type']) || isset($possibleForum['name']) || isset($possibleForum['intro'])) {
+                    Log::info('getCourseForums: Найдены форумы как массив напрямую', [
+                        'course_id' => $courseId,
+                        'forums_count' => count($result)
+                    ]);
+                    return $result;
+                }
+            }
+        }
+
+        Log::warning('getCourseForums: Не удалось найти форумы в ответе', [
+            'course_id' => $courseId,
+            'result_structure' => $result
+        ]);
 
         return [];
     }
