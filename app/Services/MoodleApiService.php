@@ -965,10 +965,22 @@ class MoodleApiService
             ]);
 
             if ($discussionsResult === false || isset($discussionsResult['exception'])) {
+                Log::warning('Ошибка получения обсуждений форума', [
+                    'forum_id' => $forumId,
+                    'course_id' => $courseId,
+                    'exception' => $discussionsResult['exception'] ?? null,
+                    'message' => $discussionsResult['message'] ?? null
+                ]);
                 continue;
             }
 
             $discussions = $discussionsResult['discussions'] ?? [];
+            
+            Log::info('Получены обсуждения форума', [
+                'forum_id' => $forumId,
+                'course_id' => $courseId,
+                'discussions_count' => count($discussions)
+            ]);
 
             foreach ($discussions as $discussion) {
                 $discussionId = $discussion['discussion'] ?? null;
@@ -985,6 +997,13 @@ class MoodleApiService
                     $allDiscussionPosts = $postsResult['posts'];
                     $studentPosts = [];
                     $teacherReplies = [];
+                    
+                    Log::info('Получены посты обсуждения', [
+                        'discussion_id' => $discussionId,
+                        'forum_id' => $forumId,
+                        'total_posts' => count($allDiscussionPosts),
+                        'student_moodle_id' => $studentMoodleId
+                    ]);
 
                     // Разделяем посты студента и ответы преподавателей
                     foreach ($allDiscussionPosts as $post) {
@@ -1070,9 +1089,30 @@ class MoodleApiService
                         }
                         $allPosts[$forumId][] = $post;
                     }
+                    
+                    Log::info('Обработаны посты студента в обсуждении', [
+                        'discussion_id' => $discussionId,
+                        'forum_id' => $forumId,
+                        'student_posts_count' => count($studentPosts),
+                        'needs_response_count' => count(array_filter($studentPosts, function($p) { return $p['needs_response'] ?? false; }))
+                    ]);
+                } else {
+                    Log::warning('Ошибка получения постов обсуждения', [
+                        'discussion_id' => $discussionId,
+                        'forum_id' => $forumId,
+                        'exception' => $postsResult['exception'] ?? null,
+                        'message' => $postsResult['message'] ?? null
+                    ]);
                 }
             }
         }
+        
+        Log::info('Итоговые посты студента в форумах', [
+            'course_id' => $courseId,
+            'student_moodle_id' => $studentMoodleId,
+            'forums_with_posts' => array_keys($allPosts),
+            'total_posts' => array_sum(array_map('count', $allPosts))
+        ]);
 
         return $allPosts;
     }

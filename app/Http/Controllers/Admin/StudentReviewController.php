@@ -317,13 +317,23 @@ class StudentReviewController extends Controller
                     return response()->json(['error' => 'Не удалось получить форумы из Moodle'], 500);
                 }
 
-                foreach ($students as $student) {
+                        foreach ($students as $student) {
                     try {
                         $forumPosts = $moodleApi->getStudentForumPosts(
                             $course->moodle_course_id,
                             $student->moodle_user_id,
                             $moodleForums
                         );
+                        
+                        Log::info('Синхронизация форумов для студента', [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'moodle_user_id' => $student->moodle_user_id,
+                            'course_id' => $courseId,
+                            'forums_count' => count($moodleForums),
+                            'forum_posts_keys' => array_keys($forumPosts),
+                            'total_posts' => array_sum(array_map('count', $forumPosts))
+                        ]);
 
                         // Обновляем данные в базе
                         foreach ($moodleForums as $moodleForum) {
@@ -358,6 +368,20 @@ class StudentReviewController extends Controller
 
                             // Сохраняем данные только если студент написал хотя бы один пост
                             if ($hasStudentPosts) {
+                                $progressData = [
+                                    'posts' => $posts,
+                                    'posts_count' => count($posts),
+                                ];
+                                
+                                Log::info('Сохранение данных форума для студента', [
+                                    'student_id' => $student->id,
+                                    'activity_id' => $activity->id,
+                                    'forum_id' => $moodleForum['id'],
+                                    'posts_count' => count($posts),
+                                    'needs_response' => $needsResponse,
+                                    'latest_post_time' => $latestPostTime
+                                ]);
+                                
                                 StudentActivityProgress::updateOrCreate(
                                     [
                                         'user_id' => $student->id,
@@ -368,10 +392,7 @@ class StudentReviewController extends Controller
                                         'needs_response' => $needsResponse,
                                         'submitted_at' => $latestPostTime ? date('Y-m-d H:i:s', $latestPostTime) : null,
                                         'status' => $needsResponse ? 'needs_response' : 'completed',
-                                        'progress_data' => json_encode([
-                                            'posts' => $posts,
-                                            'posts_count' => count($posts),
-                                        ]),
+                                        'progress_data' => $progressData, // Laravel автоматически конвертирует в JSON через cast
                                     ]
                                 );
                                 
