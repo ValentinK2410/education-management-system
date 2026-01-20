@@ -330,4 +330,36 @@ class Course extends Model
 
         return $dependencies;
     }
+
+    /**
+     * Получить Moodle Course ID из локального ID курса
+     *
+     * @param int $localCourseId Локальный ID курса в системе
+     * @return int|null Moodle Course ID или null, если курс не найден или не синхронизирован с Moodle
+     */
+    public static function getMoodleCourseId(int $localCourseId): ?int
+    {
+        $course = self::find($localCourseId);
+        return $course ? $course->moodle_course_id : null;
+    }
+
+    /**
+     * Проверить, является ли переданный ID Moodle Course ID или локальным ID
+     * Если это локальный ID, вернуть соответствующий Moodle Course ID
+     *
+     * @param int $courseId ID курса (может быть как локальным, так и Moodle Course ID)
+     * @return int|null Moodle Course ID или null, если курс не найден
+     */
+    public static function resolveToMoodleCourseId(int $courseId): ?int
+    {
+        // Сначала проверяем, является ли это moodle_course_id
+        $course = self::where('moodle_course_id', $courseId)->first();
+        if ($course) {
+            return $course->moodle_course_id;
+        }
+
+        // Если нет, проверяем как локальный ID
+        $course = self::find($courseId);
+        return $course ? $course->moodle_course_id : null;
+    }
 }

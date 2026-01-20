@@ -354,4 +354,36 @@ class User extends Authenticatable
 
         return $dependencies;
     }
+
+    /**
+     * Получить Moodle User ID из локального ID пользователя
+     *
+     * @param int $localUserId Локальный ID пользователя в системе
+     * @return int|null Moodle User ID или null, если пользователь не найден или не синхронизирован с Moodle
+     */
+    public static function getMoodleUserId(int $localUserId): ?int
+    {
+        $user = self::find($localUserId);
+        return $user ? $user->moodle_user_id : null;
+    }
+
+    /**
+     * Проверить, является ли переданный ID Moodle User ID или локальным ID
+     * Если это локальный ID, вернуть соответствующий Moodle User ID
+     *
+     * @param int $userId ID пользователя (может быть как локальным, так и Moodle User ID)
+     * @return int|null Moodle User ID или null, если пользователь не найден
+     */
+    public static function resolveToMoodleUserId(int $userId): ?int
+    {
+        // Сначала проверяем, является ли это moodle_user_id
+        $user = self::where('moodle_user_id', $userId)->first();
+        if ($user) {
+            return $user->moodle_user_id;
+        }
+
+        // Если нет, проверяем как локальный ID
+        $user = self::find($userId);
+        return $user ? $user->moodle_user_id : null;
+    }
 }

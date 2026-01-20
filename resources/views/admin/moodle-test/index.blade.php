@@ -88,9 +88,22 @@
         <div class="alert alert-info mb-4">
             <h6><i class="fas fa-info-circle me-2"></i>Как использовать эту страницу:</h6>
             <ul class="mb-0">
-                <li><strong>ID курса:</strong> Выберите курс из списка <strong>ИЛИ</strong> введите ID курса в Moodle вручную в поле ниже</li>
-                <li><strong>ID студента:</strong> Выберите студента из списка <strong>ИЛИ</strong> введите ID студента в системе вручную (не Moodle ID!)</li>
+                <li><strong>ID курса:</strong> 
+                    <ul>
+                        <li>Выберите курс из списка (автоматически используется Moodle Course ID)</li>
+                        <li><strong>ИЛИ</strong> введите <strong>Moodle Course ID</strong> вручную (например: 123)</li>
+                        <li><strong>ИЛИ</strong> введите <strong>локальный ID курса</strong> из системы (система автоматически преобразует в Moodle Course ID)</li>
+                    </ul>
+                </li>
+                <li><strong>ID студента:</strong> 
+                    <ul>
+                        <li>Выберите студента из списка (автоматически используется Moodle User ID)</li>
+                        <li><strong>ИЛИ</strong> введите <strong>локальный ID студента</strong> из системы (система автоматически преобразует в Moodle User ID)</li>
+                        <li><strong>ВАЖНО:</strong> Не вводите Moodle User ID напрямую - используйте локальный ID студента!</li>
+                    </ul>
+                </li>
                 <li>Если студент не выбран, будут показаны только общие данные курса (задания, тесты, форумы без данных конкретного студента)</li>
+                <li class="mt-2"><strong class="text-warning">Примечание:</strong> Все запросы к Moodle API используют Moodle ID (moodle_course_id и moodle_user_id), а не локальные ID из системы.</li>
             </ul>
         </div>
 
@@ -142,7 +155,7 @@
                     </select>
                     <div class="mt-2">
                         <label for="student_id_manual" class="form-label small text-muted">
-                            <i class="fas fa-keyboard me-1"></i>Или введите ID студента вручную (ID в системе, не Moodle ID):
+                            <i class="fas fa-keyboard me-1"></i>Или введите ID студента вручную:
                         </label>
                         <input type="number" 
                                class="form-control" 
@@ -150,8 +163,12 @@
                                name="student_id_manual"
                                min="1"
                                step="1"
-                               placeholder="Например: 45"
+                               placeholder="Локальный ID студента"
                                oninput="if(this.value) { document.getElementById('student_id').value = ''; }">
+                        <small class="form-text text-muted">
+                            Введите <strong>локальный ID студента</strong> из системы (не Moodle User ID!). 
+                            Система автоматически использует moodle_user_id для запросов к Moodle API.
+                        </small>
                     </div>
                 </div>
 

@@ -306,7 +306,7 @@ class MoodleApiService
     /**
      * Получить содержимое курса (разделы и модули)
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с разделами курса или false в случае ошибки
      */
     public function getCourseContents(int $courseId)
@@ -356,7 +356,7 @@ class MoodleApiService
     /**
      * Получить задания курса
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с заданиями курса или false в случае ошибки
      */
     public function getCourseAssignments(int $courseId)
@@ -457,8 +457,8 @@ class MoodleApiService
     /**
      * Получить сдачи студента по заданиям курса
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param array|null $assignments Массив заданий (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с сдачами или false в случае ошибки
      */
@@ -507,8 +507,8 @@ class MoodleApiService
     /**
      * Получить оценки студента по заданиям курса
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param array|null $assignments Массив заданий (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с оценками или false в случае ошибки
      */
@@ -554,8 +554,8 @@ class MoodleApiService
     /**
      * Получить информацию о заданиях курса с их статусами для студента
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param string|null $sectionName Название раздела для фильтрации (например, "ПОСЛЕ СЕССИИ")
      * @return array|false Массив с заданиями и их статусами или false в случае ошибки
      */
@@ -714,7 +714,7 @@ class MoodleApiService
     /**
      * Получить тесты/квизы курса
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с тестами курса или false в случае ошибки
      */
     public function getCourseQuizzes(int $courseId)
@@ -784,8 +784,8 @@ class MoodleApiService
     /**
      * Получить попытки студента по тестам курса
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param array|null $quizzes Массив тестов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с попытками или false в случае ошибки
      */
@@ -843,8 +843,8 @@ class MoodleApiService
     /**
      * Получить оценки студента за тесты курса
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param array|null $quizzes Массив тестов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с оценками или false в случае ошибки
      */
@@ -899,7 +899,7 @@ class MoodleApiService
     /**
      * Получить форумы курса
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с форумами курса или false в случае ошибки
      */
     public function getCourseForums(int $courseId)
@@ -928,8 +928,8 @@ class MoodleApiService
     /**
      * Получить посты студента в форумах курса с проверкой ответов преподавателя
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @param array|null $forums Массив форумов (если уже получены, чтобы избежать повторного запроса)
      * @return array|false Массив с постами и информацией об ответах преподавателя или false в случае ошибки
      */
@@ -1120,7 +1120,7 @@ class MoodleApiService
     /**
      * Получить материалы курса (resources)
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с материалами курса или false в случае ошибки
      */
     public function getCourseResources(int $courseId)
@@ -1164,8 +1164,8 @@ class MoodleApiService
     /**
      * Получить просмотры материалов студентом
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @return array|false Массив с просмотрами или false в случае ошибки
      */
     public function getStudentResourceViews(int $courseId, int $studentMoodleId)
@@ -1193,7 +1193,7 @@ class MoodleApiService
     /**
      * Получить содержимое курса с разделами и неделями
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с разделами курса или false в случае ошибки
      */
     public function getCourseContentsWithSections(int $courseId)
@@ -1235,8 +1235,8 @@ class MoodleApiService
     /**
      * Получить все активности курса с их статусами для студента
      *
-     * @param int $courseId ID курса в Moodle
-     * @param int $studentMoodleId ID студента в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
+     * @param int $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
      * @return array|false Массив со всеми активностями и их статусами или false в случае ошибки
      */
     public function getAllCourseActivities(int $courseId, int $studentMoodleId)
@@ -1916,7 +1916,7 @@ class MoodleApiService
     /**
      * Получить список пользователей, записанных на курс
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив пользователей или false в случае ошибки
      */
     public function getCourseEnrolledUsers(int $courseId)
@@ -1965,7 +1965,7 @@ class MoodleApiService
     /**
      * Получить преподавателей курса (пользователи с ролью editingteacher или teacher)
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив преподавателей или false в случае ошибки
      */
     public function getCourseTeachers(int $courseId)
@@ -2011,7 +2011,7 @@ class MoodleApiService
     /**
      * Получить информацию о конкретном курсе
      *
-     * @param int $courseId ID курса в Moodle
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив с данными курса или false в случае ошибки
      */
     public function getCourse(int $courseId)
@@ -2029,9 +2029,9 @@ class MoodleApiService
     /**
      * Получить URL для задания в Moodle
      *
-     * @param int|null $cmid Course Module ID (если есть)
-     * @param int|null $assignmentId Assignment ID (если cmid нет)
-     * @param int|null $courseId Course ID (если нужен альтернативный способ)
+     * @param int|null $cmid Course Module ID в Moodle (если есть)
+     * @param int|null $assignmentId Moodle Assignment ID (если cmid нет)
+     * @param int|null $courseId Moodle Course ID (если нужен альтернативный способ, НЕ локальный ID!)
      * @return string|null URL на задание или null если невозможно сформировать
      */
     public function getAssignmentUrl(?int $cmid = null, ?int $assignmentId = null, ?int $courseId = null): ?string
@@ -2057,8 +2057,8 @@ class MoodleApiService
      *
      * @param string $activityType Тип элемента курса (assign, quiz, forum и т.д.)
      * @param int|null $cmid Course Module ID в Moodle
-     * @param int $moodleUserId ID студента в Moodle
-     * @param int|null $moodleCourseId ID курса в Moodle (опционально)
+     * @param int $moodleUserId Moodle User ID студента (НЕ локальный ID пользователя из системы!)
+     * @param int|null $moodleCourseId Moodle Course ID (опционально, НЕ локальный ID курса!)
      * @return string|null URL для проверки или null если данные недостаточны
      */
     public function getGradingUrl(string $activityType, ?int $cmid, int $moodleUserId, ?int $moodleCourseId = null): ?string

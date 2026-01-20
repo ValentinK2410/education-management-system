@@ -64,7 +64,7 @@ class MoodleTestController extends Controller
             'test_type' => 'required|in:assignments,quizzes,forums,all',
         ]);
 
-        $courseId = $request->input('course_id');
+        $courseIdInput = $request->input('course_id');
         $studentId = $request->input('student_id');
         $testType = $request->input('test_type');
 
@@ -73,8 +73,64 @@ class MoodleTestController extends Controller
             $userToken = $user->getMoodleToken();
             $moodleApi = new MoodleApiService(null, $userToken);
 
+            // ВАЖНО: Преобразуем course_id в moodle_course_id
+            // course_id может быть либо локальным ID курса, либо moodle_course_id
+            $course = null;
+            $moodleCourseId = null;
+            $courseIdLocal = null;
+            
+            // Сначала проверяем, является ли это moodle_course_id
+            $course = \App\Models\Course::where('moodle_course_id', $courseIdInput)
+                ->where('instructor_id', $user->id)
+                ->first();
+            
+            if ($course) {
+                // Это moodle_course_id
+                $moodleCourseId = $course->moodle_course_id;
+                $courseIdLocal = $course->id;
+                Log::info('MoodleTest: Используется Moodle Course ID', [
+                    'input' => $courseIdInput,
+                    'moodle_course_id' => $moodleCourseId,
+                    'local_course_id' => $courseIdLocal
+                ]);
+            } else {
+                // Попытка найти по локальному ID
+                $course = \App\Models\Course::where('id', $courseIdInput)
+                    ->where('instructor_id', $user->id)
+                    ->first();
+                
+                if ($course && $course->moodle_course_id) {
+                    // Найден курс по локальному ID, используем его moodle_course_id
+                    $moodleCourseId = $course->moodle_course_id;
+                    $courseIdLocal = $course->id;
+                    Log::info('MoodleTest: Преобразован локальный ID в Moodle Course ID', [
+                        'input' => $courseIdInput,
+                        'moodle_course_id' => $moodleCourseId,
+                        'local_course_id' => $courseIdLocal
+                    ]);
+                } else {
+                    // Курс не найден или нет moodle_course_id
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Курс не найден или не синхронизирован с Moodle. ' .
+                                   'Убедитесь, что вы вводите правильный Moodle Course ID или локальный ID курса, ' .
+                                   'который имеет настроенный moodle_course_id.'
+                    ], 400);
+                }
+            }
+            
+            if (!$moodleCourseId) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Не удалось определить Moodle Course ID для курса'
+                ], 400);
+            }
+
             $results = [
-                'course_id' => $courseId,
+                'course_id_input' => $courseIdInput,
+                'course_id_local' => $courseIdLocal,
+                'moodle_course_id' => $moodleCourseId,
+                'course_name' => $course->name ?? null,
                 'student_id' => $studentId,
                 'test_type' => $testType,
                 'timestamp' => now()->toDateTimeString(),
@@ -87,6 +143,13 @@ class MoodleTestController extends Controller
             if ($studentId) {
                 $student = \App\Models\User::find($studentId);
                 if ($student) {
+                    if (!$student->moodle_user_id) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'У выбранного студента отсутствует moodle_user_id. ' .
+                                       'Студент должен быть синхронизирован с Moodle.'
+                        ], 400);
+                    }
                     $studentMoodleId = $student->moodle_user_id;
                     $results['student_info'] = [
                         'id' => $student->id,
@@ -94,20 +157,26 @@ class MoodleTestController extends Controller
                         'email' => $student->email,
                         'moodle_user_id' => $studentMoodleId
                     ];
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Студент с ID ' . $studentId . ' не найден'
+                    ], 404);
                 }
             }
 
             // Тестируем в зависимости от типа
+            // ВАЖНО: Передаем moodle_course_id, а не локальный ID
             if ($testType === 'assignments' || $testType === 'all') {
-                $results['data']['assignments'] = $this->testAssignments($moodleApi, $courseId, $studentMoodleId);
+                $results['data']['assignments'] = $this->testAssignments($moodleApi, $moodleCourseId, $studentMoodleId);
             }
 
             if ($testType === 'quizzes' || $testType === 'all') {
-                $results['data']['quizzes'] = $this->testQuizzes($moodleApi, $courseId, $studentMoodleId);
+                $results['data']['quizzes'] = $this->testQuizzes($moodleApi, $moodleCourseId, $studentMoodleId);
             }
 
             if ($testType === 'forums' || $testType === 'all') {
-                $results['data']['forums'] = $this->testForums($moodleApi, $courseId, $studentMoodleId);
+                $results['data']['forums'] = $this->testForums($moodleApi, $moodleCourseId, $studentMoodleId);
             }
 
             return response()->json([
@@ -133,8 +202,8 @@ class MoodleTestController extends Controller
      * Тестирование заданий
      *
      * @param MoodleApiService $moodleApi
-     * @param int $courseId
-     * @param int|null $studentMoodleId
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса!)
+     * @param int|null $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя!)
      * @return array
      */
     private function testAssignments(MoodleApiService $moodleApi, int $courseId, ?int $studentMoodleId): array
@@ -171,8 +240,8 @@ class MoodleTestController extends Controller
      * Тестирование тестов
      *
      * @param MoodleApiService $moodleApi
-     * @param int $courseId
-     * @param int|null $studentMoodleId
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса!)
+     * @param int|null $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя!)
      * @return array
      */
     private function testQuizzes(MoodleApiService $moodleApi, int $courseId, ?int $studentMoodleId): array
@@ -216,8 +285,8 @@ class MoodleTestController extends Controller
      * Тестирование форумов
      *
      * @param MoodleApiService $moodleApi
-     * @param int $courseId
-     * @param int|null $studentMoodleId
+     * @param int $courseId Moodle Course ID (НЕ локальный ID курса!)
+     * @param int|null $studentMoodleId Moodle User ID студента (НЕ локальный ID пользователя!)
      * @return array
      */
     private function testForums(MoodleApiService $moodleApi, int $courseId, ?int $studentMoodleId): array
