@@ -1246,14 +1246,8 @@ async function checkMoodleAssignments() {
     const loadingDiv = document.getElementById('moodle-check-loading');
     const resultsDiv = document.getElementById('moodle-check-results');
     
-    // Определяем тип проверки на основе активной вкладки
-    const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || 'assignments';
-    let checkType = 'assignments';
-    if (activeTab === 'quizzes') {
-        checkType = 'quizzes';
-    } else if (activeTab === 'forums') {
-        checkType = 'forums';
-    }
+    // Проверяем все типы одновременно (assignments, quizzes, forums)
+    const checkType = 'all';
     
     modal.show();
     loadingDiv.style.display = 'block';
@@ -1300,16 +1294,27 @@ async function checkMoodleAssignments() {
         resultsDiv.style.display = 'block';
         
         if (data.success) {
+            const isAll = data.check_type === 'all';
             const isQuizzes = data.check_type === 'quizzes';
             const isForums = data.check_type === 'forums';
-            const itemName = isQuizzes ? 'тестов' : (isForums ? 'форумов' : 'заданий');
-            const itemNameSingle = isQuizzes ? 'тест' : (isForums ? 'форум' : 'задание');
             
             let html = '<div class="alert alert-success"><strong>Проверка завершена успешно</strong></div>';
             
             html += '<div class="mb-3"><h6>Сводка:</h6>';
             html += `<ul><li>Всего курсов: ${data.total_courses}</li>`;
-            if (isQuizzes) {
+            
+            if (isAll) {
+                // Показываем информацию по всем типам
+                html += `<li>Всего заданий: ${data.summary.total_assignments || 0}</li>`;
+                html += `<li>Курсов с заданиями: ${data.summary.courses_with_assignments || 0}</li>`;
+                html += `<li>Всего тестов: ${data.summary.total_quizzes || 0}</li>`;
+                html += `<li>Курсов с тестами: ${data.summary.courses_with_quizzes || 0}</li>`;
+                html += `<li>Всего форумов: ${data.summary.total_forums || 0}</li>`;
+                html += `<li>Курсов с форумами: ${data.summary.courses_with_forums || 0}</li>`;
+                if (data.summary.total_unanswered_posts > 0) {
+                    html += `<li>Неотвеченных постов: <strong class="text-danger">${data.summary.total_unanswered_posts}</strong></li>`;
+                }
+            } else if (isQuizzes) {
                 html += `<li>Всего тестов: ${data.summary.total_quizzes}</li>`;
                 html += `<li>Курсов с тестами: ${data.summary.courses_with_quizzes}</li>`;
             } else if (isForums) {
@@ -1333,7 +1338,21 @@ async function checkMoodleAssignments() {
                 if (course.moodle_course_id) {
                     html += ` <span class="badge bg-info ms-2">Moodle ID: ${course.moodle_course_id}</span>`;
                 }
-                if (isQuizzes && course.quizzes_count !== undefined) {
+                if (isAll) {
+                    // Показываем все типы для курса
+                    if (course.assignments_count !== undefined && course.assignments_count > 0) {
+                        html += ` <span class="badge bg-primary ms-2">Заданий: ${course.assignments_count}</span>`;
+                    }
+                    if (course.quizzes_count !== undefined && course.quizzes_count > 0) {
+                        html += ` <span class="badge bg-info ms-2">Тестов: ${course.quizzes_count}</span>`;
+                    }
+                    if (course.forums_count !== undefined && course.forums_count > 0) {
+                        html += ` <span class="badge bg-success ms-2">Форумов: ${course.forums_count}</span>`;
+                    }
+                    if (course.total_unanswered_posts !== undefined && course.total_unanswered_posts > 0) {
+                        html += ` <span class="badge bg-danger ms-2">Неотвеченных: ${course.total_unanswered_posts}</span>`;
+                    }
+                } else if (isQuizzes && course.quizzes_count !== undefined) {
                     html += ` <span class="badge bg-primary ms-2">Тестов: ${course.quizzes_count}</span>`;
                 } else if (isForums && course.forums_count !== undefined) {
                     html += ` <span class="badge bg-primary ms-2">Форумов: ${course.forums_count}</span>`;
@@ -1367,7 +1386,65 @@ async function checkMoodleAssignments() {
                     html += `<pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>${JSON.stringify(course.api_response, null, 2)}</code></pre>`;
                 }
                 
-                if (isQuizzes) {
+                if (isAll) {
+                    // Показываем информацию по всем типам
+                    if (course.assignments && course.assignments.length > 0) {
+                        html += `<h6>Задания (${course.assignments.length}):</h6>`;
+                        html += `<ul>`;
+                        course.assignments.forEach(assignment => {
+                            html += `<li><strong>${assignment.name}</strong> (ID: ${assignment.id})</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    if (course.quizzes && course.quizzes.length > 0) {
+                        html += `<h6>Тесты (${course.quizzes.length}):</h6>`;
+                        html += `<ul>`;
+                        course.quizzes.forEach(quiz => {
+                            html += `<li><strong>${quiz.name}</strong> (ID: ${quiz.id})`;
+                            if (quiz.grade) {
+                                html += ` - Макс. оценка: ${quiz.grade}`;
+                            }
+                            html += `</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    if (course.forums && course.forums.length > 0) {
+                        html += `<h6>Форумы (${course.forums.length}):</h6>`;
+                        html += `<ul>`;
+                        course.forums.forEach(forum => {
+                            html += `<li><strong>${forum.name}</strong> (ID: ${forum.id})</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    // Показываем информацию о студентах и их результатах по всем типам
+                    if (course.students && course.students.length > 0) {
+                        html += `<h6>Студенты и их результаты:</h6>`;
+                        html += `<ul>`;
+                        course.students.forEach(student => {
+                            html += `<li><strong>${student.student_name}</strong> (Moodle ID: ${student.moodle_user_id})`;
+                            if (student.submissions_count !== undefined && student.submissions_count > 0) {
+                                html += ` - Сдач заданий: ${student.submissions_count}`;
+                            }
+                            if (student.quiz_attempts_count !== undefined && student.quiz_attempts_count > 0) {
+                                html += ` - Попыток тестов: ${student.quiz_attempts_count}`;
+                            }
+                            if (student.quiz_grades_count !== undefined && student.quiz_grades_count > 0) {
+                                html += ` - Оценок за тесты: ${student.quiz_grades_count}`;
+                            }
+                            if (student.total_posts !== undefined && student.total_posts > 0) {
+                                html += ` - Постов на форумах: ${student.total_posts}`;
+                            }
+                            if (student.unanswered_posts_count !== undefined && student.unanswered_posts_count > 0) {
+                                html += ` - <span class="text-danger"><strong>Неотвеченных постов: ${student.unanswered_posts_count}</strong></span>`;
+                            }
+                            html += `</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                } else if (isQuizzes) {
                     if (course.quizzes && course.quizzes.length > 0) {
                         html += `<h6>Тесты (${course.quizzes.length}):</h6>`;
                         html += `<ul>`;

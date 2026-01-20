@@ -588,8 +588,8 @@ class StudentReviewController extends Controller
             ]);
         }
 
-        // Определяем, что проверяем: assignments, quizzes или forums
-        $checkType = $request->get('type', 'assignments'); // assignments, quizzes или forums
+        // Определяем, что проверяем: assignments, quizzes, forums или all (все типы)
+        $checkType = $request->get('type', 'all'); // assignments, quizzes, forums или all
         
         $results = [];
         
@@ -611,7 +611,165 @@ class StudentReviewController extends Controller
                     continue;
                 }
 
-                if ($checkType === 'quizzes') {
+                // Если проверяем все типы, создаем общий результат для курса
+                if ($checkType === 'all') {
+                    $courseResult = [
+                        'course_id' => $course->id,
+                        'course_name' => $course->name,
+                        'moodle_course_id' => $course->moodle_course_id,
+                        'assignments' => [],
+                        'quizzes' => [],
+                        'forums' => [],
+                        'students' => []
+                    ];
+                    
+                    // Проверяем задания
+                    $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
+                    if ($assignments !== false) {
+                        $courseResult['assignments'] = $assignments;
+                        $courseResult['assignments_count'] = is_array($assignments) ? count($assignments) : 0;
+                    } else {
+                        $courseResult['assignments_count'] = 0;
+                    }
+                    
+                    // Проверяем тесты
+                    $quizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
+                    if ($quizzes !== false) {
+                        $courseResult['quizzes'] = $quizzes;
+                        $courseResult['quizzes_count'] = is_array($quizzes) ? count($quizzes) : 0;
+                    } else {
+                        $courseResult['quizzes_count'] = 0;
+                    }
+                    
+                    // Проверяем форумы
+                    $forums = $moodleApi->getCourseForums($course->moodle_course_id);
+                    if ($forums !== false) {
+                        $courseResult['forums'] = $forums;
+                        $courseResult['forums_count'] = is_array($forums) ? count($forums) : 0;
+                    } else {
+                        $courseResult['forums_count'] = 0;
+                    }
+                    
+                    // Получаем студентов курса
+                    $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
+                        $query->where('courses.id', $course->id);
+                    })
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'student');
+                    })
+                    ->whereNotNull('moodle_user_id')
+                    ->get();
+
+                    $courseResult['students_count'] = $students ? $students->count() : 0;
+                    
+                    // Для каждого студента получаем данные по всем типам
+                    $totalUnansweredPosts = 0;
+                    foreach ($students as $student) {
+                        $studentResult = [
+                            'student_id' => $student->id,
+                            'student_name' => $student->name,
+                            'student_email' => $student->email,
+                            'moodle_user_id' => $student->moodle_user_id,
+                            'submissions' => [],
+                            'quiz_attempts' => [],
+                            'quiz_grades' => [],
+                            'forum_posts' => [],
+                            'unanswered_posts' => []
+                        ];
+
+                        // Получаем сдачи студента по заданиям
+                        if ($courseResult['assignments_count'] > 0) {
+                            $submissions = $moodleApi->getStudentSubmissions(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $assignments
+                            );
+                            if ($submissions !== false) {
+                                $studentResult['submissions'] = $submissions;
+                                $studentResult['submissions_count'] = count($submissions);
+                            }
+                            
+                            $grades = $moodleApi->getStudentGrades(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $assignments
+                            );
+                            if ($grades !== false) {
+                                $studentResult['grades'] = $grades;
+                                $studentResult['grades_count'] = count($grades);
+                            }
+                        }
+
+                        // Получаем попытки и оценки студента по тестам
+                        if ($courseResult['quizzes_count'] > 0) {
+                            $quizAttempts = $moodleApi->getStudentQuizAttempts(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $quizzes
+                            );
+                            if ($quizAttempts !== false) {
+                                $studentResult['quiz_attempts'] = $quizAttempts;
+                                $totalAttempts = 0;
+                                foreach ($quizAttempts as $attempts) {
+                                    $totalAttempts += count($attempts);
+                                }
+                                $studentResult['quiz_attempts_count'] = $totalAttempts;
+                            }
+
+                            $quizGrades = $moodleApi->getStudentQuizGrades(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $quizzes
+                            );
+                            if ($quizGrades !== false) {
+                                $studentResult['quiz_grades'] = $quizGrades;
+                                $studentResult['quiz_grades_count'] = count($quizGrades);
+                            }
+                        }
+
+                        // Получаем посты студента на форумах
+                        if ($courseResult['forums_count'] > 0) {
+                            $forumPosts = $moodleApi->getStudentForumPosts(
+                                $course->moodle_course_id,
+                                $student->moodle_user_id,
+                                $forums
+                            );
+
+                            if ($forumPosts !== false && !empty($forumPosts)) {
+                                $studentResult['forum_posts'] = $forumPosts;
+                                
+                                $totalPosts = 0;
+                                $unansweredPosts = 0;
+                                
+                                foreach ($forumPosts as $forumId => $posts) {
+                                    foreach ($posts as $post) {
+                                        $totalPosts++;
+                                        if (isset($post['needs_response']) && $post['needs_response']) {
+                                            $unansweredPosts++;
+                                            $studentResult['unanswered_posts'][] = [
+                                                'forum_id' => $forumId,
+                                                'post_id' => $post['id'] ?? null,
+                                                'subject' => $post['subject'] ?? 'Без темы',
+                                                'message' => isset($post['message']) ? strip_tags(substr($post['message'], 0, 200)) : '',
+                                                'timecreated' => $post['timecreated'] ?? null,
+                                                'has_teacher_reply' => $post['has_teacher_reply'] ?? false
+                                            ];
+                                        }
+                                    }
+                                }
+                                
+                                $studentResult['total_posts'] = $totalPosts;
+                                $studentResult['unanswered_posts_count'] = $unansweredPosts;
+                                $totalUnansweredPosts += $unansweredPosts;
+                            }
+                        }
+
+                        $courseResult['students'][] = $studentResult;
+                    }
+
+                    $courseResult['total_unanswered_posts'] = $totalUnansweredPosts;
+                    $results[] = $courseResult;
+                } elseif ($checkType === 'quizzes') {
                     // Проверка тестов
                     $courseResult = [
                         'course_id' => $course->id,
@@ -937,34 +1095,77 @@ class StudentReviewController extends Controller
             }
 
             // Безопасно вычисляем суммы с проверкой на существование ключей
-            $totalItems = 0;
-            $totalStudents = 0;
-            foreach ($results as $result) {
-                if ($checkType === 'quizzes') {
-                    $totalItems += $result['quizzes_count'] ?? 0;
-                } elseif ($checkType === 'forums') {
-                    $totalItems += $result['forums_count'] ?? 0;
-                } else {
-                    $totalItems += $result['assignments_count'] ?? 0;
+            // Для типа 'all' подсчет делается отдельно в summary
+            if ($checkType !== 'all') {
+                $totalItems = 0;
+                $totalStudents = 0;
+                foreach ($results as $result) {
+                    if ($checkType === 'quizzes') {
+                        $totalItems += $result['quizzes_count'] ?? 0;
+                    } elseif ($checkType === 'forums') {
+                        $totalItems += $result['forums_count'] ?? 0;
+                    } else {
+                        $totalItems += $result['assignments_count'] ?? 0;
+                    }
+                    $totalStudents += $result['students_count'] ?? 0;
                 }
-                $totalStudents += $result['students_count'] ?? 0;
+                
+                $coursesWithItems = count(array_filter($results, function($r) use ($checkType) {
+                    if ($checkType === 'quizzes') {
+                        return isset($r['quizzes_count']) && $r['quizzes_count'] > 0;
+                    } elseif ($checkType === 'forums') {
+                        return isset($r['forums_count']) && $r['forums_count'] > 0;
+                    } else {
+                        return isset($r['assignments_count']) && $r['assignments_count'] > 0;
+                    }
+                }));
+            } else {
+                // Для типа 'all' подсчитываем студентов
+                $totalStudents = 0;
+                foreach ($results as $result) {
+                    $totalStudents += $result['students_count'] ?? 0;
+                }
             }
-            
-            $coursesWithItems = count(array_filter($results, function($r) use ($checkType) {
-                if ($checkType === 'quizzes') {
-                    return isset($r['quizzes_count']) && $r['quizzes_count'] > 0;
-                } elseif ($checkType === 'forums') {
-                    return isset($r['forums_count']) && $r['forums_count'] > 0;
-                } else {
-                    return isset($r['assignments_count']) && $r['assignments_count'] > 0;
-                }
-            }));
             
             $summary = [
                 'total_students' => $totalStudents,
             ];
             
-            if ($checkType === 'quizzes') {
+            if ($checkType === 'all') {
+                // Для всех типов показываем полную статистику
+                $totalAssignments = 0;
+                $totalQuizzes = 0;
+                $totalForums = 0;
+                $totalUnanswered = 0;
+                $coursesWithAssignments = 0;
+                $coursesWithQuizzes = 0;
+                $coursesWithForums = 0;
+                
+                foreach ($results as $result) {
+                    $totalAssignments += $result['assignments_count'] ?? 0;
+                    $totalQuizzes += $result['quizzes_count'] ?? 0;
+                    $totalForums += $result['forums_count'] ?? 0;
+                    $totalUnanswered += $result['total_unanswered_posts'] ?? 0;
+                    
+                    if (isset($result['assignments_count']) && $result['assignments_count'] > 0) {
+                        $coursesWithAssignments++;
+                    }
+                    if (isset($result['quizzes_count']) && $result['quizzes_count'] > 0) {
+                        $coursesWithQuizzes++;
+                    }
+                    if (isset($result['forums_count']) && $result['forums_count'] > 0) {
+                        $coursesWithForums++;
+                    }
+                }
+                
+                $summary['total_assignments'] = $totalAssignments;
+                $summary['total_quizzes'] = $totalQuizzes;
+                $summary['total_forums'] = $totalForums;
+                $summary['total_unanswered_posts'] = $totalUnanswered;
+                $summary['courses_with_assignments'] = $coursesWithAssignments;
+                $summary['courses_with_quizzes'] = $coursesWithQuizzes;
+                $summary['courses_with_forums'] = $coursesWithForums;
+            } elseif ($checkType === 'quizzes') {
                 $summary['total_quizzes'] = $totalItems;
                 $summary['courses_with_quizzes'] = $coursesWithItems;
             } elseif ($checkType === 'forums') {
