@@ -187,9 +187,10 @@
 
             <div class="row mb-3">
                 <div class="col-12">
-                    <div class="alert alert-secondary">
-                        <h6><i class="fas fa-info-circle me-2"></i>Дополнительно: Детальная информация о конкретном элементе</h6>
-                        <p class="mb-2 small">Укажите ID конкретного задания, теста или форума, чтобы получить детальную информацию о нем из Moodle API:</p>
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Детальная информация о конкретном элементе</h6>
+                        <p class="mb-2 small"><strong>ВАЖНО:</strong> Если вы укажете ID конкретного задания, теста или форума, будет показана <strong>ТОЛЬКО</strong> детальная информация об этом элементе. Общий список элементов курса показан не будет.</p>
+                        <p class="mb-2 small">Укажите ID конкретного элемента, чтобы увидеть полные данные, которые возвращает Moodle API для этого элемента:</p>
                         <div class="row">
                             <div class="col-md-4">
                                 <label for="assignment_id" class="form-label small">
@@ -201,6 +202,7 @@
                                        name="assignment_id"
                                        min="1"
                                        placeholder="Например: 123">
+                                <small class="form-text text-muted">Если указано, показывается только это задание</small>
                             </div>
                             <div class="col-md-4">
                                 <label for="quiz_id" class="form-label small">
@@ -212,6 +214,7 @@
                                        name="quiz_id"
                                        min="1"
                                        placeholder="Например: 456">
+                                <small class="form-text text-muted">Если указано, показывается только этот тест</small>
                             </div>
                             <div class="col-md-4">
                                 <label for="forum_id" class="form-label small">
@@ -223,6 +226,7 @@
                                        name="forum_id"
                                        min="1"
                                        placeholder="Например: 789">
+                                <small class="form-text text-muted">Если указано, показывается только этот форум</small>
                             </div>
                         </div>
                     </div>
