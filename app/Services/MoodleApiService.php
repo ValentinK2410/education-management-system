@@ -975,10 +975,52 @@ class MoodleApiService
             }
         }
 
-        Log::warning('getCourseForums: Не удалось найти форумы в ответе', [
+        Log::warning('getCourseForums: Не удалось найти форумы в ответе, пробуем альтернативный метод через core_course_get_contents', [
             'course_id' => $courseId,
             'result_structure' => $result
         ]);
+
+        // Альтернативный способ: получаем форумы через core_course_get_contents
+        try {
+            $contents = $this->getCourseContents($courseId);
+            if ($contents !== false && is_array($contents)) {
+                $forumsFromContents = [];
+                foreach ($contents as $section) {
+                    if (isset($section['modules']) && is_array($section['modules'])) {
+                        foreach ($section['modules'] as $module) {
+                            if (($module['modname'] ?? '') === 'forum') {
+                                $forumId = $module['instance'] ?? null;
+                                if ($forumId) {
+                                    $forumsFromContents[] = [
+                                        'id' => $forumId,
+                                        'name' => $module['name'] ?? 'Форум',
+                                        'intro' => $module['description'] ?? '',
+                                        'cmid' => $module['id'] ?? null,
+                                        'url' => $module['url'] ?? null,
+                                        'visible' => $module['visible'] ?? 1,
+                                        'modname' => 'forum'
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (!empty($forumsFromContents)) {
+                    Log::info('getCourseForums: Найдены форумы через core_course_get_contents', [
+                        'course_id' => $courseId,
+                        'forums_count' => count($forumsFromContents),
+                        'forums' => $forumsFromContents
+                    ]);
+                    return $forumsFromContents;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('getCourseForums: Ошибка при альтернативном получении форумов', [
+                'course_id' => $courseId,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         return [];
     }
