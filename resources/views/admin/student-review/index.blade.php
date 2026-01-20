@@ -1175,10 +1175,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция для синхронизации всех курсов
     async function syncAllCourses(tab) {
+        // Защита от повторного запуска
+        if (isSyncing) {
+            console.log('Синхронизация уже идет, пропускаем...');
+            return;
+        }
+        
         if (courses.length === 0) {
             return;
         }
         
+        isSyncing = true;
         const progressDiv = document.getElementById('sync-progress');
         const progressText = document.getElementById('sync-progress-text');
         const progressBar = document.getElementById('sync-progress-bar').querySelector('.progress-bar');
@@ -1186,59 +1193,97 @@ document.addEventListener('DOMContentLoaded', function() {
         progressDiv.classList.remove('d-none');
         progressText.textContent = `Найдено курсов: ${courses.length}`;
         progressBar.style.width = '0%';
+        progressBar.classList.remove('bg-success');
+        progressBar.classList.add('progress-bar-animated');
         
         let syncedCount = 0;
         
-        for (let i = 0; i < courses.length; i++) {
-            const course = courses[i];
-            const success = await syncCourseData(course.id, course.name, tab);
-            
-            if (success) {
-                syncedCount++;
+        try {
+            for (let i = 0; i < courses.length; i++) {
+                const course = courses[i];
+                const success = await syncCourseData(course.id, course.name, tab);
+                
+                if (success) {
+                    syncedCount++;
+                }
+                
+                // Обновляем прогресс-бар
+                const progress = ((i + 1) / courses.length) * 100;
+                progressBar.style.width = progress + '%';
+                
+                // Небольшая задержка между запросами, чтобы не перегружать сервер
+                if (i < courses.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
             }
             
-            // Обновляем прогресс-бар
-            const progress = ((i + 1) / courses.length) * 100;
-            progressBar.style.width = progress + '%';
+            // Завершение синхронизации
+            progressText.textContent = `Синхронизация завершена: ${syncedCount} из ${courses.length} курсов`;
+            progressBar.classList.remove('progress-bar-animated');
+            progressBar.classList.add('bg-success');
             
-            // Небольшая задержка между запросами, чтобы не перегружать сервер
-            if (i < courses.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
+            // Устанавливаем флаг, что синхронизация завершена
+            sessionStorage.setItem('justSynced', 'true');
+            
+            // Скрываем индикатор через 3 секунды и перезагружаем страницу ОДИН РАЗ
+            setTimeout(() => {
+                progressDiv.classList.add('d-none');
+                isSyncing = false;
+                // Перезагружаем страницу только один раз после синхронизации
+                window.location.reload();
+            }, 3000);
+        } catch (error) {
+            console.error('Ошибка синхронизации:', error);
+            progressText.textContent = 'Ошибка синхронизации';
+            progressBar.classList.remove('progress-bar-animated');
+            progressBar.classList.add('bg-danger');
+            isSyncing = false;
+            
+            setTimeout(() => {
+                progressDiv.classList.add('d-none');
+            }, 5000);
         }
-        
-        // Завершение синхронизации
-        progressText.textContent = `Синхронизация завершена: ${syncedCount} из ${courses.length} курсов`;
-        progressBar.classList.remove('progress-bar-animated');
-        progressBar.classList.add('bg-success');
-        
-        // Скрываем индикатор через 3 секунды и перезагружаем страницу
-        setTimeout(() => {
-            progressDiv.classList.add('d-none');
-            // Перезагружаем страницу для отображения обновленных данных
-            window.location.reload();
-        }, 3000);
     }
     
-    // Автоматическая синхронизация при загрузке страницы (только для тестов и форумов)
-    // Синхронизируем автоматически при открытии вкладки "Тесты" или "Форумы"
-    const autoSync = true; // Включена автоматическая синхронизация
+    // Флаг для отслеживания процесса синхронизации
+    let isSyncing = false;
     
-    if (autoSync && (currentTab === 'quizzes' || currentTab === 'forums')) {
-        // Запускаем синхронизацию через 1 секунду после загрузки страницы
+    // Автоматическая синхронизация при загрузке страницы (только для тестов и форумов)
+    // ОТКЛЮЧЕНА по умолчанию, чтобы избежать бесконечных циклов
+    // Пользователь может запустить синхронизацию вручную через кнопку
+    const autoSync = false; // Отключена автоматическая синхронизация
+    
+    // Проверяем, не была ли страница только что перезагружена после синхронизации
+    const urlParams = new URLSearchParams(window.location.search);
+    const justSynced = sessionStorage.getItem('justSynced');
+    
+    if (autoSync && !justSynced && (currentTab === 'quizzes' || currentTab === 'forums')) {
+        // Запускаем синхронизацию только если это не перезагрузка после синхронизации
+        window.autoSyncInProgress = true;
         setTimeout(() => {
             syncAllCourses(currentTab);
         }, 1000);
+    } else {
+        // Очищаем флаг после первой загрузки
+        sessionStorage.removeItem('justSynced');
     }
     
     // Также синхронизируем при переключении на вкладку "Тесты" или "Форумы"
+    // Но только если синхронизация не идет
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', function() {
             const tab = this.getAttribute('data-tab');
-            if (autoSync && (tab === 'quizzes' || tab === 'forums')) {
+            if (autoSync && !isSyncing && (tab === 'quizzes' || tab === 'forums')) {
                 // Небольшая задержка, чтобы вкладка успела переключиться
                 setTimeout(() => {
-                    syncAllCourses(tab);
+                    if (!isSyncing) {
+                        isSyncing = true;
+                        window.autoSyncInProgress = true;
+                        syncAllCourses(tab).finally(() => {
+                            isSyncing = false;
+                            window.autoSyncInProgress = false;
+                        });
+                    }
                 }, 500);
             }
         });
@@ -1249,8 +1294,15 @@ document.addEventListener('DOMContentLoaded', function() {
     syncButton.className = 'btn btn-sm btn-primary ms-2';
     syncButton.innerHTML = '<i class="fas fa-sync me-1"></i>Обновить данные из Moodle';
     syncButton.onclick = function() {
+        if (isSyncing) {
+            alert('Синхронизация уже выполняется. Пожалуйста, подождите...');
+            return;
+        }
+        
         const activeTab = document.querySelector('.tab-button.active')?.getAttribute('data-tab') || currentTab;
         if (activeTab === 'quizzes' || activeTab === 'forums') {
+            // Очищаем флаг перед ручной синхронизацией
+            sessionStorage.removeItem('justSynced');
             syncAllCourses(activeTab);
         } else {
             alert('Синхронизация доступна только для вкладок "Тесты" и "Форумы"');
