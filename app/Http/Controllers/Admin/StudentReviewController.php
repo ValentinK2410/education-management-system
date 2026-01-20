@@ -238,6 +238,9 @@ class StudentReviewController extends Controller
                 // Извлекаем текст сообщения из progress_data или draft_data
                 $progress->message_text = $this->extractForumMessage($progress);
 
+                // Формируем ссылку на конкретное обсуждение форума
+                $progress->forum_discussion_url = $this->getForumDiscussionUrl($progress);
+
                 // Если needs_response не установлен, но есть посты, устанавливаем его
                 if (is_null($progress->needs_response) && $progress->progress_data) {
                     $posts = $progress->progress_data['posts'] ?? [];
@@ -790,9 +793,27 @@ class StudentReviewController extends Controller
 
                             // Сохраняем данные только если студент написал хотя бы один пост
                             if ($hasStudentPosts) {
+                                // Находим последний пост студента с needs_response = true для формирования ссылки
+                                $lastUnansweredPost = null;
+                                $lastUnansweredPostTime = 0;
+                                foreach ($posts as $post) {
+                                    if (isset($post['needs_response']) && $post['needs_response']) {
+                                        $postTime = $post['timecreated'] ?? 0;
+                                        if ($postTime > $lastUnansweredPostTime) {
+                                            $lastUnansweredPostTime = $postTime;
+                                            $lastUnansweredPost = $post;
+                                        }
+                                    }
+                                }
+
                                 $progressData = [
                                     'posts' => $posts,
                                     'posts_count' => count($posts),
+                                    'last_unanswered_post' => $lastUnansweredPost ? [
+                                        'id' => $lastUnansweredPost['id'] ?? null,
+                                        'discussion' => $lastUnansweredPost['discussion'] ?? null,
+                                        'timecreated' => $lastUnansweredPost['timecreated'] ?? null,
+                                    ] : null,
                                 ];
 
                                 Log::info('Сохранение данных форума для студента', [

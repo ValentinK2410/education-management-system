@@ -1228,6 +1228,7 @@ class MoodleApiService
                         $post['has_teacher_reply'] = $hasTeacherReply;
                         $post['needs_response'] = !$hasTeacherReply; // Если нет ответа преподавателя, требуется ответ
                         $post['is_last_post'] = ($postTime == $lastPostTime); // Флаг, что это последний пост в обсуждении
+                        $post['discussion'] = $discussionId; // Сохраняем ID обсуждения для формирования ссылки
 
                         if (!isset($allPosts[$forumId])) {
                             $allPosts[$forumId] = [];
