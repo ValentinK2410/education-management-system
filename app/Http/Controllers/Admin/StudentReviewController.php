@@ -178,7 +178,7 @@ class StudentReviewController extends Controller
             })
             ->sortByDesc(function ($progress) {
                 // Сортируем: сначала отвеченные, потом неотвеченные
-                return in_array($progress->status, ['answered', 'graded', 'submitted']) ? 1 : 0;
+                return in_array($progress->status, ['in_progress', 'graded', 'submitted']) ? 1 : 0;
             })
             ->values();
 
