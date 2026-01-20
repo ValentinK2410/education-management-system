@@ -649,7 +649,25 @@ class StudentReviewController extends Controller
                             'course_id' => $courseId,
                             'forums_count' => count($moodleForums),
                             'forum_posts_keys' => array_keys($forumPosts),
-                            'total_posts' => array_sum(array_map('count', $forumPosts))
+                            'total_posts' => array_sum(array_map('count', $forumPosts)),
+                            'forum_posts_details' => array_map(function($posts) {
+                                return [
+                                    'posts_count' => count($posts),
+                                    'posts_with_needs_response' => count(array_filter($posts, function($p) {
+                                        return $p['needs_response'] ?? false;
+                                    })),
+                                    'posts' => array_map(function($p) {
+                                        return [
+                                            'id' => $p['id'] ?? null,
+                                            'subject' => $p['subject'] ?? null,
+                                            'timecreated' => $p['timecreated'] ?? null,
+                                            'needs_response' => $p['needs_response'] ?? false,
+                                            'has_teacher_reply' => $p['has_teacher_reply'] ?? false,
+                                            'is_last_post' => $p['is_last_post'] ?? false
+                                        ];
+                                    }, $posts)
+                                ];
+                            }, $forumPosts)
                         ]);
 
                         // Обновляем данные в базе
@@ -671,7 +689,7 @@ class StudentReviewController extends Controller
                             // Проверяем посты студента
                             $lastStudentPost = null;
                             $lastStudentPostTime = 0;
-                            
+
                             foreach ($posts as $post) {
                                 $hasStudentPosts = true;
 
@@ -679,26 +697,26 @@ class StudentReviewController extends Controller
                                 if (isset($post['needs_response']) && $post['needs_response']) {
                                     $needsResponse = true;
                                 }
-                                
+
                                 // Отслеживаем последний пост студента
                                 $postTime = $post['timecreated'] ?? 0;
                                 if ($postTime > $lastStudentPostTime) {
                                     $lastStudentPostTime = $postTime;
                                     $lastStudentPost = $post;
                                 }
-                                
+
                                 if ($postTime > $latestPostTime) {
                                     $latestPostTime = $postTime;
                                 }
                             }
-                            
+
                             // ВАЖНО: Если последний пост студента требует ответа (needs_response = true),
                             // или это последний пост в обсуждении и после него нет ответа преподавателя,
                             // устанавливаем needsResponse = true
                             if ($lastStudentPost && isset($lastStudentPost['needs_response']) && $lastStudentPost['needs_response']) {
                                 $needsResponse = true;
                             }
-                            
+
                             // Дополнительная проверка: если последний пост студента помечен как последний в обсуждении
                             // и требует ответа, устанавливаем needsResponse
                             if ($lastStudentPost && isset($lastStudentPost['is_last_post']) && $lastStudentPost['is_last_post']) {

@@ -950,6 +950,13 @@ class MoodleApiService
         if ($teachers !== false && is_array($teachers)) {
             $teacherIds = array_column($teachers, 'id');
         }
+        
+        Log::info('Преподаватели курса для проверки форумов', [
+            'course_id' => $courseId,
+            'teachers_count' => is_array($teachers) ? count($teachers) : 0,
+            'teacher_ids' => $teacherIds,
+            'teachers' => $teachers
+        ]);
 
         $allPosts = [];
 
@@ -1132,7 +1139,22 @@ class MoodleApiService
                         'discussion_id' => $discussionId,
                         'forum_id' => $forumId,
                         'student_posts_count' => count($studentPosts),
-                        'needs_response_count' => count(array_filter($studentPosts, function($p) { return $p['needs_response'] ?? false; }))
+                        'needs_response_count' => count(array_filter($studentPosts, function($p) { return $p['needs_response'] ?? false; })),
+                        'last_post_time' => $lastPostTime,
+                        'is_last_post_from_student' => $isLastPostFromStudent,
+                        'is_last_post_from_teacher' => $isLastPostFromTeacher,
+                        'last_post_author_id' => $lastPostAuthorId,
+                        'student_moodle_id' => $studentMoodleId,
+                        'teacher_ids' => $teacherIds,
+                        'posts_with_needs_response' => array_map(function($p) {
+                            return [
+                                'id' => $p['id'] ?? null,
+                                'timecreated' => $p['timecreated'] ?? null,
+                                'needs_response' => $p['needs_response'] ?? false,
+                                'is_last_post' => $p['is_last_post'] ?? false,
+                                'has_teacher_reply' => $p['has_teacher_reply'] ?? false
+                            ];
+                        }, array_filter($studentPosts, function($p) { return $p['needs_response'] ?? false; }))
                     ]);
                 } else {
                     Log::warning('Ошибка получения постов обсуждения', [
