@@ -672,12 +672,26 @@ class StudentReviewController extends Controller
 
                         // Обновляем данные в базе
                         foreach ($moodleForums as $moodleForum) {
-                            $activity = \App\Models\CourseActivity::where('course_id', $courseId)
-                                ->where('moodle_activity_id', $moodleForum['id'])
-                                ->where('activity_type', 'forum')
-                                ->first();
+                            // Ищем или создаем CourseActivity для форума
+                            $activity = \App\Models\CourseActivity::firstOrCreate(
+                                [
+                                    'course_id' => $courseId,
+                                    'moodle_activity_id' => $moodleForum['id'],
+                                    'activity_type' => 'forum',
+                                ],
+                                [
+                                    'title' => $moodleForum['name'] ?? 'Форум',
+                                    'description' => $moodleForum['intro'] ?? null,
+                                    'is_active' => true,
+                                ]
+                            );
 
                             if (!$activity) {
+                                Log::warning('Не удалось создать или найти активность форума', [
+                                    'course_id' => $courseId,
+                                    'forum_id' => $moodleForum['id'],
+                                    'forum_name' => $moodleForum['name'] ?? 'Unknown'
+                                ]);
                                 continue;
                             }
 
