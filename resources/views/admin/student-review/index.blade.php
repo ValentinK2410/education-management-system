@@ -1124,17 +1124,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Проверяем параметр tab в URL
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'assignments';
+    const currentTab = tabParam;
 
     const tabElement = document.getElementById('tab-' + tabParam);
-    if (tabElement) {
-        switchTab(null, tabParam);
+    if (tabElement && typeof window.switchTab === 'function') {
+        window.switchTab(null, tabParam);
     }
 
     console.log('Initialization complete');
     
     // Асинхронная синхронизация данных из Moodle
     const courses = @json(($courses ?? collect())->toArray());
-    const currentTab = urlParams.get('tab') || 'assignments';
     
     // Функция для синхронизации данных курса
     async function syncCourseData(courseId, courseName, tab) {
@@ -1254,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const autoSync = false; // Отключена автоматическая синхронизация
     
     // Проверяем, не была ли страница только что перезагружена после синхронизации
-    const urlParams = new URLSearchParams(window.location.search);
+    // Используем уже объявленную переменную urlParams
     const justSynced = sessionStorage.getItem('justSynced');
     
     if (autoSync && !justSynced && (currentTab === 'quizzes' || currentTab === 'forums')) {
