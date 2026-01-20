@@ -343,9 +343,24 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<div class="mb-4">';
         html += '<h6><i class="fas fa-info-circle me-2"></i>Информация о тесте</h6>';
         html += '<ul class="list-unstyled">';
-        html += `<li><strong>ID курса:</strong> ${resultsData.course_id}</li>`;
+        
+        // Информация о курсе
+        if (resultsData.moodle_course_id) {
+            html += `<li><strong>Moodle Course ID:</strong> ${resultsData.moodle_course_id}</li>`;
+        }
+        if (resultsData.course_id_local) {
+            html += `<li><strong>Локальный ID курса:</strong> ${resultsData.course_id_local}</li>`;
+        }
+        if (resultsData.course_id_input) {
+            html += `<li><strong>Введенный ID:</strong> ${resultsData.course_id_input}</li>`;
+        }
+        if (resultsData.course_name) {
+            html += `<li><strong>Название курса:</strong> ${resultsData.course_name}</li>`;
+        }
+        
+        // Информация о студенте
         if (resultsData.student_id) {
-            html += `<li><strong>ID студента:</strong> ${resultsData.student_id}</li>`;
+            html += `<li><strong>Локальный ID студента:</strong> ${resultsData.student_id}</li>`;
             if (resultsData.student_info) {
                 html += `<li><strong>Имя студента:</strong> ${resultsData.student_info.name}</li>`;
                 html += `<li><strong>Email:</strong> ${resultsData.student_info.email}</li>`;
