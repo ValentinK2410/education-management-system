@@ -2113,6 +2113,7 @@ class MoodleApiService
                 'assignment_id' => $assignmentId
             ]);
 
+            // mod_assign_get_assignments поддерживает assignmentids параметр
             $result = $this->call('mod_assign_get_assignments', [
                 'courseids' => [],
                 'assignmentids' => [$assignmentId]
@@ -2134,9 +2135,17 @@ class MoodleApiService
                 return false;
             }
 
-            // Возвращаем первое задание из результата
-            if (isset($result['courses'][0]['assignments'][0])) {
-                return $result['courses'][0]['assignments'][0];
+            // Ищем задание в результатах всех курсов
+            if (isset($result['courses']) && is_array($result['courses'])) {
+                foreach ($result['courses'] as $course) {
+                    if (isset($course['assignments']) && is_array($course['assignments'])) {
+                        foreach ($course['assignments'] as $assignment) {
+                            if (isset($assignment['id']) && $assignment['id'] == $assignmentId) {
+                                return $assignment;
+                            }
+                        }
+                    }
+                }
             }
 
             return false;
@@ -2162,10 +2171,14 @@ class MoodleApiService
                 'quiz_id' => $quizId
             ]);
 
-            // Используем mod_quiz_get_quizzes_by_courses с пустым массивом courseids и quizids
+            // mod_quiz_get_quizzes_by_courses не поддерживает quizids параметр
+            // Нужно получить все тесты (передав пустой массив courseids) и отфильтровать
+            // Или использовать mod_quiz_get_quiz_access_information для получения информации о доступе
+            // Но для полной информации используем mod_quiz_get_quizzes_by_courses
+            
+            // Получаем все доступные тесты (если courseids пустой, возвращаются все доступные тесты)
             $result = $this->call('mod_quiz_get_quizzes_by_courses', [
-                'courseids' => [],
-                'quizids' => [$quizId]
+                'courseids' => []
             ]);
 
             if ($result === false) {
@@ -2184,9 +2197,13 @@ class MoodleApiService
                 return false;
             }
 
-            // Возвращаем первый тест из результата
-            if (isset($result['quizzes'][0])) {
-                return $result['quizzes'][0];
+            // Ищем тест по ID в результате
+            if (isset($result['quizzes']) && is_array($result['quizzes'])) {
+                foreach ($result['quizzes'] as $quiz) {
+                    if (isset($quiz['id']) && $quiz['id'] == $quizId) {
+                        return $quiz;
+                    }
+                }
             }
 
             return false;
