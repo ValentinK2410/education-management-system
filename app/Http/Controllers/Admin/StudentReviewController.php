@@ -121,7 +121,7 @@ class StudentReviewController extends Controller
                 // Учитываем, что grade может быть 0 (ноль), что тоже является валидной оценкой
                 $hasGrade = false;
                 $gradeValue = null;
-                
+
                 // Проверяем оценку разными способами
                 if ($progress->grade !== null && $progress->grade !== '') {
                     // Преобразуем в число для проверки
@@ -131,12 +131,12 @@ class StudentReviewController extends Controller
                         $hasGrade = true;
                     }
                 }
-                
+
                 // Также проверяем is_graded, если оценка не найдена напрямую
                 if (!$hasGrade && $progress->is_graded) {
                     $hasGrade = true;
                 }
-                
+
                 // Если есть оценка (даже если is_graded не установлен), считаем тест выполненным
                 if ($hasGrade) {
                     $progress->status = 'graded';
@@ -169,7 +169,7 @@ class StudentReviewController extends Controller
                 }
                 // Тест не начат
                 else {
-                    $progress->status = 'not_answered';
+                    $progress->status = 'not_started';
                     $progress->status_text = 'Не ответил';
                     $progress->status_class = 'warning';
                 }
@@ -208,7 +208,7 @@ class StudentReviewController extends Controller
                     ->orWhereNotNull('progress_data');
             })
             ->with(['user.roles', 'course', 'activity.course']);
-        
+
         // Логируем запрос для отладки
         $forumsCount = $forumsQuery->count();
         Log::info('Запрос форумов для страницы student-review', [
@@ -216,7 +216,7 @@ class StudentReviewController extends Controller
             'course_ids' => $courseIds->toArray(),
             'forums_count_before_filter' => $forumsCount
         ]);
-        
+
         $forums = $forumsQuery
             ->orderByRaw('needs_response DESC, submitted_at DESC')
             ->get()
@@ -237,7 +237,7 @@ class StudentReviewController extends Controller
 
                 // Извлекаем текст сообщения из progress_data или draft_data
                 $progress->message_text = $this->extractForumMessage($progress);
-                
+
                 // Если needs_response не установлен, но есть посты, устанавливаем его
                 if (is_null($progress->needs_response) && $progress->progress_data) {
                     $posts = $progress->progress_data['posts'] ?? [];
@@ -254,11 +254,11 @@ class StudentReviewController extends Controller
                         $progress->needs_response = $hasNeedsResponse;
                     }
                 }
-                
+
                 return $progress;
             })
             ->values();
-        
+
         Log::info('Результат фильтрации форумов', [
             'forums_count_after_filter' => $forums->count(),
             'forums_with_needs_response' => $forums->where('needs_response', true)->count()
@@ -277,7 +277,7 @@ class StudentReviewController extends Controller
     public function syncCourseData(Request $request, int $courseId)
     {
         $user = auth()->user();
-        
+
         // Проверяем права доступа
         if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
             return response()->json(['error' => 'Доступ запрещен'], 403);
@@ -302,7 +302,7 @@ class StudentReviewController extends Controller
             $userToken = $user ? $user->getMoodleToken() : null;
             $moodleApi = new MoodleApiService(null, $userToken);
             $tab = $request->get('tab', 'quizzes'); // assignments, quizzes, forums
-            
+
             // Получаем студентов курса
             $students = \App\Models\User::whereHas('courses', function ($query) use ($courseId) {
                 $query->where('courses.id', $courseId);
@@ -319,7 +319,7 @@ class StudentReviewController extends Controller
             if ($tab === 'assignments') {
                 // Синхронизация заданий
                 $moodleAssignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
-                
+
                 if ($moodleAssignments === false) {
                     return response()->json(['error' => 'Не удалось получить задания из Moodle'], 500);
                 }
@@ -331,7 +331,7 @@ class StudentReviewController extends Controller
                             $student->moodle_user_id,
                             $moodleAssignments
                         );
-                        
+
                         $grades = $moodleApi->getStudentGrades(
                             $course->moodle_course_id,
                             $student->moodle_user_id,
@@ -383,7 +383,7 @@ class StudentReviewController extends Controller
                             $hasGrade = false;
                             $gradeValue = null;
                             $gradedAt = null;
-                            
+
                             if ($grade && isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '') {
                                 $gradeValue = (float)$grade['grade'];
                                 $hasGrade = true;
@@ -395,7 +395,7 @@ class StudentReviewController extends Controller
                             // Определяем статус
                             $status = 'not_submitted';
                             $needsGrading = false;
-                            
+
                             if ($hasGrade) {
                                 $status = 'graded';
                             } elseif ($submission && ($submission['status'] ?? '') === 'submitted') {
@@ -415,7 +415,7 @@ class StudentReviewController extends Controller
                                 'grade_value' => $gradeValue,
                                 'status' => $status,
                             ]);
-                            
+
                             StudentActivityProgress::updateOrCreate(
                                 [
                                     'user_id' => $student->id,
@@ -425,8 +425,8 @@ class StudentReviewController extends Controller
                                 [
                                     'submitted_at' => $submittedAt,
                                     'grade' => $hasGrade ? $gradeValue : null,
-                                    'max_grade' => isset($moodleAssignment['grade']) && $moodleAssignment['grade'] > 0 
-                                        ? (float)$moodleAssignment['grade'] 
+                                    'max_grade' => isset($moodleAssignment['grade']) && $moodleAssignment['grade'] > 0
+                                        ? (float)$moodleAssignment['grade']
                                         : null,
                                     'is_graded' => $hasGrade,
                                     'needs_grading' => $needsGrading,
@@ -434,7 +434,7 @@ class StudentReviewController extends Controller
                                     'graded_at' => $gradedAt,
                                 ]
                             );
-                            
+
                             $updatedCount++;
                         }
                     } catch (\Exception $e) {
@@ -449,7 +449,7 @@ class StudentReviewController extends Controller
             } elseif ($tab === 'quizzes') {
                 // Синхронизация тестов
                 $moodleQuizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
-                
+
                 if ($moodleQuizzes === false) {
                     return response()->json(['error' => 'Не удалось получить тесты из Moodle'], 500);
                 }
@@ -462,7 +462,7 @@ class StudentReviewController extends Controller
                             $student->moodle_user_id,
                             $moodleQuizzes
                         );
-                        
+
                         $quizGrades = $moodleApi->getStudentQuizGrades(
                             $course->moodle_course_id,
                             $student->moodle_user_id,
@@ -503,13 +503,13 @@ class StudentReviewController extends Controller
                             // Определяем, завершена ли последняя попытка
                             $latestAttempt = !empty($attempts) ? end($attempts) : null;
                             $isFinished = $latestAttempt && ($latestAttempt['state'] ?? '') === 'finished';
-                            
+
                             // Улучшенная проверка наличия оценки
                             // Проверяем оценку из mod_quiz_get_user_best_grade
                             $hasGrade = false;
                             $gradeValue = null;
                             $gradedAt = null;
-                            
+
                             if ($grade) {
                                 // Проверяем наличие оценки разными способами
                                 if (isset($grade['grade']) && $grade['grade'] !== null && $grade['grade'] !== '') {
@@ -532,7 +532,7 @@ class StudentReviewController extends Controller
                                     $hasGrade = true;
                                 }
                             }
-                            
+
                             // Дополнительно проверяем оценки из попыток (если есть завершенные попытки)
                             if (!$hasGrade && !empty($attempts)) {
                                 foreach ($attempts as $attempt) {
@@ -550,13 +550,13 @@ class StudentReviewController extends Controller
                                     }
                                 }
                             }
-                            
+
                             // Получаем существующую запись для проверки даты изменения
                             $existingProgress = StudentActivityProgress::where('user_id', $student->id)
                                 ->where('course_id', $courseId)
                                 ->where('activity_id', $activity->id)
                                 ->first();
-                            
+
                             Log::info('Синхронизация теста для студента', [
                                 'student_id' => $student->id,
                                 'student_name' => $student->name,
@@ -576,7 +576,7 @@ class StudentReviewController extends Controller
                                 'existing_updated_at' => $existingProgress ? $existingProgress->updated_at : null,
                                 'grade_from_api' => $grade,
                             ]);
-                            
+
                             // ВАЖНО: Создаем запись для ВСЕХ студентов и ВСЕХ тестов, даже если нет попыток
                             $progress = StudentActivityProgress::updateOrCreate(
                                 [
@@ -586,23 +586,23 @@ class StudentReviewController extends Controller
                                 ],
                                 [
                                     'attempts_count' => count($attempts),
-                                    'last_attempt_at' => !empty($attempts) && isset($latestAttempt['timestart']) 
-                                        ? date('Y-m-d H:i:s', $latestAttempt['timestart']) 
+                                    'last_attempt_at' => !empty($attempts) && isset($latestAttempt['timestart'])
+                                        ? date('Y-m-d H:i:s', $latestAttempt['timestart'])
                                         : null,
                                     'submitted_at' => $isFinished && isset($latestAttempt['timefinish'])
-                                        ? date('Y-m-d H:i:s', $latestAttempt['timefinish']) 
+                                        ? date('Y-m-d H:i:s', $latestAttempt['timefinish'])
                                         : null,
                                     'grade' => $hasGrade ? (float)$gradeValue : null,
-                                    'max_grade' => isset($moodleQuiz['grade']) && $moodleQuiz['grade'] > 0 
-                                        ? (float)$moodleQuiz['grade'] 
+                                    'max_grade' => isset($moodleQuiz['grade']) && $moodleQuiz['grade'] > 0
+                                        ? (float)$moodleQuiz['grade']
                                         : null,
                                     'is_graded' => $hasGrade, // Тест проверен, если есть оценка (включая 0)
                                     'needs_grading' => $isFinished && !$hasGrade, // Нужна проверка, если завершен, но нет оценки
-                                    'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : (!empty($attempts) ? 'in_progress' : 'not_answered')),
+                                    'status' => $hasGrade ? 'graded' : ($isFinished ? 'submitted' : (!empty($attempts) ? 'in_progress' : 'not_started')),
                                     'graded_at' => $gradedAt,
                                 ]
                             );
-                            
+
                             Log::info('Сохранена запись прогресса теста', [
                                 'progress_id' => $progress->id,
                                 'student_id' => $student->id,
@@ -614,7 +614,7 @@ class StudentReviewController extends Controller
                                 'graded_at' => $progress->graded_at,
                                 'updated_at' => $progress->updated_at,
                             ]);
-                            
+
                             $updatedCount++;
                         }
                     } catch (\Exception $e) {
@@ -629,7 +629,7 @@ class StudentReviewController extends Controller
             } elseif ($tab === 'forums') {
                 // Синхронизация форумов
                 $moodleForums = $moodleApi->getCourseForums($course->moodle_course_id);
-                
+
                 if ($moodleForums === false) {
                     return response()->json(['error' => 'Не удалось получить форумы из Moodle'], 500);
                 }
@@ -641,7 +641,7 @@ class StudentReviewController extends Controller
                             $student->moodle_user_id,
                             $moodleForums
                         );
-                        
+
                         Log::info('Синхронизация форумов для студента', [
                             'student_id' => $student->id,
                             'student_name' => $student->name,
@@ -671,12 +671,12 @@ class StudentReviewController extends Controller
                             // Проверяем посты студента
                             foreach ($posts as $post) {
                                 $hasStudentPosts = true;
-                                
+
                                 // Если есть пост студента с needs_response = true, значит нужен ответ
                                 if (isset($post['needs_response']) && $post['needs_response']) {
                                     $needsResponse = true;
                                 }
-                                
+
                                 $postTime = $post['timecreated'] ?? 0;
                                 if ($postTime > $latestPostTime) {
                                     $latestPostTime = $postTime;
@@ -689,7 +689,7 @@ class StudentReviewController extends Controller
                                     'posts' => $posts,
                                     'posts_count' => count($posts),
                                 ];
-                                
+
                                 Log::info('Сохранение данных форума для студента', [
                                     'student_id' => $student->id,
                                     'activity_id' => $activity->id,
@@ -698,7 +698,7 @@ class StudentReviewController extends Controller
                                     'needs_response' => $needsResponse,
                                     'latest_post_time' => $latestPostTime
                                 ]);
-                                
+
                                 StudentActivityProgress::updateOrCreate(
                                     [
                                         'user_id' => $student->id,
@@ -712,7 +712,7 @@ class StudentReviewController extends Controller
                                         'progress_data' => $progressData, // Laravel автоматически конвертирует в JSON через cast
                                     ]
                                 );
-                                
+
                                 $updatedCount++;
                             } else {
                                 // Если студент не писал в форум, удаляем запись (если была)
@@ -721,7 +721,7 @@ class StudentReviewController extends Controller
                                     ->where('activity_id', $activity->id)
                                     ->delete();
                             }
-                            
+
                             $updatedCount++;
                         }
                     } catch (\Exception $e) {
@@ -746,7 +746,7 @@ class StudentReviewController extends Controller
                 'course_id' => $courseId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'error' => 'Ошибка синхронизации: ' . $e->getMessage()
             ], 500);
@@ -764,14 +764,14 @@ class StudentReviewController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Пользователь не авторизован'
                 ], 401)->header('Content-Type', 'application/json');
             }
-            
+
             // Проверяем права доступа
             if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
                 return response()->json([
@@ -782,7 +782,7 @@ class StudentReviewController extends Controller
 
         $instructor = $user;
         $courses = \App\Models\Course::where('instructor_id', $instructor->id)->get();
-        
+
         if ($courses->isEmpty()) {
             return response()->json([
                 'success' => false,
@@ -793,14 +793,14 @@ class StudentReviewController extends Controller
 
         // Определяем, что проверяем: assignments, quizzes, forums или all (все типы)
         $checkType = $request->get('type', 'all'); // assignments, quizzes, forums или all
-        
+
         $results = [];
-        
+
         // Используем токен текущего пользователя (преподавателя/администратора)
         $user = auth()->user();
         $userToken = $user ? $user->getMoodleToken() : null;
         $moodleApi = new MoodleApiService(null, $userToken);
-        
+
         foreach ($courses as $course) {
                 if (!$course->moodle_course_id) {
                     $results[] = [
@@ -825,7 +825,7 @@ class StudentReviewController extends Controller
                         'forums' => [],
                         'students' => []
                     ];
-                    
+
                     // Проверяем задания
                     $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
                     if ($assignments !== false) {
@@ -834,7 +834,7 @@ class StudentReviewController extends Controller
                     } else {
                         $courseResult['assignments_count'] = 0;
                     }
-                    
+
                     // Проверяем тесты
                     $quizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
                     if ($quizzes !== false) {
@@ -843,7 +843,7 @@ class StudentReviewController extends Controller
                     } else {
                         $courseResult['quizzes_count'] = 0;
                     }
-                    
+
                     // Проверяем форумы
                     $forums = $moodleApi->getCourseForums($course->moodle_course_id);
                     if ($forums !== false) {
@@ -852,7 +852,7 @@ class StudentReviewController extends Controller
                     } else {
                         $courseResult['forums_count'] = 0;
                     }
-                    
+
                     // Получаем студентов курса
                     $students = \App\Models\User::whereHas('courses', function ($query) use ($course) {
                         $query->where('courses.id', $course->id);
@@ -864,7 +864,7 @@ class StudentReviewController extends Controller
                     ->get();
 
                     $courseResult['students_count'] = $students ? $students->count() : 0;
-                    
+
                     // Для каждого студента получаем данные по всем типам
                     $totalUnansweredPosts = 0;
                     foreach ($students as $student) {
@@ -891,7 +891,7 @@ class StudentReviewController extends Controller
                                 $studentResult['submissions'] = $submissions;
                                 $studentResult['submissions_count'] = count($submissions);
                             }
-                            
+
                             $grades = $moodleApi->getStudentGrades(
                                 $course->moodle_course_id,
                                 $student->moodle_user_id,
@@ -940,10 +940,10 @@ class StudentReviewController extends Controller
 
                             if ($forumPosts !== false && !empty($forumPosts)) {
                                 $studentResult['forum_posts'] = $forumPosts;
-                                
+
                                 $totalPosts = 0;
                                 $unansweredPosts = 0;
-                                
+
                                 foreach ($forumPosts as $forumId => $posts) {
                                     foreach ($posts as $post) {
                                         $totalPosts++;
@@ -960,7 +960,7 @@ class StudentReviewController extends Controller
                                         }
                                     }
                                 }
-                                
+
                                 $studentResult['total_posts'] = $totalPosts;
                                 $studentResult['unanswered_posts_count'] = $unansweredPosts;
                                 $totalUnansweredPosts += $unansweredPosts;
@@ -994,13 +994,13 @@ class StudentReviewController extends Controller
 
                     // Получаем тесты курса
                     $quizzes = $moodleApi->getCourseQuizzes($course->moodle_course_id);
-                    
+
                     if ($quizzes === false) {
                         // Получаем полный ответ API для детального анализа ошибки
                         $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
                             'courseids' => [$course->moodle_course_id]
                         ]);
-                        
+
                         $courseResult['error'] = 'Не удалось получить тесты из Moodle API';
                         $courseResult['api_response'] = $apiResponse;
                         $results[] = $courseResult;
@@ -1068,7 +1068,7 @@ class StudentReviewController extends Controller
                     $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
                         'courseids' => [$course->moodle_course_id]
                     ]);
-                    
+
                     $courseResult['api_response'] = $apiResponse;
                     $results[] = $courseResult;
                 } elseif ($checkType === 'forums') {
@@ -1093,13 +1093,13 @@ class StudentReviewController extends Controller
 
                     // Получаем форумы курса
                     $forums = $moodleApi->getCourseForums($course->moodle_course_id);
-                    
+
                     if ($forums === false) {
                         // Получаем полный ответ API для детального анализа ошибки
                         $apiResponse = $moodleApi->call('mod_forum_get_forums_by_courses', [
                             'courseids' => [$course->moodle_course_id]
                         ]);
-                        
+
                         $courseResult['error'] = 'Не удалось получить форумы из Moodle API';
                         $courseResult['api_response'] = $apiResponse;
                         $results[] = $courseResult;
@@ -1142,11 +1142,11 @@ class StudentReviewController extends Controller
 
                         if ($forumPosts !== false && !empty($forumPosts)) {
                             $studentResult['forum_posts'] = $forumPosts;
-                            
+
                             // Подсчитываем посты и неотвеченные посты
                             $totalPosts = 0;
                             $unansweredPosts = 0;
-                            
+
                             foreach ($forumPosts as $forumId => $posts) {
                                 foreach ($posts as $post) {
                                     $totalPosts++;
@@ -1163,7 +1163,7 @@ class StudentReviewController extends Controller
                                     }
                                 }
                             }
-                            
+
                             $studentResult['total_posts'] = $totalPosts;
                             $studentResult['unanswered_posts_count'] = $unansweredPosts;
                             $totalUnansweredPosts += $unansweredPosts;
@@ -1178,7 +1178,7 @@ class StudentReviewController extends Controller
                     $apiResponse = $moodleApi->call('mod_forum_get_forums_by_courses', [
                         'courseids' => [$course->moodle_course_id]
                     ]);
-                    
+
                     $courseResult['api_response'] = $apiResponse;
                     $results[] = $courseResult;
                 } else {
@@ -1204,16 +1204,16 @@ class StudentReviewController extends Controller
 
                     // Получаем задания курса
                     $assignments = $moodleApi->getCourseAssignments($course->moodle_course_id);
-                    
+
                     if ($assignments === false) {
                         // Получаем полный ответ API для детального анализа ошибки
                         $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
                             'courseids' => [$course->moodle_course_id]
                         ]);
-                        
+
                         $courseResult['error'] = 'Не удалось получить задания из Moodle API';
                         $courseResult['api_response'] = $apiResponse;
-                        
+
                         // Проверяем наличие предупреждений о правах доступа
                         if (isset($apiResponse['warnings']) && is_array($apiResponse['warnings'])) {
                             foreach ($apiResponse['warnings'] as $warning) {
@@ -1229,7 +1229,7 @@ class StudentReviewController extends Controller
                                 }
                             }
                         }
-                        
+
                         $results[] = $courseResult;
                         continue;
                     }
@@ -1269,14 +1269,14 @@ class StudentReviewController extends Controller
                         if ($submissions !== false) {
                             $studentResult['submissions'] = $submissions;
                             $studentResult['submissions_count'] = count($submissions);
-                            
+
                             // Получаем оценки студента
                             $grades = $moodleApi->getStudentGrades(
                                 $course->moodle_course_id,
                                 $student->moodle_user_id,
                                 $assignments
                             );
-                            
+
                             if ($grades !== false) {
                                 $studentResult['grades'] = $grades;
                                 $studentResult['grades_count'] = count($grades);
@@ -1290,9 +1290,9 @@ class StudentReviewController extends Controller
                     $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
                         'courseids' => [$course->moodle_course_id]
                     ]);
-                    
+
                     $courseResult['api_response'] = $apiResponse;
-                    
+
                     $results[] = $courseResult;
                 }
             }
@@ -1312,7 +1312,7 @@ class StudentReviewController extends Controller
                     }
                     $totalStudents += $result['students_count'] ?? 0;
                 }
-                
+
                 $coursesWithItems = count(array_filter($results, function($r) use ($checkType) {
                     if ($checkType === 'quizzes') {
                         return isset($r['quizzes_count']) && $r['quizzes_count'] > 0;
@@ -1329,11 +1329,11 @@ class StudentReviewController extends Controller
                     $totalStudents += $result['students_count'] ?? 0;
                 }
             }
-            
+
             $summary = [
                 'total_students' => $totalStudents,
             ];
-            
+
             if ($checkType === 'all') {
                 // Для всех типов показываем полную статистику
                 $totalAssignments = 0;
@@ -1343,13 +1343,13 @@ class StudentReviewController extends Controller
                 $coursesWithAssignments = 0;
                 $coursesWithQuizzes = 0;
                 $coursesWithForums = 0;
-                
+
                 foreach ($results as $result) {
                     $totalAssignments += $result['assignments_count'] ?? 0;
                     $totalQuizzes += $result['quizzes_count'] ?? 0;
                     $totalForums += $result['forums_count'] ?? 0;
                     $totalUnanswered += $result['total_unanswered_posts'] ?? 0;
-                    
+
                     if (isset($result['assignments_count']) && $result['assignments_count'] > 0) {
                         $coursesWithAssignments++;
                     }
@@ -1360,7 +1360,7 @@ class StudentReviewController extends Controller
                         $coursesWithForums++;
                     }
                 }
-                
+
                 $summary['total_assignments'] = $totalAssignments;
                 $summary['total_quizzes'] = $totalQuizzes;
                 $summary['total_forums'] = $totalForums;
@@ -1384,7 +1384,7 @@ class StudentReviewController extends Controller
                 $summary['total_assignments'] = $totalItems;
                 $summary['courses_with_assignments'] = $coursesWithItems;
             }
-            
+
             return response()->json([
                 'success' => true,
                 'check_type' => $checkType,
@@ -1397,7 +1397,7 @@ class StudentReviewController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'error' => 'Ошибка проверки: ' . $e->getMessage(),
