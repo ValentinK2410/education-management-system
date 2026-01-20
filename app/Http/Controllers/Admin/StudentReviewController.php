@@ -669,6 +669,9 @@ class StudentReviewController extends Controller
                             $hasStudentPosts = false;
 
                             // Проверяем посты студента
+                            $lastStudentPost = null;
+                            $lastStudentPostTime = 0;
+                            
                             foreach ($posts as $post) {
                                 $hasStudentPosts = true;
 
@@ -676,10 +679,31 @@ class StudentReviewController extends Controller
                                 if (isset($post['needs_response']) && $post['needs_response']) {
                                     $needsResponse = true;
                                 }
-
+                                
+                                // Отслеживаем последний пост студента
                                 $postTime = $post['timecreated'] ?? 0;
+                                if ($postTime > $lastStudentPostTime) {
+                                    $lastStudentPostTime = $postTime;
+                                    $lastStudentPost = $post;
+                                }
+                                
                                 if ($postTime > $latestPostTime) {
                                     $latestPostTime = $postTime;
+                                }
+                            }
+                            
+                            // ВАЖНО: Если последний пост студента требует ответа (needs_response = true),
+                            // или это последний пост в обсуждении и после него нет ответа преподавателя,
+                            // устанавливаем needsResponse = true
+                            if ($lastStudentPost && isset($lastStudentPost['needs_response']) && $lastStudentPost['needs_response']) {
+                                $needsResponse = true;
+                            }
+                            
+                            // Дополнительная проверка: если последний пост студента помечен как последний в обсуждении
+                            // и требует ответа, устанавливаем needsResponse
+                            if ($lastStudentPost && isset($lastStudentPost['is_last_post']) && $lastStudentPost['is_last_post']) {
+                                if (isset($lastStudentPost['needs_response']) && $lastStudentPost['needs_response']) {
+                                    $needsResponse = true;
                                 }
                             }
 

@@ -1044,9 +1044,25 @@ class MoodleApiService
                         }
                     }
 
+                    // Определяем последний пост в обсуждении (по времени создания)
+                    $lastPost = null;
+                    $lastPostTime = 0;
+                    foreach ($allDiscussionPosts as $post) {
+                        $postTime = $post['timecreated'] ?? 0;
+                        if ($postTime > $lastPostTime) {
+                            $lastPostTime = $postTime;
+                            $lastPost = $post;
+                        }
+                    }
+                    
+                    $lastPostAuthorId = $lastPost ? ($lastPost['author']['id'] ?? null) : null;
+                    $isLastPostFromStudent = $lastPostAuthorId == $studentMoodleId;
+                    $isLastPostFromTeacher = $lastPostAuthorId && in_array($lastPostAuthorId, $teacherIds);
+                    
                     // Добавляем посты студента с информацией о наличии ответов преподавателя
                     foreach ($studentPosts as $post) {
                         $postId = $post['id'] ?? null;
+                        $postTime = $post['timecreated'] ?? 0;
                         $hasTeacherReply = isset($teacherReplies[$postId]);
                         
                         // Также проверяем, есть ли ответы преподавателей на этот пост в цепочке
@@ -1056,6 +1072,7 @@ class MoodleApiService
                             foreach ($allDiscussionPosts as $replyPost) {
                                 $replyParentId = $replyPost['parent'] ?? null;
                                 $replyAuthorId = $replyPost['author']['id'] ?? null;
+                                $replyTime = $replyPost['timecreated'] ?? 0;
                                 
                                 // Если это ответ преподавателя и он отвечает на наш пост или на ответ на наш пост
                                 if (in_array($replyAuthorId, $teacherIds) && $replyParentId == $postId) {
@@ -1079,10 +1096,31 @@ class MoodleApiService
                                 }
                             }
                         }
+                        
+                        // ВАЖНО: Если это последний пост в обсуждении от студента, и после него нет поста от преподавателя,
+                        // то требуется ответ, даже если на предыдущие посты были ответы
+                        if ($postTime == $lastPostTime && $isLastPostFromStudent && !$isLastPostFromTeacher) {
+                            // Это последний пост от студента, проверяем, есть ли ответы после него
+                            $hasReplyAfter = false;
+                            foreach ($allDiscussionPosts as $replyPost) {
+                                $replyTime = $replyPost['timecreated'] ?? 0;
+                                $replyAuthorId = $replyPost['author']['id'] ?? null;
+                                // Если есть пост от преподавателя после последнего поста студента
+                                if ($replyTime > $postTime && in_array($replyAuthorId, $teacherIds)) {
+                                    $hasReplyAfter = true;
+                                    break;
+                                }
+                            }
+                            // Если нет ответа после последнего поста студента, требуется ответ
+                            if (!$hasReplyAfter) {
+                                $hasTeacherReply = false;
+                            }
+                        }
 
                         // Добавляем флаг о наличии ответа преподавателя
                         $post['has_teacher_reply'] = $hasTeacherReply;
                         $post['needs_response'] = !$hasTeacherReply; // Если нет ответа преподавателя, требуется ответ
+                        $post['is_last_post'] = ($postTime == $lastPostTime); // Флаг, что это последний пост в обсуждении
 
                         if (!isset($allPosts[$forumId])) {
                             $allPosts[$forumId] = [];
