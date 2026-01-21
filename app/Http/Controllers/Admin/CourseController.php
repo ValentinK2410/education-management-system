@@ -197,7 +197,7 @@ class CourseController extends Controller
      */
     public function show(Course $course)
     {
-        $course->load(['program.institution', 'program.courses', 'instructor']);
+        $course->load(['program.institution', 'program.courses', 'instructor', 'instructors']);
         return view('admin.courses.show', compact('course'));
     }
 

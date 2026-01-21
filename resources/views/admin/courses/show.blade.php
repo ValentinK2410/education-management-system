@@ -66,6 +66,27 @@
                                         @else
                                             <span class="text-muted">Не назначен</span>
                                         @endif
+
+                                        @if($course->instructors && $course->instructors->count() > 0)
+                                            <div class="mt-2">
+                                                <small class="text-muted d-block mb-1">Преподаватели курса (из Moodle):</small>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @foreach($course->instructors as $inst)
+                                                        @php
+                                                            $roleShort = $inst->pivot->moodle_role_shortname ?? null;
+                                                            $isPrimary = (bool)($inst->pivot->is_primary ?? false);
+                                                            $badgeClass = $isPrimary ? 'bg-success' : 'bg-secondary';
+                                                            $roleLabel = $roleShort ? " ({$roleShort})" : '';
+                                                            $source = $inst->pivot->source ?? 'moodle';
+                                                        @endphp
+                                                        <span class="badge {{ $badgeClass }}"
+                                                              title="{{ $inst->email }} | source={{ $source }}{{ $roleLabel }}">
+                                                            {{ $inst->name }}@if($isPrimary) ★@endif
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>

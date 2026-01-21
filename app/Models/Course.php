@@ -8,6 +8,7 @@ use App\Traits\Versionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -97,6 +98,18 @@ class Course extends Model
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    /**
+     * Получить всех преподавателей курса (например, из Moodle)
+     *
+     * @return BelongsToMany
+     */
+    public function instructors(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'course_instructors')
+            ->withPivot(['source', 'moodle_role_shortname', 'is_primary'])
+            ->withTimestamps();
     }
 
     /**

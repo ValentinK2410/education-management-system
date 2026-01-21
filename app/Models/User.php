@@ -101,6 +101,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Курсы, где пользователь указан как преподаватель (множественная связь)
+     *
+     * @return BelongsToMany
+     */
+    public function instructedCourses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_instructors')
+            ->withPivot(['source', 'moodle_role_shortname', 'is_primary'])
+            ->withTimestamps();
+    }
+
+    /**
      * Проверить, имеет ли пользователь определенную роль
      *
      * @param string $role Слаг роли для проверки

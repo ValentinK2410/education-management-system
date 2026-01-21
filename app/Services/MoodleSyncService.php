@@ -314,56 +314,105 @@ class MoodleSyncService
             }
         }
 
-        // Получаем преподавателей курса из Moodle
-        $instructorId = null;
+        // Получаем преподавателей курса из Moodle (может быть несколько)
+        $resolvedInstructors = []; // [ ['user_id' => int, 'moodle_role_shortname' => string|null], ... ]
+        $primaryInstructorId = null;
         try {
             $teachers = $this->moodleApi->getCourseTeachers($moodleCourseId);
             
             if ($teachers !== false && !empty($teachers)) {
-                // Берем первого преподавателя (или можно выбрать по приоритету)
-                $moodleTeacher = $teachers[0];
-                $teacherEmail = $moodleTeacher['email'] ?? null;
-                $teacherMoodleId = $moodleTeacher['id'] ?? null;
-                
-                if ($teacherEmail) {
-                    // Ищем преподавателя в локальной БД по email или moodle_user_id
-                    $instructor = \App\Models\User::where('email', $teacherEmail)
-                        ->orWhere('moodle_user_id', $teacherMoodleId)
-                        ->first();
-                    
-                    if ($instructor) {
-                        // Проверяем, есть ли у пользователя роль преподавателя
-                        if (!$instructor->hasRole('instructor')) {
-                            // Если нет роли преподавателя, добавляем её
-                            $instructorRole = \App\Models\Role::where('slug', 'instructor')->first();
-                            if ($instructorRole) {
-                                $instructor->roles()->syncWithoutDetaching([$instructorRole->id]);
-                                Log::info('Добавлена роль преподавателя пользователю', [
-                                    'user_id' => $instructor->id,
-                                    'email' => $instructor->email
-                                ]);
+                // Приоритет ролей: editingteacher > teacher > manager
+                $rolePriority = [
+                    'editingteacher' => 3,
+                    'teacher' => 2,
+                    'manager' => 1,
+                ];
+
+                foreach ($teachers as $moodleTeacher) {
+                    $teacherEmail = $moodleTeacher['email'] ?? null;
+                    $teacherMoodleId = $moodleTeacher['id'] ?? null;
+
+                    if (!$teacherEmail && !$teacherMoodleId) {
+                        continue;
+                    }
+
+                    // Определяем лучшую "преподавательскую" роль для этого пользователя (если roles есть)
+                    $bestRole = null;
+                    $bestRoleScore = 0;
+                    if (isset($moodleTeacher['roles']) && is_array($moodleTeacher['roles'])) {
+                        foreach ($moodleTeacher['roles'] as $role) {
+                            $shortname = $role['shortname'] ?? null;
+                            if (!$shortname) {
+                                continue;
+                            }
+                            $score = $rolePriority[$shortname] ?? 0;
+                            if ($score > $bestRoleScore) {
+                                $bestRoleScore = $score;
+                                $bestRole = $shortname;
                             }
                         }
-                        
-                        $instructorId = $instructor->id;
-                        
-                        // Обновляем moodle_user_id если его не было
-                        if (!$instructor->moodle_user_id && $teacherMoodleId) {
-                            $instructor->update(['moodle_user_id' => $teacherMoodleId]);
-                        }
-                        
-                        Log::info('Найден преподаватель для курса', [
-                            'course_id' => $moodleCourseId,
-                            'instructor_id' => $instructorId,
-                            'instructor_email' => $teacherEmail
-                        ]);
-                    } else {
+                    }
+
+                    // Ищем преподавателя в локальной БД по email или moodle_user_id
+                    $instructorQuery = \App\Models\User::query();
+                    if ($teacherEmail) {
+                        $instructorQuery->where('email', $teacherEmail);
+                    }
+                    if ($teacherMoodleId) {
+                        $instructorQuery->orWhere('moodle_user_id', $teacherMoodleId);
+                    }
+                    $instructor = $instructorQuery->first();
+
+                    if (!$instructor) {
                         Log::warning('Преподаватель курса не найден в локальной БД', [
                             'course_id' => $moodleCourseId,
                             'teacher_email' => $teacherEmail,
                             'teacher_moodle_id' => $teacherMoodleId
                         ]);
+                        continue;
                     }
+
+                    // Проверяем, есть ли у пользователя роль преподавателя в системе
+                    if (!$instructor->hasRole('instructor')) {
+                        $instructorRole = \App\Models\Role::where('slug', 'instructor')->first();
+                        if ($instructorRole) {
+                            $instructor->roles()->syncWithoutDetaching([$instructorRole->id]);
+                            Log::info('Добавлена роль преподавателя пользователю', [
+                                'user_id' => $instructor->id,
+                                'email' => $instructor->email
+                            ]);
+                        }
+                    }
+
+                    // Обновляем moodle_user_id если его не было
+                    if (!$instructor->moodle_user_id && $teacherMoodleId) {
+                        $instructor->update(['moodle_user_id' => $teacherMoodleId]);
+                    }
+
+                    $resolvedInstructors[] = [
+                        'user_id' => $instructor->id,
+                        'moodle_role_shortname' => $bestRole,
+                        'role_score' => $bestRoleScore,
+                    ];
+                }
+
+                // Определяем основного преподавателя:
+                // - если курс уже существует и instructor_id входит в список найденных — сохраняем его
+                // - иначе выбираем по приоритету роли (editingteacher > teacher > manager), при равенстве — первый
+                if ($course && $course->instructor_id) {
+                    foreach ($resolvedInstructors as $ri) {
+                        if (($ri['user_id'] ?? null) == $course->instructor_id) {
+                            $primaryInstructorId = $course->instructor_id;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$primaryInstructorId && !empty($resolvedInstructors)) {
+                    usort($resolvedInstructors, function ($a, $b) {
+                        return ($b['role_score'] ?? 0) <=> ($a['role_score'] ?? 0);
+                    });
+                    $primaryInstructorId = $resolvedInstructors[0]['user_id'] ?? null;
                 }
             } else {
                 Log::info('Преподаватели курса не найдены в Moodle', [
@@ -377,16 +426,17 @@ class MoodleSyncService
             ]);
         }
         
-        // Добавляем instructor_id в данные курса
-        if ($instructorId) {
-            $courseData['instructor_id'] = $instructorId;
+        // Добавляем instructor_id в данные курса (основной преподаватель)
+        if ($primaryInstructorId) {
+            $courseData['instructor_id'] = $primaryInstructorId;
         }
 
         Log::info('Данные для синхронизации курса', [
             'moodle_course_id' => $moodleCourseId,
             'course_data' => $courseData,
             'course_exists' => $course ? true : false,
-            'instructor_id' => $instructorId
+            'instructor_id' => $primaryInstructorId,
+            'resolved_instructors_count' => count($resolvedInstructors),
         ]);
 
         if ($course) {
@@ -408,6 +458,7 @@ class MoodleSyncService
                 
                 if ($hasChanges) {
                     $course->update($courseData);
+                    $this->syncCourseInstructors($course, $resolvedInstructors, $primaryInstructorId);
                     Log::info('Курс обновлен из Moodle', [
                         'course_id' => $course->id,
                         'moodle_course_id' => $moodleCourseId,
@@ -416,6 +467,8 @@ class MoodleSyncService
                     ]);
                     return ['created' => false, 'updated' => true, 'course' => $course];
                 } else {
+                    // Даже если курс не изменился, синхронизируем список преподавателей (из Moodle) при наличии данных
+                    $this->syncCourseInstructors($course, $resolvedInstructors, $primaryInstructorId);
                     Log::debug('Курс не изменился (данные идентичны)', [
                         'course_id' => $course->id,
                         'moodle_course_id' => $moodleCourseId,
@@ -437,6 +490,7 @@ class MoodleSyncService
             // Создаем новый курс
             try {
                 $course = Course::create($courseData);
+                $this->syncCourseInstructors($course, $resolvedInstructors, $primaryInstructorId);
                 
                 Log::info('Курс создан из Moodle', [
                     'course_id' => $course->id,
@@ -455,6 +509,60 @@ class MoodleSyncService
                 throw $e;
             }
         }
+    }
+
+    /**
+     * Синхронизировать список преподавателей курса (из Moodle) в таблицу course_instructors
+     *
+     * @param Course $course
+     * @param array $resolvedInstructors
+     * @param int|null $primaryInstructorId
+     * @return void
+     */
+    protected function syncCourseInstructors(Course $course, array $resolvedInstructors, ?int $primaryInstructorId): void
+    {
+        // Если преподаватели не определены — ничего не делаем (не очищаем вручную назначенных)
+        if (empty($resolvedInstructors)) {
+            return;
+        }
+
+        // Убираем дубликаты по user_id, оставляя запись с максимальным role_score
+        $byUserId = [];
+        foreach ($resolvedInstructors as $ri) {
+            $uid = $ri['user_id'] ?? null;
+            if (!$uid) {
+                continue;
+            }
+            if (!isset($byUserId[$uid]) || (($ri['role_score'] ?? 0) > ($byUserId[$uid]['role_score'] ?? 0))) {
+                $byUserId[$uid] = $ri;
+            }
+        }
+
+        // Сбрасываем is_primary для moodle-источника
+        DB::table('course_instructors')
+            ->where('course_id', $course->id)
+            ->where('source', 'moodle')
+            ->update(['is_primary' => false, 'updated_at' => now()]);
+
+        $rows = [];
+        foreach ($byUserId as $uid => $ri) {
+            $rows[] = [
+                'course_id' => $course->id,
+                'user_id' => $uid,
+                'source' => 'moodle',
+                'moodle_role_shortname' => $ri['moodle_role_shortname'] ?? null,
+                'is_primary' => ($primaryInstructorId && $uid == $primaryInstructorId),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Upsert по (course_id, user_id)
+        DB::table('course_instructors')->upsert(
+            $rows,
+            ['course_id', 'user_id'],
+            ['source', 'moodle_role_shortname', 'is_primary', 'updated_at']
+        );
     }
 
     /**
