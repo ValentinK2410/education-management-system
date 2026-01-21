@@ -227,6 +227,50 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    @if($isAdmin)
+                        @php
+                            $filters = $filters ?? [];
+                            $qValue = old('q', request('q', $filters['q'] ?? ''));
+                            $instructorValue = old('instructor', request('instructor', $filters['instructor'] ?? ''));
+                            $perPageValue = (int) request('per_page', $filters['per_page'] ?? 25);
+                        @endphp
+                        <form method="GET" action="{{ route('admin.courses.index') }}" class="mb-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label mb-1">Поиск курса</label>
+                                    <input type="text" name="q" class="form-control" value="{{ $qValue }}"
+                                           placeholder="Название / код / Moodle ID">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label mb-1">Преподаватель</label>
+                                    <input type="text" name="instructor" class="form-control" value="{{ $instructorValue }}"
+                                           placeholder="Имя или email преподавателя">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Показывать</label>
+                                    <select name="per_page" class="form-select">
+                                        @foreach([10, 25, 50, 100, 200] as $pp)
+                                            <option value="{{ $pp }}" @selected($perPageValue === $pp)>{{ $pp }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-1 d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="col-12 d-flex gap-2">
+                                    <a href="{{ route('admin.courses.index', ['reset' => 1]) }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-undo me-1"></i>Сбросить
+                                    </a>
+                                    <small class="text-muted align-self-center">
+                                        Настройки поиска и “показывать” сохраняются для вашего пользователя.
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    @endif
+
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>

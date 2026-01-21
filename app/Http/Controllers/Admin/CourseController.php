@@ -27,16 +27,76 @@ class CourseController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $isAdmin = $user->hasRole('admin');
         
         // Если пользователь - админ, показываем все курсы
         if ($isAdmin) {
-        $courses = Course::with(['program.institution', 'instructor'])->paginate(15);
+            // Сброс фильтров/настроек
+            if ($request->boolean('reset')) {
+                $ui = is_array($user->ui_settings) ? $user->ui_settings : [];
+                unset($ui['courses']);
+                $user->ui_settings = $ui;
+                $user->save();
+
+                return redirect()->route('admin.courses.index');
+            }
+
+            $ui = is_array($user->ui_settings) ? $user->ui_settings : [];
+            $prefs = is_array($ui['courses'] ?? null) ? $ui['courses'] : [];
+
+            $q = (string) $request->input('q', $prefs['q'] ?? '');
+            $instructor = (string) $request->input('instructor', $prefs['instructor'] ?? '');
+            $perPage = (int) $request->input('per_page', $prefs['per_page'] ?? 25);
+            $perPage = max(10, min(200, $perPage));
+
+            // Сохраняем настройки для пользователя, если пришли параметры
+            $hasIncoming = $request->hasAny(['q', 'instructor', 'per_page']);
+            if ($hasIncoming) {
+                $ui['courses'] = [
+                    'q' => $q,
+                    'instructor' => $instructor,
+                    'per_page' => $perPage,
+                ];
+                $user->ui_settings = $ui;
+                $user->save();
+            }
+
+            $coursesQuery = Course::with(['program.institution', 'instructor', 'instructors']);
+
+            if ($q !== '') {
+                $coursesQuery->where(function ($query) use ($q) {
+                    $query->where('name', 'like', '%' . $q . '%')
+                        ->orWhere('code', 'like', '%' . $q . '%')
+                        ->orWhere('moodle_course_id', 'like', '%' . $q . '%');
+                });
+            }
+
+            if ($instructor !== '') {
+                $coursesQuery->where(function ($query) use ($instructor) {
+                    $query->whereHas('instructor', function ($q) use ($instructor) {
+                        $q->where('name', 'like', '%' . $instructor . '%')
+                            ->orWhere('email', 'like', '%' . $instructor . '%');
+                    })->orWhereHas('instructors', function ($q) use ($instructor) {
+                        $q->where('name', 'like', '%' . $instructor . '%')
+                            ->orWhere('email', 'like', '%' . $instructor . '%');
+                    });
+                });
+            }
+
+            $queryParams = [
+                'q' => $q,
+                'instructor' => $instructor,
+                'per_page' => $perPage,
+            ];
+
+            $courses = $coursesQuery->paginate($perPage)->appends($queryParams);
+
             $coursesWithAssignments = [];
-            return view('admin.courses.index', compact('courses', 'isAdmin', 'coursesWithAssignments'));
+            $filters = $queryParams;
+            return view('admin.courses.index', compact('courses', 'isAdmin', 'coursesWithAssignments', 'filters'));
         }
         
         // Если пользователь - студент, показываем только его курсы

@@ -50,6 +50,7 @@ class User extends Authenticatable
         'moodle_user_id',          // ID пользователя в Moodle
         'moodle_token',            // Токен Moodle API для пользователя
         'users_per_page',          // Количество пользователей на странице
+        'ui_settings',             // UI настройки пользователя (JSON)
     ];
 
     /**
@@ -77,6 +78,7 @@ class User extends Authenticatable
             'sidebar_collapsed' => 'boolean',  // Состояние боковой панели
             'notifications_enabled' => 'boolean', // Включены ли уведомления
             'users_per_page' => 'integer',     // Количество пользователей на странице
+            'ui_settings' => 'array',          // UI настройки как массив
         ];
     }
 
