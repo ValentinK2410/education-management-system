@@ -2124,7 +2124,10 @@ class MoodleApiService
     }
 
     /**
-     * Получить преподавателей курса (пользователи с ролью editingteacher или teacher)
+     * Получить преподавателей курса.
+     *
+     * ВАЖНО: по требованиям проекта считаем преподавателями ТОЛЬКО реальных преподавателей,
+     * без ассистентов/не-редактирующих ролей. Поэтому сюда попадают только роли типа "editingteacher".
      *
      * @param int $courseId Moodle Course ID (НЕ локальный ID курса из системы!)
      * @return array|false Массив преподавателей или false в случае ошибки
@@ -2138,14 +2141,17 @@ class MoodleApiService
             return false;
         }
 
-        // Фильтруем только преподавателей (роли editingteacher или teacher)
+        // Фильтруем только преподавателей.
+        // Не включаем "teacher" (не редактирующий) и прочие ассистентские роли.
+        $allowedTeacherRoleShortnames = ['editingteacher'];
+
         $teachers = [];
         foreach ($enrolledUsers as $user) {
             if (isset($user['roles']) && is_array($user['roles'])) {
                 foreach ($user['roles'] as $role) {
                     $roleShortname = $role['shortname'] ?? '';
-                    // В Moodle роли преподавателей: editingteacher (редактор курса) или teacher (преподаватель)
-                    if (in_array($roleShortname, ['editingteacher', 'teacher', 'manager'])) {
+                    // В Moodle реальные преподаватели курса: editingteacher (редактор курса)
+                    if (in_array($roleShortname, $allowedTeacherRoleShortnames, true)) {
                         $teachers[] = $user;
                         break; // Не добавляем пользователя дважды
                     }

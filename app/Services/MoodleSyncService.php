@@ -321,11 +321,11 @@ class MoodleSyncService
             $teachers = $this->moodleApi->getCourseTeachers($moodleCourseId);
             
             if ($teachers !== false && !empty($teachers)) {
-                // Приоритет ролей: editingteacher > teacher > manager
+                // Приоритет ролей для определения "основного" преподавателя.
+                // По требованиям проекта НЕ учитываем ассистентов/не-редактирующих преподавателей,
+                // поэтому здесь ключевой ролью считается editingteacher.
                 $rolePriority = [
                     'editingteacher' => 3,
-                    'teacher' => 2,
-                    'manager' => 1,
                 ];
 
                 foreach ($teachers as $moodleTeacher) {
@@ -364,12 +364,44 @@ class MoodleSyncService
                     $instructor = $instructorQuery->first();
 
                     if (!$instructor) {
-                        Log::warning('Преподаватель курса не найден в локальной БД', [
-                            'course_id' => $moodleCourseId,
-                            'teacher_email' => $teacherEmail,
-                            'teacher_moodle_id' => $teacherMoodleId
-                        ]);
-                        continue;
+                        // Если преподаватель есть в Moodle, но отсутствует в системе — создаём пользователя (только для преподавателей).
+                        // Требуем email, чтобы не создать дубликаты без идентификатора.
+                        if (!$teacherEmail) {
+                            Log::warning('Преподаватель курса не найден в локальной БД и отсутствует email (пропуск)', [
+                                'course_id' => $moodleCourseId,
+                                'teacher_moodle_id' => $teacherMoodleId
+                            ]);
+                            continue;
+                        }
+
+                        $teacherName = $moodleTeacher['fullname']
+                            ?? trim(($moodleTeacher['firstname'] ?? '') . ' ' . ($moodleTeacher['lastname'] ?? ''))
+                            ?: $teacherEmail;
+
+                        try {
+                            $instructor = \App\Models\User::create([
+                                'name' => $teacherName,
+                                'email' => $teacherEmail,
+                                'password' => bin2hex(random_bytes(16)), // будет захеширован через cast
+                                'is_active' => true,
+                                'moodle_user_id' => $teacherMoodleId,
+                            ]);
+
+                            Log::info('Создан пользователь-преподаватель из Moodle', [
+                                'user_id' => $instructor->id,
+                                'email' => $teacherEmail,
+                                'moodle_user_id' => $teacherMoodleId,
+                                'course_id' => $moodleCourseId,
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Не удалось создать пользователя-преподавателя из Moodle', [
+                                'course_id' => $moodleCourseId,
+                                'teacher_email' => $teacherEmail,
+                                'teacher_moodle_id' => $teacherMoodleId,
+                                'error' => $e->getMessage(),
+                            ]);
+                            continue;
+                        }
                     }
 
                     // Проверяем, есть ли у пользователя роль преподавателя в системе
