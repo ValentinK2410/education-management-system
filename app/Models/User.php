@@ -229,6 +229,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Получить группы, в которых состоит пользователь
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'user_groups')
+                    ->withPivot(['enrolled_at', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
      * Получить активные программы пользователя
      * Включает программы со статусом 'active' и 'enrolled'
      *

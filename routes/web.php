@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\StudentReviewController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CourseAnalyticsController;
 use App\Http\Controllers\Admin\MoodleTestController;
+use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Api\CourseSyncController;
 use Illuminate\Support\Facades\Route;
@@ -506,6 +507,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('courses/{course}/duplicate', [CourseController::class, 'duplicate'])->name('courses.duplicate');
         Route::post('courses/bulk-destroy', [CourseController::class, 'bulkDestroy'])->name('courses.bulk-destroy');
         Route::resource('courses', CourseController::class);
+
+        // Управление группами студентов
+        Route::post('groups/{group}/add-student', [GroupController::class, 'addStudent'])->name('groups.add-student');
+        Route::delete('groups/{group}/students/{user}', [GroupController::class, 'removeStudent'])->name('groups.remove-student');
+        Route::resource('groups', GroupController::class);
 
         // События
         Route::resource('events', AdminEventController::class);

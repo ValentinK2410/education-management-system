@@ -928,6 +928,15 @@
             </div>
             @endif
 
+            @if(auth()->user()->hasRole('admin'))
+            <div class="nav-item">
+                <a href="{{ route('admin.groups.index') }}" class="nav-link {{ request()->routeIs('admin.groups.*') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span>Группы студентов</span>
+                </a>
+            </div>
+            @endif
+
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('instructor'))
             <div class="nav-item">
                 <a href="{{ route('admin.analytics.index') }}" class="nav-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
