@@ -51,16 +51,40 @@ class TestMoodleApi extends Command
 
         // 1. Получаем информацию о курсе
         $this->info("1. Получение информации о курсе...");
-        $courseInfo = $moodleApi->getCourse($courseId);
-        if ($courseInfo === false) {
-            $this->error("   ❌ Не удалось получить информацию о курсе");
+        // Используем прямой вызов для получения деталей ошибки
+        $courseResult = $moodleApi->call('core_course_get_courses', []);
+        if ($courseResult === false) {
+            $this->error("   ❌ Запрос к Moodle API вернул false (проверьте MOODLE_URL и MOODLE_TOKEN)");
+        } elseif (isset($courseResult['exception'])) {
+            $this->error("   ❌ Moodle вернул ошибку:");
+            $this->line("      Тип: " . ($courseResult['exception'] ?? 'unknown'));
+            $this->line("      Сообщение: " . ($courseResult['message'] ?? 'неизвестная ошибка'));
+            $this->line("      Код ошибки: " . ($courseResult['errorcode'] ?? 'N/A'));
+            if (isset($courseResult['debuginfo'])) {
+                $this->line("      Отладка: " . $courseResult['debuginfo']);
+            }
         } else {
-            $this->info("   ✅ Курс найден:");
-            $this->line("      Название: " . ($courseInfo['fullname'] ?? 'N/A'));
-            $this->line("      Короткое название: " . ($courseInfo['shortname'] ?? 'N/A'));
-            $this->line("      ID: " . ($courseInfo['id'] ?? 'N/A'));
-            $this->line("      Категория ID: " . ($courseInfo['categoryid'] ?? 'N/A'));
-            $this->line("      Видимый: " . (($courseInfo['visible'] ?? 0) ? 'Да' : 'Нет'));
+            // Ищем курс с нужным ID
+            $courseInfo = null;
+            if (is_array($courseResult)) {
+                foreach ($courseResult as $course) {
+                    if (isset($course['id']) && $course['id'] == $courseId) {
+                        $courseInfo = $course;
+                        break;
+                    }
+                }
+            }
+            
+            if (!$courseInfo) {
+                $this->warn("   ⚠️  Курс с ID {$courseId} не найден в списке курсов");
+            } else {
+                $this->info("   ✅ Курс найден:");
+                $this->line("      Название: " . ($courseInfo['fullname'] ?? 'N/A'));
+                $this->line("      Короткое название: " . ($courseInfo['shortname'] ?? 'N/A'));
+                $this->line("      ID: " . ($courseInfo['id'] ?? 'N/A'));
+                $this->line("      Категория ID: " . ($courseInfo['categoryid'] ?? 'N/A'));
+                $this->line("      Видимый: " . (($courseInfo['visible'] ?? 0) ? 'Да' : 'Нет'));
+            }
         }
         $this->newLine();
 
@@ -327,11 +351,12 @@ class TestMoodleApi extends Command
         // 7. Тестирование получения cohorts
         $this->info("7. Тестирование получения глобальных групп (cohorts)...");
         try {
-            $cohorts = $moodleApi->getCohorts();
-            if ($cohorts === false) {
-                $this->error("   ❌ Не удалось получить cohorts");
-                $this->line("   Проверьте логи для детальной информации об ошибке");
-            } elseif (isset($cohorts['exception'])) {
+            // Используем прямой вызов для получения деталей ошибки
+            $cohortResult = $moodleApi->call('core_cohort_get_cohorts', []);
+            if ($cohortResult === false) {
+                $this->error("   ❌ Запрос к Moodle API вернул false");
+                $this->line("   Проверьте подключение к Moodle, URL и токен в .env файле");
+            } elseif (isset($cohortResult['exception'])) {
                 $this->error("   ❌ Moodle вернул ошибку:");
                 $this->line("      Тип: " . ($cohorts['exception'] ?? 'unknown'));
                 $this->line("      Сообщение: " . ($cohorts['message'] ?? 'неизвестная ошибка'));
@@ -368,7 +393,18 @@ class TestMoodleApi extends Command
         try {
             // Пробуем получить информацию о токене
             $siteInfo = $moodleApi->call('core_webservice_get_site_info', []);
-            if ($siteInfo !== false && !isset($siteInfo['exception'])) {
+            if ($siteInfo === false) {
+                $this->error("   ❌ Запрос к Moodle API вернул false");
+                $this->line("   Проверьте подключение к Moodle, URL и токен в .env файле");
+            } elseif (isset($siteInfo['exception'])) {
+                $this->error("   ❌ Moodle вернул ошибку:");
+                $this->line("      Тип: " . ($siteInfo['exception'] ?? 'unknown'));
+                $this->line("      Сообщение: " . ($siteInfo['message'] ?? 'неизвестная ошибка'));
+                $this->line("      Код ошибки: " . ($siteInfo['errorcode'] ?? 'N/A'));
+                if (isset($siteInfo['debuginfo'])) {
+                    $this->line("      Отладка: " . $siteInfo['debuginfo']);
+                }
+            } else {
                 $this->info("   ✅ Подключение к Moodle API работает");
                 if (isset($siteInfo['functions'])) {
                     $this->line("   Доступных функций: " . count($siteInfo['functions']));
@@ -382,10 +418,11 @@ class TestMoodleApi extends Command
                     }
                     if (!$hasCohortFunction) {
                         $this->warn("   ⚠️  Функции для cohorts не найдены в списке доступных функций");
+                        $this->line("   Это означает, что токен не имеет прав на core_cohort_get_cohorts");
                     }
+                } else {
+                    $this->warn("   ⚠️  В ответе нет списка доступных функций");
                 }
-            } else {
-                $this->warn("   ⚠️  Не удалось получить информацию о сайте");
             }
         } catch (\Exception $e) {
             $this->warn("   ⚠️  Ошибка при проверке функций: " . $e->getMessage());
