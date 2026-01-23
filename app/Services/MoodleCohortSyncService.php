@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Group;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,9 +41,10 @@ class MoodleCohortSyncService
     /**
      * Синхронизировать все cohorts из Moodle
      * 
+     * @param bool $syncMembers Синхронизировать ли участников cohorts (по умолчанию true)
      * @return array Статистика синхронизации
      */
-    public function syncCohorts(): array
+    public function syncCohorts(bool $syncMembers = true): array
     {
         $stats = [
             'total' => 0,
@@ -50,6 +52,12 @@ class MoodleCohortSyncService
             'updated' => 0,
             'skipped' => 0,
             'errors' => 0,
+            'members' => [
+                'total' => 0,
+                'added' => 0,
+                'removed' => 0,
+                'errors' => 0
+            ],
             'errors_list' => []
         ];
 
@@ -108,6 +116,27 @@ class MoodleCohortSyncService
                             'cohort_name' => $moodleCohort['name'] ?? 'unknown',
                             'error' => $result
                         ];
+                        continue; // Пропускаем синхронизацию участников при ошибке
+                    }
+
+                    // Синхронизируем участников cohort, если включено
+                    if ($syncMembers) {
+                        try {
+                            $group = Group::where('moodle_cohort_id', $moodleCohort['id'])->first();
+                            if ($group) {
+                                $memberStats = $this->syncCohortMembers($group, $moodleCohort['id']);
+                                $stats['members']['total'] += $memberStats['total'];
+                                $stats['members']['added'] += $memberStats['added'];
+                                $stats['members']['removed'] += $memberStats['removed'];
+                                $stats['members']['errors'] += $memberStats['errors'];
+                            }
+                        } catch (\Exception $e) {
+                            $stats['members']['errors']++;
+                            Log::error('Ошибка синхронизации участников cohort', [
+                                'cohort_id' => $moodleCohort['id'],
+                                'error' => $e->getMessage()
+                            ]);
+                        }
                     }
                 } catch (\Exception $e) {
                     $stats['errors']++;
@@ -190,5 +219,151 @@ class MoodleCohortSyncService
             ]);
             return 'created';
         }
+    }
+
+    /**
+     * Синхронизировать участников cohort в группу
+     * 
+     * @param Group $group Группа в системе деканата
+     * @param int $moodleCohortId ID cohort в Moodle
+     * @return array Статистика синхронизации участников
+     */
+    public function syncCohortMembers(Group $group, int $moodleCohortId): array
+    {
+        $stats = [
+            'total' => 0,
+            'added' => 0,
+            'removed' => 0,
+            'errors' => 0
+        ];
+
+        try {
+            // Получаем участников cohort из Moodle
+            $membersResult = $this->moodleApi->getCohortMembers([$moodleCohortId]);
+
+            if ($membersResult === false) {
+                Log::warning('Не удалось получить участников cohort', [
+                    'cohort_id' => $moodleCohortId,
+                    'group_id' => $group->id
+                ]);
+                $stats['errors'] = 1;
+                return $stats;
+            }
+
+            // Находим участников для этого cohort
+            $moodleUserIds = [];
+            foreach ($membersResult as $cohortData) {
+                if (isset($cohortData['cohortid']) && $cohortData['cohortid'] == $moodleCohortId) {
+                    if (isset($cohortData['userids']) && is_array($cohortData['userids'])) {
+                        $moodleUserIds = $cohortData['userids'];
+                        break;
+                    }
+                }
+            }
+
+            // Если структура другая (прямой массив userids)
+            if (empty($moodleUserIds) && isset($membersResult[0]['userids'])) {
+                $moodleUserIds = $membersResult[0]['userids'];
+            }
+
+            $stats['total'] = count($moodleUserIds);
+
+            if (empty($moodleUserIds)) {
+                Log::info('Cohort не имеет участников', [
+                    'cohort_id' => $moodleCohortId,
+                    'group_id' => $group->id
+                ]);
+                // Удаляем всех участников из группы, если их нет в Moodle
+                $currentMembersCount = $group->students()->count();
+                if ($currentMembersCount > 0) {
+                    $group->students()->detach();
+                    $stats['removed'] = $currentMembersCount;
+                }
+                return $stats;
+            }
+
+            // Находим пользователей в системе деканата по moodle_user_id
+            $users = User::whereIn('moodle_user_id', $moodleUserIds)
+                ->whereNotNull('moodle_user_id')
+                ->get()
+                ->keyBy('moodle_user_id');
+
+            // Получаем текущих участников группы
+            $currentMembers = $group->students()->get()->keyBy('moodle_user_id');
+
+            // Добавляем новых участников
+            foreach ($moodleUserIds as $moodleUserId) {
+                if (isset($users[$moodleUserId])) {
+                    $user = $users[$moodleUserId];
+                    
+                    // Проверяем, не состоит ли уже пользователь в группе
+                    if (!$currentMembers->has($moodleUserId)) {
+                        try {
+                            $group->students()->attach($user->id, [
+                                'enrolled_at' => now()
+                            ]);
+                            $stats['added']++;
+                            Log::debug('Пользователь добавлен в группу из cohort', [
+                                'user_id' => $user->id,
+                                'moodle_user_id' => $moodleUserId,
+                                'group_id' => $group->id
+                            ]);
+                        } catch (\Exception $e) {
+                            $stats['errors']++;
+                            Log::error('Ошибка добавления пользователя в группу', [
+                                'user_id' => $user->id,
+                                'group_id' => $group->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                } else {
+                    // Пользователь не найден в системе деканата
+                    Log::debug('Пользователь из cohort не найден в системе деканата', [
+                        'moodle_user_id' => $moodleUserId,
+                        'group_id' => $group->id
+                    ]);
+                }
+            }
+
+            // Удаляем участников, которых нет в Moodle cohort
+            foreach ($currentMembers as $moodleUserId => $user) {
+                if (!in_array($moodleUserId, $moodleUserIds)) {
+                    try {
+                        $group->students()->detach($user->id);
+                        $stats['removed']++;
+                        Log::debug('Пользователь удален из группы (отсутствует в cohort)', [
+                            'user_id' => $user->id,
+                            'moodle_user_id' => $moodleUserId,
+                            'group_id' => $group->id
+                        ]);
+                    } catch (\Exception $e) {
+                        $stats['errors']++;
+                        Log::error('Ошибка удаления пользователя из группы', [
+                            'user_id' => $user->id,
+                            'group_id' => $group->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
+            Log::info('Синхронизация участников cohort завершена', [
+                'group_id' => $group->id,
+                'cohort_id' => $moodleCohortId,
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации участников cohort', [
+                'group_id' => $group->id,
+                'cohort_id' => $moodleCohortId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $stats['errors']++;
+        }
+
+        return $stats;
     }
 }

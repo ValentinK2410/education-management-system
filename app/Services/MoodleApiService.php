@@ -2530,5 +2530,94 @@ class MoodleApiService
             return false;
         }
     }
+
+    /**
+     * Получить участников cohort (глобальной группы) из Moodle
+     *
+     * @param array $cohortIds Массив ID cohorts для получения участников
+     * @return array|false Массив участников cohorts или false в случае ошибки
+     */
+    public function getCohortMembers(array $cohortIds)
+    {
+        try {
+            if (empty($cohortIds)) {
+                Log::warning('Moodle API: getCohortMembers вызван с пустым массивом cohort IDs');
+                return [];
+            }
+
+            $params = [
+                'cohortids' => $cohortIds
+            ];
+
+            Log::info('Moodle API: Запрос участников cohorts', [
+                'function' => 'core_cohort_get_cohort_members',
+                'cohort_ids' => $cohortIds
+            ]);
+
+            $result = $this->call('core_cohort_get_cohort_members', $params);
+
+            // Логируем полный ответ для отладки
+            Log::debug('Moodle API: Ответ getCohortMembers', [
+                'result_type' => gettype($result),
+                'result' => $result
+            ]);
+
+            if ($result === false) {
+                Log::error('Moodle API: Запрос участников cohorts вернул false', [
+                    'hint' => 'Проверьте подключение к Moodle, URL и токен в .env файле'
+                ]);
+                return false;
+            }
+
+            if (isset($result['exception'])) {
+                Log::error('Moodle API: Ошибка получения участников cohorts - исключение', [
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка',
+                    'errorcode' => $result['errorcode'] ?? null,
+                    'debuginfo' => $result['debuginfo'] ?? null,
+                    'hint' => 'Проверьте права доступа токена в Moodle. Токен должен иметь права на выполнение функции core_cohort_get_cohort_members'
+                ]);
+                return false;
+            }
+
+            // Moodle возвращает массив с ключом 'cohorts', где каждый элемент содержит 'cohortid' и 'userids'
+            if (is_array($result)) {
+                // Проверяем структуру ответа
+                if (isset($result['cohorts']) && is_array($result['cohorts'])) {
+                    Log::info('Moodle API: Получены участники cohorts', [
+                        'cohorts_count' => count($result['cohorts'])
+                    ]);
+                    return $result['cohorts'];
+                }
+                
+                // Если это массив напрямую
+                if (!empty($result) && isset($result[0])) {
+                    Log::info('Moodle API: Получены участники cohorts (прямой массив)', [
+                        'count' => count($result)
+                    ]);
+                    return $result;
+                }
+                
+                // Пустой массив
+                if (empty($result)) {
+                    Log::info('Moodle API: Участники cohorts не найдены (пустой массив)');
+                    return [];
+                }
+            }
+
+            Log::warning('Moodle API: Неожиданный формат ответа для участников cohorts', [
+                'type' => gettype($result),
+                'result' => $result
+            ]);
+            
+            return [];
+        } catch (\Exception $e) {
+            Log::error('getCohortMembers: исключение', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
 }
 

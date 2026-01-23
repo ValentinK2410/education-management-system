@@ -83,13 +83,28 @@ class SyncMoodleCohorts extends Command
         $this->table(
             ['Метрика', 'Значение'],
             [
-                ['Всего обработано', $stats['total'] ?? 0],
-                ['Создано', $stats['created'] ?? 0],
-                ['Обновлено', $stats['updated'] ?? 0],
-                ['Пропущено', $stats['skipped'] ?? 0],
-                ['Ошибок', $stats['errors'] ?? 0],
+                ['Всего обработано групп', $stats['total'] ?? 0],
+                ['Создано групп', $stats['created'] ?? 0],
+                ['Обновлено групп', $stats['updated'] ?? 0],
+                ['Пропущено групп', $stats['skipped'] ?? 0],
+                ['Ошибок групп', $stats['errors'] ?? 0],
             ]
         );
+
+        // Показываем статистику по участникам, если есть
+        if (isset($stats['members']) && ($stats['members']['total'] > 0 || $stats['members']['added'] > 0 || $stats['members']['removed'] > 0)) {
+            $this->newLine();
+            $this->info('Статистика синхронизации участников:');
+            $this->table(
+                ['Метрика', 'Значение'],
+                [
+                    ['Всего участников в cohorts', $stats['members']['total'] ?? 0],
+                    ['Добавлено в группы', $stats['members']['added'] ?? 0],
+                    ['Удалено из групп', $stats['members']['removed'] ?? 0],
+                    ['Ошибок', $stats['members']['errors'] ?? 0],
+                ]
+            );
+        }
         
         if (!empty($stats['errors_list']) && $stats['errors'] > 0) {
             $this->warn('Список ошибок:');
