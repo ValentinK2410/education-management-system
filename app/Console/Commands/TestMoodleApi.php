@@ -324,8 +324,45 @@ class TestMoodleApi extends Command
 
         $this->newLine();
         
-        // 7. Проверка доступных функций API
-        $this->info("7. Проверка доступных функций Moodle API...");
+        // 7. Тестирование получения cohorts
+        $this->info("7. Тестирование получения глобальных групп (cohorts)...");
+        try {
+            $cohorts = $moodleApi->getCohorts();
+            if ($cohorts === false) {
+                $this->error("   ❌ Не удалось получить cohorts");
+                $this->line("   Проверьте логи для детальной информации об ошибке");
+            } elseif (isset($cohorts['exception'])) {
+                $this->error("   ❌ Moodle вернул ошибку:");
+                $this->line("      Тип: " . ($cohorts['exception'] ?? 'unknown'));
+                $this->line("      Сообщение: " . ($cohorts['message'] ?? 'неизвестная ошибка'));
+                $this->line("      Код ошибки: " . ($cohorts['errorcode'] ?? 'N/A'));
+                if (isset($cohorts['debuginfo'])) {
+                    $this->line("      Отладка: " . $cohorts['debuginfo']);
+                }
+                $this->warn("   ⚠️  Возможно, токен не имеет прав на функцию core_cohort_get_cohorts");
+            } elseif (is_array($cohorts)) {
+                $this->info("   ✅ Cohorts получены успешно: " . count($cohorts));
+                if (count($cohorts) > 0) {
+                    $this->line("   Первые 5 cohorts:");
+                    foreach (array_slice($cohorts, 0, 5) as $cohort) {
+                        $this->line("      - ID: {$cohort['id']}, Название: " . ($cohort['name'] ?? 'N/A'));
+                    }
+                    if (count($cohorts) > 5) {
+                        $this->line("      ... и еще " . (count($cohorts) - 5) . " cohorts");
+                    }
+                } else {
+                    $this->warn("   ⚠️  Cohorts не найдены (возможно, их нет в Moodle)");
+                }
+            } else {
+                $this->warn("   ⚠️  Неожиданный формат ответа: " . gettype($cohorts));
+            }
+        } catch (\Exception $e) {
+            $this->error("   ❌ Ошибка при получении cohorts: " . $e->getMessage());
+        }
+        $this->newLine();
+
+        // 8. Проверка доступных функций API
+        $this->info("8. Проверка доступных функций Moodle API...");
         $this->line("   Попытка получить список доступных функций...");
         
         try {
@@ -335,6 +372,17 @@ class TestMoodleApi extends Command
                 $this->info("   ✅ Подключение к Moodle API работает");
                 if (isset($siteInfo['functions'])) {
                     $this->line("   Доступных функций: " . count($siteInfo['functions']));
+                    // Проверяем, есть ли функция для cohorts
+                    $hasCohortFunction = false;
+                    foreach ($siteInfo['functions'] as $func) {
+                        if (isset($func['name']) && strpos($func['name'], 'cohort') !== false) {
+                            $hasCohortFunction = true;
+                            $this->line("   ✅ Найдена функция для cohorts: " . $func['name']);
+                        }
+                    }
+                    if (!$hasCohortFunction) {
+                        $this->warn("   ⚠️  Функции для cohorts не найдены в списке доступных функций");
+                    }
                 }
             } else {
                 $this->warn("   ⚠️  Не удалось получить информацию о сайте");
