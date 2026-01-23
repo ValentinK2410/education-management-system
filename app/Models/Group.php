@@ -63,13 +63,25 @@ class Group extends Model
     }
 
     /**
-     * Получить программу, к которой привязана группа
+     * Получить программу, к которой привязана группа (старая связь, для обратной совместимости)
      *
      * @return BelongsTo
      */
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    /**
+     * Получить программы, к которым прикреплена группа (many-to-many)
+     *
+     * @return BelongsToMany
+     */
+    public function programs(): BelongsToMany
+    {
+        return $this->belongsToMany(Program::class, 'program_group')
+                    ->withPivot(['attached_at', 'notes'])
+                    ->withTimestamps();
     }
 
     /**

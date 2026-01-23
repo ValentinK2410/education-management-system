@@ -428,6 +428,153 @@
     </div>
     @endif
 
+    <!-- Прикрепленные группы -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Прикрепленные глобальные группы ({{ $attachedGroups->count() }})
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#attachGroupModal">
+                        <i class="fas fa-plus me-1"></i>Прикрепить группу
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if($attachedGroups->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Название группы</th>
+                                        <th>Описание</th>
+                                        <th>Студентов в группе</th>
+                                        <th>Прикреплена</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($attachedGroups as $group)
+                                    <tr>
+                                        <td>{{ $group->id }}</td>
+                                        <td>
+                                            <strong>{{ $group->name }}</strong>
+                                            @if($group->moodle_cohort_id)
+                                                <br><small class="text-muted">
+                                                    <i class="fas fa-link me-1"></i>Moodle Cohort ID: {{ $group->moodle_cohort_id }}
+                                                </small>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($group->description)
+                                                {{ Str::limit($group->description, 100) }}
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ $group->students_count }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ $group->pivot->attached_at ? \Carbon\Carbon::parse($group->pivot->attached_at)->format('d.m.Y H:i') : '—' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('admin.groups.show', $group) }}" 
+                                                   class="btn btn-sm btn-info" 
+                                                   title="Просмотр группы">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <form method="POST" 
+                                                      action="{{ route('admin.programs.groups.detach', [$program->id, $group->id]) }}" 
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('Открепить группу «{{ $group->name }}» от программы? Студенты останутся записанными на программу.');">
+                                                    @csrf
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-danger" 
+                                                            title="Открепить от программы">
+                                                        <i class="fas fa-unlink"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            К программе пока не прикреплено ни одной глобальной группы. 
+                            <button type="button" class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#attachGroupModal">
+                                <i class="fas fa-plus me-1"></i>Прикрепить группу
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для прикрепления группы -->
+    <div class="modal fade" id="attachGroupModal" tabindex="-1" aria-labelledby="attachGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attachGroupModalLabel">
+                        <i class="fas fa-users me-2"></i>Прикрепить глобальную группу к программе
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ route('admin.programs.groups.attach', $program->id) }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            При прикреплении группы все студенты из этой группы будут автоматически записаны на программу.
+                        </div>
+                        <div class="mb-3">
+                            <label for="group_id" class="form-label">Выберите группу <span class="text-danger">*</span></label>
+                            <select class="form-select" id="group_id" name="group_id" required>
+                                <option value="">— Выберите группу —</option>
+                                @foreach($availableGroups as $group)
+                                    <option value="{{ $group->id }}">
+                                        {{ $group->name }}
+                                        @if($group->students_count > 0)
+                                            ({{ $group->students_count }} {{ trans_choice('студент|студента|студентов', $group->students_count) }})
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if($availableGroups->isEmpty())
+                                <small class="text-muted">
+                                    Нет доступных глобальных групп для прикрепления. 
+                                    <a href="{{ route('admin.moodle-sync.index') }}">Синхронизируйте группы из Moodle</a>.
+                                </small>
+                            @endif
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Заметки (необязательно)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Дополнительная информация о прикреплении группы..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary" 
+                                {{ $availableGroups->isEmpty() ? 'disabled' : '' }}>
+                            <i class="fas fa-link me-1"></i>Прикрепить группу
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Модальное окно для добавления предмета -->
     <div class="modal fade" id="addSubjectModal" tabindex="-1" aria-labelledby="addSubjectModalLabel" aria-hidden="true">
         <div class="modal-dialog">

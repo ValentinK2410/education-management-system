@@ -496,6 +496,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('programs/{program}/subjects/{subject}/detach', [ProgramController::class, 'detachSubject'])->name('programs.subjects.detach');
         Route::post('programs/{program}/subjects/{subject}/move-up', [ProgramController::class, 'moveSubjectUp'])->name('programs.subjects.move-up');
         Route::post('programs/{program}/subjects/{subject}/move-down', [ProgramController::class, 'moveSubjectDown'])->name('programs.subjects.move-down');
+        Route::post('programs/{program}/groups/attach', [ProgramController::class, 'attachGroup'])->name('programs.groups.attach');
+        Route::post('programs/{program}/groups/{group}/detach', [ProgramController::class, 'detachGroup'])->name('programs.groups.detach');
         Route::resource('programs', ProgramController::class);
 
         // Управление предметами (глобальными курсами)

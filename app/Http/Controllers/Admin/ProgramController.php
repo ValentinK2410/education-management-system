@@ -7,6 +7,7 @@ use App\Models\Institution;
 use App\Models\Program;
 use App\Models\Course;
 use App\Models\Subject;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -154,7 +155,22 @@ class ProgramController extends Controller
             ->orderBy('name')
             ->get();
         
-        return view('admin.programs.show', compact('program', 'subjects', 'courses', 'availableSubjects'));
+        // Загружаем прикрепленные группы
+        $attachedGroups = $program->groups()
+            ->with('students')
+            ->withCount('students')
+            ->get();
+        
+        // Получаем все глобальные группы (с moodle_cohort_id) для добавления
+        $availableGroups = Group::whereNotNull('moodle_cohort_id')
+            ->whereDoesntHave('programs', function ($query) use ($program) {
+                $query->where('programs.id', $program->id);
+            })
+            ->withCount('students')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.programs.show', compact('program', 'subjects', 'courses', 'availableSubjects', 'attachedGroups', 'availableGroups'));
     }
     
     /**
@@ -554,5 +570,112 @@ class ProgramController extends Controller
         }
 
         return $base . ' (' . $suffix . ' ' . $counter . ')';
+    }
+
+    /**
+     * Прикрепить группу к программе и записать всех студентов группы на программу
+     *
+     * @param Request $request
+     * @param Program $program
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function attachGroup(Request $request, Program $program)
+    {
+        $request->validate([
+            'group_id' => 'required|exists:groups,id',
+            'notes' => 'nullable|string',
+        ]);
+
+        $group = Group::findOrFail($request->group_id);
+
+        // Проверяем, не прикреплена ли уже группа
+        if ($program->groups()->where('group_id', $group->id)->exists()) {
+            return redirect()->back()
+                ->with('error', 'Эта группа уже прикреплена к программе.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Прикрепляем группу к программе
+            $program->groups()->attach($group->id, [
+                'attached_at' => now(),
+                'notes' => $request->input('notes')
+            ]);
+
+            // Записываем всех студентов группы на программу
+            $students = $group->students()->get();
+            $enrolledCount = 0;
+            $skippedCount = 0;
+
+            foreach ($students as $student) {
+                // Проверяем, не записан ли уже студент на программу
+                if (!$program->users()->where('user_id', $student->id)->exists()) {
+                    $program->users()->attach($student->id, [
+                        'status' => 'enrolled',
+                        'enrolled_at' => now(),
+                        'notes' => 'Автоматически записан из группы: ' . $group->name
+                    ]);
+                    $enrolledCount++;
+                } else {
+                    $skippedCount++;
+                }
+            }
+
+            DB::commit();
+
+            $message = sprintf(
+                'Группа "%s" успешно прикреплена к программе. Записано студентов: %d',
+                $group->name,
+                $enrolledCount
+            );
+
+            if ($skippedCount > 0) {
+                $message .= sprintf(' (пропущено уже записанных: %d)', $skippedCount);
+            }
+
+            return redirect()->back()
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка прикрепления группы к программе', [
+                'program_id' => $program->id,
+                'group_id' => $group->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при прикреплении группы: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Открепить группу от программы
+     *
+     * @param Program $program
+     * @param Group $group
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function detachGroup(Program $program, Group $group)
+    {
+        try {
+            // Открепляем группу от программы
+            $program->groups()->detach($group->id);
+
+            return redirect()->back()
+                ->with('success', 'Группа успешно откреплена от программы. Примечание: студенты остаются записанными на программу.');
+
+        } catch (\Exception $e) {
+            \Log::error('Ошибка открепления группы от программы', [
+                'program_id' => $program->id,
+                'group_id' => $group->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при откреплении группы: ' . $e->getMessage());
+        }
     }
 }

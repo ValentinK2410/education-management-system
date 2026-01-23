@@ -139,6 +139,18 @@ class Program extends Model
     }
 
     /**
+     * Получить группы, прикрепленные к программе
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'program_group')
+                    ->withPivot(['attached_at', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
      * Получить количество записанных пользователей
      *
      * @return int
