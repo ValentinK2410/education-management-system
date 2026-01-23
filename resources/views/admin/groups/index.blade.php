@@ -64,6 +64,15 @@
                                     <option value="0" @selected(request('is_active') === '0')>Неактивные</option>
                                 </select>
                             </div>
+                            <div class="col-md-2">
+                                <select name="per_page" class="form-select" onchange="this.form.submit()">
+                                    <option value="10" @selected(request('per_page', $perPage ?? 15) == 10)>10 на странице</option>
+                                    <option value="15" @selected(request('per_page', $perPage ?? 15) == 15)>15 на странице</option>
+                                    <option value="25" @selected(request('per_page', $perPage ?? 15) == 25)>25 на странице</option>
+                                    <option value="50" @selected(request('per_page', $perPage ?? 15) == 50)>50 на странице</option>
+                                    <option value="100" @selected(request('per_page', $perPage ?? 15) == 100)>100 на странице</option>
+                                </select>
+                            </div>
                             <div class="col-md-3">
                                 <button type="submit" class="btn btn-info">
                                     <i class="fas fa-search me-1"></i>Найти

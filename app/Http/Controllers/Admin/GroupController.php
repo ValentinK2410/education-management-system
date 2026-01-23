@@ -47,11 +47,15 @@ class GroupController extends Controller
             $query->where('is_active', $request->is_active);
         }
 
-        $groups = $query->paginate(15)->withQueryString();
+        // Количество элементов на странице
+        $perPage = $request->input('per_page', 15);
+        $perPage = min(max((int)$perPage, 10), 200); // Ограничение от 10 до 200
+
+        $groups = $query->paginate($perPage)->withQueryString();
         $courses = Course::active()->orderBy('name')->get();
         $programs = Program::active()->orderBy('name')->get();
 
-        return view('admin.groups.index', compact('groups', 'courses', 'programs'));
+        return view('admin.groups.index', compact('groups', 'courses', 'programs', 'perPage'));
     }
 
     /**
