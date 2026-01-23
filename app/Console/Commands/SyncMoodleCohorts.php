@@ -99,6 +99,16 @@ class SyncMoodleCohorts extends Command
                     $cohortInfo = " ({$error['cohort_name']})";
                 }
                 $this->line("  - {$error['error']}{$cohortInfo}");
+                
+                // Если ошибка связана с правами доступа, показываем подсказку
+                if (isset($error['type']) && $error['type'] === 'api_error') {
+                    if (isset($error['hint'])) {
+                        $this->line("    Подсказка: {$error['hint']}");
+                    } else {
+                        $this->line("    Подсказка: Проверьте права доступа токена на функцию core_cohort_get_cohorts");
+                        $this->line("    См. документацию: MOODLE_COHORTS_SETUP.md");
+                    }
+                }
             }
         }
     }

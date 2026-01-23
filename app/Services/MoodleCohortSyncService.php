@@ -65,10 +65,10 @@ class MoodleCohortSyncService
                 $stats['errors_list'][] = [
                     'type' => 'api_error',
                     'error' => $errorMessage,
-                    'hint' => 'Возможные причины: отсутствие прав у токена на core_cohort_get_cohorts, неправильная конфигурация Moodle URL/токена, или cohorts отсутствуют в Moodle'
+                    'hint' => 'Возможные причины: отсутствие прав у токена на core_cohort_get_cohorts, неправильная конфигурация Moodle URL/токена, или cohorts отсутствуют в Moodle. См. документацию MOODLE_COHORTS_SETUP.md для решения проблемы.'
                 ];
                 Log::error('Ошибка получения cohorts из Moodle', [
-                    'hint' => 'Проверьте логи MoodleApiService для детальной информации об ошибке'
+                    'hint' => 'Проверьте логи MoodleApiService для детальной информации об ошибке. Если ошибка webservice_access_exception, добавьте функцию core_cohort_get_cohorts в права токена (см. MOODLE_COHORTS_SETUP.md)'
                 ]);
                 return $stats;
             }
