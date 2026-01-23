@@ -327,6 +327,9 @@
                                         <th class="sortable" data-column="status" data-sort="none">
                                             Статус <i class="fas fa-sort ms-1"></i>
                                         </th>
+                                        <th class="sortable" data-column="submission_state" data-sort="none">
+                                            Состояние ответа <i class="fas fa-sort ms-1"></i>
+                                        </th>
                                         <th class="sortable" data-column="date" data-sort="desc">
                                             Дата <i class="fas fa-sort ms-1"></i>
                                         </th>
@@ -359,6 +362,7 @@
                                             data-course="{{ strtolower($assignment->course->name) }}"
                                             data-activity="{{ strtolower($assignment->activity->name ?? '') }}"
                                             data-status="{{ $assignment->status }}"
+                                            data-submission-state="{{ $assignment->submission_state ?? 'not_started' }}"
                                             data-role="{{ strtolower($assignment->user->roles->pluck('name')->join(', ')) }}"
                                             data-date="{{ $assignment->display_date ? \Carbon\Carbon::parse($assignment->display_date)->timestamp : 0 }}">
                                             <td>
@@ -389,6 +393,16 @@
                                                 <span class="badge bg-{{ $assignment->status_class }} status-badge">
                                                     {{ $assignment->status_text }}
                                                 </span>
+                                            </td>
+                                            <td>
+                                                @if(isset($assignment->submission_state))
+                                                    <span class="badge bg-{{ $assignment->submission_state_class ?? 'secondary' }} status-badge">
+                                                        <i class="fas {{ $assignment->submission_state_icon ?? 'fa-circle' }} me-1"></i>
+                                                        {{ $assignment->submission_state_text ?? 'Неизвестно' }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 @if($assignment->display_date)
@@ -941,6 +955,10 @@ function sortTable(tabName, column, direction) {
             case 'status':
                 aVal = a.getAttribute('data-status') || '';
                 bVal = b.getAttribute('data-status') || '';
+                break;
+            case 'submission_state':
+                aVal = a.getAttribute('data-submission-state') || '';
+                bVal = b.getAttribute('data-submission-state') || '';
                 break;
             case 'attempts':
                 aVal = parseInt(a.getAttribute('data-attempts') || 0);

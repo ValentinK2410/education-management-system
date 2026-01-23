@@ -116,6 +116,39 @@ class StudentReviewController extends Controller
                     $progress->status_class = 'secondary';
                 }
 
+                // Определяем состояние ответа на задание
+                if ($progress->has_draft && !$progress->submitted_at) {
+                    // Есть черновик, но не отправлено
+                    $progress->submission_state = 'draft';
+                    $progress->submission_state_text = 'Черновик';
+                    $progress->submission_state_class = 'secondary';
+                    $progress->submission_state_icon = 'fa-edit';
+                } elseif ($progress->submitted_at && $progress->needs_grading && !$isGraded) {
+                    // Отправлено и ожидает проверки
+                    $progress->submission_state = 'submitted';
+                    $progress->submission_state_text = 'Отправлено';
+                    $progress->submission_state_class = 'warning';
+                    $progress->submission_state_icon = 'fa-paper-plane';
+                } elseif ($progress->submitted_at && !$isGraded) {
+                    // Отправлено, но не требует проверки или не проверено
+                    $progress->submission_state = 'submitted';
+                    $progress->submission_state_text = 'Отправлено';
+                    $progress->submission_state_class = 'info';
+                    $progress->submission_state_icon = 'fa-paper-plane';
+                } elseif ($isGraded) {
+                    // Проверено (хотя это не должно попадать сюда из-за фильтрации, но на всякий случай)
+                    $progress->submission_state = 'graded';
+                    $progress->submission_state_text = 'Проверено';
+                    $progress->submission_state_class = 'success';
+                    $progress->submission_state_icon = 'fa-check-circle';
+                } else {
+                    // Не начато
+                    $progress->submission_state = 'not_started';
+                    $progress->submission_state_text = 'Не начато';
+                    $progress->submission_state_class = 'secondary';
+                    $progress->submission_state_icon = 'fa-circle';
+                }
+
                 // Дата для отображения
                 $progress->display_date = $progress->submitted_at ?? $progress->draft_created_at ?? $progress->created_at;
 
