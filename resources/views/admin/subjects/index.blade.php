@@ -37,6 +37,31 @@
         background-color: transparent !important;
         color: var(--text-color) !important;
     }
+
+    /* Стили для сортируемых заголовков */
+    .table thead th a {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .table thead th a:hover {
+        color: var(--bs-primary);
+    }
+
+    [data-theme="dark"] .table thead th a:hover {
+        color: var(--primary-color) !important;
+    }
+
+    .table thead th a i.fa-sort {
+        opacity: 0.3;
+    }
+
+    .table thead th a:hover i.fa-sort {
+        opacity: 0.6;
+    }
 </style>
 @endpush
 
