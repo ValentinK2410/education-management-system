@@ -339,7 +339,17 @@
                                             $moodleUrl = null;
                                             try {
                                                 if ($assignment->activity) {
-                                                    $moodleUrl = $assignment->activity->moodle_url;
+                                                    $cmid = $assignment->activity->cmid;
+                                                    $moodleUserId = $assignment->user->moodle_user_id ?? null;
+                                                    
+                                                    if ($cmid && $moodleUserId) {
+                                                        // Формируем прямую ссылку на проверку ответа конкретного студента
+                                                        $moodleApiService = new \App\Services\MoodleApiService();
+                                                        $moodleUrl = $moodleApiService->getGradingUrl('assign', $cmid, $moodleUserId, $assignment->course->moodle_course_id ?? null);
+                                                    } elseif ($cmid) {
+                                                        // Если нет moodle_user_id, используем общую ссылку на задание
+                                                        $moodleUrl = $assignment->activity->moodle_url;
+                                                    }
                                                 }
                                             } catch (\Exception $e) {
                                                 $moodleUrl = null;
