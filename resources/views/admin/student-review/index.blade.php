@@ -308,6 +308,95 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Блок справки для заданий -->
+                        <div class="card border-info mb-3" style="z-index: 0 !important; position: relative;">
+                            <div class="card-header bg-info bg-opacity-10" style="z-index: 0 !important;">
+                                <h5 class="card-title mb-0">
+                                    <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlockAssignments" aria-expanded="false" aria-controls="helpBlockAssignments">
+                                        <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="collapse" id="helpBlockAssignments">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-tags me-2"></i>Статусы заданий</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <span class="badge bg-warning me-2">Ожидает проверки</span>
+                                                    Задание сдано студентом и требует проверки преподавателем
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-info me-2">Сдано (ожидает проверки)</span>
+                                                    Задание отправлено, но еще не проверено
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-secondary me-2">Есть черновик</span>
+                                                    Студент начал работу над заданием, но еще не отправил
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-file-alt me-2"></i>Состояние ответа</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <span class="badge bg-secondary me-2"><i class="fas fa-edit me-1"></i>Черновик</span>
+                                                    Есть незавершенная работа, но не отправлена
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-warning me-2"><i class="fas fa-paper-plane me-1"></i>Отправлено</span>
+                                                    Задание отправлено студентом и ожидает проверки
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-secondary me-2"><i class="fas fa-circle me-1"></i>Не начато</span>
+                                                    Студент еще не приступил к выполнению задания
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-filter me-2"></i>Поиск и фильтрация</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2"><strong>Поиск по названию</strong> - найдите задание по его названию</li>
+                                                <li class="mb-2"><strong>Поиск по студенту</strong> - фильтрация по имени или email студента</li>
+                                                <li class="mb-2"><strong>Поиск по курсу</strong> - найдите задания из конкретного курса</li>
+                                                <li class="mb-2"><strong>Сортировка</strong> - кликните на заголовок колонки для сортировки данных</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-cogs me-2"></i>Действия</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-success disabled me-2"><i class="fas fa-external-link-alt"></i></button>
+                                                    <strong>Перейти в Moodle</strong> - открывает страницу проверки ответа конкретного студента в Moodle. Позволяет сразу приступить к проверке работы.
+                                                </li>
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-primary disabled me-2"><i class="fas fa-sync"></i></button>
+                                                    <strong>Обновить данные из Moodle</strong> - синхронизирует информацию о заданиях и их статусах из Moodle.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-12">
+                                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Рекомендации</h6>
+                                            <ol class="small">
+                                                <li class="mb-2">На этой странице отображаются только задания, <strong>ожидающие проверки</strong>. Уже проверенные задания скрыты.</li>
+                                                <li class="mb-2">Используйте поиск для быстрого нахождения нужных заданий по студенту или курсу.</li>
+                                                <li class="mb-2">Кнопка "Перейти в Moodle" ведет непосредственно к ответу студента, что ускоряет процесс проверки.</li>
+                                                <li class="mb-2">Регулярно синхронизируйте данные, чтобы видеть актуальную информацию о новых сдачах.</li>
+                                                <li class="mb-2">Обращайте внимание на колонку "Состояние ответа" - она показывает, отправлено ли задание или находится в черновике.</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="table table-hover table-striped" id="assignments-table">
                                 <thead>
@@ -471,6 +560,91 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Блок справки для тестов -->
+                        <div class="card border-info mb-3" style="z-index: 0 !important; position: relative;">
+                            <div class="card-header bg-info bg-opacity-10" style="z-index: 0 !important;">
+                                <h5 class="card-title mb-0">
+                                    <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlockQuizzes" aria-expanded="false" aria-controls="helpBlockQuizzes">
+                                        <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="collapse" id="helpBlockQuizzes">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-tags me-2"></i>Статусы тестов</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <span class="badge bg-success me-2"><i class="fas fa-check-circle me-1"></i>Выполнено</span>
+                                                    Тест пройден и оценен
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-warning me-2"><i class="fas fa-clock me-1"></i>Сдано</span>
+                                                    Тест пройден, но еще не оценен
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-info me-2"><i class="fas fa-spinner me-1"></i>В процессе</span>
+                                                    Студент начал прохождение теста, но не завершил
+                                                </li>
+                                                <li class="mb-2">
+                                                    <span class="badge bg-danger me-2"><i class="fas fa-times-circle me-1"></i>Не ответил</span>
+                                                    Студент не начал прохождение теста (отображается оранжевый крестик)
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-chart-bar me-2"></i>Информация о тестах</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2"><strong>Попытки</strong> - количество попыток прохождения теста студентом</li>
+                                                <li class="mb-2"><strong>Оценка</strong> - показывает полученную оценку и максимально возможную (в процентах)</li>
+                                                <li class="mb-2"><strong>Дата последней попытки</strong> - когда студент последний раз проходил тест</li>
+                                                <li class="mb-2"><strong>Оранжевый крестик</strong> - означает, что тест не сдан студентом</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-filter me-2"></i>Поиск и фильтрация</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2"><strong>Поиск по названию</strong> - найдите тест по его названию</li>
+                                                <li class="mb-2"><strong>Поиск по студенту</strong> - фильтрация по имени или email студента</li>
+                                                <li class="mb-2"><strong>Поиск по курсу</strong> - найдите тесты из конкретного курса</li>
+                                                <li class="mb-2"><strong>Сортировка</strong> - кликните на заголовок колонки для сортировки данных</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-cogs me-2"></i>Действия</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-success disabled me-2"><i class="fas fa-external-link-alt"></i></button>
+                                                    <strong>Перейти в Moodle</strong> - открывает отчет о попытках студента в Moodle, где можно просмотреть детали прохождения теста.
+                                                </li>
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-primary disabled me-2"><i class="fas fa-sync"></i></button>
+                                                    <strong>Обновить данные из Moodle</strong> - синхронизирует информацию о тестах, попытках и оценках из Moodle.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-12">
+                                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Рекомендации</h6>
+                                            <ol class="small">
+                                                <li class="mb-2">Обращайте внимание на тесты со статусом "Не ответил" - они отмечены оранжевым крестиком.</li>
+                                                <li class="mb-2">Используйте сортировку по колонке "Оценка" для быстрого нахождения тестов с низкими оценками.</li>
+                                                <li class="mb-2">Кнопка "Перейти в Moodle" ведет к отчету о попытках, где можно увидеть детальные ответы студента.</li>
+                                                <li class="mb-2">Регулярно синхронизируйте данные для получения актуальной информации о новых попытках.</li>
+                                                <li class="mb-2">Колонка "Попытки" показывает, сколько раз студент пытался пройти тест.</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="table table-hover table-striped" id="quizzes-table">
                                 <thead>
@@ -694,6 +868,79 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Блок справки для форумов -->
+                        <div class="card border-info mb-3" style="z-index: 0 !important; position: relative;">
+                            <div class="card-header bg-info bg-opacity-10" style="z-index: 0 !important;">
+                                <h5 class="card-title mb-0">
+                                    <button class="btn btn-link text-decoration-none text-dark p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#helpBlockForums" aria-expanded="false" aria-controls="helpBlockForums">
+                                        <i class="fas fa-question-circle me-2"></i>Справка по использованию страницы
+                                        <i class="fas fa-chevron-down float-end"></i>
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="collapse" id="helpBlockForums">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-comments me-2"></i>О форумах</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">На этой странице отображаются форумы, где <strong>студент написал сообщение, на которое преподаватель еще не ответил</strong>.</li>
+                                                <li class="mb-2">В колонке "Последнее сообщение" показывается текст последнего поста студента, требующего ответа.</li>
+                                                <li class="mb-2">В колонке "Дата сообщения" указано, когда студент написал последнее сообщение.</li>
+                                                <li class="mb-2">Статус "Ожидает ответа" означает, что последнее сообщение в обсуждении написано студентом.</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-reply me-2"></i>Как определить, нужен ли ответ</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">Система автоматически определяет, требуется ли ответ преподавателя, анализируя последовательность сообщений в обсуждении.</li>
+                                                <li class="mb-2">Если последнее сообщение в обсуждении написано студентом, форум попадает в список ожидающих ответа.</li>
+                                                <li class="mb-2">После того, как преподаватель ответит, форум исчезнет из списка (после синхронизации).</li>
+                                                <li class="mb-2">Если студент ответит на сообщение преподавателя, форум снова появится в списке.</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-filter me-2"></i>Поиск и фильтрация</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2"><strong>Поиск по названию</strong> - найдите форум по его названию</li>
+                                                <li class="mb-2"><strong>Поиск по студенту</strong> - фильтрация по имени или email студента</li>
+                                                <li class="mb-2"><strong>Поиск по курсу</strong> - найдите форумы из конкретного курса</li>
+                                                <li class="mb-2"><strong>Сортировка</strong> - кликните на заголовок колонки для сортировки данных (по умолчанию сортировка по дате, новые сверху)</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            <h6 class="text-primary"><i class="fas fa-cogs me-2"></i>Действия</h6>
+                                            <ul class="list-unstyled small">
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-success disabled me-2"><i class="fas fa-reply"></i></button>
+                                                    <strong>Ответить в Moodle</strong> - открывает конкретное сообщение студента в Moodle, на которое нужно ответить. Позволяет сразу начать написание ответа.
+                                                </li>
+                                                <li class="mb-2">
+                                                    <button class="btn btn-sm btn-primary disabled me-2"><i class="fas fa-sync"></i></button>
+                                                    <strong>Обновить данные из Moodle</strong> - синхронизирует информацию о постах на форумах и определяет, какие требуют ответа преподавателя.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="col-md-12">
+                                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Рекомендации</h6>
+                                            <ol class="small">
+                                                <li class="mb-2">Кнопка "Ответить в Moodle" ведет непосредственно к сообщению студента, что ускоряет процесс ответа.</li>
+                                                <li class="mb-2">Используйте сортировку по дате (по умолчанию новые сверху) для приоритизации ответов.</li>
+                                                <li class="mb-2">Регулярно синхронизируйте данные, чтобы видеть новые сообщения студентов.</li>
+                                                <li class="mb-2">После ответа на сообщение студента, форум исчезнет из списка после следующей синхронизации.</li>
+                                                <li class="mb-2">В колонке "Последнее сообщение" показывается превью текста поста студента для быстрой оценки содержания.</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="table table-hover table-striped" id="forums-table">
                                 <thead>
@@ -1167,6 +1414,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('Initialization complete');
+    
+    // Анимация иконок chevron в блоках помощи
+    ['helpBlockAssignments', 'helpBlockQuizzes', 'helpBlockForums'].forEach(helpBlockId => {
+        const helpBlock = document.getElementById(helpBlockId);
+        if (helpBlock) {
+            const chevronIcon = helpBlock.previousElementSibling?.querySelector('.fa-chevron-down');
+            if (chevronIcon) {
+                helpBlock.addEventListener('show.bs.collapse', function() {
+                    chevronIcon.classList.remove('fa-chevron-down');
+                    chevronIcon.classList.add('fa-chevron-up');
+                });
+                
+                helpBlock.addEventListener('hide.bs.collapse', function() {
+                    chevronIcon.classList.remove('fa-chevron-up');
+                    chevronIcon.classList.add('fa-chevron-down');
+                });
+            }
+        }
+    });
     
     // Асинхронная синхронизация данных из Moodle
     const courses = @json(($courses ?? collect())->toArray());
