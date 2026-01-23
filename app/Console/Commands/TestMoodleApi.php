@@ -416,6 +416,7 @@ class TestMoodleApi extends Command
             $this->line("   - mod_forum_get_forums_by_courses");
             $this->line("   - mod_forum_get_posts_by_discussion");
             $this->line("   - core_grades_get_grades");
+            $this->line("   - core_cohort_get_cohorts (для синхронизации глобальных групп)");
             $this->line("   - core_course_get_contents (если нужно)");
             $this->newLine();
             $this->line("Альтернативно:");
