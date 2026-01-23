@@ -41,7 +41,7 @@ class StudentReviewController extends Controller
             ]);
         }
 
-        // Вкладка "Задания" - задания, ожидающие проверки
+        // Вкладка "Задания" - только задания, ожидающие проверки (не проверенные)
         $assignments = StudentActivityProgress::whereIn('course_id', $courseIds)
             ->whereHas('activity', function ($query) {
                 $query->where('activity_type', 'assign');
@@ -55,9 +55,26 @@ class StudentReviewController extends Controller
                 });
             })
             ->where(function ($query) {
-                $query->where('needs_grading', true)
-                      ->orWhereNotNull('submitted_at')
-                      ->orWhere('has_draft', true);
+                // Показываем только задания, которые ожидают проверки:
+                // 1. Сданы (submitted_at не null) И требуют проверки (needs_grading = true) И НЕ проверены
+                // 2. Или есть черновик, но задание еще не проверено
+                $query->where(function ($q) {
+                    // Сданные задания, ожидающие проверки
+                    $q->where('needs_grading', true)
+                      ->whereNotNull('submitted_at')
+                      ->where(function ($subQ) {
+                          // Не проверены: либо is_graded = false, либо grade is null
+                          $subQ->where('is_graded', false)
+                               ->orWhereNull('grade');
+                      });
+                })->orWhere(function ($q) {
+                    // Черновики, которые еще не проверены
+                    $q->where('has_draft', true)
+                      ->where(function ($subQ) {
+                          $subQ->where('is_graded', false)
+                               ->orWhereNull('grade');
+                      });
+                });
             })
             ->with(['user.roles', 'course', 'activity.course'])
             ->orderBy('submitted_at', 'desc')
@@ -69,6 +86,17 @@ class StudentReviewController extends Controller
                     $progress->activity->setRelation('course', $coursesById[$progress->course_id]);
                 }
 
+                // Проверяем, проверено ли задание (дополнительная проверка после запроса)
+                $isGraded = false;
+                if ($progress->is_graded || ($progress->grade !== null && $progress->grade !== '')) {
+                    $isGraded = true;
+                }
+
+                // Если задание проверено, не показываем его
+                if ($isGraded) {
+                    return null;
+                }
+
                 // Определяем статус задания
                 if ($progress->needs_grading && $progress->submitted_at) {
                     $progress->status = 'submitted';
@@ -76,7 +104,7 @@ class StudentReviewController extends Controller
                     $progress->status_class = 'warning';
                 } elseif ($progress->submitted_at) {
                     $progress->status = 'submitted';
-                    $progress->status_text = 'Сдано';
+                    $progress->status_text = 'Сдано (ожидает проверки)';
                     $progress->status_class = 'info';
                 } elseif ($progress->has_draft) {
                     $progress->status = 'in_progress';
@@ -92,7 +120,12 @@ class StudentReviewController extends Controller
                 $progress->display_date = $progress->submitted_at ?? $progress->draft_created_at ?? $progress->created_at;
 
                 return $progress;
-            });
+            })
+            ->filter(function ($progress) {
+                // Убираем null значения (проверенные задания)
+                return $progress !== null;
+            })
+            ->values();
 
         // Вкладка "Тесты" - все тесты со статусом ответил/не ответил
         // Получаем данные из базы (быстро, без синхронизации с Moodle)

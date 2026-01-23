@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('enrolled_at')->useCurrent(); // Дата зачисления в группу
             $table->text('notes')->nullable(); // Заметки
             $table->timestamps();
-            
+
             // Уникальная связь пользователь-группа
             $table->unique(['user_id', 'group_id'], 'user_groups_unique');
         });

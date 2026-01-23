@@ -148,7 +148,7 @@ class GroupController extends Controller
     {
         // Проверяем зависимости перед удалением
         $canDelete = $group->canBeDeleted();
-        
+
         if (!$canDelete['can_delete']) {
             return redirect()->back()
                 ->with('error', $canDelete['message'])

@@ -44,7 +44,7 @@
                                             id="course_id" name="course_id">
                                         <option value="">Не привязан к курсу</option>
                                         @foreach($courses as $course)
-                                            <option value="{{ $course->id }}" 
+                                            <option value="{{ $course->id }}"
                                                     @selected(old('course_id', $group->course_id) == $course->id)>
                                                 {{ $course->name }}
                                             </option>
@@ -62,7 +62,7 @@
                                             id="program_id" name="program_id">
                                         <option value="">Не привязана к программе</option>
                                         @foreach($programs as $program)
-                                            <option value="{{ $program->id }}" 
+                                            <option value="{{ $program->id }}"
                                                     @selected(old('program_id', $group->program_id) == $program->id)>
                                                 {{ $program->name }}
                                             </option>
@@ -77,7 +77,7 @@
 
                         <div class="mb-3">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
                                        value="1" {{ old('is_active', $group->is_active) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_active">
                                     Активная группа

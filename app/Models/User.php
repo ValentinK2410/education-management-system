@@ -317,7 +317,7 @@ class User extends Authenticatable
     /**
      * Получить токен Moodle API для пользователя
      * Если у пользователя нет токена, возвращает общий токен из конфига
-     * 
+     *
      * @return string|null Токен Moodle API или null если не настроен
      */
     public function getMoodleToken(): ?string
@@ -326,14 +326,14 @@ class User extends Authenticatable
         if (!empty($this->moodle_token)) {
             return $this->moodle_token;
         }
-        
+
         // Если у пользователя нет токена, используем общий токен из конфига
         return config('services.moodle.token', '');
     }
 
     /**
      * Проверить, имеет ли пользователь настроенный токен Moodle
-     * 
+     *
      * @return bool
      */
     public function hasMoodleToken(): bool

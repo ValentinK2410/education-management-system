@@ -35,7 +35,7 @@
                         <form action="{{ route('admin.groups.destroy', $group) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger" 
+                            <button type="submit" class="btn btn-danger"
                                     onclick="return confirm('Вы уверены, что хотите удалить эту группу?')">
                                 <i class="fas fa-trash me-1"></i>Удалить
                             </button>
@@ -140,7 +140,7 @@
                                             {{ $student->pivot->enrolled_at ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('d.m.Y') : '—' }}
                                         </td>
                                         <td>
-                                            <form action="{{ route('admin.groups.remove-student', [$group, $student]) }}" 
+                                            <form action="{{ route('admin.groups.remove-student', [$group, $student]) }}"
                                                   method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
@@ -200,7 +200,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="user_id" class="form-label">Студент *</label>
-                        <select class="form-select @error('user_id') is-invalid @enderror" 
+                        <select class="form-select @error('user_id') is-invalid @enderror"
                                 id="user_id" name="user_id" required>
                             <option value="">Выберите студента</option>
                             @foreach(\App\Models\User::whereHas('roles', function($q) { $q->where('slug', 'student'); })->orderBy('name')->get() as $user)
