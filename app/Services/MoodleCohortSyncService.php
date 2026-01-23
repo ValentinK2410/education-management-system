@@ -291,15 +291,20 @@ class MoodleCohortSyncService
             // Получаем текущих участников группы с их moodle_user_id
             $currentMembers = $group->students()
                 ->whereNotNull('moodle_user_id')
-                ->get()
-                ->keyBy('moodle_user_id');
+                ->get();
+            
+            // Создаем маппинг по moodle_user_id и по user_id для быстрой проверки
+            $currentMembersByMoodleId = $currentMembers->keyBy('moodle_user_id');
+            $currentMemberIds = $currentMembers->pluck('id')->toArray();
 
             Log::info('Начало синхронизации участников cohort', [
                 'group_id' => $group->id,
+                'group_name' => $group->name,
                 'cohort_id' => $moodleCohortId,
                 'moodle_user_ids_count' => count($moodleUserIds),
                 'found_users_count' => count($users),
-                'current_members_count' => $currentMembers->count()
+                'current_members_count' => $currentMembers->count(),
+                'current_member_ids' => $currentMemberIds
             ]);
 
             // Добавляем новых участников
@@ -307,9 +312,9 @@ class MoodleCohortSyncService
                 if (isset($users[$moodleUserId])) {
                     $user = $users[$moodleUserId];
                     
-                    // Проверяем, не состоит ли уже пользователь в группе (по moodle_user_id или по user_id)
-                    $alreadyInGroup = $currentMembers->has($moodleUserId) || 
-                                     $group->students()->where('users.id', $user->id)->exists();
+                    // Проверяем, не состоит ли уже пользователь в группе
+                    $alreadyInGroup = $currentMembersByMoodleId->has($moodleUserId) || 
+                                     in_array($user->id, $currentMemberIds);
                     
                     if (!$alreadyInGroup) {
                         try {
@@ -345,7 +350,8 @@ class MoodleCohortSyncService
             }
 
             // Удаляем участников, которых нет в Moodle cohort
-            foreach ($currentMembers as $moodleUserId => $user) {
+            foreach ($currentMembers as $user) {
+                $moodleUserId = $user->moodle_user_id;
                 if ($moodleUserId && !in_array($moodleUserId, $moodleUserIds)) {
                     try {
                         $group->students()->detach($user->id);

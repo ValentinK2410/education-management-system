@@ -127,6 +127,40 @@ class TestCohortMembers extends Command
                     $this->line("      - ID: {$member->id}, Имя: {$member->name}, Moodle ID: {$moodleId}");
                 }
             }
+
+            // Проверяем, какие пользователи должны быть добавлены
+            $this->newLine();
+            $this->info("4. Анализ: какие пользователи должны быть добавлены...");
+            $currentMemberIds = $currentMembers->pluck('id')->toArray();
+            $currentMoodleIds = $currentMembers->whereNotNull('moodle_user_id')->pluck('moodle_user_id')->toArray();
+            
+            $toAdd = [];
+            foreach ($moodleUserIds as $moodleUserId) {
+                if (isset($users[$moodleUserId])) {
+                    $user = $users[$moodleUserId];
+                    if (!in_array($user->id, $currentMemberIds) && !in_array($moodleUserId, $currentMoodleIds)) {
+                        $toAdd[] = $user;
+                    }
+                }
+            }
+            
+            if (count($toAdd) > 0) {
+                $this->warn("   ⚠️  Пользователей для добавления: " . count($toAdd));
+                $this->line("   Примеры:");
+                foreach (array_slice($toAdd, 0, 5) as $user) {
+                    $this->line("      - ID: {$user->id}, Имя: {$user->name}, Moodle ID: {$user->moodle_user_id}");
+                }
+            } else {
+                $this->info("   ✅ Все найденные пользователи уже в группе");
+            }
+        } else {
+            // Если не указана группа, ищем группу по cohort_id
+            $group = Group::where('moodle_cohort_id', $cohortId)->first();
+            if ($group) {
+                $this->newLine();
+                $this->info("3. Найдена группа: {$group->name} (ID: {$group->id})");
+                $this->info("   Запустите команду с --group-id={$group->id} для детального анализа");
+            }
         }
 
         $this->newLine();
