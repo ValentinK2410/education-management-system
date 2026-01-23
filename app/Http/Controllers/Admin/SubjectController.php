@@ -19,16 +19,62 @@ class SubjectController extends Controller
     /**
      * Отобразить список всех предметов
      *
+     * @param Request $request
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $subjects = Subject::withCount('courses')
+        $query = Subject::withCount('courses')
             ->withCount('programs')
-            ->with('programs') // Загружаем программы для каждого предмета
-            ->orderBy('order')
-            ->orderBy('name')
-            ->paginate(15);
+            ->with('programs'); // Загружаем программы для каждого предмета
+
+        // Поиск по названию
+        if ($request->filled('q')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->q . '%')
+                  ->orWhere('code', 'like', '%' . $request->q . '%')
+                  ->orWhere('description', 'like', '%' . $request->q . '%');
+            });
+        }
+
+        // Фильтр по статусу
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active);
+        }
+
+        // Сортировка
+        $sortColumn = $request->input('sort', 'order');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Валидация направления сортировки
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'asc';
+        }
+
+        // Разрешенные столбцы для сортировки
+        $allowedSortColumns = ['id', 'name', 'code', 'order', 'courses_count', 'programs_count', 'is_active', 'created_at'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'order';
+        }
+
+        // Применяем сортировку
+        if ($sortColumn === 'courses_count' || $sortColumn === 'programs_count') {
+            // Для счетчиков используем orderBy с указанием направления
+            $query->orderBy($sortColumn, $sortDirection);
+        } else {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+
+        // Дополнительная сортировка для стабильности
+        if ($sortColumn !== 'id') {
+            $query->orderBy('id', 'asc');
+        }
+
+        // Количество элементов на странице
+        $perPage = $request->input('per_page', 15);
+        $perPage = min(max((int)$perPage, 10), 200);
+
+        $subjects = $query->paginate($perPage)->withQueryString();
         
         // Получаем все активные программы для модального окна
         $availablePrograms = Program::active()
@@ -36,7 +82,7 @@ class SubjectController extends Controller
             ->orderBy('name')
             ->get();
         
-        return view('admin.subjects.index', compact('subjects', 'availablePrograms'));
+        return view('admin.subjects.index', compact('subjects', 'availablePrograms', 'sortColumn', 'sortDirection'));
     }
 
     /**

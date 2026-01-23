@@ -63,18 +63,129 @@
                     <h5 class="mb-0">Список предметов</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Фильтры и поиск -->
+                    <form method="GET" action="{{ route('admin.subjects.index') }}" class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" name="q" class="form-control" value="{{ request('q') }}"
+                                       placeholder="Поиск по названию, коду или описанию">
+                            </div>
+                            <div class="col-md-2">
+                                <select name="is_active" class="form-select">
+                                    <option value="">Все статусы</option>
+                                    <option value="1" @selected(request('is_active') === '1')>Активные</option>
+                                    <option value="0" @selected(request('is_active') === '0')>Неактивные</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="per_page" class="form-select" onchange="this.form.submit()">
+                                    <option value="10" @selected(request('per_page', 15) == 10)>10 на странице</option>
+                                    <option value="15" @selected(request('per_page', 15) == 15)>15 на странице</option>
+                                    <option value="25" @selected(request('per_page', 15) == 25)>25 на странице</option>
+                                    <option value="50" @selected(request('per_page', 15) == 50)>50 на странице</option>
+                                    <option value="100" @selected(request('per_page', 15) == 100)>100 на странице</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-search me-1"></i>Найти
+                                </button>
+                                <a href="{{ route('admin.subjects.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-undo me-1"></i>Сбросить
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Скрытые поля для сохранения сортировки -->
+                        @if(request('sort'))
+                            <input type="hidden" name="sort" value="{{ request('sort') }}">
+                        @endif
+                        @if(request('direction'))
+                            <input type="hidden" name="direction" value="{{ request('direction') }}">
+                        @endif
+                    </form>
+
                     @if($subjects->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th style="width: 50px;">Порядок</th>
-                                        <th>ID</th>
-                                        <th>Название</th>
-                                        <th>Код</th>
-                                        <th>Курсов</th>
-                                        <th>Программ</th>
-                                        <th>Статус</th>
+                                        <th style="width: 50px;">
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'order', 'direction' => ($sortColumn == 'order' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Порядок
+                                                @if($sortColumn == 'order')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => ($sortColumn == 'id' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                ID
+                                                @if($sortColumn == 'id')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'name', 'direction' => ($sortColumn == 'name' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Название
+                                                @if($sortColumn == 'name')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'code', 'direction' => ($sortColumn == 'code' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Код
+                                                @if($sortColumn == 'code')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'courses_count', 'direction' => ($sortColumn == 'courses_count' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Курсов
+                                                @if($sortColumn == 'courses_count')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'programs_count', 'direction' => ($sortColumn == 'programs_count' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Программ
+                                                @if($sortColumn == 'programs_count')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ route('admin.subjects.index', array_merge(request()->all(), ['sort' => 'is_active', 'direction' => ($sortColumn == 'is_active' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                               class="text-decoration-none text-reset">
+                                                Статус
+                                                @if($sortColumn == 'is_active')
+                                                    <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
                                         <th style="width: 200px;">Действия</th>
                                     </tr>
                                 </thead>
