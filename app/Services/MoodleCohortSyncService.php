@@ -288,25 +288,41 @@ class MoodleCohortSyncService
                 ->get()
                 ->keyBy('moodle_user_id');
 
-            // Получаем текущих участников группы
-            $currentMembers = $group->students()->get()->keyBy('moodle_user_id');
+            // Получаем текущих участников группы с их moodle_user_id
+            $currentMembers = $group->students()
+                ->whereNotNull('moodle_user_id')
+                ->get()
+                ->keyBy('moodle_user_id');
+
+            Log::info('Начало синхронизации участников cohort', [
+                'group_id' => $group->id,
+                'cohort_id' => $moodleCohortId,
+                'moodle_user_ids_count' => count($moodleUserIds),
+                'found_users_count' => count($users),
+                'current_members_count' => $currentMembers->count()
+            ]);
 
             // Добавляем новых участников
             foreach ($moodleUserIds as $moodleUserId) {
                 if (isset($users[$moodleUserId])) {
                     $user = $users[$moodleUserId];
                     
-                    // Проверяем, не состоит ли уже пользователь в группе
-                    if (!$currentMembers->has($moodleUserId)) {
+                    // Проверяем, не состоит ли уже пользователь в группе (по moodle_user_id или по user_id)
+                    $alreadyInGroup = $currentMembers->has($moodleUserId) || 
+                                     $group->students()->where('users.id', $user->id)->exists();
+                    
+                    if (!$alreadyInGroup) {
                         try {
                             $group->students()->attach($user->id, [
                                 'enrolled_at' => now()
                             ]);
                             $stats['added']++;
-                            Log::debug('Пользователь добавлен в группу из cohort', [
+                            Log::info('Пользователь добавлен в группу из cohort', [
                                 'user_id' => $user->id,
+                                'user_name' => $user->name,
                                 'moodle_user_id' => $moodleUserId,
-                                'group_id' => $group->id
+                                'group_id' => $group->id,
+                                'group_name' => $group->name
                             ]);
                         } catch (\Exception $e) {
                             $stats['errors']++;
@@ -319,16 +335,18 @@ class MoodleCohortSyncService
                     }
                 } else {
                     // Пользователь не найден в системе деканата
-                    Log::debug('Пользователь из cohort не найден в системе деканата', [
+                    Log::warning('Пользователь из cohort не найден в системе деканата', [
                         'moodle_user_id' => $moodleUserId,
-                        'group_id' => $group->id
+                        'group_id' => $group->id,
+                        'group_name' => $group->name,
+                        'hint' => 'У пользователя в Moodle нет соответствующей записи в системе деканата с таким moodle_user_id'
                     ]);
                 }
             }
 
             // Удаляем участников, которых нет в Moodle cohort
             foreach ($currentMembers as $moodleUserId => $user) {
-                if (!in_array($moodleUserId, $moodleUserIds)) {
+                if ($moodleUserId && !in_array($moodleUserId, $moodleUserIds)) {
                     try {
                         $group->students()->detach($user->id);
                         $stats['removed']++;
