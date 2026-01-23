@@ -61,17 +61,28 @@ class MoodleCohortSyncService
 
             if ($moodleCohorts === false) {
                 $stats['errors'] = 1;
+                $errorMessage = 'Не удалось получить cohorts из Moodle API. Проверьте логи для деталей.';
                 $stats['errors_list'][] = [
                     'type' => 'api_error',
-                    'error' => 'Не удалось получить cohorts из Moodle API'
+                    'error' => $errorMessage,
+                    'hint' => 'Возможные причины: отсутствие прав у токена на core_cohort_get_cohorts, неправильная конфигурация Moodle URL/токена, или cohorts отсутствуют в Moodle'
                 ];
-                Log::error('Ошибка получения cohorts из Moodle');
+                Log::error('Ошибка получения cohorts из Moodle', [
+                    'hint' => 'Проверьте логи MoodleApiService для детальной информации об ошибке'
+                ]);
                 return $stats;
             }
 
             if (!is_array($moodleCohorts)) {
+                $stats['errors'] = 1;
+                $errorMessage = 'Moodle API вернул неожиданный формат данных: ' . gettype($moodleCohorts);
+                $stats['errors_list'][] = [
+                    'type' => 'format_error',
+                    'error' => $errorMessage
+                ];
                 Log::warning('Moodle API вернул неожиданный формат данных', [
-                    'type' => gettype($moodleCohorts)
+                    'type' => gettype($moodleCohorts),
+                    'value' => $moodleCohorts
                 ]);
                 return $stats;
             }
