@@ -163,7 +163,7 @@
                 <div class="card-body">
                     <!-- Статистика -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <div class="card bg-info text-white">
                                 <div class="card-body">
                                     <h5 class="card-title">Всего курсов</h5>
@@ -171,11 +171,27 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <div class="card bg-success text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">Синхронизировано с Moodle</h5>
+                                    <h5 class="card-title">Синхронизировано курсов</h5>
                                     <h2 class="mb-0">{{ $coursesCount }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Всего групп</h5>
+                                    <h2 class="mb-0">{{ $totalGroups ?? 0 }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Синхронизировано групп</h5>
+                                    <h2 class="mb-0">{{ $groupsCount ?? 0 }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -193,6 +209,10 @@
                                 
                                 <button type="button" class="btn btn-info btn-lg w-100 mb-2" onclick="startSyncCourses()" id="sync-courses-btn">
                                     <i class="fas fa-book me-2"></i>Синхронизировать только курсы
+                                </button>
+                                
+                                <button type="button" class="btn btn-warning btn-lg w-100 mb-2" onclick="startSyncCohorts()" id="sync-cohorts-btn">
+                                    <i class="fas fa-users me-2"></i>Синхронизировать глобальные группы (cohorts)
                                 </button>
                             </div>
                         </div>
@@ -434,6 +454,84 @@ function startSyncAll() {
 function startSyncCourses() {
     syncEnrollments = false;
     startSync('courses');
+}
+
+function startSyncCohorts() {
+    if (syncInProgress) {
+        alert('Синхронизация уже выполняется. Дождитесь завершения.');
+        return;
+    }
+    
+    const btn = document.getElementById('sync-cohorts-btn');
+    const originalText = btn ? btn.innerHTML : '';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Синхронизация групп...';
+    }
+    
+    // Показываем контейнер прогресса
+    const progressContainer = document.getElementById('sync-progress-container');
+    if (progressContainer) {
+        progressContainer.style.display = 'block';
+        progressContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Обновляем UI прогресса
+    document.getElementById('sync-current-step').textContent = 'Синхронизация глобальных групп из Moodle...';
+    document.getElementById('sync-progress-text').textContent = 'Подготовка...';
+    document.getElementById('sync-progress-percent').textContent = '0%';
+    document.getElementById('sync-progress-bar').style.width = '0%';
+    document.getElementById('stop-sync-btn').style.display = 'none';
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    
+    // Отправляем запрос на синхронизацию cohorts
+    fetch('{{ route("admin.moodle-sync.sync-cohorts") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('sync-progress-bar').style.width = '100%';
+            document.getElementById('sync-progress-percent').textContent = '100%';
+            document.getElementById('sync-progress-text').textContent = 'Синхронизация завершена';
+            document.getElementById('sync-current-step').textContent = 
+                `Создано: ${data.stats.created || 0}, Обновлено: ${data.stats.updated || 0}, Ошибок: ${data.stats.errors || 0}`;
+            
+            showSuccessMessage(data.message || 'Синхронизация глобальных групп завершена успешно');
+        } else {
+            showErrorMessage(data.message || 'Ошибка при синхронизации групп');
+            document.getElementById('sync-current-step').textContent = 'Ошибка: ' + (data.message || 'Неизвестная ошибка');
+        }
+        
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        
+        // Обновляем страницу через 3 секунды
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showErrorMessage('Ошибка при синхронизации групп: ' + error.message);
+        document.getElementById('sync-current-step').textContent = 'Ошибка: ' + error.message;
+        
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
 }
 
 function startSync(syncType) {
@@ -751,8 +849,10 @@ function finishSync(btn, originalText) {
     
     const syncAllBtn = document.getElementById('sync-all-btn');
     const syncCoursesBtn = document.getElementById('sync-courses-btn');
+    const syncCohortsBtn = document.getElementById('sync-cohorts-btn');
     if (syncAllBtn) syncAllBtn.disabled = false;
     if (syncCoursesBtn) syncCoursesBtn.disabled = false;
+    if (syncCohortsBtn) syncCohortsBtn.disabled = false;
     
     // Обновляем страницу через 5 секунд
     setTimeout(() => {
@@ -776,6 +876,7 @@ function stopSync() {
         
         const syncAllBtn = document.getElementById('sync-all-btn');
         const syncCoursesBtn = document.getElementById('sync-courses-btn');
+        const syncCohortsBtn = document.getElementById('sync-cohorts-btn');
         if (syncAllBtn) {
             syncAllBtn.disabled = false;
             syncAllBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Полная синхронизация (курсы + записи студентов)';
@@ -783,6 +884,10 @@ function stopSync() {
         if (syncCoursesBtn) {
             syncCoursesBtn.disabled = false;
             syncCoursesBtn.innerHTML = '<i class="fas fa-book me-2"></i>Синхронизировать только курсы';
+        }
+        if (syncCohortsBtn) {
+            syncCohortsBtn.disabled = false;
+            syncCohortsBtn.innerHTML = '<i class="fas fa-users me-2"></i>Синхронизировать глобальные группы (cohorts)';
         }
     }
 }
@@ -798,8 +903,10 @@ function resetSyncUI(btn, originalText) {
     
     const syncAllBtn = document.getElementById('sync-all-btn');
     const syncCoursesBtn = document.getElementById('sync-courses-btn');
+    const syncCohortsBtn = document.getElementById('sync-cohorts-btn');
     if (syncAllBtn) syncAllBtn.disabled = false;
     if (syncCoursesBtn) syncCoursesBtn.disabled = false;
+    if (syncCohortsBtn) syncCohortsBtn.disabled = false;
     
     const progressContainer = document.getElementById('sync-progress-container');
     if (progressContainer) {

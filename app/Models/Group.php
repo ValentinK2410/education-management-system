@@ -25,11 +25,12 @@ class Group extends Model
      * Поля, доступные для массового заполнения
      */
     protected $fillable = [
-        'name',        // Название группы
-        'description', // Описание
-        'course_id',   // ID курса (опционально)
-        'program_id',  // ID программы (опционально)
-        'is_active',   // Статус активности
+        'name',             // Название группы
+        'description',       // Описание
+        'course_id',        // ID курса (опционально)
+        'program_id',       // ID программы (опционально)
+        'moodle_cohort_id', // ID глобальной группы в Moodle (опционально)
+        'is_active',        // Статус активности
     ];
 
     /**

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Group;
 use App\Services\MoodleSyncService;
+use App\Services\MoodleCohortSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -47,10 +49,14 @@ class MoodleSyncController extends Controller
         $coursesCount = Course::whereNotNull('moodle_course_id')->count();
         $totalCourses = Course::count();
 
+        // Получаем статистику групп (cohorts)
+        $groupsCount = Group::whereNotNull('moodle_cohort_id')->count();
+        $totalGroups = Group::count();
+
         // Получаем последние логи синхронизации (из файла логов)
         $recentLogs = $this->getRecentSyncLogs();
 
-        return view('admin.moodle-sync.index', compact('coursesCount', 'totalCourses', 'recentLogs'));
+        return view('admin.moodle-sync.index', compact('coursesCount', 'totalCourses', 'groupsCount', 'totalGroups', 'recentLogs'));
     }
 
     /**
@@ -916,6 +922,80 @@ class MoodleSyncController extends Controller
         }
 
         return 'Прочие ошибки';
+    }
+
+    /**
+     * Синхронизировать глобальные группы (cohorts) из Moodle
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function syncCohorts(Request $request)
+    {
+        try {
+            // Увеличиваем время выполнения для длительной синхронизации
+            set_time_limit(1800); // 30 минут
+            ini_set('max_execution_time', '1800');
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true);
+
+            if (!headers_sent()) {
+                header('X-Accel-Buffering: no');
+            }
+
+            $syncService = new MoodleCohortSyncService();
+            
+            $stats = $syncService->syncCohorts();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Синхронизация глобальных групп завершена',
+                    'stats' => $stats
+                ]);
+            }
+
+            $message = sprintf(
+                'Синхронизация завершена. Создано: %d, Обновлено: %d, Ошибок: %d',
+                $stats['created'] ?? 0,
+                $stats['updated'] ?? 0,
+                $stats['errors'] ?? 0
+            );
+
+            return redirect()->route('admin.moodle-sync.index')
+                ->with('success', $message);
+
+        } catch (\InvalidArgumentException $e) {
+            $errorMessage = 'Ошибка конфигурации Moodle: ' . $e->getMessage();
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 400);
+            }
+
+            return redirect()->route('admin.moodle-sync.index')
+                ->with('error', $errorMessage);
+
+        } catch (\Exception $e) {
+            Log::error('Ошибка синхронизации cohorts из Moodle', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            $errorMessage = 'Ошибка при синхронизации: ' . $e->getMessage();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+
+            return redirect()->route('admin.moodle-sync.index')
+                ->with('error', $errorMessage);
+        }
     }
 }
 

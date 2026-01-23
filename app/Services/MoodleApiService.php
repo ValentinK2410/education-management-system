@@ -2440,5 +2440,48 @@ class MoodleApiService
             return false;
         }
     }
+
+    /**
+     * Получить все глобальные группы (cohorts) из Moodle
+     *
+     * @param array $cohortIds Массив ID cohorts для фильтрации (опционально)
+     * @return array|false Массив cohorts или false в случае ошибки
+     */
+    public function getCohorts(array $cohortIds = [])
+    {
+        try {
+            $params = [];
+            
+            // Если указаны конкретные ID cohorts, фильтруем по ним
+            if (!empty($cohortIds)) {
+                $params['cohortids'] = $cohortIds;
+            }
+
+            $result = $this->call('core_cohort_get_cohorts', $params);
+
+            if ($result === false || isset($result['exception'])) {
+                Log::error('Moodle API: Ошибка получения cohorts', [
+                    'exception' => $result['exception'] ?? 'unknown',
+                    'message' => $result['message'] ?? 'неизвестная ошибка'
+                ]);
+                return false;
+            }
+
+            // Moodle возвращает массив cohorts
+            if (is_array($result)) {
+                Log::info('Moodle API: Получены cohorts', [
+                    'count' => count($result)
+                ]);
+                return $result;
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error('getCohorts: исключение', [
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 }
 
