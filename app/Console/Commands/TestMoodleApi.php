@@ -358,14 +358,23 @@ class TestMoodleApi extends Command
                 $this->line("   Проверьте подключение к Moodle, URL и токен в .env файле");
             } elseif (isset($cohortResult['exception'])) {
                 $this->error("   ❌ Moodle вернул ошибку:");
-                $this->line("      Тип: " . ($cohorts['exception'] ?? 'unknown'));
-                $this->line("      Сообщение: " . ($cohorts['message'] ?? 'неизвестная ошибка'));
-                $this->line("      Код ошибки: " . ($cohorts['errorcode'] ?? 'N/A'));
-                if (isset($cohorts['debuginfo'])) {
-                    $this->line("      Отладка: " . $cohorts['debuginfo']);
+                $this->line("      Тип: " . ($cohortResult['exception'] ?? 'unknown'));
+                $this->line("      Сообщение: " . ($cohortResult['message'] ?? 'неизвестная ошибка'));
+                $this->line("      Код ошибки: " . ($cohortResult['errorcode'] ?? 'N/A'));
+                if (isset($cohortResult['debuginfo'])) {
+                    $this->line("      Отладка: " . $cohortResult['debuginfo']);
                 }
                 $this->warn("   ⚠️  Возможно, токен не имеет прав на функцию core_cohort_get_cohorts");
-            } elseif (is_array($cohorts)) {
+                $this->newLine();
+                $this->line("   Для исправления:");
+                $this->line("   1. Войдите в Moodle как администратор");
+                $this->line("   2. Перейдите: Настройки сайта → Плагины → Веб-сервисы → Внешние службы");
+                $this->line("   3. Найдите службу, которую использует ваш токен");
+                $this->line("   4. Добавьте функцию 'core_cohort_get_cohorts' в список разрешенных");
+            } else {
+                // Обрабатываем результат через getCohorts для правильной структуры
+                $cohorts = $moodleApi->getCohorts();
+                if (is_array($cohorts)) {
                 $this->info("   ✅ Cohorts получены успешно: " . count($cohorts));
                 if (count($cohorts) > 0) {
                     $this->line("   Первые 5 cohorts:");
@@ -378,8 +387,10 @@ class TestMoodleApi extends Command
                 } else {
                     $this->warn("   ⚠️  Cohorts не найдены (возможно, их нет в Moodle)");
                 }
-            } else {
-                $this->warn("   ⚠️  Неожиданный формат ответа: " . gettype($cohorts));
+                } else {
+                    $this->warn("   ⚠️  Неожиданный формат ответа: " . gettype($cohorts));
+                    $this->line("   Структура ответа: " . json_encode(array_keys($cohortResult ?? []), JSON_UNESCAPED_UNICODE));
+                }
             }
         } catch (\Exception $e) {
             $this->error("   ❌ Ошибка при получении cohorts: " . $e->getMessage());
