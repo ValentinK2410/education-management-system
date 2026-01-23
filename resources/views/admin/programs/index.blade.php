@@ -218,6 +218,15 @@
                                                    class="btn btn-sm btn-warning" title="{{ __('messages.edit') }}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <form action="{{ route('admin.programs.duplicate', $program) }}"
+                                                      method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-secondary"
+                                                            title="Дублировать программу"
+                                                            onclick="return confirm('Создать копию программы «{{ $program->name }}»?')">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </form>
                                                 <form action="{{ route('admin.programs.destroy', $program) }}"
                                                       method="POST" class="d-inline">
                                                     @csrf
