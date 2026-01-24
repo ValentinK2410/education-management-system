@@ -1,4 +1,5 @@
 #!/bin/bash
+# Использование: bash fix-nginx-default-ssl.sh (не sh!)
 
 # Скрипт для исправления конфигурации Nginx в файле default
 # Для theologybooks.org с SSL сертификатом
@@ -69,12 +70,7 @@ echo ""
 # Проверяем, есть ли уже блок для домена
 if grep -q "server_name.*${DOMAIN}" "$NGINX_CONFIG"; then
     echo "⚠️  В конфигурации уже есть блок для ${DOMAIN}"
-    read -p "Заменить существующий блок? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Отмена. Используйте отдельный файл конфигурации для домена."
-        exit 0
-    fi
+    echo "Продолжаем обновление конфигурации..."
 fi
 
 # Читаем текущий файл
@@ -83,12 +79,7 @@ CURRENT_CONFIG=$(cat "$NGINX_CONFIG")
 # Проверяем, есть ли уже HTTPS блок
 if echo "$CURRENT_CONFIG" | grep -q "listen 443"; then
     echo "⚠️  В конфигурации уже есть HTTPS блок (443 порт)"
-    read -p "Заменить существующий HTTPS блок? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Отмена."
-        exit 0
-    fi
+    echo "Обновляем существующий блок..."
 fi
 
 # Создаем новую конфигурацию
