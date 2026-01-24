@@ -38,23 +38,44 @@ else
     echo ""
 fi
 
-# Проверяем дату истечения
+# Проверяем дату истечения через certbot (более надежно)
+CERTBOT_EXPIRY=$(certbot certificates 2>/dev/null | grep -A 5 "theologybooks.org" | grep "Expiry Date" | awk '{print $3, $4, $5}')
+
+if [ -n "$CERTBOT_EXPIRY" ]; then
+    echo "📅 Дата истечения (из certbot): $CERTBOT_EXPIRY"
+    # Проверяем через certbot, нуждается ли сертификат в обновлении
+    CERTBOT_STATUS=$(certbot certificates 2>/dev/null | grep -A 5 "theologybooks.org" | grep "Certificate Name" -A 3 | grep -E "Expiry|VALID")
+    echo "$CERTBOT_STATUS"
+    echo ""
+fi
+
+# Проверяем дату истечения через openssl (дополнительная проверка)
 EXPIRY_DATE=$(echo | openssl s_client -connect ${DOMAIN}:443 -servername ${DOMAIN} 2>&1 | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
 EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null || date -j -f "%b %d %H:%M:%S %Y %Z" "$EXPIRY_DATE" +%s 2>/dev/null)
 CURRENT_EPOCH=$(date +%s)
-DAYS_UNTIL_EXPIRY=$(( ($EXPIRY_EPOCH - $CURRENT_EPOCH) / 86400 ))
 
-if [ -n "$DAYS_UNTIL_EXPIRY" ]; then
+if [ -n "$EXPIRY_EPOCH" ] && [ -n "$CURRENT_EPOCH" ]; then
+    DAYS_UNTIL_EXPIRY=$(( ($EXPIRY_EPOCH - $CURRENT_EPOCH) / 86400 ))
+    
     if [ $DAYS_UNTIL_EXPIRY -lt 0 ]; then
         echo "❌ Сертификат ИСТЕК! Необходимо срочное обновление."
     elif [ $DAYS_UNTIL_EXPIRY -lt 30 ]; then
         echo "⚠️  Сертификат истекает через $DAYS_UNTIL_EXPIRY дней. Рекомендуется обновление."
-    else
-        echo "✅ Сертификат действителен еще $DAYS_UNTIL_EXPIRY дней."
+    elif [ $DAYS_UNTIL_EXPIRY -lt 60 ]; then
+        echo "✅ Сертификат действителен еще $DAYS_UNTIL_EXPIRY дней. Можно обновить заранее."
         read -p "Продолжить обновление? (y/n): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Обновление отменено."
+            echo "Обновление отменено. Сертификат будет автоматически обновлен при приближении к дате истечения."
+            exit 0
+        fi
+    else
+        echo "✅ Сертификат действителен еще $DAYS_UNTIL_EXPIRY дней."
+        echo "ℹ️  Certbot автоматически обновит сертификат за 30 дней до истечения."
+        read -p "Принудительно обновить сейчас? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Обновление отменено. Сертификат будет автоматически обновлен при необходимости."
             exit 0
         fi
     fi
