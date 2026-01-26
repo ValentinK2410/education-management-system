@@ -25,7 +25,8 @@ class GroupController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Group::with(['course', 'program', 'students']);
+        $query = Group::with(['course', 'program'])
+            ->withCount('students');
 
         // Поиск по названию
         if ($request->filled('q')) {
@@ -47,6 +48,41 @@ class GroupController extends Controller
             $query->where('is_active', $request->is_active);
         }
 
+        // Сортировка
+        $sortColumn = $request->input('sort', 'id');
+        $sortDirection = $request->input('direction', 'asc');
+
+        // Валидация направления сортировки
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'asc';
+        }
+
+        // Разрешенные столбцы для сортировки
+        $allowedSortColumns = ['id', 'name', 'course', 'program', 'students_count', 'is_active'];
+        if (!in_array($sortColumn, $allowedSortColumns)) {
+            $sortColumn = 'id';
+        }
+
+        // Применяем сортировку
+        if ($sortColumn === 'course') {
+            $query->orderBy(
+                Course::select('name')->whereColumn('courses.id', 'groups.course_id'),
+                $sortDirection
+            );
+        } elseif ($sortColumn === 'program') {
+            $query->orderBy(
+                Program::select('name')->whereColumn('programs.id', 'groups.program_id'),
+                $sortDirection
+            );
+        } else {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+
+        // Дополнительная сортировка для стабильности
+        if ($sortColumn !== 'id') {
+            $query->orderBy('groups.id', 'asc');
+        }
+
         // Количество элементов на странице
         $perPage = $request->input('per_page', 15);
         $perPage = min(max((int)$perPage, 10), 200); // Ограничение от 10 до 200
@@ -55,7 +91,7 @@ class GroupController extends Controller
         $courses = Course::active()->orderBy('name')->get();
         $programs = Program::active()->orderBy('name')->get();
 
-        return view('admin.groups.index', compact('groups', 'courses', 'programs', 'perPage'));
+        return view('admin.groups.index', compact('groups', 'courses', 'programs', 'perPage', 'sortColumn', 'sortDirection'));
     }
 
     /**

@@ -13,6 +13,31 @@
     [data-theme="dark"] .container-fluid .table {
         color: var(--text-color) !important;
     }
+
+    /* Стили для сортируемых заголовков */
+    .table thead th a {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .table thead th a:hover {
+        color: var(--bs-primary);
+    }
+
+    [data-theme="dark"] .table thead th a:hover {
+        color: var(--primary-color) !important;
+    }
+
+    .table thead th a i.fa-sort {
+        opacity: 0.3;
+    }
+
+    .table thead th a:hover i.fa-sort {
+        opacity: 0.6;
+    }
 </style>
 @endpush
 
@@ -82,18 +107,85 @@
                                 </a>
                             </div>
                         </div>
+                        <!-- Скрытые поля для сохранения сортировки -->
+                        @if(request('sort'))
+                            <input type="hidden" name="sort" value="{{ request('sort') }}">
+                        @endif
+                        @if(request('direction'))
+                            <input type="hidden" name="direction" value="{{ request('direction') }}">
+                        @endif
                     </form>
 
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Название</th>
-                                    <th>Курс</th>
-                                    <th>Программа</th>
-                                    <th>Студентов</th>
-                                    <th>Статус</th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => ($sortColumn == 'id' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            ID
+                                            @if($sortColumn == 'id')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'name', 'direction' => ($sortColumn == 'name' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            Название
+                                            @if($sortColumn == 'name')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'course', 'direction' => ($sortColumn == 'course' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            Курс
+                                            @if($sortColumn == 'course')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'program', 'direction' => ($sortColumn == 'program' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            Программа
+                                            @if($sortColumn == 'program')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'students_count', 'direction' => ($sortColumn == 'students_count' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            Студентов
+                                            @if($sortColumn == 'students_count')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'is_active', 'direction' => ($sortColumn == 'is_active' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                           class="text-decoration-none text-reset">
+                                            Статус
+                                            @if($sortColumn == 'is_active')
+                                                <i class="fas fa-sort-{{ $sortDirection == 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
@@ -126,7 +218,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-info">{{ $group->students->count() }}</span>
+                                            <span class="badge bg-info">{{ $group->students_count }}</span>
                                         </td>
                                         <td>
                                             @if($group->is_active)
