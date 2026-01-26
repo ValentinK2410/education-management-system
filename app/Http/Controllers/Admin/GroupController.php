@@ -8,6 +8,8 @@ use App\Models\Course;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Контроллер для управления группами студентов
@@ -221,13 +223,53 @@ class GroupController extends Controller
                 ->with('error', 'Студент уже состоит в этой группе.');
         }
 
-        $group->students()->attach($request->user_id, [
-            'notes' => $request->notes,
-            'enrolled_at' => now(),
-        ]);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->back()
-            ->with('success', 'Студент успешно добавлен в группу.');
+            // Добавляем студента в группу
+            $group->students()->attach($request->user_id, [
+                'notes' => $request->notes,
+                'enrolled_at' => now(),
+            ]);
+
+            // Автоматически записываем студента на все программы, прикреплённые к группе
+            $enrolledProgramsCount = 0;
+            $groupPrograms = $group->programs()->get();
+
+            foreach ($groupPrograms as $program) {
+                // Проверяем, не записан ли уже студент на эту программу
+                if (!$program->users()->where('user_id', $request->user_id)->exists()) {
+                    $program->users()->attach($request->user_id, [
+                        'status' => 'enrolled',
+                        'enrolled_at' => now(),
+                        'notes' => 'Автоматически записан из группы: ' . $group->name
+                    ]);
+                    $enrolledProgramsCount++;
+                }
+            }
+
+            DB::commit();
+
+            $message = 'Студент успешно добавлен в группу.';
+            if ($enrolledProgramsCount > 0) {
+                $message .= sprintf(' Также записан на %d программ(у/ы).', $enrolledProgramsCount);
+            }
+
+            return redirect()->back()
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Ошибка добавления студента в группу', [
+                'group_id' => $group->id,
+                'user_id' => $request->user_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Произошла ошибка при добавлении студента: ' . $e->getMessage());
+        }
     }
 
     /**

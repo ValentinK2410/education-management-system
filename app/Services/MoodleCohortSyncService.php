@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Group;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -318,18 +319,40 @@ class MoodleCohortSyncService
                     
                     if (!$alreadyInGroup) {
                         try {
+                            DB::beginTransaction();
+                            
                             $group->students()->attach($user->id, [
                                 'enrolled_at' => now()
                             ]);
+                            
+                            // Автоматически записываем студента на все программы группы
+                            $groupPrograms = $group->programs()->get();
+                            $enrolledProgramsCount = 0;
+                            
+                            foreach ($groupPrograms as $program) {
+                                if (!$program->users()->where('user_id', $user->id)->exists()) {
+                                    $program->users()->attach($user->id, [
+                                        'status' => 'enrolled',
+                                        'enrolled_at' => now(),
+                                        'notes' => 'Автоматически записан из группы (синхронизация Moodle): ' . $group->name
+                                    ]);
+                                    $enrolledProgramsCount++;
+                                }
+                            }
+                            
+                            DB::commit();
+                            
                             $stats['added']++;
                             Log::info('Пользователь добавлен в группу из cohort', [
                                 'user_id' => $user->id,
                                 'user_name' => $user->name,
                                 'moodle_user_id' => $moodleUserId,
                                 'group_id' => $group->id,
-                                'group_name' => $group->name
+                                'group_name' => $group->name,
+                                'enrolled_programs_count' => $enrolledProgramsCount
                             ]);
                         } catch (\Exception $e) {
+                            DB::rollBack();
                             $stats['errors']++;
                             Log::error('Ошибка добавления пользователя в группу', [
                                 'user_id' => $user->id,
