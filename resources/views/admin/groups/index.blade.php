@@ -121,7 +121,7 @@
                             <thead>
                                 <tr>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => ($sortColumn == 'id' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => ($sortColumn == 'id' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             ID
                                             @if($sortColumn == 'id')
@@ -132,7 +132,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'name', 'direction' => ($sortColumn == 'name' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'name', 'direction' => ($sortColumn == 'name' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             Название
                                             @if($sortColumn == 'name')
@@ -143,7 +143,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'course', 'direction' => ($sortColumn == 'course' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'course', 'direction' => ($sortColumn == 'course' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             Курс
                                             @if($sortColumn == 'course')
@@ -154,7 +154,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'program', 'direction' => ($sortColumn == 'program' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'program', 'direction' => ($sortColumn == 'program' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             Программа
                                             @if($sortColumn == 'program')
@@ -165,7 +165,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'students_count', 'direction' => ($sortColumn == 'students_count' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'students_count', 'direction' => ($sortColumn == 'students_count' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             Студентов
                                             @if($sortColumn == 'students_count')
@@ -176,7 +176,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'is_active', 'direction' => ($sortColumn == 'is_active' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}" 
+                                        <a href="{{ route('admin.groups.index', array_merge(request()->all(), ['sort' => 'is_active', 'direction' => ($sortColumn == 'is_active' && $sortDirection == 'asc') ? 'desc' : 'asc'])) }}"
                                            class="text-decoration-none text-reset">
                                             Статус
                                             @if($sortColumn == 'is_active')

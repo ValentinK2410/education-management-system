@@ -156,6 +156,7 @@
                                     <th>ID</th>
                                     <th>{{ __('messages.course_name') }}</th>
                                     <th>{{ __('messages.institution') }}</th>
+                                    <th>Связи</th>
                                     <th>{{ __('messages.payment_type') }}</th>
                                     <th>{{ __('messages.price') }}</th>
                                     <th>{{ __('messages.status') }}</th>
@@ -178,6 +179,23 @@
                                             @else
                                                 <span class="text-muted">{{ __('messages.not_specified') }}</span>
                                             @endif
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                @if($program->groups_count > 0)
+                                                    <span class="badge bg-primary" title="Глобальные группы">
+                                                        <i class="fas fa-users me-1"></i>{{ $program->groups_count }} {{ $program->groups_count == 1 ? 'группа' : ($program->groups_count < 5 ? 'группы' : 'групп') }}
+                                                    </span>
+                                                @endif
+                                                @if($program->users_count > 0)
+                                                    <span class="badge bg-secondary" title="Индивидуальные студенты">
+                                                        <i class="fas fa-user me-1"></i>{{ $program->users_count }} {{ $program->users_count == 1 ? 'студент' : ($program->users_count < 5 ? 'студента' : 'студентов') }}
+                                                    </span>
+                                                @endif
+                                                @if($program->groups_count == 0 && $program->users_count == 0)
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>
                                             @if($program->is_paid)
@@ -242,7 +260,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-4">
+                                        <td colspan="8" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class="fas fa-book fa-3x mb-3"></i>
                                                 <p>{{ __('messages.programs_not_found') }}</p>

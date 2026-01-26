@@ -27,7 +27,9 @@ class ProgramController extends Controller
      */
     public function index()
     {
-        $programs = Program::with(['institution', 'subjects', 'courses'])->paginate(15);
+        $programs = Program::with(['institution', 'subjects', 'courses'])
+            ->withCount(['groups', 'users'])
+            ->paginate(15);
         return view('admin.programs.index', compact('programs'));
     }
 
