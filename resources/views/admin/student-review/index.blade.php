@@ -501,17 +501,34 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($moodleUrl)
-                                                    <a href="{{ $moodleUrl }}" target="_blank" class="btn btn-sm btn-success">
-                                                        <i class="fas fa-external-link-alt me-1"></i>
-                                                        Перейти в Moodle
-                                                    </a>
-                                                @else
-                                                    <button class="btn btn-sm btn-secondary" disabled>
-                                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        Ссылка недоступна
-                                                    </button>
-                                                @endif
+                                                <div class="btn-group" role="group">
+                                                    @if($moodleUrl)
+                                                        <a href="{{ $moodleUrl }}" target="_blank" class="btn btn-sm btn-success">
+                                                            <i class="fas fa-external-link-alt me-1"></i>
+                                                            Перейти в Moodle
+                                                        </a>
+                                                    @else
+                                                        <button class="btn btn-sm btn-secondary" disabled>
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            Ссылка недоступна
+                                                        </button>
+                                                    @endif
+                                                    @if(request('adminfun') === 'true')
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-info admin-fun-btn" 
+                                                                data-progress-id="{{ $assignment->id }}"
+                                                                data-user-id="{{ $assignment->user->id }}"
+                                                                data-course-id="{{ $assignment->course->id }}"
+                                                                data-activity-id="{{ $assignment->activity->id ?? null }}"
+                                                                data-moodle-user-id="{{ $assignment->user->moodle_user_id ?? null }}"
+                                                                data-moodle-course-id="{{ $assignment->course->moodle_course_id ?? null }}"
+                                                                data-activity-type="assign"
+                                                                onclick="showMoodleDataModal(this)">
+                                                            <i class="fas fa-code me-1"></i>
+                                                            API
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -809,17 +826,34 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($moodleUrl)
-                                                    <a href="{{ $moodleUrl }}" target="_blank" class="btn btn-sm btn-success">
-                                                        <i class="fas fa-external-link-alt me-1"></i>
-                                                        Перейти в Moodle
-                                                    </a>
-                                                @else
-                                                    <button class="btn btn-sm btn-secondary" disabled>
-                                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        Ссылка недоступна
-                                                    </button>
-                                                @endif
+                                                <div class="btn-group" role="group">
+                                                    @if($moodleUrl)
+                                                        <a href="{{ $moodleUrl }}" target="_blank" class="btn btn-sm btn-success">
+                                                            <i class="fas fa-external-link-alt me-1"></i>
+                                                            Перейти в Moodle
+                                                        </a>
+                                                    @else
+                                                        <button class="btn btn-sm btn-secondary" disabled>
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            Ссылка недоступна
+                                                        </button>
+                                                    @endif
+                                                    @if(request('adminfun') === 'true')
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-info admin-fun-btn" 
+                                                                data-progress-id="{{ $quiz->id }}"
+                                                                data-user-id="{{ $quiz->user->id }}"
+                                                                data-course-id="{{ $quiz->course->id }}"
+                                                                data-activity-id="{{ $quiz->activity->id ?? null }}"
+                                                                data-moodle-user-id="{{ $quiz->user->moodle_user_id ?? null }}"
+                                                                data-moodle-course-id="{{ $quiz->course->moodle_course_id ?? null }}"
+                                                                data-activity-type="quiz"
+                                                                onclick="showMoodleDataModal(this)">
+                                                            <i class="fas fa-code me-1"></i>
+                                                            API
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -1027,17 +1061,34 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($forumUrl)
-                                                    <a href="{{ $forumUrl }}" target="_blank" class="btn btn-sm btn-success">
-                                                        <i class="fas fa-reply me-1"></i>
-                                                        Ответить в Moodle
-                                                    </a>
-                                                @else
-                                                    <button class="btn btn-sm btn-secondary" disabled>
-                                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        Ссылка недоступна
-                                                    </button>
-                                                @endif
+                                                <div class="btn-group" role="group">
+                                                    @if($forumUrl)
+                                                        <a href="{{ $forumUrl }}" target="_blank" class="btn btn-sm btn-success">
+                                                            <i class="fas fa-reply me-1"></i>
+                                                            Ответить в Moodle
+                                                        </a>
+                                                    @else
+                                                        <button class="btn btn-sm btn-secondary" disabled>
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            Ссылка недоступна
+                                                        </button>
+                                                    @endif
+                                                    @if(request('adminfun') === 'true')
+                                                        <button type="button" 
+                                                                class="btn btn-sm btn-info admin-fun-btn" 
+                                                                data-progress-id="{{ $forum->id }}"
+                                                                data-user-id="{{ $forum->user->id }}"
+                                                                data-course-id="{{ $forum->course->id }}"
+                                                                data-activity-id="{{ $forum->activity->id ?? null }}"
+                                                                data-moodle-user-id="{{ $forum->user->moodle_user_id ?? null }}"
+                                                                data-moodle-course-id="{{ $forum->course->moodle_course_id ?? null }}"
+                                                                data-activity-type="forum"
+                                                                onclick="showMoodleDataModal(this)">
+                                                            <i class="fas fa-code me-1"></i>
+                                                            API
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -1975,5 +2026,253 @@ function copyMoodleCheckResults() {
         });
     }
 }
+
+// Функция для отображения модального окна с данными из Moodle API
+function showMoodleDataModal(button) {
+    const progressId = button.getAttribute('data-progress-id');
+    const userId = button.getAttribute('data-user-id');
+    const courseId = button.getAttribute('data-course-id');
+    const activityId = button.getAttribute('data-activity-id');
+    const moodleUserId = button.getAttribute('data-moodle-user-id');
+    const moodleCourseId = button.getAttribute('data-moodle-course-id');
+    const activityType = button.getAttribute('data-activity-type');
+    
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('moodleDataModal'));
+    modal.show();
+    
+    // Очищаем содержимое
+    document.getElementById('moodleDataContent').innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Загрузка...</span></div><p class="mt-2">Загрузка данных из Moodle API...</p></div>';
+    
+    // Загружаем данные
+    fetch(`/admin/student-review/get-moodle-data?progress_id=${progressId}&user_id=${userId}&course_id=${courseId}&activity_id=${activityId}&moodle_user_id=${moodleUserId}&moodle_course_id=${moodleCourseId}&activity_type=${activityType}&adminfun=true`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayMoodleData(data.data);
+        } else {
+            document.getElementById('moodleDataContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Ошибка загрузки данных</h5>
+                    <p>${data.error || 'Неизвестная ошибка'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        document.getElementById('moodleDataContent').innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Ошибка загрузки данных</h5>
+                <p>${error.message}</p>
+            </div>
+        `;
+    });
+}
+
+// Функция для отображения данных в модальном окне
+function displayMoodleData(data) {
+    let html = '<div class="accordion" id="moodleDataAccordion">';
+    
+    // Информация о запросе
+    if (data.request_info) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRequest">
+                        <i class="fas fa-info-circle me-2"></i>Информация о запросе
+                    </button>
+                </h2>
+                <div id="collapseRequest" class="accordion-collapse collapse show" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded"><code>${JSON.stringify(data.request_info, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Данные задания
+    if (data.assignment) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssignment">
+                        <i class="fas fa-tasks me-2"></i>Данные задания
+                    </button>
+                </h2>
+                <div id="collapseAssignment" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.assignment, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Данные теста
+    if (data.quiz) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseQuiz">
+                        <i class="fas fa-question-circle me-2"></i>Данные теста
+                    </button>
+                </h2>
+                <div id="collapseQuiz" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.quiz, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Данные форума
+    if (data.forum) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseForum">
+                        <i class="fas fa-comments me-2"></i>Данные форума
+                    </button>
+                </h2>
+                <div id="collapseForum" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.forum, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Попытки теста
+    if (data.attempts) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAttempts">
+                        <i class="fas fa-redo me-2"></i>Попытки теста
+                    </button>
+                </h2>
+                <div id="collapseAttempts" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.attempts, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Посты форума
+    if (data.posts) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePosts">
+                        <i class="fas fa-comment-dots me-2"></i>Посты форума
+                    </button>
+                </h2>
+                <div id="collapsePosts" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.posts, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Данные сдачи
+    if (data.submission) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSubmission">
+                        <i class="fas fa-paper-plane me-2"></i>Данные сдачи
+                    </button>
+                </h2>
+                <div id="collapseSubmission" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded"><code>${JSON.stringify(data.submission, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Данные оценки
+    if (data.grade) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrade">
+                        <i class="fas fa-star me-2"></i>Данные оценки
+                    </button>
+                </h2>
+                <div id="collapseGrade" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded"><code>${JSON.stringify(data.grade, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Полный ответ API
+    if (data.api_response) {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApiResponse">
+                        <i class="fas fa-server me-2"></i>Полный ответ API
+                    </button>
+                </h2>
+                <div id="collapseApiResponse" class="accordion-collapse collapse" data-bs-parent="#moodleDataAccordion">
+                    <div class="accordion-body">
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>${JSON.stringify(data.api_response, null, 2)}</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    document.getElementById('moodleDataContent').innerHTML = html;
+}
 </script>
+
+<!-- Модальное окно для отображения данных из Moodle API -->
+@if(request('adminfun') === 'true')
+<div class="modal fade" id="moodleDataModal" tabindex="-1" aria-labelledby="moodleDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="moodleDataModalLabel">
+                    <i class="fas fa-code me-2"></i>Данные из Moodle API
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="moodleDataContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка данных...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection

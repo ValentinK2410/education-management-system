@@ -453,6 +453,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('student-review', [StudentReviewController::class, 'index'])->name('student-review.index');
         Route::post('student-review/sync-course/{course}', [StudentReviewController::class, 'syncCourseData'])->name('student-review.sync-course');
         Route::get('student-review/check-moodle-assignments', [StudentReviewController::class, 'checkMoodleAssignments'])->name('student-review.check-moodle-assignments');
+        Route::get('student-review/get-moodle-data', [StudentReviewController::class, 'getMoodleData'])->name('student-review.get-moodle-data');
 
         // Тестирование Moodle API
         Route::get('moodle-test', [MoodleTestController::class, 'index'])->name('moodle-test.index');

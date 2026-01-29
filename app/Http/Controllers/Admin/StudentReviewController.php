@@ -1736,4 +1736,251 @@ class StudentReviewController extends Controller
             return null;
         }
     }
+
+    /**
+     * Получить полные данные из Moodle API для конкретной активности студента
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMoodleData(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            // Проверяем права доступа
+            if (!$user->hasRole('instructor') && !$user->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Доступ запрещен'
+                ], 403);
+            }
+
+            // Проверяем наличие параметра adminfun в URL (из реферера или прямого запроса)
+            $referer = $request->header('Referer');
+            $hasAdminFun = $request->get('adminfun') === 'true' || 
+                          ($referer && strpos($referer, 'adminfun=true') !== false);
+            
+            if (!$hasAdminFun) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Функция недоступна'
+                ], 403);
+            }
+
+            $progressId = $request->get('progress_id');
+            $userId = $request->get('user_id');
+            $courseId = $request->get('course_id');
+            $activityId = $request->get('activity_id');
+            $moodleUserId = $request->get('moodle_user_id');
+            $moodleCourseId = $request->get('moodle_course_id');
+            $activityType = $request->get('activity_type', 'assign');
+
+            // Проверяем, что курс принадлежит преподавателю
+            $course = \App\Models\Course::where('id', $courseId)
+                ->where('instructor_id', $user->id)
+                ->first();
+
+            if (!$course) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Курс не найден или нет доступа'
+                ], 404);
+            }
+
+            if (!$course->moodle_course_id) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Курс не синхронизирован с Moodle'
+                ], 400);
+            }
+
+            if (!$moodleUserId) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Студент не синхронизирован с Moodle (нет moodle_user_id)'
+                ], 400);
+            }
+
+            // Используем токен текущего пользователя
+            $userToken = $user ? $user->getMoodleToken() : null;
+            $moodleApi = new MoodleApiService(null, $userToken);
+
+            $result = [
+                'request_info' => [
+                    'progress_id' => $progressId,
+                    'user_id' => $userId,
+                    'course_id' => $courseId,
+                    'activity_id' => $activityId,
+                    'moodle_user_id' => $moodleUserId,
+                    'moodle_course_id' => $moodleCourseId,
+                    'activity_type' => $activityType,
+                    'course_name' => $course->name,
+                ]
+            ];
+
+            if ($activityType === 'assign') {
+                // Получаем данные задания
+                $assignments = $moodleApi->getCourseAssignments($moodleCourseId);
+                
+                if ($assignments === false) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Не удалось получить задания из Moodle'
+                    ], 500);
+                }
+
+                // Находим нужное задание
+                $activity = \App\Models\CourseActivity::find($activityId);
+                $assignment = null;
+                
+                if ($activity && $activity->moodle_activity_id) {
+                    foreach ($assignments as $moodleAssignment) {
+                        if ($moodleAssignment['id'] == $activity->moodle_activity_id) {
+                            $assignment = $moodleAssignment;
+                            break;
+                        }
+                    }
+                }
+
+                // Получаем данные сдачи
+                $submissions = $moodleApi->getStudentSubmissions(
+                    $moodleCourseId,
+                    $moodleUserId,
+                    $assignments
+                );
+
+                // Получаем данные оценки
+                $grades = $moodleApi->getStudentGrades(
+                    $moodleCourseId,
+                    $moodleUserId,
+                    $assignments
+                );
+
+                $result['assignment'] = $assignment;
+                $result['submission'] = ($submissions !== false && $activity && isset($submissions[$activity->moodle_activity_id])) 
+                    ? $submissions[$activity->moodle_activity_id] 
+                    : null;
+                $result['grade'] = ($grades !== false && $activity && isset($grades[$activity->moodle_activity_id])) 
+                    ? $grades[$activity->moodle_activity_id] 
+                    : null;
+                
+                // Получаем полный ответ API для задания
+                $apiResponse = $moodleApi->call('mod_assign_get_assignments', [
+                    'courseids' => [$moodleCourseId]
+                ]);
+                $result['api_response'] = $apiResponse;
+
+            } elseif ($activityType === 'quiz') {
+                // Получаем данные теста
+                $quizzes = $moodleApi->getCourseQuizzes($moodleCourseId);
+                
+                if ($quizzes === false) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Не удалось получить тесты из Moodle'
+                    ], 500);
+                }
+
+                // Находим нужный тест
+                $activity = \App\Models\CourseActivity::find($activityId);
+                $quiz = null;
+                
+                if ($activity && $activity->moodle_activity_id) {
+                    foreach ($quizzes as $moodleQuiz) {
+                        if ($moodleQuiz['id'] == $activity->moodle_activity_id) {
+                            $quiz = $moodleQuiz;
+                            break;
+                        }
+                    }
+                }
+
+                // Получаем попытки студента
+                $quizAttempts = $moodleApi->getStudentQuizAttempts(
+                    $moodleCourseId,
+                    $moodleUserId,
+                    $quizzes
+                );
+
+                // Получаем оценки студента
+                $quizGrades = $moodleApi->getStudentQuizGrades(
+                    $moodleCourseId,
+                    $moodleUserId,
+                    $quizzes
+                );
+
+                $result['quiz'] = $quiz;
+                $result['attempts'] = ($quizAttempts !== false && $activity && isset($quizAttempts[$activity->moodle_activity_id])) 
+                    ? $quizAttempts[$activity->moodle_activity_id] 
+                    : null;
+                $result['grade'] = ($quizGrades !== false && $activity && isset($quizGrades[$activity->moodle_activity_id])) 
+                    ? $quizGrades[$activity->moodle_activity_id] 
+                    : null;
+                
+                // Получаем полный ответ API для теста
+                $apiResponse = $moodleApi->call('mod_quiz_get_quizzes_by_courses', [
+                    'courseids' => [$moodleCourseId]
+                ]);
+                $result['api_response'] = $apiResponse;
+
+            } elseif ($activityType === 'forum') {
+                // Получаем данные форума
+                $forums = $moodleApi->getCourseForums($moodleCourseId);
+                
+                if ($forums === false) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Не удалось получить форумы из Moodle'
+                    ], 500);
+                }
+
+                // Находим нужный форум
+                $activity = \App\Models\CourseActivity::find($activityId);
+                $forum = null;
+                
+                if ($activity && $activity->moodle_activity_id) {
+                    foreach ($forums as $moodleForum) {
+                        if ($moodleForum['id'] == $activity->moodle_activity_id) {
+                            $forum = $moodleForum;
+                            break;
+                        }
+                    }
+                }
+
+                // Получаем посты студента
+                $forumPosts = $moodleApi->getStudentForumPosts(
+                    $moodleCourseId,
+                    $moodleUserId,
+                    $forums
+                );
+
+                $result['forum'] = $forum;
+                $result['posts'] = ($forumPosts !== false && $activity && isset($forumPosts[$activity->moodle_activity_id])) 
+                    ? $forumPosts[$activity->moodle_activity_id] 
+                    : null;
+                
+                // Получаем полный ответ API для форума
+                $apiResponse = $moodleApi->call('mod_forum_get_forums_by_courses', [
+                    'courseids' => [$moodleCourseId]
+                ]);
+                $result['api_response'] = $apiResponse;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Ошибка получения данных из Moodle API', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Ошибка получения данных: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
